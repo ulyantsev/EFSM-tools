@@ -1,0 +1,189 @@
+<project name="jarsBuilder" default="all">
+    <property name="src.dir" value="src"/>
+    <property name="bin.dir" value="jar-classes"/>
+    <property name="jars.dir" value="jars"/>
+
+    <property name="isomorphism.main" value="IsomorphismCheckerMain"/>
+    <property name="isomorphism.jar" value="isomorphism-checker.jar"/>
+
+    <property name="consistency.main" value="ConsistencyCheckerMain"/>
+    <property name="consistency.jar" value="consistency-checker.jar"/>
+
+    <property name="completeness.main" value="CompletenessCheckerMain"/>
+    <property name="completeness.jar" value="completeness-checker.jar"/>
+    
+    <property name="builder.main" value="Main"/>
+    <property name="builder.jar" value="builder.jar"/>
+    <property name="choco.path" value="lib/choco-solver-2.1.5-with-sources.jar"/>
+    <property name="args4j.path" value="lib/args4j-2.0.21.jar"/>
+
+    <property name="sat-builder.main" value="SatBuilderMain"/>
+    <property name="sat-builder.jar" value="sat-builder.jar"/>
+
+    <property name="automaton.generator.main" value="AutomatonGeneratorMain"/>
+    <property name="automaton.generator.jar" value="automaton-generator.jar"/>
+
+    <property name="scenarios.generator.main" value="ScenariosGeneratorMain"/>
+    <property name="scenarios.generator.jar" value="scenarios-generator.jar"/>
+
+    <target name="all" 
+            depends="consistency-jar, 
+                     isomorphism-jar, 
+                     completeness-jar,
+                     builder-jar, 
+                     sat-builder-jar, 
+                     automaton-generator-jar, 
+                     scenarios-generator-jar">
+    </target>
+
+    <target name="isomorphism-jar">
+        <mkdir dir="${bin.dir}"/>
+    
+        <javac srcdir="${src.dir}"
+               destdir="${bin.dir}"
+               includeantruntime="false"
+               debug="true"
+               debuglevel="lines,vars,source">
+            <include name="${isomorphism.main}.java"/>
+        </javac>
+
+        <jar destfile="${jars.dir}/${isomorphism.jar}"
+             basedir="${bin.dir}">
+            <manifest>
+                <attribute name="Main-Class" value="${isomorphism.main}"/>
+            </manifest>
+        </jar>
+
+        <delete dir="${bin.dir}"/>
+    </target>
+
+    <target name="completeness-jar">
+        <mkdir dir="${bin.dir}"/>
+    
+        <javac srcdir="${src.dir}"
+               destdir="${bin.dir}"
+               includeantruntime="false">
+            <include name="${completeness.main}.java"/>
+        </javac>
+
+        <jar destfile="${jars.dir}/${completeness.jar}"
+             basedir="${bin.dir}">
+            <manifest>
+                <attribute name="Main-Class" value="${completeness.main}"/>
+            </manifest>
+        </jar>
+
+        <delete dir="${bin.dir}"/>
+    </target>
+
+    <target name="builder-jar">
+        <mkdir dir="${bin.dir}"/>
+        
+        <javac srcdir="${src.dir}"
+               destdir="${bin.dir}"
+               classpath="${choco.path}:${args4j.path}"
+               includeantruntime="false"
+               debug="true"
+               debuglevel="lines,vars,source">
+            <include name="${builder.main}.java"/>
+        </javac>
+
+        <jar destfile="${jars.dir}/${builder.jar}"
+             basedir="${bin.dir}">
+            <manifest>
+                <attribute name="Main-Class" value="${builder.main}"/>
+            </manifest>
+
+            <zipfileset src="${choco.path}" excludes="META-INF/*.SF"/>
+            <zipfileset src="${args4j.path}" excludes="META-INF/*.SF"/>
+        </jar>
+
+        <delete dir="${bin.dir}"/>
+    </target>
+
+    <target name="sat-builder-jar">
+        <mkdir dir="${bin.dir}"/>
+        
+        <javac srcdir="${src.dir}"
+               destdir="${bin.dir}"
+               classpath="${choco.path}:${args4j.path}"
+               includeantruntime="false"
+               debug="true"
+               debuglevel="lines,vars,source">
+            <include name="${sat-builder.main}.java"/>
+        </javac>
+
+        <jar destfile="${jars.dir}/${sat-builder.jar}"
+             basedir="${bin.dir}">
+            <manifest>
+                <attribute name="Main-Class" value="${sat-builder.main}"/>
+            </manifest>
+            <zipfileset src="${args4j.path}" excludes="META-INF/*.SF"/>
+        </jar>
+
+        <delete dir="${bin.dir}"/>
+    </target>
+
+    <target name="automaton-generator-jar">
+        <mkdir dir="${bin.dir}"/>
+    
+        <javac srcdir="${src.dir}"
+               destdir="${bin.dir}"
+               classpath="${args4j.path}"
+               includeantruntime="false">
+            <include name="${automaton.generator.main}.java"/>
+        </javac>
+
+        <jar destfile="${jars.dir}/${automaton.generator.jar}"
+             basedir="${bin.dir}">
+            <manifest>
+                <attribute name="Main-Class" value="${automaton.generator.main}"/>
+            </manifest>
+            <zipfileset src="${args4j.path}" excludes="META-INF/*.SF"/>
+        </jar>
+
+        <delete dir="${bin.dir}"/>
+    </target>
+
+    <target name="scenarios-generator-jar">
+        <mkdir dir="${bin.dir}"/>
+    
+        <javac srcdir="${src.dir}"
+               destdir="${bin.dir}"
+               classpath="${args4j.path}"
+               includeantruntime="false">
+            <include name="${scenarios.generator.main}.java"/>
+        </javac>
+
+        <jar destfile="${jars.dir}/${scenarios.generator.jar}"
+             basedir="${bin.dir}">
+            <manifest>
+                <attribute name="Main-Class" value="${scenarios.generator.main}"/>
+            </manifest>
+
+            <zipfileset src="${args4j.path}" excludes="META-INF/*.SF"/>
+        </jar>
+
+        <delete dir="${bin.dir}"/>
+    </target>
+
+    <target name="consistency-jar">
+        <mkdir dir="${bin.dir}"/>
+    
+        <javac srcdir="${src.dir}"
+               destdir="${bin.dir}"
+               includeantruntime="false">
+            <include name="${consistency.main}.java"/>
+        </javac>
+
+        <jar destfile="${jars.dir}/${consistency.jar}"
+             basedir="${bin.dir}">
+            <manifest>
+                <attribute name="Main-Class" value="${consistency.main}"/>
+            </manifest>
+        </jar>
+
+        <delete dir="${bin.dir}"/>
+    </target>
+    
+</project>
