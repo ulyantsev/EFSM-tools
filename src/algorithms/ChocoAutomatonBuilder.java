@@ -257,63 +257,56 @@ public class ChocoAutomatonBuilder {
             }
         }
         Collections.sort(eventExprOrder);
+        assert eventExprOrder.size() == transitionsVars.size();
 
         IntegerVariable[][] edgeExists = new IntegerVariable[size][];
         for (int nodeColor = 0; nodeColor < size; nodeColor++) {
-            edgeExists[nodeColor] =
-                    Choco.makeIntVarArray("edgeExists_" + nodeColor, size - nodeColor, nodeColor, size - 1);
+            edgeExists[nodeColor] = Choco.makeBooleanVarArray("edgeExists_" + nodeColor, size);
         }
 
         // e_a_b <=> y_a_b_ee1 \/ ... \/ y_a_b_een
         for (int nodeColor = 0; nodeColor < size; nodeColor++) {
             for (int childColor = nodeColor + 1; childColor < size; childColor++) {
 
-
-                int edgeVar = vars.get("e_" + nodeColor + "_" + childColor);
-                String edgeThenRelation = -edgeVar + " ";
-                for (String eventExpr : eventExprOrder) {
-                    int relationVar = vars.get("y_" + eventExpr + "_" + nodeColor + "_" + childColor);
-                    clauses.add(-relationVar + " " + edgeVar);
-
-                    edgeThenRelation += relationVar + " ";
+                IntegerVariable[] yVars = new IntegerVariable[transitionsVars.size()];
+                for (int i = 0; i < eventExprOrder.size(); i++) {
+                    yVars[i] = transitionsVars.get(eventExprOrder.get(i))[nodeColor];
                 }
-                clauses.add(edgeThenRelation);
+
+                Constraint[] orConstraints = new Constraint[yVars.length];
+                for (int i = 0; i < yVars.length; i++) {
+                    orConstraints[i] = Choco.eq(yVars[i], childColor);
+                }
+
+                Constraint right = Choco.or(orConstraints);
+                Constraint cst = Choco.reifiedConstraint(edgeExists[nodeColor][childColor], right);
+
+                ans.add(cst);
             }
         }
 
-        for (int nodeColor = 1; nodeColor < k; nodeColor++) {
-            for (int parentColor = 0; parentColor < nodeColor; parentColor++) {
-                vars.put("p_" + nodeColor + "_" + parentColor, vars.size() + 1);
-            }
-        }
-
-        // p_a_1 \/ ... \/ p_a_{a-1}
-        for (int nodeColor = 1; nodeColor < k; nodeColor++) {
-            String hasParentClause = "";
-            for (int parentColor = 0; parentColor < nodeColor; parentColor++) {
-                hasParentClause += vars.get("p_" + nodeColor + "_" + parentColor) + " ";
-            }
-            clauses.add(hasParentClause);
+        IntegerVariable[] parentVars = new IntegerVariable[size];
+        for (int nodeColor = 1; nodeColor < size; nodeColor++) {
+            parentVars[nodeColor] = Choco.makeIntVar("parent_" + nodeColor, 0, nodeColor - 1);
         }
 
         // p_a_b <=> e_b_a /\ ~e_{b-1}_a /\ ... /\ ~e_0_a
-        for (int nodeColor = 1; nodeColor < k; nodeColor++) {
+        for (int nodeColor = 1; nodeColor < size; nodeColor++) {
             for (int parentColor = 0; parentColor < nodeColor; parentColor++) {
-                int parentVar = vars.get("p_" + nodeColor + "_" + parentColor);
-                int edgeVar = vars.get("e_" + parentColor + "_" + nodeColor);
-                clauses.add(-parentVar + " " + edgeVar);
 
-                String edgesThenParent = -edgeVar + " ";
+                Constraint[] andConstraints = new Constraint[parentColor + 1];
+                andConstraints[parentColor] = Choco.eq(edgeExists[parentColor][nodeColor], 1);
                 for (int otherParent = 0; otherParent < parentColor; otherParent++) {
-                    int otherEdgeVar = vars.get("e_" + otherParent + "_" + nodeColor);
-                    clauses.add(-parentVar + " " + -otherEdgeVar);
-
-                    edgesThenParent += otherEdgeVar + " ";
+                    andConstraints[otherParent] = Choco.eq(edgeExists[otherParent][nodeColor], 0);
                 }
-                edgesThenParent += parentVar + "";
-                clauses.add(edgesThenParent);
+
+                Constraint left = Choco.eq(parentVars[nodeColor], parentColor);
+                ans.add(Choco.ifOnlyIf(left, Choco.and(andConstraints)));
             }
         }
+
+
+/*
 
         for (int nodeColor = 0; nodeColor < k; nodeColor++) {
             for (int childColor = nodeColor + 1; childColor < k; childColor++) {
@@ -395,9 +388,9 @@ public class ChocoAutomatonBuilder {
                 }
             }
         }
+        */
 
-
-        return null;
+        return ans.toArray(new Constraint[ans.size()]);
     }
 
     private static List<Automaton> buildAllAutomatonsFromModel(int size,
