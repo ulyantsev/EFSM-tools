@@ -24,26 +24,32 @@ public class Main {
     @Argument(usage = "paths to files with scenarios", metaVar = "files", required = true)
     private List<String> arguments = new ArrayList<String>();
 
-    @Option(name = "--size", aliases = { "-s" }, usage = "automaton size", metaVar = "<size>", required = true)
+//    @Option(name = "--negative-scenarios", aliases = { "-n" }, usage = "file with negative scenarios", metaVar = "<file>")
+//    private String negativeScenariosPath;
+
+    @Option(name = "--size", aliases = {"-s"}, usage = "automaton size", metaVar = "<size>", required = true)
     private int size;
 
-    @Option(name = "--log", aliases = { "-l" }, usage = "write log to this file", metaVar = "<file>")
+    @Option(name = "--log", aliases = {"-l"}, usage = "write log to this file", metaVar = "<file>")
     private String logFilePath;
 
-    @Option(name = "--result", aliases = { "-r" }, usage = "write result automaton in GV format to this file", metaVar = "<GV file>")
+    @Option(name = "--result", aliases = {"-r"}, usage = "write result automaton in GV format to this file", metaVar = "<GV file>")
     private String resultFilePath;
 
-    @Option(name = "--tree", aliases = { "-t" }, usage = "write scenarios tree in GV format to this file", metaVar = "<GV file>")
+    @Option(name = "--tree", aliases = {"-t"}, usage = "write scenarios tree in GV format to this file", metaVar = "<GV file>")
     private String treeFilePath;
 
-    @Option(name = "--model", aliases = { "-m" }, usage = "write CSP model to this file", metaVar = "<file>")
+    @Option(name = "--model", aliases = {"-m"}, usage = "write CSP model to this file", metaVar = "<file>")
     private String modelFilePath;
 
-    @Option(name = "--complete", aliases = { "-c" }, handler = BooleanOptionHandler.class, usage = "is automaton will be complete")
+    @Option(name = "--complete", aliases = {"-c"}, handler = BooleanOptionHandler.class, usage = "is automaton will be complete")
     private boolean isComplete;
 
-    @Option(name = "--weak", aliases = { "-w" }, handler = BooleanOptionHandler.class, usage = "activate weak completeness, available in <-c> mode")
+    @Option(name = "--weak", aliases = {"-w"}, handler = BooleanOptionHandler.class, usage = "activate weak completeness, available in <-c> mode")
     private boolean isWeakCompleteness;
+
+    @Option(name = "--all", aliases = {"-a"}, handler = BooleanOptionHandler.class, usage = "find all solutions")
+    private boolean solveAll;
 
     private void launcher(String[] args) {
         Locale.setDefault(Locale.US);
@@ -60,10 +66,10 @@ public class Main {
             parser.printUsage(System.out);
             return;
         }
-        
+
         if (isWeakCompleteness && !isComplete) {
-        	System.out.println("Unable to use <-w> option without <-c> option");
-        	return;
+            System.out.println("Unable to use <-w> option without <-c> option");
+            return;
         }
 
         Logger logger = Logger.getLogger("Logger");
@@ -116,31 +122,60 @@ public class Main {
         }
 
         long startTime = System.currentTimeMillis();
-        logger.info("Start building automaton with Choco CSP solver");
-        Automaton resultAutomaton;
-        if (modelPrintWriter == null) {
-            resultAutomaton = ChocoAutomatonBuilder.build(tree, size, isComplete, isWeakCompleteness);
+
+        if (!solveAll) {
+            logger.info("Start building automaton with Choco CSP solver");
+            Automaton resultAutomaton;
+            if (modelPrintWriter == null) {
+                resultAutomaton = ChocoAutomatonBuilder.build(tree, size, isComplete, isWeakCompleteness);
+            } else {
+                resultAutomaton =
+                        ChocoAutomatonBuilder.build(tree, size, isComplete, isWeakCompleteness, modelPrintWriter);
+                modelPrintWriter.close();
+            }
+            double executionTime = (System.currentTimeMillis() - startTime) / 1000.;
+
+            if (resultAutomaton == null) {
+                logger.info("Automaton with " + size + " states NOT FOUND!");
+            } else {
+                logger.info("Automaton with " + size + " states WAS FOUND!");
+                if (resultFilePath != null) {
+                    try {
+                        PrintWriter resultPrintWriter = new PrintWriter(new File(resultFilePath));
+                        resultPrintWriter.println(resultAutomaton);
+                        resultPrintWriter.close();
+                    } catch (FileNotFoundException e) {
+                        logger.warning("File " + resultFilePath + " not found: " + e.getMessage());
+                    }
+                }
+            }
+            logger.info("Choco automaton builder execution time: " + executionTime);
         } else {
-            resultAutomaton = ChocoAutomatonBuilder.build(tree, size, isComplete, isWeakCompleteness, modelPrintWriter);
-            modelPrintWriter.close();
-        }
-        double executionTime = (System.currentTimeMillis() - startTime) / 1000.;
-        
-        if (resultAutomaton == null) {
-            logger.info("Automaton with " + size + " states NOT FOUND!");
-        } else {
-            logger.info("Automaton with " + size + " states WAS FOUND!");
+            logger.info("Start building all feasible automatons with Choco CSP solver");
+            List<Automaton> result =
+                    ChocoAutomatonBuilder.buildAll(tree, size, isComplete, isWeakCompleteness, modelPrintWriter);
+            if (modelPrintWriter != null) {
+                modelPrintWriter.close();
+            }
+            double executionTime = (System.currentTimeMillis() - startTime) / 1000.;
+
+            logger.info(result.size() + " solutions found");
             if (resultFilePath != null) {
                 try {
                     PrintWriter resultPrintWriter = new PrintWriter(new File(resultFilePath));
-                    resultPrintWriter.println(resultAutomaton);
+
+                    for (Automaton automaton : result) {
+                        resultPrintWriter.println(automaton + "\n\n");
+                    }
+
                     resultPrintWriter.close();
                 } catch (FileNotFoundException e) {
                     logger.warning("File " + resultFilePath + " not found: " + e.getMessage());
                 }
             }
+            logger.info("Choco execution time for all solutions: " + executionTime);
         }
-        logger.info("Choco automaton builder execution time: " + executionTime);
+
     }
 
     public void run(String[] args) {

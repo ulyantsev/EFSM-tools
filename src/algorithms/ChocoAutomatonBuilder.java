@@ -1,12 +1,7 @@
 package algorithms;
 
 import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
+import java.util.*;
 
 import bool.MyBooleanExpression;
 
@@ -36,13 +31,40 @@ public class ChocoAutomatonBuilder {
         return build(tree, size, isComplete, isWeakCompleteness, null);
     }
 
-    public static Automaton build(ScenariosTree tree, int size, boolean isComplete, boolean isWeakCompleteness, PrintWriter modelPrintWriter) {
-        CPModel model = new CPModel();
+    public static Automaton build(ScenariosTree tree,
+                                  int size,
+                                  boolean isComplete,
+                                  boolean isWeakCompleteness,
+                                  PrintWriter modelPrintWriter) {
         IntegerVariable[] nodesColorsVars = Choco.makeIntVarArray("Color", tree.nodesCount(), 0, size - 1);
-        
+        CPModel model = buildModel(tree, size, isComplete, isWeakCompleteness, nodesColorsVars, modelPrintWriter);
+
+        return buildAutomatonFromModel(size, tree, nodesColorsVars, model);
+    }
+
+    public static List<Automaton> buildAll(ScenariosTree tree,
+                                           int size,
+                                           boolean isComplete,
+                                           boolean isWeakCompleteness,
+                                           PrintWriter modelPrintWriter) {
+        IntegerVariable[] nodesColorsVars = Choco.makeIntVarArray("Color", tree.nodesCount(), 0, size - 1);
+        CPModel model = buildModel(tree, size, isComplete, isWeakCompleteness, nodesColorsVars, modelPrintWriter);
+
+        return buildAllAutomatonsFromModel(size, tree, nodesColorsVars, model);
+    }
+
+
+    private static CPModel buildModel(ScenariosTree tree,
+                                      int size,
+                                      boolean isComplete,
+                                      boolean isWeakCompleteness,
+                                      IntegerVariable[] nodesColorsVars,
+                                      PrintWriter modelPrintWriter) {
+        CPModel model = new CPModel();
+
         Constraint rootColorConstraint = Choco.eq(nodesColorsVars[0], 0);
         model.addConstraint(rootColorConstraint);
-        
+
         model.addConstraints(getTransitionsConstraints(size, tree, nodesColorsVars));
         model.addConstraints(getAdjacentConstraints(tree, nodesColorsVars));
 
@@ -56,10 +78,14 @@ public class ChocoAutomatonBuilder {
             modelPrintWriter.flush();
         }
 
-        return buildAutomatonFromModel(size, tree, nodesColorsVars, model);
+        return model;
     }
 
-    private static Constraint[] getCompleteConstraints(CPModel model, int size, ScenariosTree tree, IntegerVariable[] nodesColorsVars, boolean isWeakCompleteness) {
+    private static Constraint[] getCompleteConstraints(CPModel model,
+                                                       int size,
+                                                       ScenariosTree tree,
+                                                       IntegerVariable[] nodesColorsVars,
+                                                       boolean isWeakCompleteness) {
 
         Map<String, Map<String, List<Node>>> eventExprToNodes = new TreeMap<String, Map<String, List<Node>>>();
 
@@ -119,7 +145,7 @@ public class ChocoAutomatonBuilder {
                         orClauses.add(clause);
                     }
 
-                    Constraint orConstraint = Choco.or(orClauses.toArray(new Constraint[0]));
+                    Constraint orConstraint = Choco.or(orClauses.toArray(new Constraint[orClauses.size()]));
                     Constraint eqConstraint = Choco.eq(vars[color], 1);
                     Constraint res = Choco.ifOnlyIf(orConstraint, eqConstraint);
                     ans.add(res);
@@ -140,26 +166,26 @@ public class ChocoAutomatonBuilder {
                     onesArray[i] = 1;
                     countsArray[i++] = exprSetsCount.get(expr.toString());
                 }
-                IntegerVariable[] varsArray = vars.toArray(new IntegerVariable[0]);
-                
+                IntegerVariable[] varsArray = vars.toArray(new IntegerVariable[vars.size()]);
+
                 String sumVarName = "sum_" + color + "_" + event;
                 int[] values = new int[]{0, totalSetsCount};
                 IntegerVariable sumVar = Choco.makeIntVar(sumVarName, values);
                 model.addVariable(sumVar);
-                
+
                 System.out.println(sumVar.pretty());
                 for (IntegerVariable v : varsArray) {
                     System.out.println(v.pretty() + " ");
                 }
-                
+
                 if (!isWeakCompleteness) {
                     sumVar = Choco.constant(totalSetsCount);
                 }
-                
+
                 //Constraint equation = Choco.equation(sumVar, varsArray, countsArray);
                 //System.out.println("Equation created");
                 //ans.add(equation);
-                
+
                 Constraint equationFull = Choco.equation(totalSetsCount, varsArray, countsArray);
                 Constraint equationZero = Choco.equation(0, varsArray, onesArray);
                 ans.add(Choco.or(equationFull, equationZero));
@@ -169,7 +195,7 @@ public class ChocoAutomatonBuilder {
             }
         }
 
-        return ans.toArray(new Constraint[0]);
+        return ans.toArray(new Constraint[ans.size()]);
     }
 
     private static Constraint[] getAdjacentConstraints(ScenariosTree tree, IntegerVariable[] nodesColorsVars) {
@@ -186,11 +212,12 @@ public class ChocoAutomatonBuilder {
             }
         }
 
-        return ans.toArray(new Constraint[0]);
+        return ans.toArray(new Constraint[ans.size()]);
     }
 
-    private static Constraint[] getTransitionsConstraints(int size, ScenariosTree tree,
-            IntegerVariable[] nodesColorsVars) {
+    private static Constraint[] getTransitionsConstraints(int size,
+                                                          ScenariosTree tree,
+                                                          IntegerVariable[] nodesColorsVars) {
         List<Constraint> ans = new ArrayList<Constraint>();
 
         Map<String, IntegerVariable[]> transitionsVars = new HashMap<String, IntegerVariable[]>();
@@ -212,19 +239,220 @@ public class ChocoAutomatonBuilder {
             }
         }
 
-        return ans.toArray(new Constraint[0]);
+        return ans.toArray(new Constraint[ans.size()]);
     }
 
-    private static Automaton buildAutomatonFromModel(int size, ScenariosTree tree, IntegerVariable[] nodesColorsVars,
-            CPModel model) {
+    private static Constraint[] getBFSSymmetryBreakingConstraints(int size,
+                                                                  ScenariosTree tree,
+                                                                  Map<String, IntegerVariable[]> transitionsVars) {
+        List<Constraint> ans = new ArrayList<Constraint>();
+
+        List<String> eventExprOrder = new ArrayList<String>();
+        for (Node node : tree.getNodes()) {
+            for (Transition t : node.getTransitions()) {
+                String eventExpr = t.getEvent() + "[" + t.getExpr().toString() + "]";
+                if (!eventExprOrder.contains(eventExpr)) {
+                    eventExprOrder.add(eventExpr);
+                }
+            }
+        }
+        Collections.sort(eventExprOrder);
+
+        IntegerVariable[][] edgeExists = new IntegerVariable[size][];
+        for (int nodeColor = 0; nodeColor < size; nodeColor++) {
+            edgeExists[nodeColor] =
+                    Choco.makeIntVarArray("edgeExists_" + nodeColor, size - nodeColor, nodeColor, size - 1);
+        }
+
+        // e_a_b <=> y_a_b_ee1 \/ ... \/ y_a_b_een
+        for (int nodeColor = 0; nodeColor < size; nodeColor++) {
+            for (int childColor = nodeColor + 1; childColor < size; childColor++) {
+
+
+                int edgeVar = vars.get("e_" + nodeColor + "_" + childColor);
+                String edgeThenRelation = -edgeVar + " ";
+                for (String eventExpr : eventExprOrder) {
+                    int relationVar = vars.get("y_" + eventExpr + "_" + nodeColor + "_" + childColor);
+                    clauses.add(-relationVar + " " + edgeVar);
+
+                    edgeThenRelation += relationVar + " ";
+                }
+                clauses.add(edgeThenRelation);
+            }
+        }
+
+        for (int nodeColor = 1; nodeColor < k; nodeColor++) {
+            for (int parentColor = 0; parentColor < nodeColor; parentColor++) {
+                vars.put("p_" + nodeColor + "_" + parentColor, vars.size() + 1);
+            }
+        }
+
+        // p_a_1 \/ ... \/ p_a_{a-1}
+        for (int nodeColor = 1; nodeColor < k; nodeColor++) {
+            String hasParentClause = "";
+            for (int parentColor = 0; parentColor < nodeColor; parentColor++) {
+                hasParentClause += vars.get("p_" + nodeColor + "_" + parentColor) + " ";
+            }
+            clauses.add(hasParentClause);
+        }
+
+        // p_a_b <=> e_b_a /\ ~e_{b-1}_a /\ ... /\ ~e_0_a
+        for (int nodeColor = 1; nodeColor < k; nodeColor++) {
+            for (int parentColor = 0; parentColor < nodeColor; parentColor++) {
+                int parentVar = vars.get("p_" + nodeColor + "_" + parentColor);
+                int edgeVar = vars.get("e_" + parentColor + "_" + nodeColor);
+                clauses.add(-parentVar + " " + edgeVar);
+
+                String edgesThenParent = -edgeVar + " ";
+                for (int otherParent = 0; otherParent < parentColor; otherParent++) {
+                    int otherEdgeVar = vars.get("e_" + otherParent + "_" + nodeColor);
+                    clauses.add(-parentVar + " " + -otherEdgeVar);
+
+                    edgesThenParent += otherEdgeVar + " ";
+                }
+                edgesThenParent += parentVar + "";
+                clauses.add(edgesThenParent);
+            }
+        }
+
+        for (int nodeColor = 0; nodeColor < k; nodeColor++) {
+            for (int childColor = nodeColor + 1; childColor < k; childColor++) {
+                for (String eventExpr : eventExprOrder) {
+                    vars.put("m_" + eventExpr + "_" + nodeColor + "_" + childColor, vars.size() + 1);
+                }
+            }
+        }
+
+        // m_a_b_ee <=> e_a_b /\ y_a_b_ee /\ ~y_a_b_{ee-1} /\ ... /\ ~y_a_b_{ee0}
+        for (int nodeColor = 0; nodeColor < k; nodeColor++) {
+            for (int childColor = nodeColor + 1; childColor < k; childColor++) {
+                int edgeVar = vars.get("e_" + nodeColor + "_" + childColor);
+
+                for (String eventExpr : eventExprOrder) {
+                    int minTransition = vars.get("m_" + eventExpr + "_" + nodeColor + "_" + childColor);
+                    int relationVar = vars.get("y_" + eventExpr + "_" + nodeColor + "_" + childColor);
+
+                    clauses.add(-minTransition + " " + edgeVar);
+                    clauses.add(-minTransition + " " + relationVar);
+
+                    String transitionThenMin = -edgeVar + " " + -relationVar + " ";
+                    for (String otherEventExpr : eventExprOrder) {
+                        if (otherEventExpr == eventExpr) {
+                            break;
+                        }
+                        int otherRelationVar = vars.get("y_" + otherEventExpr + "_" + nodeColor + "_" + childColor);
+                        clauses.add(-minTransition + " " + -otherRelationVar);
+
+                        transitionThenMin += otherRelationVar + " ";
+                    }
+                    transitionThenMin += minTransition + "";
+                    clauses.add(transitionThenMin);
+                }
+            }
+        }
+
+        // p_a_b /\ p_{a+1}_b /\ m_b_a_ee1 => ~m_b_{a+1}_ee2 (ee2 < ee1)
+        for (int nodeColor = 0; nodeColor < k; nodeColor++) {
+            for (int childColor = nodeColor + 1; childColor < k - 1; childColor++) {
+                int parentVar = vars.get("p_" + childColor + "_" + nodeColor);
+                int nextParentVar = vars.get("p_" + (childColor + 1) + "_" + nodeColor);
+
+                for (String eventExpr : eventExprOrder) {
+                    for (String otherEventExpr : eventExprOrder) {
+                        if (otherEventExpr == eventExpr) {
+                            break;
+                        }
+                        int minTransition = vars.get("m_" + eventExpr + "_" + nodeColor + "_" + childColor);
+                        int otherMin = vars.get("m_" + otherEventExpr + "_" + nodeColor + "_" + (childColor + 1));
+
+                        clauses.add(-parentVar + " " + -nextParentVar + " " + -minTransition + " " + -otherMin);
+                    }
+                }
+            }
+        }
+
+        // p_a_b /\ ~p_{a+1}_b => ~p_c_b (c > a + 1)
+        for (int nodeColor = 0; nodeColor < k; nodeColor++) {
+            for (int childColor = nodeColor + 1; childColor < k - 1; childColor++) {
+                int parentVar = vars.get("p_" + childColor + "_" + nodeColor);
+                int nextParentVar = vars.get("p_" + (childColor + 1) + "_" + nodeColor);
+
+                for (int otherChild = childColor + 2; otherChild < k; otherChild++) {
+                    int otherParentVar = vars.get("p_" + otherChild + "_" + nodeColor);
+                    clauses.add(-parentVar + " " + nextParentVar + " " + -otherParentVar);
+                }
+            }
+        }
+
+        // p_a_b => ~p_a+1_d (d < b)
+        for (int nodeColor = 1; nodeColor < k - 1; nodeColor++) {
+            for (int parentColor = 0; parentColor < nodeColor; parentColor++) {
+                for (int nextParent = 0; nextParent < parentColor; nextParent++) {
+                    int parentVar = vars.get("p_" + nodeColor + "_" + parentColor);
+                    int nextParentVar = vars.get("p_" + (nodeColor + 1) + "_" + nextParent);
+
+                    clauses.add(-parentVar + " " + -nextParentVar);
+                }
+            }
+        }
+
+
+        return null;
+    }
+
+    private static List<Automaton> buildAllAutomatonsFromModel(int size,
+                                                               ScenariosTree tree,
+                                                               IntegerVariable[] nodesColorsVars,
+                                                               CPModel model) {
         CPSolver solver = new CPSolver();
         solver.read(model);
         solver.setTimeLimit(300000);
         solver.addGoal(new AssignVar(
-                new MinDomain(solver, solver.getVar(nodesColorsVars)), 
+                new MinDomain(solver, solver.getVar(nodesColorsVars)),
                 new IncreasingDomain()));
         solver.solve();
-        
+
+        if (!solver.existsSolution()) {
+            solver = new CPSolver();
+            solver.read(model);
+            solver.solve();
+        }
+
+        List<Automaton> ans = new ArrayList<Automaton>();
+        if (!solver.existsSolution()) {
+            return ans;
+        }
+
+        do {
+            Automaton automaton = new Automaton(size);
+            for (int i = 0; i < tree.nodesCount(); i++) {
+                int color = solver.getVar(nodesColorsVars[i]).getVal();
+                Node state = automaton.getState(color);
+                for (Transition t : tree.getNodes().get(i).getTransitions()) {
+                    if (!state.hasTransition(t.getEvent(), t.getExpr())) {
+                        int childColor = solver.getVar(nodesColorsVars[t.getDst().getNumber()]).getVal();
+                        state.addTransition(t.getEvent(), t.getExpr(), t.getActions(), automaton.getState(childColor));
+                    }
+                }
+            }
+            ans.add(automaton);
+        } while (solver.nextSolution());
+
+        return ans;
+    }
+
+    private static Automaton buildAutomatonFromModel(int size,
+                                                     ScenariosTree tree,
+                                                     IntegerVariable[] nodesColorsVars,
+                                                     CPModel model) {
+        CPSolver solver = new CPSolver();
+        solver.read(model);
+        solver.setTimeLimit(300000);
+        solver.addGoal(new AssignVar(
+                new MinDomain(solver, solver.getVar(nodesColorsVars)),
+                new IncreasingDomain()));
+        solver.solve();
+
         if (!solver.existsSolution()) {
             solver = new CPSolver();
             solver.read(model);
@@ -233,7 +461,8 @@ public class ChocoAutomatonBuilder {
 //                  new IncreasingDomain()));
             solver.solve();
         }
-        
+
+
         Automaton ans = null;
         if (solver.existsSolution()) {
             ans = new Automaton(size);

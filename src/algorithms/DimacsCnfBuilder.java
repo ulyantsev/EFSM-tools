@@ -249,13 +249,15 @@ public class DimacsCnfBuilder {
             }
         
         }
-        
-        
+
         StringBuilder sb = new StringBuilder();
-        sb.append("c CNF for scenarios tree with " + tree.nodesCount() + " nodes, colored in " + k + " colors\n");
-        sb.append("p cnf " + vars.size() + " " + clauses.size() + "\n");
+
+        String header = "c CNF for scenarios tree with " + tree.nodesCount() + " nodes, colored in " + k + " colors\n";
+        header += "p cnf " + vars.size() + " " + clauses.size() + "\n";
+        sb.append(header);
+
         for (String s : clauses) {
-            sb.append(s + " 0\n");
+            sb.append(s).append(" 0\n");
         }
         
         return sb.toString();
