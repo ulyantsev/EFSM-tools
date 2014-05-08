@@ -26,6 +26,10 @@
     <property name="scenarios.generator.main" value="ScenariosGeneratorMain"/>
     <property name="scenarios.generator.jar" value="scenarios-generator.jar"/>
 
+    <property name="minizinc.generator.main" value="MiniZincDataGeneratorMain"/>
+    <property name="minizinc.generator.jar" value="minizinc-generator.jar"/>
+
+
     <target name="all" 
             depends="consistency-jar, 
                      isomorphism-jar, 
@@ -33,8 +37,33 @@
                      builder-jar, 
                      sat-builder-jar, 
                      automaton-generator-jar, 
-                     scenarios-generator-jar">
+                     scenarios-generator-jar,
+                     minizinc-generator-jar">
     </target>
+
+    <target name="minizinc-generator-jar">
+        <mkdir dir="${bin.dir}"/>
+    
+        <javac srcdir="${src.dir}"
+               destdir="${bin.dir}"
+               includeantruntime="false"
+               debug="true"
+               classpath="${args4j.path}"
+               debuglevel="lines,vars,source">
+            <include name="${minizinc.generator.main}.java"/>
+        </javac>
+
+        <jar destfile="${jars.dir}/${minizinc.generator.jar}"
+             basedir="${bin.dir}">
+            <manifest>
+                <attribute name="Main-Class" value="${minizinc.generator.main}"/>
+            </manifest>
+            <zipfileset src="${args4j.path}" excludes="META-INF/*.SF"/>            
+        </jar>
+
+        <delete dir="${bin.dir}"/>
+    </target>
+
 
     <target name="isomorphism-jar">
         <mkdir dir="${bin.dir}"/>

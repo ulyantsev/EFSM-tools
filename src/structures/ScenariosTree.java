@@ -68,7 +68,7 @@ public class ScenariosTree {
                 events.add(transition.getEvent());
             }
         }
-        return events.toArray(new String[0]);
+        return events.toArray(new String[events.size()]);
     }
     
     public int getEventsCount() {
@@ -83,7 +83,7 @@ public class ScenariosTree {
                 variables.addAll(Arrays.asList(transitionVars));
             }
         }
-        return variables.toArray(new String[0]);
+        return variables.toArray(new String[variables.size()]);
     }
 
     public int getVariablesCount() {

@@ -4,7 +4,7 @@ import actions.StringActions;
 import bool.MyBooleanExpression;
 
 public class Transition {
-	public static boolean isCopatibility(Transition first, Transition second) {
+	public static boolean isCompatibility(Transition first, Transition second) {
 		if (first.getEvent().equals(second.getEvent())) {
 			if (first.getExpr() == second.getExpr()) {
 				if (!first.getActions().equals(second.getActions())) {

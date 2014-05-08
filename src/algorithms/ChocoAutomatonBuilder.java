@@ -264,7 +264,7 @@ public class ChocoAutomatonBuilder {
             edgeExists[nodeColor] = Choco.makeBooleanVarArray("edgeExists_" + nodeColor, size);
         }
 
-        // e_a_b <=> y_a_b_ee1 \/ ... \/ y_a_b_een
+        // e_a_b <=> y_a_ee1 = b \/ ... \/ y_a_een = b
         for (int nodeColor = 0; nodeColor < size; nodeColor++) {
             for (int childColor = nodeColor + 1; childColor < size; childColor++) {
 
@@ -290,7 +290,7 @@ public class ChocoAutomatonBuilder {
             parentVars[nodeColor] = Choco.makeIntVar("parent_" + nodeColor, 0, nodeColor - 1);
         }
 
-        // p_a_b <=> e_b_a /\ ~e_{b-1}_a /\ ... /\ ~e_0_a
+        // p_a = b <=> e_b_a /\ ~e_{b-1}_a /\ ... /\ ~e_0_a
         for (int nodeColor = 1; nodeColor < size; nodeColor++) {
             for (int parentColor = 0; parentColor < nodeColor; parentColor++) {
 
@@ -305,18 +305,18 @@ public class ChocoAutomatonBuilder {
             }
         }
 
+        // Minimum event+expression between states
+        IntegerVariable[][] minEventExpression = new IntegerVariable[size][];
+        for (int nodeColor = 0; nodeColor < size; nodeColor++) {
+            minEventExpression[nodeColor] =
+                    Choco.makeIntVarArray("min_" + nodeColor, size, 0, eventExprOrder.size() - 1);
+        }
+
+        // e_a_b => [m_a_b = ee <=> y_a_ee = b /\ ~(y_a_{ee-1} = b) /\ ... /\ ~(y_a_{ee0} = b)]
 
 /*
 
-        for (int nodeColor = 0; nodeColor < k; nodeColor++) {
-            for (int childColor = nodeColor + 1; childColor < k; childColor++) {
-                for (String eventExpr : eventExprOrder) {
-                    vars.put("m_" + eventExpr + "_" + nodeColor + "_" + childColor, vars.size() + 1);
-                }
-            }
-        }
 
-        // m_a_b_ee <=> e_a_b /\ y_a_b_ee /\ ~y_a_b_{ee-1} /\ ... /\ ~y_a_b_{ee0}
         for (int nodeColor = 0; nodeColor < k; nodeColor++) {
             for (int childColor = nodeColor + 1; childColor < k; childColor++) {
                 int edgeVar = vars.get("e_" + nodeColor + "_" + childColor);
