@@ -13,8 +13,8 @@ set of int: colors = 0..C-1;
 set of int: vertices = 0..V-1;
 set of int: apta_edges = 1..V-1;
 set of int: adjacent_edges = 1..AE;
-set of int: events = 1..E;
-set of int: actions = 1..A;
+set of int: events = 0..E-1;
+set of int: actions = 0..A-1;
 
 
 %% given data
@@ -34,8 +34,8 @@ array [actions] of string: action_str;
 %% variables
 
 array [vertices] of var colors: x; % vertices colors
-
 array [colors, events] of var colors: y; % EFSM transitions destinations
+array [colors, events] of var actions: z; % EFSM transitions actions
 
 
 %% constraints
@@ -45,7 +45,11 @@ constraint x[0] = 0;
 
 % transitions constraints
 constraint forall (i in apta_edges) (
-    x[i] = y[x[tree_parent[i]], tree_event[i]]
+    y[x[tree_parent[i]], tree_event[i]] = x[i]
+);
+
+constraint forall (i in apta_edges) (
+    z[x[tree_parent[i]], tree_event[i]] = tree_action[i]
 );
 
 % adjacent graph constraints
@@ -59,15 +63,15 @@ solve satisfy;
 
 
 
-output ["# Actions = ", show(actionsStr), "\n",
+output ["# Actions = ", show(action_str), "\n",
         "digraph Automaton {\n",
         "    node [shape = circle];\n",
         "    0 [style = \"bold\"];\n"] ++
         
-        [show(exists (i in vertices) (nextEvent[i] == e /\ x[i] == c)) ++ 
+        [show(exists (i in apta_edges) (tree_event[i] == e /\ x[tree_parent[i]] == c /\ z[c, e] == a)) ++ 
          "    " ++ show(c) ++ " -> " ++ show(y[c, e]) ++ 
-         " [label = \" " ++ show(eventsStr[e]) ++ " (" ++ 
-         show(z[c, e]) ++ ") \"];\n" 
-         | c in colors, e in events] ++
+         " [label = \" " ++ show(event_str[e]) ++ " (" ++ 
+         show(action_str[a]) ++ ") \"];\n" 
+         | c in colors, e in events, a in actions] ++
         
         ["}"];
