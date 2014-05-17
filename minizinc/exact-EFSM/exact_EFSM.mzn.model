@@ -58,10 +58,7 @@ constraint forall (i in adjacent_edges) (
 );
 
 
-
 solve satisfy;
-
-
 
 output ["# Actions = ", show(action_str), "\n",
         "digraph Automaton {\n",
@@ -70,8 +67,8 @@ output ["# Actions = ", show(action_str), "\n",
         
         [show(exists (i in apta_edges) (tree_event[i] == e /\ x[tree_parent[i]] == c /\ z[c, e] == a)) ++ 
          "    " ++ show(c) ++ " -> " ++ show(y[c, e]) ++ 
-         " [label = \" " ++ show(event_str[e]) ++ " (" ++ 
-         show(action_str[a]) ++ ") \"];\n" 
+         " [label = \" " ++ show(event_str[e + 1]) ++ " (" ++ 
+         show(action_str[a + 1]) ++ ") \"];\n" 
          | c in colors, e in events, a in actions] ++
         
         ["}"];
