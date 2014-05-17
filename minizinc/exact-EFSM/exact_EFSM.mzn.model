@@ -60,6 +60,8 @@ constraint forall (i in adjacent_edges) (
 
 solve satisfy;
 
+% I have no idea, why do I have do do " + 1" in event_str[e + 1] and action_str[a + 1]
+
 output ["# Actions = ", show(action_str), "\n",
         "digraph Automaton {\n",
         "    node [shape = circle];\n",
