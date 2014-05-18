@@ -1,5 +1,5 @@
 % MZN file model for EFSM induction
-% Unfortunately, local variables in predicate are also global variables
+% Unfortunately, local variables in predicate are also global variables to solver
 % Author: Vladimir Ulyantsev (ulyantsev@rain.ifmo.ru)
 
 % given constants and domains

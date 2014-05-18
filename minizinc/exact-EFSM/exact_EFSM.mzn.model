@@ -35,6 +35,8 @@ array [actions] of string: action_str;
 
 array [vertices] of var colors: x; % vertices colors
 array [colors, events] of var colors: y; % EFSM transitions destinations
+array [colors, colors] of var bool: tr;
+array [1..C-1] of var colors: p; 
 
 
 %% constraints
@@ -57,6 +59,24 @@ constraint forall (i in apta_edges) (
 constraint forall (c in colors, e in events) (
     (not exists (i in apta_edges) (tree_event[i] == e /\ x[tree_parent[i]] == c)) -> y[c, e] = c
 );
+
+constraint forall (i in colors, j in colors) (
+    if i >= j then
+        tr[i, j] = false
+    else
+        tr[i, j] = exists (e in events) (y[i, e] = j)
+    endif
+);
+
+constraint forall (i in 1..C-1, j in colors where j < i) (
+    (p[i] = j) <-> (tr[j, i] /\ forall (k in 0..j-1) (not tr[k, i]))
+);
+
+constraint forall (i in colors, j in colors, e in events where j > i) (
+    
+);
+
+
 
 solve satisfy;
 
