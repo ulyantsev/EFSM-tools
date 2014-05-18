@@ -1,4 +1,5 @@
 % MZN file model for EFSM induction
+% Unfortunately, local variables in predicate are also global variables
 % Author: Vladimir Ulyantsev (ulyantsev@rain.ifmo.ru)
 
 % given constants and domains
@@ -34,34 +35,32 @@ array [actions] of string: action_str;
 %% variables
 
 array [vertices] of var colors: x; % vertices colors
-array [colors, events] of var colors: y; % EFSM transitions destinations
 
+predicate is_satisfying_coloring(array [vertices] of var colors: x,
+                                 array [apta_edges] of int: tree_event,
+                                 array [apta_edges] of int: tree_parent) = 
+    let {
+        array [colors, events] of var colors: y    
+    } in (
+        forall (i in apta_edges) (
+            y[x[tree_parent[i]], tree_event[i]] = x[i]
+        )
+    );
 
 %% constraints
 
 % start vertex corresponds to start state
 constraint x[0] = 0;
 
+constraint is_satisfying_coloring(x, tree_event, tree_parent);
+
 % adjacent graph constraints
 constraint forall (i in adjacent_edges) (
     x[edge_src[i]] != x[edge_dst[i]]
 );
 
-% transitions constraints
-constraint forall (i in apta_edges) (
-    y[x[tree_parent[i]], tree_event[i]] = x[i]
-);
-
-% redundant constraints to unify y variables
-% used to find all solutions
-constraint forall (c in colors, e in events) (
-    (not exists (i in apta_edges) (tree_event[i] == e /\ x[tree_parent[i]] == c)) -> y[c, e] = c
-);
 
 solve satisfy;
-
-
-% I have no idea, why do I have to add " + 1" in event_str[e + 1] and action_str[a + 1]
 
 output ["# Colors = ", show(x), "\n",
         "digraph Automaton {\n",
