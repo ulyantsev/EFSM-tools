@@ -37,6 +37,7 @@ array [vertices] of var colors: x; % vertices colors
 array [colors, events] of var colors: y; % EFSM transitions destinations
 array [colors, colors] of var bool: tr;
 array [1..C-1] of var colors: p; 
+array [colors, colors] of var events: m;
 
 
 %% constraints
@@ -60,6 +61,10 @@ constraint forall (c in colors, e in events) (
     (not exists (i in apta_edges) (tree_event[i] == e /\ x[tree_parent[i]] == c)) -> y[c, e] = c
 );
 
+
+% symmetry breaking constraints
+
+% transition definition
 constraint forall (i in colors, j in colors) (
     if i >= j then
         tr[i, j] = false
@@ -68,17 +73,38 @@ constraint forall (i in colors, j in colors) (
     endif
 );
 
+% parent definition
 constraint forall (i in 1..C-1, j in colors where j < i) (
     (p[i] = j) <-> (tr[j, i] /\ forall (k in 0..j-1) (not tr[k, i]))
 );
 
-constraint forall (i in colors, j in colors, e in events where j > i) (
-    
+% next node i parent not less then our i-1
+constraint forall (i in colors, where i > 1) (
+    p[i - 1] <= p[i]
 );
 
+% node i is the last child of j
+constraint (i in colors, j in colors where i + 1 < j) (
+    (p[i] = j /\ p[i + 1] > j) -> 
+        forall (k in colors where k > i + 1) (p[k] != j)
+);
+
+% defining m[i, j] as minimum label on transitions between i and j
+constraint forall (i in colors, j in colors, e in events where j > i) (
+    tr[i, j] -> (
+        m[i, j] = e <-> (y[i, e] = j /\ forall (ee in 0..e-1) (y[i, ee] != j))
+    ) 
+    /\
+    not tr[i, j] -> m[i, j] = 0
+);
+
+% ordering nodes i and i+1 with the same parent j
+constraint forall (i in colors, j in colors where i + 1 < j) (
+    (p[i] = j /\ p[i + 1] = j) -> (m[j, i] < m[j, i + 1])
+)
 
 
-solve satisfy;
+solve satisfy;                          
 
 
 % I have no idea, why do I have to add " + 1" in event_str[e + 1] and action_str[a + 1]
