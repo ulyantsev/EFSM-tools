@@ -101,7 +101,7 @@ constraint forall (i in colors, j in colors, e in events where j > i) (
 % ordering nodes i and i+1 with the same parent j
 constraint forall (i in colors, j in colors where i + 1 < j) (
     (p[i] = j /\ p[i + 1] = j) -> (m[j, i] < m[j, i + 1])
-)
+);
 
 
 solve satisfy;                          
