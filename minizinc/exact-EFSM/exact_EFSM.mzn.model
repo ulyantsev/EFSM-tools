@@ -66,10 +66,10 @@ constraint forall (c in colors, e in events) (
 
 % transition definition
 constraint forall (i in colors, j in colors) (
-    if i >= j then
-        tr[i, j] = false
-    else
+    if i < j then
         tr[i, j] = exists (e in events) (y[i, e] = j)
+    else
+        tr[i, j] = false
     endif
 );
 
@@ -84,18 +84,22 @@ constraint forall (i in colors, where i > 1) (
 );
 
 % node i is the last child of j
-constraint (i in colors, j in colors where i + 1 < j) (
+constraint forall (i in colors, j in colors, where i + 1 < j) (
     (p[i] = j /\ p[i + 1] > j) -> 
         forall (k in colors where k > i + 1) (p[k] != j)
 );
 
 % defining m[i, j] as minimum label on transitions between i and j
-constraint forall (i in colors, j in colors, e in events where j > i) (
-    tr[i, j] -> (
-        m[i, j] = e <-> (y[i, e] = j /\ forall (ee in 0..e-1) (y[i, ee] != j))
-    ) 
-    /\
-    not tr[i, j] -> m[i, j] = 0
+constraint forall (i in colors, j in colors, e in events) (
+    if i < j then
+        (tr[i, j] -> (
+            m[i, j] = e <-> (y[i, e] = j /\ forall (ee in 0..e-1) (y[i, ee] != j))
+        )) 
+        /\
+        ((not tr[i, j]) -> m[i, j] = 0)
+    else
+        m[i, j] = 0
+    endif
 );
 
 % ordering nodes i and i+1 with the same parent j
@@ -109,7 +113,12 @@ solve satisfy;
 
 % I have no idea, why do I have to add " + 1" in event_str[e + 1] and action_str[a + 1]
 
-output ["# Colors = ", show(x), "\n",
+output ["# x = ", show(x), "\n",
+        "# y = ", show(y), "\n",
+        "# tr = ", show(tr), "\n",
+        "# m = ", show(m), "\n",
+        "# p = ", show(p), "\n",
+
         "digraph Automaton {\n",
         "    node [shape = circle];\n",
         "    0 [style = \"bold\"];\n"] ++
