@@ -56,9 +56,10 @@ constraint forall (i in apta_edges) (
 );
 
 % redundant constraints to unify y variables
-% constraint forall (c in colors, e in events) (
-%    (not exists (i in apta_edges) (tree_event[i] == e /\ x[tree_parent[i]] == c)) -> y[c, e] = c
-% );
+% used to find all solutions
+constraint forall (c in colors, e in events) (
+    (not exists (i in apta_edges) (tree_event[i] == e /\ x[tree_parent[i]] == c)) -> y[c, e] = c
+);
 
 
 % symmetry breaking constraints
@@ -94,8 +95,8 @@ constraint forall (i in colors, j in colors, e in events) (
         (tr[i, j] -> (
             m[i, j] = e <-> (y[i, e] = j /\ forall (ee in 0..e-1) (y[i, ee] != j))
         )) 
-%         /\
-%         ((not tr[i, j]) -> m[i, j] = 0)
+        /\
+        ((not tr[i, j]) -> m[i, j] = 0)
     else
         m[i, j] = 0
     endif
