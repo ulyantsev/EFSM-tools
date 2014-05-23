@@ -29,8 +29,11 @@ public class MiniZincDataGeneratorMain {
     @Option(name = "--log", aliases = {"-l"}, usage = "write log to this file", metaVar = "<file>")
     private String logFilePath;
 
-    @Option(name = "--result", aliases = {"-r"}, usage = "write result MiniZinc data file", metaVar = "<file>")
+    @Option(name = "--output", aliases = {"-o"}, usage = "write result MiniZinc data file", metaVar = "<file>")
     private String resultFilePath;
+
+    @Option(name = "--model", aliases = {"-m"}, usage = "model to import", metaVar = "<file>")
+    private String modelFP;
 
     private void launcher(String[] args) {
         Locale.setDefault(Locale.US);
@@ -142,7 +145,12 @@ public class MiniZincDataGeneratorMain {
 
         StringBuilder sb = new StringBuilder();
 
-        sb.append("include \"exact_EFSM.mzn.model\";\n\n");
+        if (modelFP != null) {
+            sb.append("include \"");
+            sb.append(modelFP);
+            sb.append("\";\n\n");
+        }
+
         sb.append(String.format("C = %d;\nV = %d;\nE = %d;\nA = %d;\nAE = %d;\n",
                 size, tree.nodesCount(), eventExprOrder.size(), actionsOrder.size(), adjacentPairs));
 
