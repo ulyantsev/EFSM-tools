@@ -42,13 +42,13 @@ public class Main {
     @Option(name = "--model", aliases = {"-m"}, usage = "write CSP model to this file", metaVar = "<file>")
     private String modelFilePath;
 
-    @Option(name = "--complete", aliases = {"-c"}, handler = BooleanOptionHandler.class, usage = "is automaton will be complete")
+    @Option(name = "--complete", aliases = {"-c"}, handler = BooleanOptionHandler.class, usage = "should the automaton be complete")
     private boolean isComplete;
 
     @Option(name = "--weak", aliases = {"-w"}, handler = BooleanOptionHandler.class, usage = "activate weak completeness, available in <-c> mode")
     private boolean isWeakCompleteness;
 
-    @Option(name = "--all", aliases = {"-a"}, handler = BooleanOptionHandler.class, usage = "find all solutions")
+    @Option(name = "--all", aliases = {"-a"}, handler = BooleanOptionHandler.class, usage = "TODO find all solutions (without symmetry breaking)")
     private boolean solveAll;
 
     private void launcher(String[] args) {
