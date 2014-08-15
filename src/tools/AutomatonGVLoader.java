@@ -18,8 +18,9 @@ public class AutomatonGVLoader {
     
     private static String readFileAsString(String filePath) throws IOException {
         byte[] buffer = new byte[(int) new File(filePath).length()];
-        BufferedInputStream f = new BufferedInputStream(new FileInputStream(filePath));
-        f.read(buffer);
+        try (BufferedInputStream f = new BufferedInputStream(new FileInputStream(filePath))) {
+        	f.read(buffer);
+        }
         return new String(buffer);
     }
     

@@ -1,0 +1,31 @@
+#!/bin/bash
+
+echo "Evaluating..."
+solver=SKIZZO
+timeout=10
+#ltl="testing/event-ltl"
+fsm="generated-fsm.gv"
+
+for ((size = 2; size <= 3; size++)); do
+    for ((events = 2; events <= 5; events++)); do
+        for ((actions = 2; actions <= 5; actions++)); do
+            name="testing/fsm_${size}s${events}e${actions}a"
+            for i in 20 40 80 160; do
+                fullname=${name}_$i.sc
+                echo ">>> $fullname"
+                rm -f "$fsm"
+                java -ea -jar ../jars/qbf-automaton-generator.jar "$fullname" --ltl "$name.ltl" --size "$size" --timeout "$timeout" --depth "0" -qs "$solver" --complete --result "$fsm" 2>&1 | grep "\\(INFO\\|WARNING\\|SEVERE\\|Exception\\)"
+                if [ -f "$fsm" ]; then
+                    correct_formulas=$(java -jar verifier.jar "$fsm" "$size" "$name.ltl" | wc -l)
+                    if (( $(cat "$name.ltl" | wc -l) == 0 )); then
+                        echo "NOTHING TO VERIFY"
+                    elif (( correct_formulas == 1 )); then
+                        echo "VERIFIED"
+                    else 
+                        echo "NOT VERIFIED"
+                    fi
+                fi
+            done
+        done
+    done
+done

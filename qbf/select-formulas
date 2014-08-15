@@ -1,0 +1,28 @@
+#!/bin/bash
+
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+FSM=
+NSTATES=
+FORMULAS=
+
+while getopts ':a:n:f:' opt ; do
+    case "$opt" in
+        a) FSM="$OPTARG" ;; 
+        n) NSTATES="$OPTARG" ;;
+        f) FORMULAS="$OPTARG" ;;
+        [?]) echo >&2 "Usage: $0 -a (EFSM file) -n (number of EFSM states) -f (LTL formulae file)" && exit 1 ;;
+    esac
+done
+
+if [[ -z $FSM || -z $NSTATES || -z $FORMULAS ]] 
+then
+    echo >&2 "Usage: $0 -a (EFSM file) -n (number of EFSM states) -f (LTL formulae file)" && exit 1
+fi
+
+
+cwd=$(pwd)
+cd $SCRIPT_DIR
+java -jar verifier.jar $FSM $NSTATES $FORMULAS
+cd $cwd
+

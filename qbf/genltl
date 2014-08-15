@@ -1,0 +1,19 @@
+#!/bin/bash
+
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+FSM=
+NLTL=
+
+while getopts ':a:n:' opt ; do
+    case "$opt" in
+        a) FSM="$OPTARG" ;;
+        n) NLTL="$OPTARG" ;;
+        [?]) echo >&2 "Usage: $0 -a (EFSM file) -n (number of EFSM states)"
+             exit 1 ;;
+    esac
+done
+
+
+seed=$(date +%N)
+LD_LIBRARY_PATH=/usr/local/lib/ randltl -n $NLTL --tree-size=$TREE_SIZE --seed $seed -p -s $($SCRIPT_DIR/getprop $FSM) | sed -r 's/\[\]/G/g' | sed 's/<>/F/g' | sed 's/V/R/g'

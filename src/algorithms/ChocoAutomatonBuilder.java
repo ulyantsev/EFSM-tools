@@ -1,12 +1,20 @@
 package algorithms;
 
 import java.io.PrintWriter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 
+import structures.Automaton;
+import structures.Node;
+import structures.ScenariosTree;
+import structures.Transition;
 import bool.MyBooleanExpression;
-
 import choco.Choco;
-import choco.Options;
 import choco.cp.model.CPModel;
 import choco.cp.solver.CPSolver;
 import choco.cp.solver.search.integer.branching.AssignVar;
@@ -14,12 +22,6 @@ import choco.cp.solver.search.integer.valiterator.IncreasingDomain;
 import choco.cp.solver.search.integer.varselector.MinDomain;
 import choco.kernel.model.constraints.Constraint;
 import choco.kernel.model.variables.integer.IntegerVariable;
-import choco.kernel.model.variables.set.SetConstantVariable;
-import choco.kernel.solver.Solver;
-import structures.Automaton;
-import structures.Node;
-import structures.ScenariosTree;
-import structures.Transition;
 
 public class ChocoAutomatonBuilder {
 

@@ -3,18 +3,14 @@ package algorithms;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
-import java.util.Queue;
 import java.util.Random;
-import java.util.TreeMap;
-
-import actions.StringActions;
-import bool.MyBooleanExpression;
 
 import scenario.StringScenario;
 import structures.Automaton;
 import structures.Node;
 import structures.Transition;
+import actions.StringActions;
+import bool.MyBooleanExpression;
 
 public class ScenariosGenerator {
 	

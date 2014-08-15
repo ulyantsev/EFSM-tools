@@ -6,7 +6,6 @@ import java.util.*;
 
 import actions.StringActions;
 import bool.MyBooleanExpression;
-
 import scenario.StringScenario;
 
 public class ScenariosTree {
@@ -69,6 +68,18 @@ public class ScenariosTree {
             }
         }
         return events.toArray(new String[events.size()]);
+    }
+    
+    public List<String> getActions() {
+        Set<String> actions = new TreeSet<>();
+        for (Node node : nodes) {
+            for (Transition transition : node.getTransitions()) {
+            	for (String action : transition.getActions().getActions()) {
+            		actions.add(action);
+            	}
+            }
+        }
+        return new ArrayList<>(actions);
     }
     
     public int getEventsCount() {
