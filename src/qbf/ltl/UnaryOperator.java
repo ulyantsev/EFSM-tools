@@ -9,7 +9,6 @@ package qbf.ltl;
  * @author: Kirill Egorov
  */
 public class UnaryOperator extends Operator<UnaryOperatorType> {
-
     private LtlNode operand;
 
     public UnaryOperator(UnaryOperatorType type) {
