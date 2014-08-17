@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
-import qbf.ltl.grammar.LtlNode;
 import qbf.ognl.GrammarConverter;
 import qbf.ognl.Node;
 import qbf.ognl.Ognl;
@@ -33,22 +32,20 @@ public class LtlParser {
     public static List<LtlNode> loadProperties(String filepath) throws ParseException, FileNotFoundException, LtlParseException {
         List<LtlNode> ans = new ArrayList<>();
 
-        Scanner in = new Scanner(new File(filepath));
-
-        while (in.hasNextLine()) {
-        	String input = in.nextLine().trim();
-            if (input.startsWith("#")) {
-            	// comment
-            	continue;
-            }
-            if (input.equals("")) {
-            	continue;
-            }
-            input = input.replaceAll("->", ">>");
-            ans.add(parse(input));
+        try (Scanner in = new Scanner(new File(filepath))) {
+	        while (in.hasNextLine()) {
+	        	String input = in.nextLine().trim();
+	            if (input.startsWith("#")) {
+	            	// comment
+	            	continue;
+	            }
+	            if (input.equals("")) {
+	            	continue;
+	            }
+	            input = input.replaceAll("->", ">>");
+	            ans.add(parse(input));
+	        }
         }
-
-        in.close();
         return ans;
     }
 }

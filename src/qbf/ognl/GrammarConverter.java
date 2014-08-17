@@ -5,14 +5,14 @@ package qbf.ognl;
 
 import java.util.Collections;
 
-import qbf.ltl.grammar.BinaryOperator;
-import qbf.ltl.grammar.BinaryOperatorType;
-import qbf.ltl.grammar.BooleanNode;
-import qbf.ltl.grammar.LtlNode;
-import qbf.ltl.grammar.UnaryOperator;
-import qbf.ltl.grammar.UnaryOperatorType;
-import qbf.ltl.grammar.exception.UnexpectedOperatorException;
-import qbf.ltl.grammar.exception.UnexpectedParameterException;
+import qbf.ltl.BinaryOperator;
+import qbf.ltl.BinaryOperatorType;
+import qbf.ltl.BooleanNode;
+import qbf.ltl.LtlNode;
+import qbf.ltl.UnaryOperator;
+import qbf.ltl.UnaryOperatorType;
+import qbf.ltl.UnexpectedOperatorException;
+import qbf.ltl.UnexpectedParameterException;
 
 //import org.apache.commons.lang3.NotImplementedException;
 
@@ -45,7 +45,7 @@ public class GrammarConverter {
                 }
             }
 
-            return new qbf.ltl.grammar.Predicate(name, Collections.singletonList(node._children[0].toString().replaceAll(".*\\.", "")));
+            return new qbf.ltl.Predicate(name, Collections.singletonList(node._children[0].toString().replaceAll(".*\\.", "")));
 
         } else if (root instanceof ASTAnd) {
             return createBinaryOperator((SimpleNode) root, BinaryOperatorType.AND);

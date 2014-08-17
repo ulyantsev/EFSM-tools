@@ -17,9 +17,9 @@ import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 import org.kohsuke.args4j.spi.BooleanOptionHandler;
 
+import qbf.ltl.LtlNode;
 import qbf.ltl.LtlParseException;
 import qbf.ltl.LtlParser;
-import qbf.ltl.grammar.LtlNode;
 import qbf.reduction.Solvers;
 import structures.Automaton;
 import structures.ScenariosTree;

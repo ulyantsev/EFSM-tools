@@ -16,7 +16,7 @@ import java.util.TreeSet;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-import qbf.ltl.grammar.LtlNode;
+import qbf.ltl.LtlNode;
 import qbf.reduction.Assignment;
 import qbf.reduction.QuantifiedBooleanFormula;
 import qbf.reduction.SolverResult;

@@ -1,12 +1,12 @@
 package qbf.reduction;
 
-import qbf.ltl.grammar.BinaryOperator;
-import qbf.ltl.grammar.BinaryOperatorType;
-import qbf.ltl.grammar.BooleanNode;
-import qbf.ltl.grammar.LtlNode;
-import qbf.ltl.grammar.Predicate;
-import qbf.ltl.grammar.UnaryOperator;
-import qbf.ltl.grammar.UnaryOperatorType;
+import qbf.ltl.BinaryOperator;
+import qbf.ltl.BinaryOperatorType;
+import qbf.ltl.BooleanNode;
+import qbf.ltl.LtlNode;
+import qbf.ltl.Predicate;
+import qbf.ltl.UnaryOperator;
+import qbf.ltl.UnaryOperatorType;
 
 public class LtlNormalizer {
 	public static UnaryOperator future(LtlNode node) {

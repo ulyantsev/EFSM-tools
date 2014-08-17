@@ -17,11 +17,11 @@ import java.util.logging.Logger;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
-import qbf.ltl.grammar.BinaryOperator;
-import qbf.ltl.grammar.BooleanNode;
-import qbf.ltl.grammar.LtlNode;
-import qbf.ltl.grammar.Predicate;
-import qbf.ltl.grammar.UnaryOperator;
+import qbf.ltl.BinaryOperator;
+import qbf.ltl.BooleanNode;
+import qbf.ltl.LtlNode;
+import qbf.ltl.Predicate;
+import qbf.ltl.UnaryOperator;
 import qbf.reduction.BinaryOperation;
 import qbf.reduction.BinaryOperations;
 import qbf.reduction.BooleanFormula;
