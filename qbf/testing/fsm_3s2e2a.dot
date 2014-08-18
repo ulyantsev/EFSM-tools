@@ -3,10 +3,10 @@
 digraph Automaton {
     node [shape = circle];
     0 [style = "bold"];
-    0 -> 2 [label = "B [1] (z0) "];
-    0 -> 1 [label = "A [1] (z1) "];
-    1 -> 1 [label = "B [1] (z1, z1) "];
-    1 -> 2 [label = "A [1] (z0) "];
-    2 -> 1 [label = "B [1] (z1, z0) "];
+    0 -> 1 [label = "A [1] (z0, z0) "];
+    0 -> 1 [label = "B [1] (z1, z1) "];
+    1 -> 2 [label = "A [1] (z1, z1) "];
+    1 -> 0 [label = "B [1] (z1, z0) "];
     2 -> 0 [label = "A [1] (z0, z0) "];
+    2 -> 0 [label = "B [1] (z0) "];
 }

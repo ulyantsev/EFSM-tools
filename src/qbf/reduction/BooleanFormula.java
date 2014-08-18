@@ -60,39 +60,29 @@ public abstract class BooleanFormula {
 		}
 	}
 	
-	private static final boolean USE_COPROCESSOR = false;
+	private static final boolean USE_COPROCESSOR = true;
 	
 	public DimacsConversionInfo toDimacs(Logger logger) throws IOException {
 		final String beforeLimbooleFilename = "_tmp.limboole";
 		DimacsConversionInfo info = new DimacsConversionInfo();
 
-		if (!USE_COPROCESSOR) {
-			PrintWriter pw = new PrintWriter(beforeLimbooleFilename);
+		try (PrintWriter pw = new PrintWriter(beforeLimbooleFilename)) {
 			pw.print(toLimbooleString());
-			pw.close();
-	
-			String limbooleStr = "limboole -d -s " + beforeLimbooleFilename;
+		}
+		
+		if (!USE_COPROCESSOR) {
+			final String limbooleStr = "limboole -d -s " + beforeLimbooleFilename;
 			logger.info(limbooleStr);
 			Process p = Runtime.getRuntime().exec(limbooleStr);
 			try (BufferedReader input = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
-				String line;
-				while ((line = input.readLine()) != null) {
-					info.acceptLine(line);
-				}
+				input.lines().forEach(info::acceptLine);
 			}
-			
-			return info;
 		} else {
 			final String afterLimbooleFilename = "_tmp.after.limboole.dimacs";
-			String line;
-			
-			try (PrintWriter pw = new PrintWriter(beforeLimbooleFilename)) {
-				pw.print(toLimbooleString());
-			}
-	
+
 			// transforming formula to DIMACS
-			String limbooleStr = "limboole -d -s -o " + afterLimbooleFilename + " " + beforeLimbooleFilename;
-			System.out.println(limbooleStr);
+			final String limbooleStr = "limboole -d -s -o " + afterLimbooleFilename + " " + beforeLimbooleFilename;
+			logger.info(limbooleStr);
 			Process limboole = Runtime.getRuntime().exec(limbooleStr);
 			try {
 				limboole.waitFor();
@@ -102,31 +92,22 @@ public abstract class BooleanFormula {
 			
 			// obtaining variable name mapping
 			try (BufferedReader input = new BufferedReader(new InputStreamReader(new FileInputStream(afterLimbooleFilename)))) {
-				while ((line = input.readLine()) != null) {
-					if (line.startsWith("c")) {
-						info.acceptLine(line);
-					}
-				}
+				input.lines().filter(l -> l.startsWith("c")).forEach(info::acceptLine);
 			}
 			
 			// writing variables we cannot exclude from DIMACS CNF
 			try (PrintWriter pw = new PrintWriter("white.var")) {
-				for (int var : info.dimacsNumberToLimboole.keySet()) {
-					pw.println(var);
-				}
+				info.dimacsNumberToLimboole.keySet().forEach(pw::println);
 			}
 			
 			// simplifying CNF, not excluding important variables
-			Process coprocessor = Runtime.getRuntime().exec("coprocessor " + afterLimbooleFilename + " -CP_mapFile=map.map -CP_print=1 -CP_whiteFile=white.var -CP_unlimited=1");
+			Process coprocessor = Runtime.getRuntime().exec("coprocessor " + afterLimbooleFilename + " -CP_mapFile=map.map -CP_print=1 -CP_whiteFile=white.var");
 			
 			try (BufferedReader input = new BufferedReader(new InputStreamReader(coprocessor.getInputStream()))) {
-				while ((line = input.readLine()) != null) {
-					info.acceptLine(line);
-				}
+				input.lines().forEach(info::acceptLine);
 			}
-	
-			return info;
 		}
+		return info;
 	}
 	
 	public BooleanFormula not() {

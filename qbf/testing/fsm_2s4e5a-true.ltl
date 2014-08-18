@@ -1,0 +1,1 @@
+F(R((wasEvent(ep.A)) , ((wasEvent(ep.A)) || (!((wasEvent(ep.B)) and (wasEvent(ep.D)))))))

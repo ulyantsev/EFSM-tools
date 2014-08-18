@@ -7,8 +7,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Scanner;
+import java.util.Set;
 import java.util.TreeSet;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import qbf.reduction.BooleanFormula.DimacsConversionInfo;
 import qbf.reduction.SolverResult.SolverResults;
@@ -26,10 +28,8 @@ public class QuantifiedBooleanFormula {
 	
 	@Override
 	public String toString() {
-		List<BooleanVariable> e = new ArrayList<>(existVars);
-		List<BooleanVariable> a = new ArrayList<>(forallVars);
-		Collections.sort(e);
-		Collections.sort(a);
+		List<BooleanVariable> e = existVars.stream().sorted().collect(Collectors.toList());
+		List<BooleanVariable> a = forallVars.stream().sorted().collect(Collectors.toList());
 		return "EXIST\n" + e + "\nFORALL\n" + a + "\n" + formula;
 	}
 	
@@ -96,10 +96,12 @@ public class QuantifiedBooleanFormula {
 	
 	private static final String qdimacsFilename = "_tmp.qdimacs";
 	
-	private SolverResult depqbfSolve(int timeoutSeconds, QdimacsConversionInfo qdimacs) throws IOException {
+	private SolverResult depqbfSolve(Logger logger, int timeoutSeconds, QdimacsConversionInfo qdimacs) throws IOException {
 		long time = System.currentTimeMillis();
 		List<Assignment> list = new ArrayList<>();
-		Process p = Runtime.getRuntime().exec("depqbf --max-secs=" + timeoutSeconds + " --qdo " + qdimacsFilename);
+		String depqbfStr = "depqbf --max-secs=" + timeoutSeconds + " --qdo " + qdimacsFilename;
+		logger.info(depqbfStr);
+		Process p = Runtime.getRuntime().exec(depqbfStr);
 		try (Scanner input = new Scanner(p.getInputStream())) {
 			while (input.hasNextLine()) {
 				String line = input.nextLine();
@@ -114,9 +116,22 @@ public class QuantifiedBooleanFormula {
 			}
 		}
 		time = System.currentTimeMillis() - time;
-		return list.isEmpty() ?
-			new SolverResult(time >= timeoutSeconds * 1000 ? SolverResults.UNKNOWN : SolverResults.UNSAT, (int) time) :
-			new SolverResult(list, (int) time);
+		
+		if (list.isEmpty()) {
+			return new SolverResult(time >= timeoutSeconds * 1000 ? SolverResults.UNKNOWN : SolverResults.UNSAT, (int) time);
+		} else if (assignmentIsOk(list)) {
+			return new SolverResult(list, (int) time);
+		} else {
+			logger.severe("DEPQBF PRODUCED A BAD ASSIGNMENT, GIVING UP");
+			return new SolverResult(SolverResults.UNKNOWN, (int) time);
+		}
+	}
+	
+	private boolean assignmentIsOk(List<Assignment> assignments) {
+		Set<String> properVars = existVars.stream().map(v -> v.name).collect(Collectors.toCollection(TreeSet::new));
+		Set<String> actualVars = assignments.stream().map(a -> a.var.name).collect(Collectors.toCollection(TreeSet::new));
+		
+		return properVars.equals(actualVars);
 	}
 	
 	private SolverResult skizzoSolve(Logger logger, int timeoutSeconds, QdimacsConversionInfo qdimacs) throws IOException {
@@ -161,7 +176,7 @@ public class QuantifiedBooleanFormula {
 			}
 			if (!certificate.exists()) {
 				logger.warning("NO CERTIFICATE PRODUCED BY OZZIKS, TRYING DEPQBF");
-				return depqbfSolve(timeoutSeconds, qdimacs);
+				return depqbfSolve(logger, timeoutSeconds, qdimacs);
 			}
 			
 			try (Scanner sc = new Scanner(certificate)) {
@@ -178,19 +193,10 @@ public class QuantifiedBooleanFormula {
 					}
 				}
 			}
-			
-			List<String> properVars = new ArrayList<>();
-			List<String> actualVars = new ArrayList<>();
-			
-			for (BooleanVariable v : existVars) {
-				properVars.add(v.name);
-			}
-			for (Assignment ass : list) {
-				actualVars.add(ass.var.name);
-			}
-			if (!new TreeSet<>(properVars).equals(new TreeSet<>(actualVars))) {
+
+			if (!assignmentIsOk(list)) {
 				logger.warning("NOT ALL VARS ARE PRESENT IN CERTIFICATE, TRYING DEPQBF");
-				return depqbfSolve(timeoutSeconds, qdimacs);
+				return depqbfSolve(logger, timeoutSeconds, qdimacs);
 			}
 			
 			return new SolverResult(list, (int) time);
@@ -199,10 +205,10 @@ public class QuantifiedBooleanFormula {
 		case 30:
 			return new SolverResult(SolverResults.UNKNOWN, (int) time);
 		case 250:
-			System.err.println("MEMOUT");
+			logger.warning("MEMOUT");
 			return new SolverResult(SolverResults.UNKNOWN, (int) time);
 		default:
-			System.err.println("Something went wrong during sKizzo execution, exit code = " + code);
+			logger.severe("Something went wrong during sKizzo execution, exit code = " + code);
 			return new SolverResult(SolverResults.UNKNOWN, (int) time);
 		}
 	}
@@ -220,7 +226,7 @@ public class QuantifiedBooleanFormula {
 		
 		switch (solver) {
 		case DEPQBF:
-			return depqbfSolve(timeoutSeconds, qdimacs);
+			return depqbfSolve(logger, timeoutSeconds, qdimacs);
 		case SKIZZO:
 			return skizzoSolve(logger, timeoutSeconds, qdimacs);
 		default:

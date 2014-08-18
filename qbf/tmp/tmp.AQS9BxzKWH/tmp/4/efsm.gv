@@ -1,8 +1,0 @@
-# generated file, don't try to modify
-# command: dot -Tpng <filename> > tree.png
-digraph Automaton {
-    node [shape = circle];
-    0 [style = "bold"];
-    0 -> 1 [label = "A [1] (z2, z2, z0) "];
-    1 -> 0 [label = "B [1] (z3, z1, z1, z0) "];
-}
