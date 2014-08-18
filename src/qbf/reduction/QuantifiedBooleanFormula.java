@@ -1,5 +1,9 @@
 package qbf.reduction;
 
+/**
+ * (c) Igor Buzhinsky
+ */
+
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -101,8 +105,8 @@ public class QuantifiedBooleanFormula {
 		List<Assignment> list = new ArrayList<>();
 		String depqbfStr = "depqbf --max-secs=" + timeoutSeconds + " --qdo " + qdimacsFilename;
 		logger.info(depqbfStr);
-		Process p = Runtime.getRuntime().exec(depqbfStr);
-		try (Scanner input = new Scanner(p.getInputStream())) {
+		Process depqbf = Runtime.getRuntime().exec(depqbfStr);
+		try (Scanner input = new Scanner(depqbf.getInputStream())) {
 			while (input.hasNextLine()) {
 				String line = input.nextLine();
 				if (line.startsWith("V")) {
@@ -137,22 +141,15 @@ public class QuantifiedBooleanFormula {
 	private SolverResult skizzoSolve(Logger logger, int timeoutSeconds, QdimacsConversionInfo qdimacs) throws IOException {
 		long time = System.currentTimeMillis();
 		List<Assignment> list = new ArrayList<>();
-		// delete previous files
 		File skizzoLog = new File(qdimacsFilename + ".sKizzo.log");
-		if (skizzoLog.exists()) {
-			skizzoLog.delete();
-		}
 		File certificate = new File(qdimacsFilename + ".qdc");
-		if (certificate.exists()) {
-			certificate.delete();
-		}
 		
 		String skizzoStr = "sKizzo -log text -v 0 " + qdimacsFilename + " " + timeoutSeconds;
 		logger.info(skizzoStr);
-		Process p = Runtime.getRuntime().exec(skizzoStr);
+		Process skizzo = Runtime.getRuntime().exec(skizzoStr);
 		int code;
 		try {
-			code = p.waitFor();
+			code = skizzo.waitFor();
 		} catch (InterruptedException e) {
 			throw new AssertionError();
 		}
@@ -168,9 +165,9 @@ public class QuantifiedBooleanFormula {
 			// find the partial certificate
 			String ozziksStr = "ozziKs -var " + String.join(",", vars) + " -dump qdc " + skizzoLog.getName();
 			logger.info(ozziksStr);
-			p = Runtime.getRuntime().exec(ozziksStr);
+			Process ozziks = Runtime.getRuntime().exec(ozziksStr);
 			try {
-				p.waitFor();
+				ozziks.waitFor();
 			} catch (InterruptedException e) {
 				throw new AssertionError();
 			}

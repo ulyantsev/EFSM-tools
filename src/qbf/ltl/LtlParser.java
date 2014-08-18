@@ -22,12 +22,11 @@ public class LtlParser {
 	private static class GrammarConverter {
 		public static LtlNode convert(Node root) {
 			if (root == null) {
-				throw new IllegalArgumentException(
-						"Node shouldn't be null");
+				throw new IllegalArgumentException("Node shouldn't be null");
 			}
 
 			final String className = root.getClass().getSimpleName();
-			
+
 			if (className.equals("ASTMethod")) {
 				String name = root.toString().replaceAll("\\(.*$", "");
 				// is unary operator?
@@ -43,8 +42,8 @@ public class LtlParser {
 					}
 				}
 				return new qbf.ltl.Predicate(name,
-						Collections.singletonList(root.jjtGetChild(0).toString()
-								.replaceAll(".*\\.", "")));
+						Collections.singletonList(root.jjtGetChild(0)
+								.toString().replaceAll(".*\\.", "")));
 			} else if (className.equals("ASTAnd")) {
 				return createBinaryOperator((SimpleNode) root,
 						BinaryOperatorType.AND);
@@ -62,17 +61,18 @@ public class LtlParser {
 				if (name.equals("true") || name.equals("false")) {
 					return BooleanNode.getByName(name);
 				} else {
-					throw new UnexpectedParameterException(root.getClass());
+					throw new RuntimeException("Unexpected node "
+							+ root.getClass().toString());
 				}
 			}
-			throw new UnexpectedOperatorException(root.getClass().toString());
+			throw new RuntimeException("Unexpected node "
+					+ root.getClass().toString());
 		}
 
 		private static UnaryOperator createUnaryOperator(SimpleNode node,
 				UnaryOperatorType type) {
 			if (node.jjtGetNumChildren() != 1) {
-				throw new UnexpectedOperatorException(node
-						+ " isn't unary operator");
+				throw new RuntimeException(node + " isn't unary operator");
 			}
 			UnaryOperator op = new UnaryOperator(type);
 			op.setOperand(convert(node.jjtGetChild(0)));
@@ -82,8 +82,7 @@ public class LtlParser {
 		private static BinaryOperator createBinaryOperator(SimpleNode node,
 				BinaryOperatorType type) {
 			if (node.jjtGetNumChildren() < 2) {
-				throw new UnexpectedOperatorException(node
-						+ " isn't binary operation");
+				throw new RuntimeException(node + " isn't binary operation");
 			}
 			return createBinaryOperator(node, 0, type);
 		}
@@ -92,8 +91,8 @@ public class LtlParser {
 				int i, BinaryOperatorType type) {
 			BinaryOperator op = new BinaryOperator(type);
 			op.setLeftOperand(convert(node.jjtGetChild(i)));
-			LtlNode right = (++i == node.jjtGetNumChildren() - 1) ? convert(node.jjtGetChild(i))
-					: createBinaryOperator(node, i, type);
+			LtlNode right = (++i == node.jjtGetNumChildren() - 1) ? convert(node
+					.jjtGetChild(i)) : createBinaryOperator(node, i, type);
 			op.setRightOperand(right);
 			return op;
 		}

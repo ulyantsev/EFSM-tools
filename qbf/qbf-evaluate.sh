@@ -3,7 +3,6 @@
 echo "Evaluating..."
 solver=SKIZZO
 timeout=20
-#ltl="testing/event-ltl"
 fsm="generated-fsm.gv"
 #suffix="false"
 suffix="true"

@@ -1,5 +1,9 @@
 package qbf.reduction;
 
+/**
+ * (c) Igor Buzhinsky
+ */
+
 public class Assignment implements Comparable<Assignment> {
 	public final BooleanVariable var;
 	public final boolean value;

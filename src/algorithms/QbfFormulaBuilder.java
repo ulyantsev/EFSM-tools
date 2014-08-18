@@ -1,7 +1,7 @@
 package algorithms;
 
 /**
- * (c) Alena Panchenko, Igor Buzhinsky
+ * (c) Igor Buzhinsky
  */
 
 import java.util.ArrayList;
@@ -13,8 +13,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
 import qbf.ltl.BinaryOperator;
@@ -157,7 +157,12 @@ public class QbfFormulaBuilder {
 		FormulaList constraints = new FormulaList(BinaryOperations.AND);
 		Map<Node, Set<Node>> adjacent = AdjacentCalculator.getAdjacent(tree);
 		for (Node node : tree.getNodes()) {
-			for (Node other : adjacent.get(node)) {
+			// removing non-determinism of hash maps
+			List<Node> otherNodes = adjacent.get(node).stream()
+				.sorted((n1, n2) -> n1.getNumber() - n2.getNumber())
+				.collect(Collectors.toList());
+			
+			for (Node other : otherNodes) {
 				if (other.getNumber() < node.getNumber()) {
 					for (int color = 0; color < colorSize; color++) {
 						BooleanVariable v1 = xVar(node.getNumber(), color);
@@ -242,10 +247,10 @@ public class QbfFormulaBuilder {
 				FormulaList zConstraints = new FormulaList(BinaryOperations.AND);
 				zConstraints.add(xVar(node.getNumber(), i));
 				for (Transition t : node.getTransitions()) {
-					String[] actionSequence = t.getActions().getActions();
+					List<String> actionSequence = Arrays.asList(t.getActions().getActions());
 					for (String z : actions) {
 						BooleanFormula f = zVar(i, z, t.getEvent(), t.getExpr());
-						if (!ArrayUtils.contains(actionSequence, z)) {
+						if (!actionSequence.contains(z)) {
 							f = f.not();
 						}
 						zConstraints.add(f);
@@ -327,11 +332,7 @@ public class QbfFormulaBuilder {
 			return BooleanNode.FALSE;
 		}
 		
-		LtlNode f = formulae.get(0);
-		for (int i = 1; i < formulae.size(); i++) {
-			f = LtlNormalizer.and(f, formulae.get(i));
-		}
-		
+		LtlNode f = formulae.stream().skip(1).reduce(formulae.get(0), (f1, f2) -> LtlNormalizer.and(f1, f2));
 		f = LtlNormalizer.removeImplications(f);
 		f = LtlNormalizer.toNegationNormalForm(LtlNormalizer.not(f));
 		
@@ -357,17 +358,19 @@ public class QbfFormulaBuilder {
 			cyclicPathFormula.add(llkTerm(l).and(translateCyclic(formulaToCheck, l, 0)));
 		}
 
-		BooleanFormula pathFormula = lkTerm().not().and(translateNonCyclic(formulaToCheck, 0))
+		BooleanFormula pathFormula = lkTerm().not()
+			.and(translateNonCyclic(formulaToCheck, 0))
 			.or(cyclicPathFormula.assemble());
 		
 		// auxiliary "forall" variables
 		FormulaList subtermEquations = new FormulaList(BinaryOperations.AND);
-		for (Map.Entry<SubtermIdentifier, Pair<BooleanFormula, BooleanVariable>> entry : subterms.entrySet()) {
+		
+		subterms.entrySet().forEach(entry -> {
 			BooleanFormula expansion = entry.getValue().getLeft();
 			BooleanVariable name = entry.getValue().getRight();
 			forallVars.add(name);
 			subtermEquations.add(name.equivalent(expansion));
-		}
+		});
 		
 		constraints.add(BinaryOperation.or(Arrays.asList(subtermEquations.assemble().not(),
 			pathIsCorrect.not(), pathFormula.not()), "main QBF constraint"));
@@ -380,11 +383,11 @@ public class QbfFormulaBuilder {
 		FormulaList constraints = new FormulaList(BinaryOperations.AND);
 		
 		Set<Pair<String, MyBooleanExpression>> efPairs = new LinkedHashSet<>();
-		for (String e : events) {
-			for (MyBooleanExpression f : pairsEventExpression.get(e)) {
-				efPairs.add(Pair.of(e, f));
-			}
-		}
+		
+		events.forEach(e -> pairsEventExpression.get(e).forEach(f ->
+			efPairs.add(Pair.of(e, f))
+		));
+		
 		List<Pair<String, MyBooleanExpression>> efPairsList = new ArrayList<>(efPairs);
 		
 		for (int j = 0; j <= k; j++) {
@@ -469,10 +472,6 @@ public class QbfFormulaBuilder {
 				for (String z : actions) {
 					for (String e : events) {
 						for (MyBooleanExpression f : pairsEventExpression.get(e)) {
-							//constraints.add(BinaryOperation.and(sigmaVar(i1, j),
-							//	epsVar(e, f, j), zetaVar(z, j)).implies(zVar(i1, z, e, f)));
-							//constraints.add(BinaryOperation.and(sigmaVar(i1, j),
-							//	epsVar(e, f, j), zetaVar(z, j).not()).implies(zVar(i1, z, e, f).not()));
 							constraints.add(sigmaVar(i1, j).and(epsVar(e, f, j))
 								.implies(zVar(i1, z, e, f).equivalent(zetaVar(z, j))));
 						}
@@ -523,10 +522,8 @@ public class QbfFormulaBuilder {
 		String arg = p.args().get(0).toString();
 		switch (p.getName()) {
 		case "wasEvent":
-			FormulaList options = new FormulaList(BinaryOperations.OR);
-			for (MyBooleanExpression f : pairsEventExpression.get(arg)) {
-				options.add(epsVar(arg, f, index));
-			}
+			FormulaList options = new FormulaList(BinaryOperations.OR);	
+			pairsEventExpression.get(arg).forEach(f -> options.add(epsVar(arg, f, index)));
 			return options.assemble();
 		case "wasVariable":
 			//FormulaList options = new FormulaList(BinaryOperations.OR);
@@ -572,21 +569,21 @@ public class QbfFormulaBuilder {
 			if (node instanceof UnaryOperator) {
 				UnaryOperator op = (UnaryOperator) node;
 				LtlNode f = op.getOperand();
-				switch (op.toString()) {
-				case "G":
+				switch (op.getType()) {
+				case GLOBAL:
 					expansion = FalseFormula.INSTANCE;
 					break;
-				case "F":
+				case FUTURE:
 					for (int j = index; j <= k; j++) {
 						orList.add(translateNonCyclic(f, j));
 					}
 					expansion = orList.assemble();
 					break;
-				case "X":
+				case NEXT:
 					expansion = index == k ? FalseFormula.INSTANCE
 						: translateNonCyclic(f, index + 1);
 					break;
-				case "!":
+				case NEG:
 					assert f instanceof BooleanNode || f instanceof Predicate;
 					expansion = translateNonCyclic(f, index).not();
 					break;
@@ -595,31 +592,31 @@ public class QbfFormulaBuilder {
 				}
 			} else if (node instanceof BinaryOperator) {
 				BinaryOperator op = (BinaryOperator) node;
-				LtlNode f = op.getLeftOperand();
-				LtlNode g = op.getRightOperand();
+				LtlNode a = op.getLeftOperand();
+				LtlNode b = op.getRightOperand();
 				
-				switch (op.toString()) {
-				case "||":
-					expansion = translateNonCyclic(f, index).or(translateNonCyclic(g, index));
+				switch (op.getType()) {
+				case OR:
+					expansion = translateNonCyclic(a, index).or(translateNonCyclic(b, index));
 					break;
-				case "&&":
-					expansion = translateNonCyclic(f, index).and(translateNonCyclic(g, index));
+				case AND:
+					expansion = translateNonCyclic(a, index).and(translateNonCyclic(b, index));
 					break;
-				case "U":
+				case UNTIL:
 					for (int j = index; j <= k; j++) {
-						andList.add(translateNonCyclic(g, j));
+						andList.add(translateNonCyclic(b, j));
 						for (int n = index; n < j; n++) {
-							andList.add(translateNonCyclic(f, n));
+							andList.add(translateNonCyclic(a, n));
 						}
 						orList.add(andList.assemble());
 					}
 					expansion = orList.assemble();
 					break;
-				case "R":
+				case RELEASE:
 					for (int j = index; j <= k; j++) {
-						orList.add(translateNonCyclic(g, j));
+						orList.add(translateNonCyclic(b, j));
 						for (int n = index; n < j; n++) {
-							orList.add(translateNonCyclic(f, n));
+							orList.add(translateNonCyclic(a, n));
 						}
 						andList.add(orList.assemble());
 					}
@@ -663,25 +660,25 @@ public class QbfFormulaBuilder {
 			if (node instanceof UnaryOperator) {
 				UnaryOperator op = (UnaryOperator) node;
 				LtlNode f = op.getOperand();
-				switch (op.toString()) {
-				case "G":
+				switch (op.getType()) {
+				case GLOBAL:
 					FormulaList andList = new FormulaList(BinaryOperations.AND);
 					for (int j = Math.min(index, l); j <= k; j++) {
 						andList.add(translateCyclic(f, l, j));
 					}
 					expansion = andList.assemble();
 					break;
-				case "F":
+				case FUTURE:
 					FormulaList orList = new FormulaList(BinaryOperations.OR);
 					for (int j = Math.min(index, l); j <= k; j++) {
 						orList.add(translateCyclic(f, l, j));
 					}
 					expansion = orList.assemble();
 					break;
-				case "X":
+				case NEXT:
 					expansion = translateCyclic(f, l, index < k ? index + 1 : l);
 					break;
-				case "!":
+				case NEG:
 					assert f instanceof BooleanNode || f instanceof Predicate;
 					expansion = translateCyclic(f, l, index).not();
 					break;
@@ -690,33 +687,33 @@ public class QbfFormulaBuilder {
 				}
 			} else if (node instanceof BinaryOperator) {
 				BinaryOperator op = (BinaryOperator) node;
-				LtlNode f = op.getLeftOperand();
-				LtlNode g = op.getRightOperand();
+				LtlNode a = op.getLeftOperand();
+				LtlNode b = op.getRightOperand();
 				
-				switch (op.toString()) {
-				case "||":
-					expansion = translateCyclic(f, l, index).or(translateCyclic(g, l, index));
+				switch (op.getType()) {
+				case OR:
+					expansion = translateCyclic(a, l, index).or(translateCyclic(b, l, index));
 					break;
-				case "&&":
-					expansion = translateCyclic(f, l, index).and(translateCyclic(g, l, index));
+				case AND:
+					expansion = translateCyclic(a, l, index).and(translateCyclic(b, l, index));
 					break;
-				case "U": {
+				case UNTIL: {
 					// according to the new article
 					FormulaList orList = new FormulaList(BinaryOperations.OR);
 					for (int j = index; j <= k; j++) {
 						FormulaList andList = new FormulaList(BinaryOperations.AND);
-						andList.add(translateCyclic(g, l, j));
+						andList.add(translateCyclic(b, l, j));
 						for (int n = index; n < j; n++) {
-							andList.add(translateCyclic(f, l, n));
+							andList.add(translateCyclic(a, l, n));
 						}
 						orList.add(andList.assemble());
 					}
 					for (int j = l; j < index; j++) {
 						FormulaList andList = new FormulaList(BinaryOperations.AND);
-						andList.add(translateCyclic(g, l, j));
+						andList.add(translateCyclic(b, l, j));
 						for (int n = 0; n <= k; n++) {
 							if (n >= index || n >= l && n < j) {
-								andList.add(translateCyclic(f, l, n));
+								andList.add(translateCyclic(a, l, n));
 							}
 						}
 						orList.add(andList.assemble());
@@ -724,23 +721,23 @@ public class QbfFormulaBuilder {
 					expansion = orList.assemble();
 					break;
 				}
-				case "R": {
+				case RELEASE: {
 					// similar to U
 					FormulaList andList = new FormulaList(BinaryOperations.AND);
 					for (int j = index; j <= k; j++) {
 						FormulaList orList = new FormulaList(BinaryOperations.OR);
-						orList.add(translateCyclic(g, l, j));
+						orList.add(translateCyclic(b, l, j));
 						for (int n = index; n < j; n++) {
-							orList.add(translateCyclic(f, l, n));
+							orList.add(translateCyclic(a, l, n));
 						}
 						andList.add(orList.assemble());
 					}
 					for (int j = l; j < index; j++) {
 						FormulaList orList = new FormulaList(BinaryOperations.OR);
-						orList.add(translateCyclic(g, l, j));
+						orList.add(translateCyclic(b, l, j));
 						for (int n = 0; n <= k; n++) {
 							if (n >= index || n >= l && n < j) {
-								orList.add(translateCyclic(f, l, n));
+								orList.add(translateCyclic(a, l, n));
 							}
 						}
 						andList.add(orList.assemble());

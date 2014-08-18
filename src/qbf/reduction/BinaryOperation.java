@@ -1,8 +1,13 @@
 package qbf.reduction;
 
+/**
+ * (c) Igor Buzhinsky
+ */
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class BinaryOperation extends BooleanFormula {
 	private final List<BooleanFormula> children;
@@ -75,10 +80,7 @@ public class BinaryOperation extends BooleanFormula {
 			return comment(children.get(0).toString());
 		}
 		
-		List<String> strChildren = new ArrayList<>();
-		for (BooleanFormula f : children) {
-			strChildren.add(f.toString());
-		}
+		List<String> strChildren = children.stream().map(f -> f.toString()).collect(Collectors.toList());
 		return "(" + comment(String.join(" " + type + " ", strChildren)) + ")";
 	}
 	

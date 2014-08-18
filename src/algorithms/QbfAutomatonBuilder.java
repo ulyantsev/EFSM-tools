@@ -1,9 +1,10 @@
 package algorithms;
 
 /**
- * (c) Alena Panchenko, Igor Buzhinsky
+ * (c) Igor Buzhinsky
  */
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.text.ParseException;
@@ -32,8 +33,15 @@ import bool.MyBooleanExpression;
 
 public class QbfAutomatonBuilder {
 	public static Optional<Automaton> build(Logger logger, ScenariosTree tree, List<LtlNode> formulae, int colorSize, int depth, int timeoutSeconds, Solvers solver, boolean extractSubterms, boolean complete, List<String> scenarioPaths) throws IOException {
-		QbfFormulaBuilder lfb = new QbfFormulaBuilder(logger, tree, formulae, colorSize, depth, extractSubterms, complete);
-		QuantifiedBooleanFormula qbf = lfb.getLTLformat(tree);
+		// delete files from the previous run
+		for (File f : new File(".").listFiles()) {
+			if (f.getName().contains("_tmp.")) {
+				f.delete();
+			}
+		}
+		
+		QbfFormulaBuilder qfb = new QbfFormulaBuilder(logger, tree, formulae, colorSize, depth, extractSubterms, complete);
+		QuantifiedBooleanFormula qbf = qfb.getLTLformat(tree);
 		SolverResult ass = qbf.solve(logger, solver, timeoutSeconds);
 		logger.info(ass.toString().split("\n")[0]);
 		

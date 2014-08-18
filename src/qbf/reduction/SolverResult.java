@@ -1,8 +1,12 @@
 package qbf.reduction;
 
-import java.util.ArrayList;
+/**
+ * (c) Igor Buzhinsky
+ */
+
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class SolverResult {
 	private final SolverResults result;
@@ -15,8 +19,7 @@ public class SolverResult {
 	
 	public SolverResult(List<Assignment> assignments, int timeMillis) {
 		result = SolverResults.SAT;
-		this.assignments = new ArrayList<>(assignments);
-		Collections.sort(this.assignments);
+		this.assignments = assignments.stream().sorted().collect(Collectors.toList());
 		this.timeMillis = timeMillis;
 	}
 	

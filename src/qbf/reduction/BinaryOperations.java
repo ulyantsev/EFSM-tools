@@ -1,17 +1,20 @@
 package qbf.reduction;
 
+/**
+ * (c) Igor Buzhinsky
+ */
+
 public enum BinaryOperations {
-	EQ, IMPLIES, AND, OR;
+	EQ("<->"), IMPLIES("->"), AND("&"), OR("|");
+	
+	private final String symbol;
+	
+	private BinaryOperations(String symbol) {
+		this.symbol = symbol;
+	}
 	
 	@Override
 	public String toString() {
-		switch (this) {
-		case EQ: return "<->";
-		case IMPLIES: return "->";
-		case AND: return "&";
-		case OR: return "|";
-		}
-		assert false;
-		return null;
+		return symbol;
 	}
 }

@@ -1,5 +1,9 @@
 package qbf.reduction;
 
+/**
+ * (c) Igor Buzhinsky
+ */
+
 import qbf.ltl.BinaryOperator;
 import qbf.ltl.BinaryOperatorType;
 import qbf.ltl.BooleanNode;
@@ -85,31 +89,31 @@ public class LtlNormalizer {
 				return not(nestedNode);
 			} else if (nestedNode instanceof UnaryOperator) {
 				UnaryOperator uo = (UnaryOperator) nestedNode;
-				switch (uo.toString()) {
-				case "G":
+				switch (uo.getType()) {
+				case GLOBAL:
 					return future(toNegationNormalForm(not(uo.getOperand())));
-				case "F":
+				case FUTURE:
 					return global(toNegationNormalForm(not(uo.getOperand())));
-				case "X":
+				case NEXT:
 					return next(toNegationNormalForm(not(uo.getOperand())));
-				case "!":
+				case NEG:
 					return toNegationNormalForm(uo.getOperand());
 				default:
 					throw new RuntimeException("Unknown unary operator " + nestedNode.toString());
 				}
 			} else if (nestedNode instanceof BinaryOperator) {
 				BinaryOperator bo = (BinaryOperator) nestedNode;
-				switch (bo.toString()) {
-				case "||":
+				switch (bo.getType()) {
+				case OR:
 					return and(toNegationNormalForm(not(bo.getLeftOperand())),
 						toNegationNormalForm(not(bo.getRightOperand())));
-				case "&&":
+				case AND:
 					return or(toNegationNormalForm(not(bo.getLeftOperand())),
 						toNegationNormalForm(not(bo.getRightOperand())));
-				case "U":
+				case UNTIL:
 					return release(toNegationNormalForm(not(bo.getLeftOperand())),
 						toNegationNormalForm(not(bo.getRightOperand())));
-				case "R":
+				case RELEASE:
 					return until(toNegationNormalForm(not(bo.getLeftOperand())),
 						toNegationNormalForm(not(bo.getRightOperand())));
 				default:

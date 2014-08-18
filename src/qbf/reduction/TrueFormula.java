@@ -1,5 +1,9 @@
 package qbf.reduction;
 
+/**
+ * (c) Igor Buzhinsky
+ */
+
 public class TrueFormula extends BooleanFormula {	
 	public static final TrueFormula INSTANCE = new TrueFormula();
 

@@ -1,5 +1,9 @@
 package qbf.reduction;
 
+/**
+ * (c) Igor Buzhinsky
+ */
+
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -18,7 +22,7 @@ public abstract class BooleanFormula {
 		private final Map<Integer, Integer> dimacsNumberToLimboole = new HashMap<>();
 		private String title;
 		private Integer varCount;
-		
+
 		void acceptLine(String line) {
 			if (line.startsWith("c")) {
 				String[] tokens = line.split(" ");
@@ -66,8 +70,10 @@ public abstract class BooleanFormula {
 		final String beforeLimbooleFilename = "_tmp.limboole";
 		DimacsConversionInfo info = new DimacsConversionInfo();
 
+		final String limbooleInput = toLimbooleString();
+		
 		try (PrintWriter pw = new PrintWriter(beforeLimbooleFilename)) {
-			pw.print(toLimbooleString());
+			pw.print(limbooleInput);
 		}
 		
 		if (!USE_COPROCESSOR) {
@@ -79,7 +85,10 @@ public abstract class BooleanFormula {
 			}
 		} else {
 			final String afterLimbooleFilename = "_tmp.after.limboole.dimacs";
-
+			
+			final String mapFilename = "_tmp.map";
+			final String whiteVarFilename = "_tmp.white.var";
+			
 			// transforming formula to DIMACS
 			final String limbooleStr = "limboole -d -s -o " + afterLimbooleFilename + " " + beforeLimbooleFilename;
 			logger.info(limbooleStr);
@@ -96,17 +105,20 @@ public abstract class BooleanFormula {
 			}
 			
 			// writing variables we cannot exclude from DIMACS CNF
-			try (PrintWriter pw = new PrintWriter("white.var")) {
+			try (PrintWriter pw = new PrintWriter(whiteVarFilename)) {
 				info.dimacsNumberToLimboole.keySet().forEach(pw::println);
 			}
 			
 			// simplifying CNF, not excluding important variables
-			Process coprocessor = Runtime.getRuntime().exec("coprocessor " + afterLimbooleFilename + " -CP_mapFile=map.map -CP_print=1 -CP_whiteFile=white.var");
+			final String coprocessorStr = "coprocessor " + afterLimbooleFilename + " -CP_mapFile=" + mapFilename + " -CP_print=1 -CP_whiteFile=" + whiteVarFilename;
+			logger.info(coprocessorStr);
+			Process coprocessor = Runtime.getRuntime().exec(coprocessorStr);
 			
 			try (BufferedReader input = new BufferedReader(new InputStreamReader(coprocessor.getInputStream()))) {
 				input.lines().forEach(info::acceptLine);
 			}
 		}
+
 		return info;
 	}
 	
