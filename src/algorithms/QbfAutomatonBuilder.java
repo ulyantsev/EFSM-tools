@@ -32,34 +32,40 @@ import actions.StringActions;
 import bool.MyBooleanExpression;
 
 public class QbfAutomatonBuilder {
-	public static Optional<Automaton> build(Logger logger, ScenariosTree tree, List<LtlNode> formulae, int colorSize, int depth, int timeoutSeconds, Solvers solver, boolean extractSubterms, boolean complete, List<String> scenarioPaths) throws IOException {
+	public static Optional<Automaton> build(Logger logger, ScenariosTree tree,
+			List<LtlNode> formulae, int colorSize, int depth,
+			int timeoutSeconds, Solvers solver, boolean extractSubterms,
+			boolean complete, List<String> scenarioPaths) throws IOException {
 		// delete files from the previous run
 		for (File f : new File(".").listFiles()) {
 			if (f.getName().contains("_tmp.")) {
 				f.delete();
 			}
 		}
-		
-		QbfFormulaBuilder qfb = new QbfFormulaBuilder(logger, tree, formulae, colorSize, depth, extractSubterms, complete);
-		QuantifiedBooleanFormula qbf = qfb.getLTLformat(tree);
+
+		QuantifiedBooleanFormula qbf = new QbfFormulaBuilder(logger, tree,
+				formulae, colorSize, depth, extractSubterms, complete)
+				.getFormula();
 		SolverResult ass = qbf.solve(logger, solver, timeoutSeconds);
 		logger.info(ass.toString().split("\n")[0]);
-		
+
 		if (ass.type() != SolverResults.SAT) {
 			return Optional.empty();
 		}
-		
-        try {
+
+		try {
 			int[] nodesColors = new int[tree.nodesCount()];
 
-			ass.list().stream().filter(a -> a.value && a.var.name.startsWith("x")).forEach(a -> {
-				String[] tokens = a.var.name.split("_");
-				assert tokens.length == 3;
-				int node = Integer.parseInt(tokens[1]);
-				int color = Integer.parseInt(tokens[2]);
-				nodesColors[node] = color;
-			});
-			
+			ass.list().stream()
+					.filter(a -> a.value && a.var.name.startsWith("x"))
+					.forEach(a -> {
+						String[] tokens = a.var.name.split("_");
+						assert tokens.length == 3;
+						int node = Integer.parseInt(tokens[1]);
+						int color = Integer.parseInt(tokens[2]);
+						nodesColors[node] = color;
+					});
+
 			// add transitions from scenarios
 			Automaton ans = new Automaton(colorSize);
 			for (int i = 0; i < tree.nodesCount(); i++) {
@@ -69,34 +75,40 @@ public class QbfAutomatonBuilder {
 					if (!state.hasTransition(t.getEvent(), t.getExpr())) {
 						int childColor = nodesColors[t.getDst().getNumber()];
 						state.addTransition(t.getEvent(), t.getExpr(),
-							t.getActions(), ans.getState(childColor));
+								t.getActions(), ans.getState(childColor));
 					}
 				}
 			}
-			
+
 			// add other transitions
-			for (Assignment a : ass.list().stream().filter(a -> a.value && a.var.name.startsWith("y")).collect(Collectors.toList())) {
+			for (Assignment a : ass.list().stream()
+					.filter(a -> a.value && a.var.name.startsWith("y"))
+					.collect(Collectors.toList())) {
 				String[] tokens = a.var.name.split("_");
 				assert tokens.length == 5;
 				int from = Integer.parseInt(tokens[1]);
 				int to = Integer.parseInt(tokens[2]);
 				String event = tokens[3];
 				MyBooleanExpression expr = MyBooleanExpression.get(tokens[4]);
-				
+
 				Node state = ans.getState(from);
-				
+
 				List<String> properUniqieActions = new ArrayList<>();
 				for (Assignment az : ass.list()) {
-					if (az.value && az.var.name.startsWith("z_" + from + "_") && az.var.name.endsWith("_" + event + "_" + expr)) {
+					if (az.value && az.var.name.startsWith("z_" + from + "_")
+							&& az.var.name.endsWith("_" + event + "_" + expr)) {
 						properUniqieActions.add(az.var.name.split("_")[2]);
 					}
 				}
 				Collections.sort(properUniqieActions);
-				
+
 				if (!state.hasTransition(event, expr)) {
 					// add
-					state.addTransition(event, expr,
-						new StringActions(String.join(",", properUniqieActions)), ans.getState(to));
+					state.addTransition(
+							event,
+							expr,
+							new StringActions(String.join(",",
+									properUniqieActions)), ans.getState(to));
 					logger.info("ADDING TRANSITION NOT FROM SCENARIOS");
 				} else {
 					// check
@@ -104,17 +116,18 @@ public class QbfAutomatonBuilder {
 					if (t.getDst() != ans.getState(to)) {
 						logger.severe("INVALID TRANSITION DESTINATION");
 					}
-					List<String> actualActions = new ArrayList<>(new TreeSet<>(Arrays.asList(t.getActions().getActions())));
+					List<String> actualActions = new ArrayList<>(new TreeSet<>(
+							Arrays.asList(t.getActions().getActions())));
 					if (!actualActions.equals(properUniqieActions)) {
 						logger.severe("ACTIONS DO NOT MATCH");
 					}
 				}
 			}
-			
+
 			List<StringScenario> scenarios = new ArrayList<>();
-        	for (String scenarioPath : scenarioPaths) {
-        		scenarios.addAll(StringScenario.loadScenarios(scenarioPath));
-        	}
+			for (String scenarioPath : scenarioPaths) {
+				scenarios.addAll(StringScenario.loadScenarios(scenarioPath));
+			}
 
 			if (scenarios.stream().allMatch(ans::isCompliesWithScenario)) {
 				logger.info("COMPLIES WITH SCENARIOS");
@@ -123,9 +136,9 @@ public class QbfAutomatonBuilder {
 			}
 
 			return Optional.of(ans);
-        } catch (FileNotFoundException | ParseException e) {
-            e.printStackTrace();
-            return Optional.empty();
-        }
+		} catch (FileNotFoundException | ParseException e) {
+			e.printStackTrace();
+			return Optional.empty();
+		}
 	}
 }

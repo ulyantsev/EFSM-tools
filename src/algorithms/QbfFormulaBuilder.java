@@ -12,6 +12,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -339,7 +341,7 @@ public class QbfFormulaBuilder {
 		return f;
 	}
 	
-	public QuantifiedBooleanFormula getLTLformat(ScenariosTree tree) {
+	public QuantifiedBooleanFormula getFormula() {
 		addColorVars(); // exist
 		addTransitionVars(); // exist
 		
@@ -348,7 +350,7 @@ public class QbfFormulaBuilder {
 		addZetaVars(); // forall
 		
 		LtlNode formulaToCheck = formulaToCheck();
-		logger.info(formulaToCheck.toFullString());
+		logger.info(formulaToCheck.toString());
 		FormulaList constraints = scenarioConstraints();
 		
 		BooleanFormula pathIsCorrect = BinaryOperation.and(sigmaVar(0, 0), aTerm(), bTerm(), cTerm(), dTerm());
@@ -563,37 +565,48 @@ public class QbfFormulaBuilder {
 		Pair<BooleanFormula, BooleanVariable> subterm = subterms.get(si);
 		if (subterm == null) {
 			BooleanFormula expansion;
-			FormulaList orList = new FormulaList(BinaryOperations.OR);
-			FormulaList andList = new FormulaList(BinaryOperations.AND);
 
 			if (node instanceof UnaryOperator) {
 				UnaryOperator op = (UnaryOperator) node;
-				LtlNode f = op.getOperand();
+				LtlNode a = op.getOperand();
 				switch (op.getType()) {
 				case GLOBAL:
 					expansion = FalseFormula.INSTANCE;
 					break;
 				case FUTURE:
+					FormulaList orList = new FormulaList(BinaryOperations.OR);
 					for (int j = index; j <= k; j++) {
-						orList.add(translateNonCyclic(f, j));
+						orList.add(translateNonCyclic(a, j));
 					}
 					expansion = orList.assemble();
 					break;
 				case NEXT:
-					expansion = index == k ? FalseFormula.INSTANCE
-						: translateNonCyclic(f, index + 1);
+					expansion = index == k ? FalseFormula.INSTANCE : translateNonCyclic(a, index + 1);
 					break;
 				case NEG:
-					assert f instanceof BooleanNode || f instanceof Predicate;
-					expansion = translateNonCyclic(f, index).not();
+					assert a instanceof BooleanNode || a instanceof Predicate;
+					expansion = translateNonCyclic(a, index).not();
 					break;
 				default:
-					throw new RuntimeException("Unknown unary operator " + op.toString());
+					throw new RuntimeException("Unknown unary operator " + op);
 				}
 			} else if (node instanceof BinaryOperator) {
 				BinaryOperator op = (BinaryOperator) node;
 				LtlNode a = op.getLeftOperand();
 				LtlNode b = op.getRightOperand();
+				
+				Function<Boolean, BooleanFormula> untilRelease = isUntil -> {
+					FormulaList orList = new FormulaList(BinaryOperations.OR);
+					for (int j = index; j <= k; j++) {
+						FormulaList andList = new FormulaList(BinaryOperations.AND);
+						andList.add(translateNonCyclic(isUntil ? b : a, j));
+						for (int n = index; n <= (isUntil ? j - 1 : j); n++) {
+							andList.add(translateNonCyclic(isUntil ? a : b, n));
+						}
+						orList.add(andList.assemble());
+					}
+					return orList.assemble();
+				};
 				
 				switch (op.getType()) {
 				case OR:
@@ -603,27 +616,13 @@ public class QbfFormulaBuilder {
 					expansion = translateNonCyclic(a, index).and(translateNonCyclic(b, index));
 					break;
 				case UNTIL:
-					for (int j = index; j <= k; j++) {
-						andList.add(translateNonCyclic(b, j));
-						for (int n = index; n < j; n++) {
-							andList.add(translateNonCyclic(a, n));
-						}
-						orList.add(andList.assemble());
-					}
-					expansion = orList.assemble();
+					expansion = untilRelease.apply(true);
 					break;
 				case RELEASE:
-					for (int j = index; j <= k; j++) {
-						orList.add(translateNonCyclic(b, j));
-						for (int n = index; n < j; n++) {
-							orList.add(translateNonCyclic(a, n));
-						}
-						andList.add(orList.assemble());
-					}
-					expansion = andList.assemble();
+					expansion = untilRelease.apply(false);
 					break;
 				default:
-					throw new RuntimeException("Unknown binary operator " + op.toString());
+					throw new RuntimeException("Unknown binary operator " + op);
 				}
 			} else {
 				throw new AssertionError();
@@ -659,36 +658,60 @@ public class QbfFormulaBuilder {
 			BooleanFormula expansion;
 			if (node instanceof UnaryOperator) {
 				UnaryOperator op = (UnaryOperator) node;
-				LtlNode f = op.getOperand();
+				LtlNode a = op.getOperand();
+				
+				Function<BinaryOperations, BooleanFormula> globalFuture = operation -> {
+					FormulaList list = new FormulaList(operation);
+					for (int j = Math.min(index, l); j <= k; j++) {
+						list.add(translateCyclic(a, l, j));
+					}
+					return list.assemble();
+				};
+				
 				switch (op.getType()) {
 				case GLOBAL:
-					FormulaList andList = new FormulaList(BinaryOperations.AND);
-					for (int j = Math.min(index, l); j <= k; j++) {
-						andList.add(translateCyclic(f, l, j));
-					}
-					expansion = andList.assemble();
+					expansion = globalFuture.apply(BinaryOperations.AND);
 					break;
 				case FUTURE:
-					FormulaList orList = new FormulaList(BinaryOperations.OR);
-					for (int j = Math.min(index, l); j <= k; j++) {
-						orList.add(translateCyclic(f, l, j));
-					}
-					expansion = orList.assemble();
+					expansion = globalFuture.apply(BinaryOperations.OR);
 					break;
 				case NEXT:
-					expansion = translateCyclic(f, l, index < k ? index + 1 : l);
+					expansion = translateCyclic(a, l, index < k ? index + 1 : l);
 					break;
 				case NEG:
-					assert f instanceof BooleanNode || f instanceof Predicate;
-					expansion = translateCyclic(f, l, index).not();
+					assert a instanceof BooleanNode || a instanceof Predicate;
+					expansion = translateCyclic(a, l, index).not();
 					break;
 				default:
-					throw new RuntimeException("Unknown unary operator " + op.toString());
+					throw new RuntimeException("Unknown unary operator " + op);
 				}
 			} else if (node instanceof BinaryOperator) {
 				BinaryOperator op = (BinaryOperator) node;
 				LtlNode a = op.getLeftOperand();
 				LtlNode b = op.getRightOperand();
+				
+				BiFunction<BinaryOperations, BinaryOperations, BooleanFormula> untilRelease = (op1, op2) -> {
+					FormulaList l1 = new FormulaList(op1);
+					for (int j = index; j <= k; j++) {
+						FormulaList l2 = new FormulaList(op2);
+						l2.add(translateCyclic(b, l, j));
+						for (int n = index; n < j; n++) {
+							l2.add(translateCyclic(a, l, n));
+						}
+						l1.add(l2.assemble());
+					}
+					for (int j = l; j < index; j++) {
+						FormulaList l2 = new FormulaList(op2);
+						l2.add(translateCyclic(b, l, j));
+						for (int n = 0; n <= k; n++) {
+							if (n >= index || n >= l && n < j) {
+								l2.add(translateCyclic(a, l, n));
+							}
+						}
+						l1.add(l2.assemble());
+					}
+					return l1.assemble();
+				};
 				
 				switch (op.getType()) {
 				case OR:
@@ -697,56 +720,14 @@ public class QbfFormulaBuilder {
 				case AND:
 					expansion = translateCyclic(a, l, index).and(translateCyclic(b, l, index));
 					break;
-				case UNTIL: {
-					// according to the new article
-					FormulaList orList = new FormulaList(BinaryOperations.OR);
-					for (int j = index; j <= k; j++) {
-						FormulaList andList = new FormulaList(BinaryOperations.AND);
-						andList.add(translateCyclic(b, l, j));
-						for (int n = index; n < j; n++) {
-							andList.add(translateCyclic(a, l, n));
-						}
-						orList.add(andList.assemble());
-					}
-					for (int j = l; j < index; j++) {
-						FormulaList andList = new FormulaList(BinaryOperations.AND);
-						andList.add(translateCyclic(b, l, j));
-						for (int n = 0; n <= k; n++) {
-							if (n >= index || n >= l && n < j) {
-								andList.add(translateCyclic(a, l, n));
-							}
-						}
-						orList.add(andList.assemble());
-					}
-					expansion = orList.assemble();
+				case UNTIL:
+					expansion = untilRelease.apply(BinaryOperations.OR, BinaryOperations.AND);
 					break;
-				}
-				case RELEASE: {
-					// similar to U
-					FormulaList andList = new FormulaList(BinaryOperations.AND);
-					for (int j = index; j <= k; j++) {
-						FormulaList orList = new FormulaList(BinaryOperations.OR);
-						orList.add(translateCyclic(b, l, j));
-						for (int n = index; n < j; n++) {
-							orList.add(translateCyclic(a, l, n));
-						}
-						andList.add(orList.assemble());
-					}
-					for (int j = l; j < index; j++) {
-						FormulaList orList = new FormulaList(BinaryOperations.OR);
-						orList.add(translateCyclic(b, l, j));
-						for (int n = 0; n <= k; n++) {
-							if (n >= index || n >= l && n < j) {
-								orList.add(translateCyclic(a, l, n));
-							}
-						}
-						andList.add(orList.assemble());
-					}
-					expansion = andList.assemble();
+				case RELEASE:
+					expansion = untilRelease.apply(BinaryOperations.AND, BinaryOperations.OR);
 					break;
-				}
 				default:
-					throw new RuntimeException("Unknown binary operator " + op.toString());
+					throw new RuntimeException("Unknown binary operator " + op);
 				}
 			} else {
 				throw new AssertionError();
@@ -793,7 +774,7 @@ public class QbfFormulaBuilder {
 		
 		@Override
 		public String toString() {
-			return node.toFullString() + " " + l + " " + index;
+			return node + " " + l + " " + index;
 		}
 	}
 }

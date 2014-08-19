@@ -30,7 +30,7 @@ public class BooleanNode extends LtlNode {
     }
 
 	@Override
-	public String toFullString() {
+	public String toString() {
 		return getName();
 	}
 }

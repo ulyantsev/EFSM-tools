@@ -76,10 +76,10 @@ public class LtlNormalizer {
 			BinaryOperator op = (BinaryOperator) node;
 			return binary(toNegationNormalForm(op.getLeftOperand()),
 				toNegationNormalForm(op.getRightOperand()), op.getType());
-		} else if (node instanceof UnaryOperator && node.toString() != "!") {
+		} else if (node instanceof UnaryOperator && ((UnaryOperator) node).getType() != UnaryOperatorType.NEG) {
 			UnaryOperator op = (UnaryOperator) node;
 			return unary(toNegationNormalForm(op.getOperand()), op.getType());
-		} else if (node instanceof UnaryOperator && node.toString() == "!") {
+		} else if (node instanceof UnaryOperator) {
 			final LtlNode nestedNode = ((UnaryOperator) node).getOperand();
 			if (nestedNode == BooleanNode.TRUE) {
 				return BooleanNode.FALSE;

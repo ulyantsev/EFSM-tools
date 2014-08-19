@@ -38,24 +38,8 @@ public class BinaryOperator extends Operator<BinaryOperatorType> {
         this.rightOperand = rightOperand;
     }
 
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        } else if (obj instanceof BinaryOperator) {
-            BinaryOperator op = (BinaryOperator) obj;
-            if (getType() == op.getType()) {
-                return equals(leftOperand.equals(op.leftOperand) && rightOperand.equals(op.rightOperand));
-            }
-        }
-        return false;
-    }
-
-    public int hashCode() {
-        return getName().hashCode() ^ leftOperand.getName().hashCode() ^ rightOperand.getName().hashCode();
-    }
-
 	@Override
-	public String toFullString() {
-		return "(" + leftOperand.toFullString() + " " + toString() + " " + rightOperand.toFullString() + ")"; 
+	public String toString() {
+		return "(" + leftOperand + " " + getName() + " " + rightOperand + ")"; 
 	}
 }

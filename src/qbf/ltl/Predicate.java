@@ -22,9 +22,4 @@ public class Predicate extends LtlNode {
     public String toString() {
     	return getName() + "(" + String.join(", ", args) + ")";
     }
-
-	@Override
-	public String toFullString() {
-		return toString();
-	}
 }

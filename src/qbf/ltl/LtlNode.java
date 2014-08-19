@@ -23,11 +23,4 @@ public abstract class LtlNode {
     public String getName() {
         return name;
     }
-
-    @Override
-    public String toString() {
-        return name;
-    }
-    
-    public abstract String toFullString();
 }

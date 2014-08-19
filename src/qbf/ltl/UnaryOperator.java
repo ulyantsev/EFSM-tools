@@ -28,24 +28,8 @@ public class UnaryOperator extends Operator<UnaryOperatorType> {
         this.operand = operand;
     }
 
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        } else if (obj instanceof UnaryOperator) {
-            UnaryOperator op = (UnaryOperator) obj;
-            if (getType() == op.getType()) {
-                return operand.equals(op.getOperand());
-            }
-        }
-        return false;
-    }
-
-    public int hashCode() {
-        return getName().hashCode() ^ operand.getName().hashCode();
-    }
-
 	@Override
-	public String toFullString() {
-		return toString() + "(" + operand.toFullString() + ")";
+	public String toString() {
+		return getName() + "(" + operand + ")";
 	}
 }

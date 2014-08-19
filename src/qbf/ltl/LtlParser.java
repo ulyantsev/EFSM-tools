@@ -62,11 +62,11 @@ public class LtlParser {
 					return BooleanNode.getByName(name);
 				} else {
 					throw new RuntimeException("Unexpected node "
-							+ root.getClass().toString());
+							+ root.getClass());
 				}
 			}
 			throw new RuntimeException("Unexpected node "
-					+ root.getClass().toString());
+					+ root.getClass());
 		}
 
 		private static UnaryOperator createUnaryOperator(SimpleNode node,
@@ -118,7 +118,7 @@ public class LtlParser {
 					// comment
 					continue;
 				}
-				if (input.equals("")) {
+				if (input.isEmpty()) {
 					continue;
 				}
 				input = input.replaceAll("->", ">>");
