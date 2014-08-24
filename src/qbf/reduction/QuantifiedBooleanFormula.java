@@ -4,13 +4,17 @@ package qbf.reduction;
  * (c) Igor Buzhinsky
  */
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Scanner;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.logging.Logger;
@@ -46,7 +50,7 @@ public class QuantifiedBooleanFormula {
 			this.info = info;
 		}
 		
-		public Integer toLimbooleNumber(int num) {
+		public Optional<Integer> toLimbooleNumber(int num) {
 			return info.toLimbooleNumber(num);
 		}
 	}
@@ -54,7 +58,7 @@ public class QuantifiedBooleanFormula {
 	private String otherVars(DimacsConversionInfo info) {
 		List<Integer> nums = new ArrayList<>();
 		for (int i = 1; i <= info.varCount(); i++) {
-			if (info.toLimbooleNumber(i) == null) {
+			if (!info.toLimbooleNumber(i).isPresent()) {
 				nums.add(i);
 			}
 		}
@@ -76,48 +80,41 @@ public class QuantifiedBooleanFormula {
 	
 	private String varsToNumbers(List<BooleanVariable> vars, DimacsConversionInfo info) {
 		List<Integer> nums = new ArrayList<>();
-		for (BooleanVariable v : vars) {
-			Integer dimacsNumber = info.toDimacsNumber(v.number);
-			if (dimacsNumber != null) {
-				nums.add(dimacsNumber);
-			} else {
+		vars.forEach(v -> {
+			Optional<Integer> dimacsNumber = info.toDimacsNumber(v.number);
+			dimacsNumber.map(nums::add);
+			if (!dimacsNumber.isPresent()) {
 				System.out.println("Warning: unused variable " + v.name + " " + v.number);
 			}
-		}
+		});
 		Collections.sort(nums);
 		return nums.toString().replaceAll("[\\[\\],]", "");
 	}
 
-	private Assignment fromDimacsToken(String token, QdimacsConversionInfo qdimacs) {
+	private Optional<Assignment> fromDimacsToken(String token, QdimacsConversionInfo qdimacs) {
 		boolean isTrue = token.charAt(0) != '-';
 		if (!isTrue) {
 			token = token.substring(1);
 		}
 		int dimacsIndex = Integer.parseInt(token);
-		Integer limbooleIndex = qdimacs.toLimbooleNumber(dimacsIndex);
-		return limbooleIndex == null ? null : new Assignment(BooleanVariable.getVarByNumber(limbooleIndex), isTrue);
+		Optional<Integer> limbooleIndex = qdimacs.toLimbooleNumber(dimacsIndex);
+		return limbooleIndex.map(index -> new Assignment(BooleanVariable.getVarByNumber(index), isTrue));
 	}
 	
-	private static final String qdimacsFilename = "_tmp.qdimacs";
+	private static final String QDIMACS_FILENAME = "_tmp.qdimacs";
 	
 	private SolverResult depqbfSolve(Logger logger, int timeoutSeconds, QdimacsConversionInfo qdimacs) throws IOException {
 		long time = System.currentTimeMillis();
 		List<Assignment> list = new ArrayList<>();
-		String depqbfStr = "depqbf --max-secs=" + timeoutSeconds + " --qdo " + qdimacsFilename;
+		String depqbfStr = "depqbf --max-secs=" + timeoutSeconds + " --qdo " + QDIMACS_FILENAME;
 		logger.info(depqbfStr);
 		Process depqbf = Runtime.getRuntime().exec(depqbfStr);
-		try (Scanner input = new Scanner(depqbf.getInputStream())) {
-			while (input.hasNextLine()) {
-				String line = input.nextLine();
-				if (line.startsWith("V")) {
-					String[] tokens = line.split(" ");
-					assert tokens.length == 3 && tokens[2].equals("0");
-					Assignment ass = fromDimacsToken(tokens[1], qdimacs);
-					if (ass != null) {
-						list.add(ass);
-					}
-				}
-			}
+		try (BufferedReader input = new BufferedReader(new InputStreamReader(depqbf.getInputStream()))) {
+			input.lines().filter(s -> s.startsWith("V")).forEach(line -> {
+				String[] tokens = line.split(" ");
+				assert tokens.length == 3 && tokens[2].equals("0");
+				fromDimacsToken(tokens[1], qdimacs).ifPresent(list::add);
+			});
 		}
 		time = System.currentTimeMillis() - time;
 		
@@ -134,17 +131,16 @@ public class QuantifiedBooleanFormula {
 	private boolean assignmentIsOk(List<Assignment> assignments) {
 		Set<String> properVars = existVars.stream().map(v -> v.name).collect(Collectors.toCollection(TreeSet::new));
 		Set<String> actualVars = assignments.stream().map(a -> a.var.name).collect(Collectors.toCollection(TreeSet::new));
-		
 		return properVars.equals(actualVars);
 	}
 	
 	private SolverResult skizzoSolve(Logger logger, int timeoutSeconds, QdimacsConversionInfo qdimacs) throws IOException {
 		long time = System.currentTimeMillis();
 		List<Assignment> list = new ArrayList<>();
-		File skizzoLog = new File(qdimacsFilename + ".sKizzo.log");
-		File certificate = new File(qdimacsFilename + ".qdc");
+		File skizzoLog = new File(QDIMACS_FILENAME + ".sKizzo.log");
+		File certificate = new File(QDIMACS_FILENAME + ".qdc");
 		
-		String skizzoStr = "sKizzo -log text -v 0 " + qdimacsFilename + " " + timeoutSeconds;
+		String skizzoStr = "sKizzo -log text -v 0 " + QDIMACS_FILENAME + " " + timeoutSeconds;
 		logger.info(skizzoStr);
 		Process skizzo = Runtime.getRuntime().exec(skizzoStr);
 		int code;
@@ -159,7 +155,7 @@ public class QuantifiedBooleanFormula {
 		case 10:
 			List<String> vars = new ArrayList<>();
 			for (BooleanVariable v : existVars) {
-				vars.add(String.valueOf(qdimacs.info.toDimacsNumber(v.number)));
+				vars.add(String.valueOf(qdimacs.info.toDimacsNumber(v.number).get()));
 			}
 
 			// find the partial certificate
@@ -176,19 +172,12 @@ public class QuantifiedBooleanFormula {
 				return depqbfSolve(logger, timeoutSeconds, qdimacs);
 			}
 			
-			try (Scanner sc = new Scanner(certificate)) {
-				while (sc.hasNextLine()) {
-					String certificateLine = sc.nextLine();
-					if (certificateLine.startsWith("v")) {
-						String[] tokens = certificateLine.split(" ");
-						for (int i = 1; i < tokens.length; i++) {
-							Assignment ass = fromDimacsToken(tokens[i], qdimacs);
-							if (ass != null) {
-								list.add(ass);
-							}
-						}
-					}
-				}
+			try (BufferedReader input = new BufferedReader(new FileReader(certificate))) {
+				input.lines().filter(s -> s.startsWith("v")).forEach(certificateLine ->
+					Arrays.stream(certificateLine.split(" ")).skip(1).forEach(token ->
+						fromDimacsToken(token, qdimacs).ifPresent(list::add)
+					)
+				);
 			}
 
 			if (!assignmentIsOk(list)) {
@@ -214,7 +203,7 @@ public class QuantifiedBooleanFormula {
 		QdimacsConversionInfo qdimacs = toQdimacs(logger);
 		logger.info("DIMACS CNF: " + qdimacs.info.title());
 		
-		try (PrintWriter pw = new PrintWriter(qdimacsFilename)) {
+		try (PrintWriter pw = new PrintWriter(QDIMACS_FILENAME)) {
 			pw.print(qdimacs.qdimacsString);
 		}
 		try (PrintWriter pw = new PrintWriter("_tmp.pretty")) {

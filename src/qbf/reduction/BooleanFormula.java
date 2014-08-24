@@ -11,10 +11,11 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.logging.Logger;
 
 public abstract class BooleanFormula {
-	public abstract String toLimbooleString();
+	private static final boolean USE_COPROCESSOR = true;
 	
 	public static class DimacsConversionInfo {
 		private final StringBuilder dimacsBuilder = new StringBuilder();
@@ -48,23 +49,20 @@ public abstract class BooleanFormula {
 			return dimacsBuilder.toString();
 		}
 		
-		public Integer toDimacsNumber(int num) {
-			return limbooleNumberToDimacs.get(num);
+		public Optional<Integer> toDimacsNumber(int num) {
+			return Optional.of(limbooleNumberToDimacs.get(num));
 		}
 		
 		public int varCount() {
 			return varCount;
 		}
 		
-		/*
-		 * Can return null as there can be more vars in DIMACS representation.
-		 */
-		public Integer toLimbooleNumber(int num) {
-			return dimacsNumberToLimboole.get(num);
+		public Optional<Integer> toLimbooleNumber(int num) {
+			return Optional.ofNullable(dimacsNumberToLimboole.get(num));
 		}
 	}
 	
-	private static final boolean USE_COPROCESSOR = true;
+	public abstract String toLimbooleString();
 	
 	public DimacsConversionInfo toDimacs(Logger logger) throws IOException {
 		final String beforeLimbooleFilename = "_tmp.limboole";

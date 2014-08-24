@@ -8,7 +8,7 @@ package qbf.ltl;
  *
  * @author: Kirill Egorov
  */
-public enum UnaryOperatorType implements IOperatorType {
+public enum UnaryOperatorType {
     NEG("!"), FUTURE("F"), NEXT("X"), GLOBAL("G");
 
     private String name;
@@ -17,7 +17,8 @@ public enum UnaryOperatorType implements IOperatorType {
         this.name = name;
     }
 
-    public String getName() {
+    @Override
+    public String toString() {
         return name;
     }
 }

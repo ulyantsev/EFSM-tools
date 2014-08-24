@@ -16,8 +16,8 @@ public class BooleanVariable extends BooleanFormula implements Comparable<Boolea
 	public final int number;
 	
 	private static int counter = 1;
-	private static final List<BooleanVariable> allVars = new ArrayList<>();
-	private static final Map<String, BooleanVariable> varsByName = new HashMap<>();
+	private static final List<BooleanVariable> ALL_VARS = new ArrayList<>();
+	private static final Map<String, BooleanVariable> VARS_BY_NAME = new HashMap<>();
 	
 	private static String createName(String prefix, Object... indices) {
 		assert indices.length == 0 || !prefix.contains("_");
@@ -34,8 +34,8 @@ public class BooleanVariable extends BooleanFormula implements Comparable<Boolea
 	public BooleanVariable(String prefix, Object... indices) {
 		name = createName(prefix, indices);
 		number = counter++;
-		allVars.add(this);
-		varsByName.put(name, this);
+		ALL_VARS.add(this);
+		VARS_BY_NAME.put(name, this);
 	}
 
 	public static int variableCount() {
@@ -43,11 +43,11 @@ public class BooleanVariable extends BooleanFormula implements Comparable<Boolea
 	}
 	
 	public static BooleanVariable getVarByNumber(int num) {
-		return allVars.get(num - 1);
+		return ALL_VARS.get(num - 1);
 	}
 	
 	public static Optional<BooleanVariable> byName(String prefix, Object... indices) {
-		return Optional.ofNullable(varsByName.get(createName(prefix, indices)));
+		return Optional.ofNullable(VARS_BY_NAME.get(createName(prefix, indices)));
 	}
 	
 	@Override

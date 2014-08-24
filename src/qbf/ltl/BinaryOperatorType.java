@@ -8,7 +8,7 @@ package qbf.ltl;
  *
  * @author: Kirill Egorov
  */
-public enum BinaryOperatorType implements IOperatorType {
+public enum BinaryOperatorType {
     AND("&&"), OR("||"), RELEASE("R"), UNTIL("U"), IMPLIES("->");
 
     private String name;
@@ -17,7 +17,8 @@ public enum BinaryOperatorType implements IOperatorType {
         this.name = name;
     }
 
-    public String getName() {
+    @Override
+    public String toString() {
         return name;
     }
 }

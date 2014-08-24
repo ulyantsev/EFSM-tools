@@ -223,14 +223,14 @@ public class QbfFormulaBuilder {
 		FormulaList constraints = new FormulaList(BinaryOperations.AND);
 		
 		for (int i1 = 0; i1 < colorSize; i1++) {
-			for (String z : actions) {
-				for (String e : events) {
-					for (MyBooleanExpression f : pairsEventExpression.get(e)) {
+			for (String action : actions) {
+				for (String event : events) {
+					for (MyBooleanExpression f : pairsEventExpression.get(event)) {
 						FormulaList options = new FormulaList(BinaryOperations.OR);
 						for (int i2 = 0; i2 < colorSize; i2++) {
-							options.add(yVar(i1, i2, e, f));
+							options.add(yVar(i1, i2, event, f));
 						}
-						constraints.add(zVar(i1, z, e, f).implies(options.assemble()));
+						constraints.add(zVar(i1, action, event, f).implies(options.assemble()));
 					}
 				}
 			}
@@ -250,9 +250,9 @@ public class QbfFormulaBuilder {
 				zConstraints.add(xVar(node.getNumber(), i));
 				for (Transition t : node.getTransitions()) {
 					List<String> actionSequence = Arrays.asList(t.getActions().getActions());
-					for (String z : actions) {
-						BooleanFormula f = zVar(i, z, t.getEvent(), t.getExpr());
-						if (!actionSequence.contains(z)) {
+					for (String action : actions) {
+						BooleanFormula f = zVar(i, action, t.getEvent(), t.getExpr());
+						if (!actionSequence.contains(action)) {
 							f = f.not();
 						}
 						zConstraints.add(f);
@@ -270,11 +270,11 @@ public class QbfFormulaBuilder {
 	private BooleanFormula eventCompletenessConstraints() {
 		FormulaList constraints = new FormulaList(BinaryOperations.AND);
 		for (int i1 = 0; i1 < colorSize; i1++) {
-			for (String e : events) {
-				for (MyBooleanExpression f : pairsEventExpression.get(e)) {
+			for (String event : events) {
+				for (MyBooleanExpression f : pairsEventExpression.get(event)) {
 					FormulaList options = new FormulaList(BinaryOperations.OR);
 					for (int i2 = 0; i2 < colorSize; i2++) {
-						options.add(yVar(i1, i2, e, f));
+						options.add(yVar(i1, i2, event, f));
 					}
 					constraints.add(options.assemble());
 				}
@@ -292,10 +292,10 @@ public class QbfFormulaBuilder {
 	}
 	
 	private void addEpsVars() {
-		for (String e : events) {
-			for (MyBooleanExpression f : pairsEventExpression.get(e)) {
+		for (String event : events) {
+			for (MyBooleanExpression f : pairsEventExpression.get(event)) {
 				for (int j = 0; j <= k; j++) {
-					forallVars.add(new BooleanVariable("eps", e, f, j));
+					forallVars.add(new BooleanVariable("eps", event, f, j));
 				}
 			}
 		}
@@ -422,9 +422,9 @@ public class QbfFormulaBuilder {
 			constraints.add(optionsS.assemble());
 			
 			FormulaList optionsE = new FormulaList(BinaryOperations.OR);
-			for (String e : events) {
-				for (MyBooleanExpression f : pairsEventExpression.get(e)) {
-					optionsE.add(epsVar(e, f, j));
+			for (String event : events) {
+				for (MyBooleanExpression f : pairsEventExpression.get(event)) {
+					optionsE.add(epsVar(event, f, j));
 				}
 			}
 			constraints.add(optionsE.assemble());
@@ -438,10 +438,10 @@ public class QbfFormulaBuilder {
 		for (int j = 0; j < k; j++) {
 			for (int i1 = 0; i1 < colorSize; i1++) {
 				for (int i2 = 0; i2 < colorSize; i2++) {
-					for (String e : events) {
-						for (MyBooleanExpression f : pairsEventExpression.get(e)) {
+					for (String event : events) {
+						for (MyBooleanExpression f : pairsEventExpression.get(event)) {
 							constraints.add(BinaryOperation.and(sigmaVar(i1, j),
-								epsVar(e, f, j), sigmaVar(i2, j + 1)).implies(yVar(i1, i2, e, f)));
+								epsVar(event, f, j), sigmaVar(i2, j + 1)).implies(yVar(i1, i2, event, f)));
 						}
 					}
 				}
@@ -450,14 +450,14 @@ public class QbfFormulaBuilder {
 		if (!eventCompleteness) {
 			// additional term for j = k
 			for (int i1 = 0; i1 < colorSize; i1++) {
-				for (String e : events) {
-					for (MyBooleanExpression f : pairsEventExpression.get(e)) {
+				for (String event : events) {
+					for (MyBooleanExpression f : pairsEventExpression.get(event)) {
 						FormulaList options = new FormulaList(BinaryOperations.OR);
 						// some state exists to transit to
 						for (int i2 = 0; i2 < colorSize; i2++) {
-							options.add(yVar(i1, i2, e, f));
+							options.add(yVar(i1, i2, event, f));
 						}
-						constraints.add(sigmaVar(i1, k).and(epsVar(e, f, k)).implies(options.assemble()));
+						constraints.add(sigmaVar(i1, k).and(epsVar(event, f, k)).implies(options.assemble()));
 					}
 				}
 			}
@@ -471,11 +471,11 @@ public class QbfFormulaBuilder {
 		FormulaList constraints = new FormulaList(BinaryOperations.AND);
 		for (int j = 0; j <= k; j++) {
 			for (int i1 = 0; i1 < colorSize; i1++) {
-				for (String z : actions) {
-					for (String e : events) {
-						for (MyBooleanExpression f : pairsEventExpression.get(e)) {
-							constraints.add(sigmaVar(i1, j).and(epsVar(e, f, j))
-								.implies(zVar(i1, z, e, f).equivalent(zetaVar(z, j))));
+				for (String action : actions) {
+					for (String event : events) {
+						for (MyBooleanExpression f : pairsEventExpression.get(event)) {
+							constraints.add(sigmaVar(i1, j).and(epsVar(event, f, j))
+								.implies(zVar(i1, action, event, f).equivalent(zetaVar(action, j))));
 						}
 					}
 				}
@@ -495,10 +495,10 @@ public class QbfFormulaBuilder {
 			FormulaList options = new FormulaList(BinaryOperations.OR);
 			for (int i1 = 0; i1 < colorSize; i1++) {
 				for (int i2 = 0; i2 < colorSize; i2++) {
-					for (String e : events) {
-						for (MyBooleanExpression f : pairsEventExpression.get(e)) {
+					for (String event : events) {
+						for (MyBooleanExpression f : pairsEventExpression.get(event)) {
 							options.add(BinaryOperation.and(sigmaVar(i1, k),
-								epsVar(e, f, k), sigmaVar(i2, l), yVar(i1, i2, e, f)));
+								epsVar(event, f, k), sigmaVar(i2, l), yVar(i1, i2, event, f)));
 						}
 					}
 				}

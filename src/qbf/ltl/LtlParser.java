@@ -31,13 +31,13 @@ public class LtlParser {
 				String name = root.toString().replaceAll("\\(.*$", "");
 				// is unary operator?
 				for (UnaryOperatorType type : UnaryOperatorType.values()) {
-					if (type.getName().equalsIgnoreCase(name)) {
+					if (type.toString().equalsIgnoreCase(name)) {
 						return createUnaryOperator((SimpleNode) root, type);
 					}
 				}
 				// is binary operator?
 				for (BinaryOperatorType type : BinaryOperatorType.values()) {
-					if (type.getName().equalsIgnoreCase(name)) {
+					if (type.toString().equalsIgnoreCase(name)) {
 						return createBinaryOperator((SimpleNode) root, type);
 					}
 				}
