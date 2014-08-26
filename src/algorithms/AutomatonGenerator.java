@@ -14,7 +14,7 @@ import structures.Node;
 import structures.Transition;
 
 /**
- * √енерируем автомат, полный по переменным
+ * Generating a variable-complete automaton
  * 
  * @author ulyantsev
  * 
@@ -129,8 +129,8 @@ public class AutomatonGenerator {
 	}
 
 	/**
-	 * –асставл€ем ребра. ќдно ребро точно ведет в следующее состо€ние,
-	 * остальные случайны
+	 * Assigning the edges. One edge always leads to the next state,
+	 * others are random
 	 * 
 	 * @param statesCount
 	 * @param eventsCount

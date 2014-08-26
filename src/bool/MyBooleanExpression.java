@@ -95,7 +95,7 @@ public class MyBooleanExpression {
             return true;
         }
 
-        // можно переписать умнее
+        // possible to rewrite in a smarter way
         MyBooleanExpression e = null;
         try {
             e = new MyBooleanExpression("(" + this.repr + ")=(" + other.repr + ")");
@@ -123,7 +123,7 @@ public class MyBooleanExpression {
             return hasSolutionWithRes.get(other);
         }
 
-        // можно переписать умнее
+        // possible to rewrite in a smarter way
         MyBooleanExpression e = null;
         try {
             e = new MyBooleanExpression("(" + repr + ")&(" + other.repr + ")");

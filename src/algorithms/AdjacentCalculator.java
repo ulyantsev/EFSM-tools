@@ -26,7 +26,7 @@ public class AdjacentCalculator {
             }
 
             for (Transition t1 : node.getTransitions()) {
-                // считаем для детей
+                // calculating for children
                 calcNode(tree, t1.getDst(), ans);
                 for (Node other : tree.getNodes()) {
                     if (other != node) {
