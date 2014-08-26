@@ -3,6 +3,7 @@ package structures;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 import actions.StringActions;
 import bool.MyBooleanExpression;
@@ -14,7 +15,7 @@ public class Node {
     
     public Node(int number) {
         this.number = number;
-        transitions = new HashMap<String, Transition>(); 
+        transitions = new TreeMap<String, Transition>();
     }
     
     public int getNumber() {
