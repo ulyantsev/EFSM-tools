@@ -5,7 +5,6 @@ package algorithms;
  */
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -23,7 +22,6 @@ import qbf.reduction.QuantifiedBooleanFormula;
 import qbf.reduction.SolverResult;
 import qbf.reduction.SolverResult.SolverResults;
 import qbf.reduction.Solvers;
-import scenario.StringScenario;
 import structures.Automaton;
 import structures.Node;
 import structures.ScenariosTree;
@@ -35,17 +33,14 @@ public class QbfAutomatonBuilder {
 	public static Optional<Automaton> build(Logger logger, ScenariosTree tree,
 			List<LtlNode> formulae, int colorSize, int depth,
 			int timeoutSeconds, Solvers solver, boolean extractSubterms,
-			boolean complete, List<String> scenarioPaths) throws IOException {
+			boolean complete) throws IOException {
 		// delete files from the previous run
-		for (File f : new File(".").listFiles()) {
-			if (f.getName().contains("_tmp.")) {
-				f.delete();
-			}
-		}
+		Arrays.stream(new File(".").listFiles())
+			.filter(f -> f.getName().contains("_tmp."))
+			.forEach(File::delete);
 
 		QuantifiedBooleanFormula qbf = new QbfFormulaBuilder(logger, tree,
-				formulae, colorSize, depth, extractSubterms, complete)
-				.getFormula();
+			formulae, colorSize, depth, extractSubterms, complete).getFormula();
 		SolverResult ass = qbf.solve(logger, solver, timeoutSeconds);
 		logger.info(ass.toString().split("\n")[0]);
 
@@ -54,7 +49,7 @@ public class QbfAutomatonBuilder {
 		}
 
 		try {
-			int[] nodesColors = new int[tree.nodesCount()];
+			int[] nodeColors = new int[tree.nodesCount()];
 
 			ass.list().stream()
 					.filter(a -> a.value && a.var.name.startsWith("x"))
@@ -63,19 +58,19 @@ public class QbfAutomatonBuilder {
 						assert tokens.length == 3;
 						int node = Integer.parseInt(tokens[1]);
 						int color = Integer.parseInt(tokens[2]);
-						nodesColors[node] = color;
+						nodeColors[node] = color;
 					});
 
 			// add transitions from scenarios
 			Automaton ans = new Automaton(colorSize);
 			for (int i = 0; i < tree.nodesCount(); i++) {
-				int color = nodesColors[i];
+				int color = nodeColors[i];
 				Node state = ans.getState(color);
 				for (Transition t : tree.getNodes().get(i).getTransitions()) {
 					if (!state.hasTransition(t.getEvent(), t.getExpr())) {
-						int childColor = nodesColors[t.getDst().getNumber()];
+						int childColor = nodeColors[t.getDst().getNumber()];
 						state.addTransition(t.getEvent(), t.getExpr(),
-								t.getActions(), ans.getState(childColor));
+							t.getActions(), ans.getState(childColor));
 					}
 				}
 			}
@@ -104,11 +99,9 @@ public class QbfAutomatonBuilder {
 
 				if (!state.hasTransition(event, expr)) {
 					// add
-					state.addTransition(
-							event,
-							expr,
-							new StringActions(String.join(",",
-									properUniqieActions)), ans.getState(to));
+					state.addTransition(event, expr,
+						new StringActions(String.join(",",
+						properUniqieActions)), ans.getState(to));
 					logger.info("ADDING TRANSITION NOT FROM SCENARIOS");
 				} else {
 					// check
@@ -124,19 +117,8 @@ public class QbfAutomatonBuilder {
 				}
 			}
 
-			List<StringScenario> scenarios = new ArrayList<>();
-			for (String scenarioPath : scenarioPaths) {
-				scenarios.addAll(StringScenario.loadScenarios(scenarioPath));
-			}
-
-			if (scenarios.stream().allMatch(ans::isCompliesWithScenario)) {
-				logger.info("COMPLIES WITH SCENARIOS");
-			} else {
-				logger.severe("NOT COMPLIES WITH SCENARIOS");
-			}
-
 			return Optional.of(ans);
-		} catch (FileNotFoundException | ParseException e) {
+		} catch (ParseException e) {
 			e.printStackTrace();
 			return Optional.empty();
 		}

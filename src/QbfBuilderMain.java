@@ -1,6 +1,8 @@
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -21,6 +23,7 @@ import qbf.ltl.LtlNode;
 import qbf.ltl.LtlParseException;
 import qbf.ltl.LtlParser;
 import qbf.reduction.Solvers;
+import scenario.StringScenario;
 import structures.Automaton;
 import structures.ScenariosTree;
 import algorithms.QbfAutomatonBuilder;
@@ -37,7 +40,7 @@ public class QbfBuilderMain {
 	private String logFilePath;
 
 	@Option(name = "--result", aliases = { "-r" }, usage = "write result automaton in GV format to this file", metaVar = "<GV file>")
-	private String resultFilePath;
+	private String resultFilePath = "automaton.gv";
 
 	@Option(name = "--tree", aliases = { "-t" }, usage = "write scenarios tree in GV format to this file", metaVar = "<GV file>")
 	private String treeFilePath;
@@ -133,19 +136,45 @@ public class QbfBuilderMain {
 			long startTime = System.currentTimeMillis();
 			logger.info("Start building automaton");
 			Optional<Automaton> resultAutomaton = QbfAutomatonBuilder.build(logger, tree, formulae, size, depth, timeout,
-					Solvers.valueOf(qbfSolver), extractSubterms, isComplete, arguments);
+					Solvers.valueOf(qbfSolver), extractSubterms, isComplete);
 			double executionTime = (System.currentTimeMillis() - startTime) / 1000.;
 			
 			if (!resultAutomaton.isPresent()) {
 				logger.info("Automaton with " + size + " states NOT FOUND!");
 			} else {
 				logger.info("Automaton with " + size + " states WAS FOUND!");
-				if (resultFilePath != null) {
-					try (PrintWriter resultPrintWriter = new PrintWriter(new File(resultFilePath))) {
-						resultPrintWriter.println(resultAutomaton.get());
-					} catch (FileNotFoundException e) {
-						logger.warning("File " + resultFilePath + " not found: " + e.getMessage());
-					}
+				
+				// writing file
+				try (PrintWriter resultPrintWriter = new PrintWriter(new File(resultFilePath))) {
+					resultPrintWriter.println(resultAutomaton.get());
+				} catch (FileNotFoundException e) {
+					logger.warning("File " + resultFilePath + " not found: " + e.getMessage());
+				}
+				
+				// test compliance
+				List<StringScenario> scenarios = new ArrayList<>();
+				for (String scenarioPath : arguments) {
+					scenarios.addAll(StringScenario.loadScenarios(scenarioPath));
+				}
+				
+				if (scenarios.stream().allMatch(resultAutomaton.get()::isCompliesWithScenario)) {
+					logger.info("COMPLIES WITH SCENARIOS");
+				} else {
+					logger.severe("NOT COMPLIES WITH SCENARIOS");
+				}
+
+				// verification
+				String java7 = "/usr/lib/jvm/jdk1.7.0_45/bin/java";
+				String verifierStr = java7 + " -jar verifier.jar ../" + resultFilePath +  " " + size + " " + "../" + ltlFilePath;
+				Process verifier = Runtime.getRuntime().exec(verifierStr, new String[0], new File("./qbf"));
+				int verified;
+				try (BufferedReader input = new BufferedReader(new InputStreamReader(verifier.getInputStream()))) {
+					verified = (int) input.lines().count();
+				}
+				if (verified == formulae.size()) {
+					logger.info("VERIFIED");
+				} else {
+					logger.severe("NOT VERIFIED");
 				}
 			}
 			logger.info("Automaton builder execution time: " + executionTime);
