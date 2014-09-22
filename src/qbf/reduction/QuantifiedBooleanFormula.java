@@ -103,10 +103,10 @@ public class QuantifiedBooleanFormula {
 	
 	private static final String QDIMACS_FILENAME = "_tmp.qdimacs";
 	
-	private SolverResult depqbfSolve(Logger logger, int timeoutSeconds, QdimacsConversionInfo qdimacs) throws IOException {
+	private SolverResult depqbfSolve(Logger logger, int timeoutSeconds, QdimacsConversionInfo qdimacs, String params) throws IOException {
 		long time = System.currentTimeMillis();
 		List<Assignment> list = new ArrayList<>();
-		String depqbfStr = "depqbf --max-secs=" + timeoutSeconds + " --qdo " + QDIMACS_FILENAME;
+		String depqbfStr = "depqbf --max-secs=" + timeoutSeconds + " --qdo " + QDIMACS_FILENAME + " " + params;
 		logger.info(depqbfStr);
 		Process depqbf = Runtime.getRuntime().exec(depqbfStr);
 		try (BufferedReader input = new BufferedReader(new InputStreamReader(depqbf.getInputStream()))) {
@@ -134,13 +134,14 @@ public class QuantifiedBooleanFormula {
 		return properVars.equals(actualVars);
 	}
 	
-	private SolverResult skizzoSolve(Logger logger, int timeoutSeconds, QdimacsConversionInfo qdimacs) throws IOException {
+	private SolverResult skizzoSolve(Logger logger, int timeoutSeconds, QdimacsConversionInfo qdimacs, String params) throws IOException {
 		long time = System.currentTimeMillis();
 		List<Assignment> list = new ArrayList<>();
 		File skizzoLog = new File(QDIMACS_FILENAME + ".sKizzo.log");
 		File certificate = new File(QDIMACS_FILENAME + ".qdc");
 		
-		String skizzoStr = "sKizzo -log text -v 0 " + QDIMACS_FILENAME + " " + timeoutSeconds;
+		String skizzoStr = "sKizzo -log text -v 0 " + params + " "
+			+ QDIMACS_FILENAME + " " + timeoutSeconds;
 		logger.info(skizzoStr);
 		Process skizzo = Runtime.getRuntime().exec(skizzoStr);
 		int code;
@@ -169,7 +170,7 @@ public class QuantifiedBooleanFormula {
 			}
 			if (!certificate.exists()) {
 				logger.warning("NO CERTIFICATE PRODUCED BY OZZIKS, TRYING DEPQBF");
-				return depqbfSolve(logger, timeoutSeconds, qdimacs);
+				return depqbfSolve(logger, timeoutSeconds, qdimacs, "");
 			}
 			
 			try (BufferedReader input = new BufferedReader(new FileReader(certificate))) {
@@ -182,7 +183,7 @@ public class QuantifiedBooleanFormula {
 
 			if (!assignmentIsOk(list)) {
 				logger.warning("NOT ALL VARS ARE PRESENT IN CERTIFICATE, TRYING DEPQBF");
-				return depqbfSolve(logger, timeoutSeconds, qdimacs);
+				return depqbfSolve(logger, timeoutSeconds, qdimacs, "");
 			}
 			
 			return new SolverResult(list, (int) time);
@@ -199,7 +200,7 @@ public class QuantifiedBooleanFormula {
 		}
 	}
 	
-	public SolverResult solve(Logger logger, Solvers solver, int timeoutSeconds) throws IOException {
+	public SolverResult solve(Logger logger, Solvers solver, String solverParams, int timeoutSeconds) throws IOException {
 		QdimacsConversionInfo qdimacs = toQdimacs(logger);
 		logger.info("DIMACS CNF: " + qdimacs.info.title());
 		
@@ -212,9 +213,9 @@ public class QuantifiedBooleanFormula {
 		
 		switch (solver) {
 		case DEPQBF:
-			return depqbfSolve(logger, timeoutSeconds, qdimacs);
+			return depqbfSolve(logger, timeoutSeconds, qdimacs, solverParams);
 		case SKIZZO:
-			return skizzoSolve(logger, timeoutSeconds, qdimacs);
+			return skizzoSolve(logger, timeoutSeconds, qdimacs, solverParams);
 		default:
 			throw new AssertionError();
 		}

@@ -64,6 +64,9 @@ public class QbfBuilderMain {
 	@Option(name = "--qbfSolver", aliases = { "-qs" }, usage = "QBF solver (SKIZZO / DEPQBF)", metaVar = "<qbfSolver>")
 	private String qbfSolver = "SKIZZO";
 	
+	@Option(name = "--solverParams", aliases = { "-sp" }, usage = "Additional solver parameters", metaVar = "<solverParams>")
+	private String solverParams = "";
+	
 	@Option(name = "--timeout", aliases = { "-to" }, usage = "QBF solver timeout (sec)", metaVar = "<timeout>")
 	private int timeout = 60 * 60 * 24;
 		
@@ -136,7 +139,7 @@ public class QbfBuilderMain {
 			long startTime = System.currentTimeMillis();
 			logger.info("Start building automaton");
 			Optional<Automaton> resultAutomaton = QbfAutomatonBuilder.build(logger, tree, formulae, size, depth, timeout,
-					Solvers.valueOf(qbfSolver), extractSubterms, isComplete);
+					Solvers.valueOf(qbfSolver), solverParams, extractSubterms, isComplete);
 			double executionTime = (System.currentTimeMillis() - startTime) / 1000.;
 			
 			if (!resultAutomaton.isPresent()) {
