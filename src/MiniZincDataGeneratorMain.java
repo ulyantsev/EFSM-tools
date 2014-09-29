@@ -30,7 +30,7 @@ public class MiniZincDataGeneratorMain {
     private String logFilePath;
 
     @Option(name = "--output", aliases = {"-o"}, usage = "write result MiniZinc data file", metaVar = "<file>")
-    private String resultFilePath;
+    private String resultFilePath = "data.mzn";
 
     @Option(name = "--model", aliases = {"-m"}, usage = "model to import", metaVar = "<file>")
     private String modelFP;
@@ -81,10 +81,6 @@ public class MiniZincDataGeneratorMain {
 
         Map<Node, Set<Node>> adjacent = AdjacentCalculator.getAdjacent(tree);
 
-        if (resultFilePath == null) {
-            resultFilePath = "data.mzn";
-        }
-
         try {
             PrintWriter pw = new PrintWriter(resultFilePath);
             pw.println(getDataString(tree, adjacent));
@@ -97,13 +93,27 @@ public class MiniZincDataGeneratorMain {
     private String getDataString(ScenariosTree tree, Map<Node, Set<Node>> adjacent) {
         Transition[] incomingTransition = new Transition[tree.nodesCount()];
 
+        List<String> eventOrder = new ArrayList<String>();
         List<String> eventExprOrder = new ArrayList<String>();
         List<String> actionsOrder = new ArrayList<String>();
+        List<Integer> eventExprToEvent = new ArrayList<Integer>();
+        //List<Integer> eventExprVarsCount = new ArrayList<Integer>();
+        List<Integer> eventExprSatCount = new ArrayList<Integer>();
+
         for (Node node : tree.getNodes()) {
             for (Transition t : node.getTransitions()) {
+                if (!eventOrder.contains(t.getEvent())) {
+                    eventOrder.add(t.getEvent());
+                }
+
                 String eventExpr = t.getEvent() + "[" + t.getExpr().toString() + "]";
                 if (!eventExprOrder.contains(eventExpr)) {
                     eventExprOrder.add(eventExpr);
+                    eventExprToEvent.add(eventOrder.indexOf(t.getEvent()) + 1);
+                    int satCnt = t.getExpr().getSatisfiabilitySetsCount() *
+                            (1 << (tree.getVariablesCount() - t.getExpr().getVariablesCount()));
+                    eventExprSatCount.add(satCnt);
+                    //eventExprVarsCount.add(t.getExpr().getVariablesCount());
                 }
 
                 if (!actionsOrder.contains(t.getActions().toString())) {
@@ -113,14 +123,12 @@ public class MiniZincDataGeneratorMain {
                 incomingTransition[t.getDst().getNumber()] = t;
             }
         }
-        Collections.sort(eventExprOrder);
-        Collections.sort(actionsOrder);
+
 
         int adjacentPairs = 0;
         for (Set<Node> set : adjacent.values()) {
             adjacentPairs += set.size();
         }
-
 
         int[] events = new int[tree.nodesCount() - 1], actions = new int[tree.nodesCount() - 1],
                 parents = new int[tree.nodesCount() - 1];
@@ -128,7 +136,7 @@ public class MiniZincDataGeneratorMain {
             Transition t = incomingTransition[nodeNum];
 
             String eventExpr = t.getEvent() + "[" + t.getExpr().toString() + "]";
-            events[nodeNum - 1] = eventExprOrder.indexOf(eventExpr);
+            events[nodeNum - 1] = eventExprOrder.indexOf(eventExpr) + 1;
             actions[nodeNum - 1] = actionsOrder.indexOf(t.getActions().toString());
             parents[nodeNum - 1] = t.getSrc().getNumber();
         }
@@ -151,8 +159,15 @@ public class MiniZincDataGeneratorMain {
             sb.append("\";\n\n");
         }
 
-        sb.append(String.format("C = %d;\nV = %d;\nE = %d;\nA = %d;\nAE = %d;\n",
-                size, tree.nodesCount(), eventExprOrder.size(), actionsOrder.size(), adjacentPairs));
+        sb.append(String.format("C = %d;\n" +
+                "V = %d;\n" +
+                "E = %d;\n" +
+                "TE = %d;\n" +
+                "A = %d;\n" +
+                "AE = %d;\n" +
+                "TSC = %d;\n",
+                size, tree.nodesCount(), eventExprOrder.size(),
+                eventOrder.size(), actionsOrder.size(), adjacentPairs, 1 << tree.getVariablesCount()));
 
         sb.append("tree_event = ").append(Arrays.toString(events)).append(";\n");
         sb.append("tree_action = ").append(Arrays.toString(actions)).append(";\n");
@@ -171,6 +186,8 @@ public class MiniZincDataGeneratorMain {
         }
 
         sb.append("event_str = ").append(Arrays.toString(eventsArray)).append(";\n");
+        sb.append("ee_event = ").append(Arrays.toString(eventExprToEvent.toArray())).append(";\n");
+        sb.append("ee_sat_sets = ").append(Arrays.toString(eventExprSatCount.toArray())).append(";\n");
         sb.append("action_str = ").append(Arrays.toString(actionsArray)).append(";\n");
 
         return sb.toString();
