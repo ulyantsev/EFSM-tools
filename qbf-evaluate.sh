@@ -1,8 +1,10 @@
 #!/bin/bash
 
+echo "Compiling..."
+ant qbf-automaton-generator-jar
 echo "Evaluating..."
 solver=SKIZZO
-timeout=10
+timeout=15
 fsm="qbf/generated-fsm.gv"
 #suffix="false"
 suffix="true"

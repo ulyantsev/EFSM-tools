@@ -20,4 +20,16 @@ public class NotOperation extends BooleanFormula {
 	public String toString() {
 		return "!" + inside;
 	}
+
+	@Override
+	public BooleanFormula substitute(BooleanVariable v, BooleanFormula replacement) {
+		return inside.substitute(v, replacement).not();
+	}
+	
+	@Override
+	public BooleanFormula simplify() {
+		BooleanFormula insideSimpl = inside.simplify();
+		return insideSimpl == TrueFormula.INSTANCE ? FalseFormula.INSTANCE
+			 : insideSimpl == FalseFormula.INSTANCE ? TrueFormula.INSTANCE : this;
+	}
 }

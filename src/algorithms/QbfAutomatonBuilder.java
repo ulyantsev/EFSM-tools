@@ -33,7 +33,7 @@ public class QbfAutomatonBuilder {
 	public static Optional<Automaton> build(Logger logger, ScenariosTree tree,
 			List<LtlNode> formulae, int colorSize, int depth,
 			int timeoutSeconds, Solvers solver, String solverParams, boolean extractSubterms,
-			boolean complete) throws IOException {
+			boolean complete, boolean useSat) throws IOException {
 		// delete files from the previous run
 		Arrays.stream(new File(".").listFiles())
 			.filter(f -> f.getName().contains("_tmp."))
@@ -41,7 +41,12 @@ public class QbfAutomatonBuilder {
 
 		QuantifiedBooleanFormula qbf = new QbfFormulaBuilder(logger, tree,
 			formulae, colorSize, depth, extractSubterms, complete).getFormula();
-		SolverResult ass = qbf.solve(logger, solver, solverParams, timeoutSeconds);
+		
+		
+		SolverResult ass = useSat
+				? qbf.solveAsSat(logger, solver, solverParams, timeoutSeconds)
+				: qbf.solve(logger, solver, solverParams, timeoutSeconds);
+
 		logger.info(ass.toString().split("\n")[0]);
 
 		if (ass.type() != SolverResults.SAT) {

@@ -70,6 +70,9 @@ public class QbfBuilderMain {
 	@Option(name = "--timeout", aliases = { "-to" }, usage = "QBF solver timeout (sec)", metaVar = "<timeout>")
 	private int timeout = 60 * 60 * 24;
 		
+	@Option(name = "--useSAT", aliases = { "-us" }, handler = BooleanOptionHandler.class,
+			usage = "whether to generate and solve the Boolean formula of exponential size of k instead", metaVar = "<useSat>")
+	private boolean useSat;
 	
 	private void launcher(String[] args) throws IOException {
 		Locale.setDefault(Locale.US);
@@ -139,7 +142,7 @@ public class QbfBuilderMain {
 			long startTime = System.currentTimeMillis();
 			logger.info("Start building automaton");
 			Optional<Automaton> resultAutomaton = QbfAutomatonBuilder.build(logger, tree, formulae, size, depth, timeout,
-					Solvers.valueOf(qbfSolver), solverParams, extractSubterms, isComplete);
+					Solvers.valueOf(qbfSolver), solverParams, extractSubterms, isComplete, useSat);
 			double executionTime = (System.currentTimeMillis() - startTime) / 1000.;
 			
 			if (!resultAutomaton.isPresent()) {

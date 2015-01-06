@@ -351,7 +351,7 @@ public class QbfFormulaBuilder {
 		
 		LtlNode formulaToCheck = formulaToCheck();
 		logger.info(formulaToCheck.toString());
-		FormulaList constraints = scenarioConstraints();
+		BooleanFormula scenarioConstraints = scenarioConstraints().assemble();
 		
 		BooleanFormula pathIsCorrect = BinaryOperation.and(sigmaVar(0, 0), aTerm(), bTerm(), cTerm(), dTerm());
 		
@@ -374,10 +374,13 @@ public class QbfFormulaBuilder {
 			subtermEquations.add(name.equivalent(expansion));
 		});
 		
-		constraints.add(BinaryOperation.or(Arrays.asList(subtermEquations.assemble().not(),
-			pathIsCorrect.not(), pathFormula.not()), "main QBF constraint"));
+		BooleanFormula mainQbfConstraint = BinaryOperation.or(Arrays.asList(
+				subtermEquations.assemble().not(),
+				pathIsCorrect.not(),
+				pathFormula.not()
+		),"main QBF constraint");
 
-		return new QuantifiedBooleanFormula(existVars, forallVars, constraints.assemble());
+		return new QuantifiedBooleanFormula(existVars, forallVars, scenarioConstraints, mainQbfConstraint);
 	}
 
 	// not more than one state/event in the same place of the path

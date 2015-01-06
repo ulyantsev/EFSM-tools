@@ -26,19 +26,25 @@ import qbf.reduction.SolverResult.SolverResults;
 public class QuantifiedBooleanFormula {
 	private final List<BooleanVariable> existVars;
 	private final List<BooleanVariable> forallVars;
-	private final BooleanFormula formula;
+	private final BooleanFormula formulaExist; // the part which does not use forall-variables
+	private final BooleanFormula formulaTheRest;
 
-	public QuantifiedBooleanFormula(List<BooleanVariable> existVars, List<BooleanVariable> forallVars, BooleanFormula formula) {
+	private BooleanFormula formula() {
+		return formulaExist.and(formulaTheRest);
+	}
+	
+	public QuantifiedBooleanFormula(List<BooleanVariable> existVars, List<BooleanVariable> forallVars, BooleanFormula formulaExist, BooleanFormula formulaTheRest) {
 		this.existVars = existVars;
 		this.forallVars = forallVars;
-		this.formula = formula;
+		this.formulaExist = formulaExist;
+		this.formulaTheRest = formulaTheRest;
 	}
 	
 	@Override
 	public String toString() {
 		List<BooleanVariable> e = existVars.stream().sorted().collect(Collectors.toList());
 		List<BooleanVariable> a = forallVars.stream().sorted().collect(Collectors.toList());
-		return "EXIST\n" + e + "\nFORALL\n" + a + "\n" + formula;
+		return "EXIST\n" + e + "\nFORALL\n" + a + "\n" + formula();
 	}
 	
 	private static class QdimacsConversionInfo {
@@ -48,10 +54,6 @@ public class QuantifiedBooleanFormula {
 		public QdimacsConversionInfo(String qdimacsString, DimacsConversionInfo info) {
 			this.qdimacsString = qdimacsString;
 			this.info = info;
-		}
-		
-		public Optional<Integer> toLimbooleNumber(int num) {
-			return info.toLimbooleNumber(num);
 		}
 	}
 	
@@ -67,7 +69,7 @@ public class QuantifiedBooleanFormula {
 	
 	public QdimacsConversionInfo toQdimacs(Logger logger) throws IOException {
 		StringBuilder sb = new StringBuilder();
-		DimacsConversionInfo info = formula.toDimacs(logger);
+		DimacsConversionInfo info = formula().toDimacs(logger);
 		
 		sb.append(info.title() + "\n");
 		sb.append("e " + varsToNumbers(existVars, info) + " 0\n");
@@ -91,13 +93,13 @@ public class QuantifiedBooleanFormula {
 		return nums.toString().replaceAll("[\\[\\],]", "");
 	}
 
-	private Optional<Assignment> fromDimacsToken(String token, QdimacsConversionInfo qdimacs) {
+	private Optional<Assignment> fromDimacsToken(String token, DimacsConversionInfo dimacs) {
 		boolean isTrue = token.charAt(0) != '-';
 		if (!isTrue) {
 			token = token.substring(1);
 		}
 		int dimacsIndex = Integer.parseInt(token);
-		Optional<Integer> limbooleIndex = qdimacs.toLimbooleNumber(dimacsIndex);
+		Optional<Integer> limbooleIndex = dimacs.toLimbooleNumber(dimacsIndex);
 		return limbooleIndex.map(index -> new Assignment(BooleanVariable.getVarByNumber(index), isTrue));
 	}
 	
@@ -113,7 +115,7 @@ public class QuantifiedBooleanFormula {
 			input.lines().filter(s -> s.startsWith("V")).forEach(line -> {
 				String[] tokens = line.split(" ");
 				assert tokens.length == 3 && tokens[2].equals("0");
-				fromDimacsToken(tokens[1], qdimacs).ifPresent(list::add);
+				fromDimacsToken(tokens[1], qdimacs.info).ifPresent(list::add);
 			});
 		}
 		time = System.currentTimeMillis() - time;
@@ -176,7 +178,7 @@ public class QuantifiedBooleanFormula {
 			try (BufferedReader input = new BufferedReader(new FileReader(certificate))) {
 				input.lines().filter(s -> s.startsWith("v")).forEach(certificateLine ->
 					Arrays.stream(certificateLine.split(" ")).skip(1).forEach(token ->
-						fromDimacsToken(token, qdimacs).ifPresent(list::add)
+						fromDimacsToken(token, qdimacs.info).ifPresent(list::add)
 					)
 				);
 			}
@@ -218,6 +220,77 @@ public class QuantifiedBooleanFormula {
 			return skizzoSolve(logger, timeoutSeconds, qdimacs, solverParams);
 		default:
 			throw new AssertionError();
+		}
+	}
+	
+	// recursive
+	private void findAllAssignments(int pos, Set<BooleanVariable> currentTrueVariables, List<String> listToAppend) {
+		if (pos == forallVars.size()) {
+			BooleanFormula formulaToAppend = formulaTheRest;
+			for (BooleanVariable v : forallVars) {
+				formulaToAppend = formulaToAppend.substitute(v, currentTrueVariables.contains(v) ?
+						TrueFormula.INSTANCE : FalseFormula.INSTANCE);
+			}
+			formulaToAppend = formulaToAppend.simplify();
+			listToAppend.add(formulaToAppend.toLimbooleString().replace(" ", ""));
+		} else {
+			BooleanVariable currentVar = forallVars.get(pos);
+			// false
+			findAllAssignments(pos + 1, currentTrueVariables, listToAppend);
+			currentTrueVariables.add(currentVar);
+			// true
+			findAllAssignments(pos + 1, currentTrueVariables, listToAppend);
+			currentTrueVariables.remove(currentVar);
+		}
+	}
+	
+	/*
+	 * Produce an equivalent Boolean formula as a Limboole string.
+	 * The size of the formula is exponential of forallVars.size().
+	 */
+	private String flatten(Logger logger) {
+		List<String> mainList = new ArrayList<>();
+		logger.info("Number of 'forall' variables: " + forallVars.size());
+		logger.info("List of 'forall' variables: " + forallVars);
+		logger.info("Initial 'inner' SAT formula length: " + formulaTheRest.toLimbooleString().length());
+		findAllAssignments(0, new TreeSet<>(), mainList);
+		return formulaExist.toLimbooleString().replace(" ", "")
+				+ "&" + String.join("&", mainList);
+	}
+	
+	public SolverResult solveAsSat(Logger logger, Solvers solver, String solverParams, int timeoutSeconds) throws IOException {
+		String flatFormula = flatten(logger);
+		logger.info("Final SAT formula length: " + flatFormula.length());
+		DimacsConversionInfo info = BooleanFormula.toDimacs(flatFormula, logger);
+		final String dimaxFilename = "_tmp.dimacs";
+		try (PrintWriter pw = new PrintWriter(dimaxFilename)) {
+			pw.print(info.title() + "\n" + info.output());
+		}
+		logger.info("CREATED DIMACS FILE");
+		
+		long time = System.currentTimeMillis();
+		List<Assignment> list = new ArrayList<>();
+		String solverStr = "cryptominisat --maxtime=" + timeoutSeconds + " " + dimaxFilename + " " + solverParams;
+		logger.info(solverStr);
+		Process depqbf = Runtime.getRuntime().exec(solverStr);
+		
+		try (BufferedReader input = new BufferedReader(new InputStreamReader(depqbf.getInputStream()))) {
+			input.lines().filter(s -> s.startsWith("v")).forEach(certificateLine ->
+				Arrays.stream(certificateLine.split(" ")).skip(1).forEach(token ->
+					fromDimacsToken(token, info).ifPresent(list::add)
+				)
+			);
+		}
+		
+		time = System.currentTimeMillis() - time;
+		
+		if (list.isEmpty()) {
+			return new SolverResult(time >= timeoutSeconds * 1000 ? SolverResults.UNKNOWN : SolverResults.UNSAT, (int) time);
+		} else if (assignmentIsOk(list)) {
+			return new SolverResult(list, (int) time);
+		} else {
+			assert false;
+			return null;
 		}
 	}
 }

@@ -19,4 +19,14 @@ public class TrueFormula extends BooleanFormula {
 	public String toString() {
 		return "TRUE";
 	}
+
+	@Override
+	public BooleanFormula substitute(BooleanVariable v, BooleanFormula replacement) {
+		return this;
+	}
+	
+	@Override
+	public BooleanFormula simplify() {
+		return this;
+	}
 }

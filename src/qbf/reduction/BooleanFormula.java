@@ -64,14 +64,12 @@ public abstract class BooleanFormula {
 	
 	public abstract String toLimbooleString();
 	
-	public DimacsConversionInfo toDimacs(Logger logger) throws IOException {
+	public static DimacsConversionInfo toDimacs(String limbooleFormula, Logger logger) throws IOException {
 		final String beforeLimbooleFilename = "_tmp.limboole";
 		DimacsConversionInfo info = new DimacsConversionInfo();
 
-		final String limbooleInput = toLimbooleString();
-		
 		try (PrintWriter pw = new PrintWriter(beforeLimbooleFilename)) {
-			pw.print(limbooleInput);
+			pw.print(limbooleFormula);
 		}
 		
 		if (!USE_COPROCESSOR) {
@@ -120,6 +118,10 @@ public abstract class BooleanFormula {
 		return info;
 	}
 	
+	public DimacsConversionInfo toDimacs(Logger logger) throws IOException {
+		return toDimacs(toLimbooleString(), logger);
+	}
+	
 	public BooleanFormula not() {
 		return new NotOperation(this);
 	}
@@ -139,4 +141,12 @@ public abstract class BooleanFormula {
 	public BooleanFormula equivalent(BooleanFormula other) {
 		return new BinaryOperation(this, other, BinaryOperations.EQ);
 	}
+	
+	public abstract BooleanFormula substitute(BooleanVariable v, BooleanFormula replacement);
+	
+	/*
+	 * Remove TRUE and FALSE.
+	 */
+	public abstract BooleanFormula simplify();
+
 }

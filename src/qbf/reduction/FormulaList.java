@@ -33,6 +33,10 @@ public class FormulaList {
 		list.addAll(f);
 	}
 	
+	public void removeLast() {
+		list.remove(list.size() - 1);
+	}
+	
 	public boolean isEmpty() {
 		return list.isEmpty();
 	}

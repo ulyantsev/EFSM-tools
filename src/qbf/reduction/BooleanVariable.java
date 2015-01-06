@@ -64,4 +64,14 @@ public class BooleanVariable extends BooleanFormula implements Comparable<Boolea
 	public int compareTo(BooleanVariable o) {
 		return toString().compareTo(o.toString());
 	}
+
+	@Override
+	public BooleanFormula substitute(BooleanVariable v, BooleanFormula replacement) {
+		return name.equals(v.name) ? replacement : this;
+	}
+	
+	@Override
+	public BooleanFormula simplify() {
+		return this;
+	}
 }
