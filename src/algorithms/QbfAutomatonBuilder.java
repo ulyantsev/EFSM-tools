@@ -40,11 +40,11 @@ public class QbfAutomatonBuilder {
 			.forEach(File::delete);
 
 		QuantifiedBooleanFormula qbf = new QbfFormulaBuilder(logger, tree,
-			formulae, colorSize, depth, extractSubterms, complete).getFormula();
+			formulae, colorSize, depth, extractSubterms, complete).getFormula(useSat);
 		
 		
 		SolverResult ass = useSat
-				? qbf.solveAsSat(logger, solver, solverParams, timeoutSeconds)
+				? qbf.solveAsSat(tree, colorSize, depth, logger, solver, solverParams, timeoutSeconds)
 				: qbf.solve(logger, solver, solverParams, timeoutSeconds);
 
 		logger.info(ass.toString().split("\n")[0]);

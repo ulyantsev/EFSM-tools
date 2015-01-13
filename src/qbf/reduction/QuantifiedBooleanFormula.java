@@ -20,8 +20,10 @@ import java.util.TreeSet;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+import bool.MyBooleanExpression;
 import qbf.reduction.BooleanFormula.DimacsConversionInfo;
 import qbf.reduction.SolverResult.SolverResults;
+import structures.ScenariosTree;
 
 public class QuantifiedBooleanFormula {
 	private final List<BooleanVariable> existVars;
@@ -224,23 +226,58 @@ public class QuantifiedBooleanFormula {
 	}
 	
 	// recursive
-	private void findAllAssignments(int pos, Set<BooleanVariable> currentTrueVariables, List<String> listToAppend) {
-		if (pos == forallVars.size()) {
-			BooleanFormula formulaToAppend = formulaTheRest;
-			for (BooleanVariable v : forallVars) {
-				formulaToAppend = formulaToAppend.substitute(v, currentTrueVariables.contains(v) ?
-						TrueFormula.INSTANCE : FalseFormula.INSTANCE);
-			}
-			formulaToAppend = formulaToAppend.simplify();
+	/*
+	 * Enumerates 2^exponentialAssignmentVars.size() variable values.
+	 */
+	private static void findAllAssignmentsOther(int pos, BooleanVariable[] otherAssignmentVars,
+			BooleanFormula formulaToAppend, List<String> listToAppend) {
+		if (pos == otherAssignmentVars.length) {
 			listToAppend.add(formulaToAppend.toLimbooleString().replace(" ", ""));
 		} else {
-			BooleanVariable currentVar = forallVars.get(pos);
-			// false
-			findAllAssignments(pos + 1, currentTrueVariables, listToAppend);
-			currentTrueVariables.add(currentVar);
-			// true
-			findAllAssignments(pos + 1, currentTrueVariables, listToAppend);
-			currentTrueVariables.remove(currentVar);
+			BooleanVariable currentVar = otherAssignmentVars[pos];
+			findAllAssignmentsOther(pos + 1, otherAssignmentVars,
+					formulaToAppend.substitute(currentVar, FalseFormula.INSTANCE).simplify(), listToAppend);
+			findAllAssignmentsOther(pos + 1, otherAssignmentVars,
+					formulaToAppend.substitute(currentVar, TrueFormula.INSTANCE).simplify(), listToAppend);
+		}
+	}
+	
+	// recursive
+	/*
+	 * Equivalent to constrains sigma_0_0 = 0 and A_1 and A_2 and B.
+	 */
+	private void findAllAssignmentsSigmaEps(ScenariosTree tree, int statesNum, int k, int j, BooleanFormula formulaToAppend,
+			List<String> listToAppend) {
+		if (j == k + 1) {
+			List<BooleanVariable> otherAssignmentVars = forallVars.stream()
+					.filter(v -> !v.name.startsWith("sigma") && !v.name.startsWith("eps"))
+					.collect(Collectors.toList());
+			findAllAssignmentsOther(0, otherAssignmentVars.toArray(new BooleanVariable[otherAssignmentVars.size()]),
+					formulaToAppend, listToAppend);
+		} else {
+			int iMax = (k == 0 ? 0 : statesNum);
+			for (int i = 0; i < iMax; i++) {
+				BooleanFormula curFormula1 = formulaToAppend.substitute(BooleanVariable.byName("sigma", i, j).get(),
+						TrueFormula.INSTANCE);
+				for (int iOther = 0; iOther < statesNum; iOther++) {
+					curFormula1 = curFormula1.substitute(BooleanVariable.byName("sigma", iOther, j).get(),
+							FalseFormula.INSTANCE);
+				}
+				for (String event : tree.getEvents()) {
+					for (MyBooleanExpression f : tree.getPairsEventExpression().get(event)) {
+						BooleanFormula curFormula2 = curFormula1.substitute(BooleanVariable.byName("eps", event, f, j).get(),
+								TrueFormula.INSTANCE);
+						for (String eventOther : tree.getEvents()) {
+							for (MyBooleanExpression fOther : tree.getPairsEventExpression().get(eventOther)) {
+								curFormula2 = curFormula2.substitute(BooleanVariable.byName("eps", eventOther, fOther, j).get(),
+										FalseFormula.INSTANCE);
+							}
+						}
+						// recursive call
+						findAllAssignmentsSigmaEps(tree, statesNum, k, j + 1, curFormula2.simplify(), listToAppend);
+					}
+				}
+			}
 		}
 	}
 	
@@ -248,18 +285,25 @@ public class QuantifiedBooleanFormula {
 	 * Produce an equivalent Boolean formula as a Limboole string.
 	 * The size of the formula is exponential of forallVars.size().
 	 */
-	private String flatten(Logger logger) {
+	private String flatten(ScenariosTree tree, int statesNum, int k, Logger logger) {
 		List<String> mainList = new ArrayList<>();
 		logger.info("Number of 'forall' variables: " + forallVars.size());
 		logger.info("List of 'forall' variables: " + forallVars);
 		logger.info("Initial 'inner' SAT formula length: " + formulaTheRest.toLimbooleString().length());
-		findAllAssignments(0, new TreeSet<>(), mainList);
+		
+		long time = System.currentTimeMillis();
+		
+		findAllAssignmentsSigmaEps(tree, statesNum, k, 0, formulaTheRest, mainList);
+		
+		time = System.currentTimeMillis() - time;
+		logger.info("Formula generation time: " + time + " ms.");
+		
 		return formulaExist.toLimbooleString().replace(" ", "")
 				+ "&" + String.join("&", mainList);
 	}
 	
-	public SolverResult solveAsSat(Logger logger, Solvers solver, String solverParams, int timeoutSeconds) throws IOException {
-		String flatFormula = flatten(logger);
+	public SolverResult solveAsSat(ScenariosTree tree, int statesNum, int k, Logger logger, Solvers solver, String solverParams, int timeoutSeconds) throws IOException {
+		String flatFormula = flatten(tree, statesNum, k, logger);
 		logger.info("Final SAT formula length: " + flatFormula.length());
 		DimacsConversionInfo info = BooleanFormula.toDimacs(flatFormula, logger);
 		final String dimaxFilename = "_tmp.dimacs";

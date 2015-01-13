@@ -341,7 +341,7 @@ public class QbfFormulaBuilder {
 		return f;
 	}
 	
-	public QuantifiedBooleanFormula getFormula() {
+	public QuantifiedBooleanFormula getFormula(boolean forFurtherSatReduction) {
 		addColorVars(); // exist
 		addTransitionVars(); // exist
 		
@@ -353,7 +353,9 @@ public class QbfFormulaBuilder {
 		logger.info(formulaToCheck.toString());
 		BooleanFormula scenarioConstraints = scenarioConstraints().assemble();
 		
-		BooleanFormula pathIsCorrect = BinaryOperation.and(sigmaVar(0, 0), aTerm(), bTerm(), cTerm(), dTerm());
+		BooleanFormula pathIsCorrect = forFurtherSatReduction
+				? cTerm().and(dTerm())
+				: BinaryOperation.and(sigmaVar(0, 0), aTerm(), bTerm(), cTerm(), dTerm());
 		
 		FormulaList cyclicPathFormula = new FormulaList(BinaryOperations.OR);
 		for (int l = 0; l <= k; l++) {

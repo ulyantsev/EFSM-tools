@@ -170,7 +170,7 @@ public class QbfBuilderMain {
 				}
 
 				// verification
-				String java7 = "/usr/lib/jvm/jdk1.7.0_45/bin/java";
+				String java7 = "/usr/lib/jvm/jdk7/bin/java";
 				String verifierStr = java7 + " -jar verifier.jar ../" + resultFilePath +  " " + size + " " + "../" + ltlFilePath;
 				Process verifier = Runtime.getRuntime().exec(verifierStr, new String[0], new File("./qbf"));
 				int verified;
