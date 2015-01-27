@@ -162,7 +162,8 @@ public class QbfBuilderMain {
 					? QbfAutomatonBuilder.build(logger, tree, formulae, size, depth, timeout,
 							solver, solverParams, extractSubterms, isComplete, ss == SolvingStrategy.SAT)
 					: ss == SolvingStrategy.ITERATIVE_SAT
-					? IterativeAutomatonBuilder.build(logger, tree, size, solverParams, isComplete, timeout)
+					? IterativeAutomatonBuilder.build(logger, tree, size, solverParams, isComplete,
+							timeout, resultFilePath, ltlFilePath, formulae)
 					: null;
 			double executionTime = (System.currentTimeMillis() - startTime) / 1000.;
 			

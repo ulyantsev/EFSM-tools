@@ -20,7 +20,7 @@ import java.util.logging.Logger;
 import org.apache.commons.lang3.tuple.Pair;
 
 public abstract class BooleanFormula {
-	private static final boolean USE_COPROCESSOR = true;
+	private static final boolean USE_COPROCESSOR = false;
 	
 	public static Optional<Assignment> fromDimacsToken(String token, DimacsConversionInfo dimacs) {
 		boolean isTrue = token.charAt(0) != '-';
@@ -190,5 +190,9 @@ public abstract class BooleanFormula {
 	 * Remove TRUE and FALSE.
 	 */
 	public abstract BooleanFormula simplify();
+	
+	public static BooleanFormula fromBoolean(boolean value) {
+		return value ? TrueFormula.INSTANCE : FalseFormula.INSTANCE;
+	}
 
 }

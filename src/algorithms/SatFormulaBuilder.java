@@ -51,6 +51,10 @@ public class SatFormulaBuilder {
 		return BooleanVariable.byName("y", from, to, event, f).get();
 	}
 	
+	private BooleanVariable zVar(int from, String action, String event, MyBooleanExpression f) {
+		return BooleanVariable.byName("z", from, action, event, f).get();
+	}
+	
 	private void addColorVars() {
 		// color variables x_#node_color
 		for (Node node : tree.getNodes()) {
@@ -110,6 +114,54 @@ public class SatFormulaBuilder {
 			}
 		}
 		return constraints.assemble("scenario constraints: each tree node has at most one color");
+	}
+	
+	// if there exists z, then it exists for some transition (unnecessary if completeness is enabled)
+	private BooleanFormula actionTransitionExistenceConstraints() {
+		FormulaList constraints = new FormulaList(BinaryOperations.AND);
+		
+		for (int i1 = 0; i1 < colorSize; i1++) {
+			for (String action : actions) {
+				for (String event : events) {
+					for (MyBooleanExpression f : pairsEventExpression.get(event)) {
+						FormulaList options = new FormulaList(BinaryOperations.OR);
+						for (int i2 = 0; i2 < colorSize; i2++) {
+							options.add(yVar(i1, i2, event, f));
+						}
+						constraints.add(zVar(i1, action, event, f).implies(options.assemble()));
+					}
+				}
+			}
+		}
+		
+		return constraints.assemble("additional scenario constraints: if there exists z, then it exists for some transition");
+	}
+	
+	// z's are consistent with scenarios
+	private BooleanFormula actionScenarioConsistencyConstraints() {
+		FormulaList constraints = new FormulaList(BinaryOperations.AND);
+		
+		for (Node node : tree.getNodes()) {
+			FormulaList options = new FormulaList(BinaryOperations.OR);
+			for (int i = 0; i < colorSize; i++) {
+				FormulaList zConstraints = new FormulaList(BinaryOperations.AND);
+				zConstraints.add(xVar(node.getNumber(), i));
+				for (Transition t : node.getTransitions()) {
+					List<String> actionSequence = Arrays.asList(t.getActions().getActions());
+					for (String action : actions) {
+						BooleanFormula f = zVar(i, action, t.getEvent(), t.getExpr());
+						if (!actionSequence.contains(action)) {
+							f = f.not();
+						}
+						zConstraints.add(f);
+					}
+				}
+				options.add(zConstraints.assemble());
+			}
+			constraints.add(options.assemble());
+		}
+
+		return constraints.assemble("additional scenario constraints: z's are consistent with scenarios");
 	}
 	
 	private BooleanFormula consistencyConstraints() {
@@ -192,7 +244,10 @@ public class SatFormulaBuilder {
 		return constraints.assemble("induce a complete FSM");
 	}
 	
-	private FormulaList scenarioConstraints() {
+	public BooleanFormula getFormula() {
+		addColorVars();
+		addTransitionVars();
+		
 		FormulaList constraints = new FormulaList(BinaryOperations.AND);
 		// first node has color 0
 		constraints.add(xVar(0, 0));
@@ -204,16 +259,12 @@ public class SatFormulaBuilder {
 		
 		// TODO add BFS constraints
 		
+		constraints.add(actionScenarioConsistencyConstraints());
 		if (eventCompleteness) {
 			constraints.add(eventCompletenessConstraints());
+		} else {
+			constraints.add(actionTransitionExistenceConstraints());
 		}
-		
-		return constraints;
-	}
-	
-	public BooleanFormula getFormula() {
-		addColorVars();
-		addTransitionVars();
-		return scenarioConstraints().assemble();
+		return constraints.assemble();
 	}
 }
