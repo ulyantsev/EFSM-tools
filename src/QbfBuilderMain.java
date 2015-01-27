@@ -1,8 +1,6 @@
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -19,6 +17,8 @@ import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 import org.kohsuke.args4j.spi.BooleanOptionHandler;
 
+import qbf.SolvingStrategy;
+import qbf.Verifier;
 import qbf.ltl.LtlNode;
 import qbf.ltl.LtlParseException;
 import qbf.ltl.LtlParser;
@@ -26,6 +26,7 @@ import qbf.reduction.Solvers;
 import scenario.StringScenario;
 import structures.Automaton;
 import structures.ScenariosTree;
+import algorithms.IterativeAutomatonBuilder;
 import algorithms.QbfAutomatonBuilder;
 
 public class QbfBuilderMain {
@@ -61,7 +62,7 @@ public class QbfBuilderMain {
 			usage = "whether subterms should be extracted to separate variables", metaVar = "<extractSubterms>")
 	private boolean extractSubterms;
 	
-	@Option(name = "--qbfSolver", aliases = { "-qs" }, usage = "QBF solver (SKIZZO / DEPQBF)", metaVar = "<qbfSolver>")
+	@Option(name = "--qbfSolver", aliases = { "-qs" }, usage = "QBF solver (SKIZZO / DEPQBF) (only for QSAT strategy)", metaVar = "<qbfSolver>")
 	private String qbfSolver = "SKIZZO";
 	
 	@Option(name = "--solverParams", aliases = { "-sp" }, usage = "Additional solver parameters", metaVar = "<solverParams>")
@@ -69,10 +70,9 @@ public class QbfBuilderMain {
 	
 	@Option(name = "--timeout", aliases = { "-to" }, usage = "QBF solver timeout (sec)", metaVar = "<timeout>")
 	private int timeout = 60 * 60 * 24;
-		
-	@Option(name = "--useSAT", aliases = { "-us" }, handler = BooleanOptionHandler.class,
-			usage = "whether to generate and solve the Boolean formula of exponential size of k instead", metaVar = "<useSat>")
-	private boolean useSat;
+	
+	@Option(name = "--strategy", aliases = { "-str" }, usage = "solving mode: QSAT, EXP_SAT, ITERATIVE_SAT, BRANCHES_BOUNDS", metaVar = "<strategy>")
+	private String strategy = "QSAT";
 	
 	private void launcher(String[] args) throws IOException {
 		Locale.setDefault(Locale.US);
@@ -141,8 +141,29 @@ public class QbfBuilderMain {
 			
 			long startTime = System.currentTimeMillis();
 			logger.info("Start building automaton");
-			Optional<Automaton> resultAutomaton = QbfAutomatonBuilder.build(logger, tree, formulae, size, depth, timeout,
-					Solvers.valueOf(qbfSolver), solverParams, extractSubterms, isComplete, useSat);
+			
+			SolvingStrategy ss;
+			try {
+				ss = SolvingStrategy.valueOf(strategy);
+			} catch (IllegalArgumentException e) {
+				logger.warning(strategy + " is not a valid solving strategy.");
+				return;
+			}
+			
+			Solvers solver;
+			try {
+				solver = Solvers.valueOf(qbfSolver);
+			} catch (IllegalArgumentException e) {
+				logger.warning(qbfSolver + " is not a valid QBF solver.");
+				return;
+			}
+			
+			Optional<Automaton> resultAutomaton = ss == SolvingStrategy.QSAT || ss == SolvingStrategy.SAT
+					? QbfAutomatonBuilder.build(logger, tree, formulae, size, depth, timeout,
+							solver, solverParams, extractSubterms, isComplete, ss == SolvingStrategy.SAT)
+					: ss == SolvingStrategy.ITERATIVE_SAT
+					? IterativeAutomatonBuilder.build(logger, tree, size, solverParams, isComplete, timeout)
+					: null;
 			double executionTime = (System.currentTimeMillis() - startTime) / 1000.;
 			
 			if (!resultAutomaton.isPresent()) {
@@ -170,18 +191,7 @@ public class QbfBuilderMain {
 				}
 
 				// verification
-				String java7 = "/usr/lib/jvm/jdk7/bin/java";
-				String verifierStr = java7 + " -jar verifier.jar ../" + resultFilePath +  " " + size + " " + "../" + ltlFilePath;
-				Process verifier = Runtime.getRuntime().exec(verifierStr, new String[0], new File("./qbf"));
-				int verified;
-				try (BufferedReader input = new BufferedReader(new InputStreamReader(verifier.getInputStream()))) {
-					verified = (int) input.lines().count();
-				}
-				if (verified == formulae.size()) {
-					logger.info("VERIFIED");
-				} else {
-					logger.severe("NOT VERIFIED");
-				}
+				Verifier.verify(resultFilePath, ltlFilePath, size, formulae, logger);
 			}
 			logger.info("Automaton builder execution time: " + executionTime);
 		} catch (ParseException | LtlParseException e) {

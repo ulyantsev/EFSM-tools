@@ -20,6 +20,8 @@ import java.util.TreeSet;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.tuple.Pair;
+
 import bool.MyBooleanExpression;
 import qbf.reduction.BooleanFormula.DimacsConversionInfo;
 import qbf.reduction.SolverResult.SolverResults;
@@ -95,16 +97,6 @@ public class QuantifiedBooleanFormula {
 		return nums.toString().replaceAll("[\\[\\],]", "");
 	}
 
-	private Optional<Assignment> fromDimacsToken(String token, DimacsConversionInfo dimacs) {
-		boolean isTrue = token.charAt(0) != '-';
-		if (!isTrue) {
-			token = token.substring(1);
-		}
-		int dimacsIndex = Integer.parseInt(token);
-		Optional<Integer> limbooleIndex = dimacs.toLimbooleNumber(dimacsIndex);
-		return limbooleIndex.map(index -> new Assignment(BooleanVariable.getVarByNumber(index), isTrue));
-	}
-	
 	private static final String QDIMACS_FILENAME = "_tmp.qdimacs";
 	
 	private SolverResult depqbfSolve(Logger logger, int timeoutSeconds, QdimacsConversionInfo qdimacs, String params) throws IOException {
@@ -117,7 +109,7 @@ public class QuantifiedBooleanFormula {
 			input.lines().filter(s -> s.startsWith("V")).forEach(line -> {
 				String[] tokens = line.split(" ");
 				assert tokens.length == 3 && tokens[2].equals("0");
-				fromDimacsToken(tokens[1], qdimacs.info).ifPresent(list::add);
+				BooleanFormula.fromDimacsToken(tokens[1], qdimacs.info).ifPresent(list::add);
 			});
 		}
 		time = System.currentTimeMillis() - time;
@@ -180,7 +172,7 @@ public class QuantifiedBooleanFormula {
 			try (BufferedReader input = new BufferedReader(new FileReader(certificate))) {
 				input.lines().filter(s -> s.startsWith("v")).forEach(certificateLine ->
 					Arrays.stream(certificateLine.split(" ")).skip(1).forEach(token ->
-						fromDimacsToken(token, qdimacs.info).ifPresent(list::add)
+						BooleanFormula.fromDimacsToken(token, qdimacs.info).ifPresent(list::add)
 					)
 				);
 			}
@@ -301,32 +293,12 @@ public class QuantifiedBooleanFormula {
 		return formulaExist.toLimbooleString().replace(" ", "")
 				+ "&" + String.join("&", mainList);
 	}
-	
-	public SolverResult solveAsSat(ScenariosTree tree, int statesNum, int k, Logger logger, Solvers solver, String solverParams, int timeoutSeconds) throws IOException {
+
+	public SolverResult solveAsSat(ScenariosTree tree, int statesNum, int k, Logger logger, String solverParams, int timeoutSeconds) throws IOException {
 		String flatFormula = flatten(tree, statesNum, k, logger);
-		logger.info("Final SAT formula length: " + flatFormula.length());
-		DimacsConversionInfo info = BooleanFormula.toDimacs(flatFormula, logger);
-		final String dimaxFilename = "_tmp.dimacs";
-		try (PrintWriter pw = new PrintWriter(dimaxFilename)) {
-			pw.print(info.title() + "\n" + info.output());
-		}
-		logger.info("CREATED DIMACS FILE");
-		
-		long time = System.currentTimeMillis();
-		List<Assignment> list = new ArrayList<>();
-		String solverStr = "cryptominisat --maxtime=" + timeoutSeconds + " " + dimaxFilename + " " + solverParams;
-		logger.info(solverStr);
-		Process depqbf = Runtime.getRuntime().exec(solverStr);
-		
-		try (BufferedReader input = new BufferedReader(new InputStreamReader(depqbf.getInputStream()))) {
-			input.lines().filter(s -> s.startsWith("v")).forEach(certificateLine ->
-				Arrays.stream(certificateLine.split(" ")).skip(1).forEach(token ->
-					fromDimacsToken(token, info).ifPresent(list::add)
-				)
-			);
-		}
-		
-		time = System.currentTimeMillis() - time;
+		Pair<List<Assignment>, Long> solution = BooleanFormula.solveAsSat(flatFormula, logger, solverParams, timeoutSeconds);
+		List<Assignment> list = solution.getLeft();
+		long time = solution.getRight();
 		
 		if (list.isEmpty()) {
 			return new SolverResult(time >= timeoutSeconds * 1000 ? SolverResults.UNKNOWN : SolverResults.UNSAT, (int) time);

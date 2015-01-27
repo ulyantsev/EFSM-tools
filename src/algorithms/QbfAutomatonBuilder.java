@@ -42,9 +42,8 @@ public class QbfAutomatonBuilder {
 		QuantifiedBooleanFormula qbf = new QbfFormulaBuilder(logger, tree,
 			formulae, colorSize, depth, extractSubterms, complete).getFormula(useSat);
 		
-		
 		SolverResult ass = useSat
-				? qbf.solveAsSat(tree, colorSize, depth, logger, solver, solverParams, timeoutSeconds)
+				? qbf.solveAsSat(tree, colorSize, depth, logger, solverParams, timeoutSeconds)
 				: qbf.solve(logger, solver, solverParams, timeoutSeconds);
 
 		logger.info(ass.toString().split("\n")[0]);
@@ -93,20 +92,20 @@ public class QbfAutomatonBuilder {
 
 				Node state = ans.getState(from);
 
-				List<String> properUniqieActions = new ArrayList<>();
+				List<String> properUniqueActions = new ArrayList<>();
 				for (Assignment az : ass.list()) {
 					if (az.value && az.var.name.startsWith("z_" + from + "_")
 							&& az.var.name.endsWith("_" + event + "_" + expr)) {
-						properUniqieActions.add(az.var.name.split("_")[2]);
+						properUniqueActions.add(az.var.name.split("_")[2]);
 					}
 				}
-				Collections.sort(properUniqieActions);
+				Collections.sort(properUniqueActions);
 
 				if (!state.hasTransition(event, expr)) {
 					// add
 					state.addTransition(event, expr,
 						new StringActions(String.join(",",
-						properUniqieActions)), ans.getState(to));
+						properUniqueActions)), ans.getState(to));
 					logger.info("ADDING TRANSITION NOT FROM SCENARIOS");
 				} else {
 					// check
@@ -116,7 +115,7 @@ public class QbfAutomatonBuilder {
 					}
 					List<String> actualActions = new ArrayList<>(new TreeSet<>(
 							Arrays.asList(t.getActions().getActions())));
-					if (!actualActions.equals(properUniqieActions)) {
+					if (!actualActions.equals(properUniqueActions)) {
 						logger.severe("ACTIONS DO NOT MATCH");
 					}
 				}

@@ -9,13 +9,55 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Logger;
 
+import org.apache.commons.lang3.tuple.Pair;
+
 public abstract class BooleanFormula {
 	private static final boolean USE_COPROCESSOR = true;
+	
+	public static Optional<Assignment> fromDimacsToken(String token, DimacsConversionInfo dimacs) {
+		boolean isTrue = token.charAt(0) != '-';
+		if (!isTrue) {
+			token = token.substring(1);
+		}
+		int dimacsIndex = Integer.parseInt(token);
+		Optional<Integer> limbooleIndex = dimacs.toLimbooleNumber(dimacsIndex);
+		return limbooleIndex.map(index -> new Assignment(BooleanVariable.getVarByNumber(index), isTrue));
+	}
+	
+	public static Pair<List<Assignment>, Long> solveAsSat(String formula, Logger logger, String solverParams, int timeoutSeconds) throws IOException {
+		logger.info("Final SAT formula length: " + formula.length());
+		DimacsConversionInfo info = BooleanFormula.toDimacs(formula, logger);
+		final String dimaxFilename = "_tmp.dimacs";
+		try (PrintWriter pw = new PrintWriter(dimaxFilename)) {
+			pw.print(info.title() + "\n" + info.output());
+		}
+		logger.info("CREATED DIMACS FILE");
+		
+		long time = System.currentTimeMillis();
+		List<Assignment> list = new ArrayList<>();
+		String solverStr = "cryptominisat --maxtime=" + timeoutSeconds + " " + dimaxFilename + " " + solverParams;
+		logger.info(solverStr);
+		Process depqbf = Runtime.getRuntime().exec(solverStr);
+		
+		try (BufferedReader input = new BufferedReader(new InputStreamReader(depqbf.getInputStream()))) {
+			input.lines().filter(s -> s.startsWith("v")).forEach(certificateLine ->
+				Arrays.stream(certificateLine.split(" ")).skip(1).forEach(token ->
+					fromDimacsToken(token, info).ifPresent(list::add)
+				)
+			);
+		}
+		
+		time = System.currentTimeMillis() - time;
+		return Pair.of(list, time);
+	}
 	
 	public static class DimacsConversionInfo {
 		private final StringBuilder dimacsBuilder = new StringBuilder();
