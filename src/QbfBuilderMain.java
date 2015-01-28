@@ -74,6 +74,10 @@ public class QbfBuilderMain {
 	@Option(name = "--strategy", aliases = { "-str" }, usage = "solving mode: QSAT, EXP_SAT, ITERATIVE_SAT, BRANCHES_BOUNDS", metaVar = "<strategy>")
 	private String strategy = "QSAT";
 	
+	@Option(name = "--bfsConstraints", aliases = { "-bfs" }, handler = BooleanOptionHandler.class,
+			usage = "include symmetry breaking BFS constraints")
+	private boolean bfsConstraints;
+	
 	private void launcher(String[] args) throws IOException {
 		Locale.setDefault(Locale.US);
 
@@ -160,10 +164,10 @@ public class QbfBuilderMain {
 			
 			Optional<Automaton> resultAutomaton = ss == SolvingStrategy.QSAT || ss == SolvingStrategy.SAT
 					? QbfAutomatonBuilder.build(logger, tree, formulae, size, depth, timeout,
-							solver, solverParams, extractSubterms, isComplete, ss == SolvingStrategy.SAT)
+							solver, solverParams, extractSubterms, isComplete, ss == SolvingStrategy.SAT, bfsConstraints)
 					: ss == SolvingStrategy.ITERATIVE_SAT
 					? IterativeAutomatonBuilder.build(logger, tree, size, solverParams, isComplete,
-							timeout, resultFilePath, ltlFilePath, formulae)
+							timeout, resultFilePath, ltlFilePath, formulae, bfsConstraints)
 					: null;
 			double executionTime = (System.currentTimeMillis() - startTime) / 1000.;
 			

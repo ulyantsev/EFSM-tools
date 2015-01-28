@@ -11,7 +11,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -61,8 +61,8 @@ public abstract class BooleanFormula {
 	
 	public static class DimacsConversionInfo {
 		private final StringBuilder dimacsBuilder = new StringBuilder();
-		private final Map<Integer, Integer> limbooleNumberToDimacs = new HashMap<>();
-		private final Map<Integer, Integer> dimacsNumberToLimboole = new HashMap<>();
+		private final Map<Integer, Integer> limbooleNumberToDimacs = new LinkedHashMap<>();
+		private final Map<Integer, Integer> dimacsNumberToLimboole = new LinkedHashMap<>();
 		private String title;
 		private Integer varCount;
 
@@ -108,34 +108,29 @@ public abstract class BooleanFormula {
 	
 	public static DimacsConversionInfo toDimacs(String limbooleFormula, Logger logger) throws IOException {
 		final String beforeLimbooleFilename = "_tmp.limboole";
-		DimacsConversionInfo info = new DimacsConversionInfo();
-
+		final DimacsConversionInfo info = new DimacsConversionInfo();
+		final String afterLimbooleFilename = "_tmp.after.limboole.dimacs";
+		
 		try (PrintWriter pw = new PrintWriter(beforeLimbooleFilename)) {
 			pw.print(limbooleFormula);
 		}
 		
+		final String limbooleStr = "limboole -d -s -o " + afterLimbooleFilename + " " + beforeLimbooleFilename;
+		logger.info(limbooleStr);
+		final Process limboole = Runtime.getRuntime().exec(limbooleStr);
+		try {
+			limboole.waitFor();
+		} catch (InterruptedException e) {
+			throw new AssertionError();
+		}
+		
 		if (!USE_COPROCESSOR) {
-			final String limbooleStr = "limboole -d -s " + beforeLimbooleFilename;
-			logger.info(limbooleStr);
-			Process p = Runtime.getRuntime().exec(limbooleStr);
-			try (BufferedReader input = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
+			try (BufferedReader input = new BufferedReader(new InputStreamReader(new FileInputStream(afterLimbooleFilename)))) {
 				input.lines().forEach(info::acceptLine);
 			}
 		} else {
-			final String afterLimbooleFilename = "_tmp.after.limboole.dimacs";
-			
 			final String mapFilename = "_tmp.map";
 			final String whiteVarFilename = "_tmp.white.var";
-			
-			// transforming formula to DIMACS
-			final String limbooleStr = "limboole -d -s -o " + afterLimbooleFilename + " " + beforeLimbooleFilename;
-			logger.info(limbooleStr);
-			Process limboole = Runtime.getRuntime().exec(limbooleStr);
-			try {
-				limboole.waitFor();
-			} catch (InterruptedException e) {
-				throw new AssertionError();
-			}
 			
 			// obtaining variable name mapping
 			try (BufferedReader input = new BufferedReader(new InputStreamReader(new FileInputStream(afterLimbooleFilename)))) {

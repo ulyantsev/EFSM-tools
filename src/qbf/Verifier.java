@@ -9,6 +9,10 @@ import java.util.logging.Logger;
 
 import qbf.ltl.LtlNode;
 
+/**
+ * (c) Igor Buzhinsky
+ */
+
 public class Verifier {
 	public static boolean verify(String resultFilePath, String ltlFilePath, int size, List<LtlNode> formulae, Logger logger) throws IOException {
 		final String java7 = "/usr/lib/jvm/jdk7/bin/java";
