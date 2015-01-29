@@ -1,0 +1,26 @@
+# generated file, don't try to modify
+# command: dot -Tpng <filename> > tree.png
+digraph Automaton {
+    node [shape = circle];
+    0 [style = "bold"];
+    0 -> 1 [label = "A [1] (z0, z2) "];
+    0 -> 5 [label = "B [1] (z0, z2) "];
+    1 -> 2 [label = "A [1] (z0, z2) "];
+    1 -> 9 [label = "B [1] (z1, z1) "];
+    2 -> 3 [label = "A [1] (z0) "];
+    2 -> 4 [label = "B [1] (z2, z2, z1) "];
+    3 -> 4 [label = "A [1] (z1, z2) "];
+    3 -> 3 [label = "B [1] (z1, z1) "];
+    4 -> 5 [label = "A [1] (z0) "];
+    4 -> 7 [label = "B [1] (z1, z1, z1) "];
+    5 -> 6 [label = "A [1] (z0) "];
+    5 -> 9 [label = "B [1] (z0) "];
+    6 -> 7 [label = "A [1] (z0, z1, z0) "];
+    6 -> 0 [label = "B [1] (z0, z2) "];
+    7 -> 8 [label = "A [1] (z0) "];
+    7 -> 3 [label = "B [1] (z2, z1, z1) "];
+    8 -> 9 [label = "A [1] (z2, z1, z2) "];
+    8 -> 5 [label = "B [1] (z2) "];
+    9 -> 0 [label = "A [1] (z2) "];
+    9 -> 6 [label = "B [1] (z1, z1, z1) "];
+}

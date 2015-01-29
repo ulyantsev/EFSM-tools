@@ -24,61 +24,67 @@ import structures.Automaton;
 import structures.ScenariosTree;
 
 public class IterativeAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
-	private static Pair<Optional<Automaton>, List<Assignment>> automatonFromFormula(BooleanFormula bf, Logger logger, String solverParams, int timeoutSeconds, ScenariosTree tree, int colorSize) throws IOException {
+	private static Pair<Optional<Automaton>, List<Assignment>> automatonFromFormula(BooleanFormula bf, Logger logger, String solverParams,
+			int timeoutSeconds, ScenariosTree tree, int colorSize) throws IOException {
 		deleteTrash();
 		try (PrintWriter pw = new PrintWriter("_tmp.pretty")) {
 			pw.print(bf.toString());
 		}
-		String strBf = bf.toLimbooleString();
-		Pair<List<Assignment>, Long> solution = BooleanFormula.solveAsSat(strBf, logger, solverParams, timeoutSeconds);
-		List<Assignment> list = solution.getLeft();
-		long time = solution.getRight();
+		final String strBf = bf.toLimbooleString();
+		final Pair<List<Assignment>, Long> solution = BooleanFormula.solveAsSat(strBf, logger, solverParams, timeoutSeconds);
+		final List<Assignment> list = solution.getLeft();
+		final long time = solution.getRight();
 		
-		SolverResult ass = list.isEmpty()
+		final SolverResult ass = list.isEmpty()
 			? new SolverResult(time >= timeoutSeconds * 1000 ? SolverResults.UNKNOWN : SolverResults.UNSAT, (int) time)
 			: new SolverResult(list, (int) time);
 		logger.info(ass.toString().split("\n")[0]);
 
-		return Pair.of(ass.type() != SolverResults.SAT ?
-				Optional.empty() : constructAutomatonFromAssignment(logger, ass, tree, colorSize), list);
+		return Pair.of(ass.type() != SolverResults.SAT
+				? Optional.empty()
+				: constructAutomatonFromAssignment(logger, ass, tree, colorSize), list
+		);
 	}
 	
-	public static Optional<Automaton> build(Logger logger, ScenariosTree tree, int colorSize, String solverParams, boolean complete, int timeoutSeconds,
-			String resultFilePath, String ltlFilePath, List<LtlNode> formulae, boolean bfsConstraints) throws IOException {
-		BooleanFormula initialBf = new SatFormulaBuilder(tree, colorSize, complete, bfsConstraints).getFormula();
-		FormulaList additionalConstraints = new FormulaList(BinaryOperations.AND);
+	public static Optional<Automaton> build(Logger logger, ScenariosTree tree, int colorSize, String solverParams, boolean complete,
+			int timeoutSeconds, String resultFilePath, String ltlFilePath, List<LtlNode> formulae, boolean bfsConstraints) throws IOException {
+		final BooleanFormula initialBf = new SatFormulaBuilder(tree, colorSize, complete, bfsConstraints).getFormula();
+		final FormulaList additionalConstraints = new FormulaList(BinaryOperations.AND);
 		
-		Optional<Automaton> fsm = Optional.empty();
-		int iterations = 0;
-		while (true) {
+		Optional<Automaton> automaton = Optional.empty();
+		final long time = System.currentTimeMillis();
+		for (int iterations = 0; (System.currentTimeMillis() - time) < timeoutSeconds * 1000; iterations++) {
 			iterations++;
 			BooleanFormula actualFormula = initialBf.and(additionalConstraints.assemble());
-			Pair<Optional<Automaton>, List<Assignment>> p = automatonFromFormula(actualFormula, logger, solverParams, timeoutSeconds, tree, colorSize);
-			fsm = p.getLeft();
-			if (fsm.isPresent()) {// writing file
+			final int secondsLeft = timeoutSeconds - (int) (System.currentTimeMillis() - time) / 1000 + 1;
+			final Pair<Optional<Automaton>, List<Assignment>> p = automatonFromFormula(actualFormula, logger, solverParams,
+					secondsLeft, tree, colorSize);
+			automaton = p.getLeft();
+			if (automaton.isPresent()) {
+				System.out.println(automaton.get());
 				try (PrintWriter resultPrintWriter = new PrintWriter(new File(resultFilePath))) {
-					resultPrintWriter.println(fsm);
+					resultPrintWriter.println(automaton);
 				} catch (FileNotFoundException e) {
 					logger.warning("File " + resultFilePath + " not found: " + e.getMessage());
 				}
 				if (Verifier.verify(resultFilePath, ltlFilePath, colorSize, formulae, logger)) {
-					logger.info("Iterations: " + iterations);
-					return fsm;
+					logger.info("ITERATIONS: " + iterations);
+					return automaton;
 				}
-				List<Assignment> assList = p.getRight().stream()
+				final List<Assignment> assList = p.getRight().stream()
 						.filter(ass -> !ass.var.name.startsWith("x"))
 						.collect(Collectors.toList());
-				System.out.println(assList.stream().filter(x -> x.value).map(x -> x.var)
-						.collect(Collectors.toList()));
-				List<BooleanFormula> constraints = assList.stream()
+				final List<BooleanFormula> constraints = assList.stream()
 						.map(ass -> ass.value ? ass.var : ass.var.not())
 						.collect(Collectors.toList());
 				additionalConstraints.add(BinaryOperation.and(constraints).not());
 			} else {
 				// no solution
-				logger.info("Iterations: " + iterations);
-				return fsm;
+				logger.info("ITERATIONS: " + iterations);
+				return automaton;
 			}
 		}
+		logger.info("TOTAL TIME LIMIT EXCEEDED, ANSWER IS UNKNOWN.");
+		return Optional.empty();
 	}
 }

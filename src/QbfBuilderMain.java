@@ -32,7 +32,7 @@ import algorithms.QbfAutomatonBuilder;
 public class QbfBuilderMain {
 
 	@Argument(usage = "paths to files with scenarios", metaVar = "files", required = true)
-	private List<String> arguments = new ArrayList<String>();
+	private List<String> arguments = new ArrayList<>();
 
 	@Option(name = "--size", aliases = { "-s" }, usage = "automaton size", metaVar = "<size>", required = true)
 	private int size;
@@ -40,18 +40,18 @@ public class QbfBuilderMain {
 	@Option(name = "--log", aliases = { "-l" }, usage = "write log to this file", metaVar = "<file>")
 	private String logFilePath;
 
-	@Option(name = "--result", aliases = { "-r" }, usage = "write result automaton in GV format to this file", metaVar = "<GV file>")
+	@Option(name = "--result", aliases = { "-r" }, usage = "write result automaton in GV format to this file",
+			metaVar = "<GV file>")
 	private String resultFilePath = "automaton.gv";
 
-	@Option(name = "--tree", aliases = { "-t" }, usage = "write scenarios tree in GV format to this file", metaVar = "<GV file>")
+	@Option(name = "--tree", aliases = { "-t" }, usage = "write scenarios tree in GV format to this file",
+			metaVar = "<GV file>")
 	private String treeFilePath;
 
 	@Option(name = "--complete", aliases = { "-c" }, handler = BooleanOptionHandler.class,
 			usage = "generate automaton which has a transition for all (event, expression) pairs")
 	private boolean isComplete;
 
-	
-	// FOR QBF
 	@Option(name = "--ltl", aliases = { "-lt" }, usage = "file with LTL properties", metaVar = "<file>")
 	private String ltlFilePath;
 
@@ -59,24 +59,32 @@ public class QbfBuilderMain {
 	private int depth = 0;
 	
 	@Option(name = "--extractSubterms", aliases = { "-es" }, handler = BooleanOptionHandler.class,
-			usage = "whether subterms should be extracted to separate variables", metaVar = "<extractSubterms>")
+			usage = "whether subterms should be extracted to separate variables (only for QSAT strategy)",
+			metaVar = "<extractSubterms>")
 	private boolean extractSubterms;
 	
-	@Option(name = "--qbfSolver", aliases = { "-qs" }, usage = "QBF solver (SKIZZO / DEPQBF) (only for QSAT strategy)", metaVar = "<qbfSolver>")
+	@Option(name = "--qbfSolver", aliases = { "-qs" }, usage = "QBF solver: SKIZZO or DEPQBF (only for QSAT strategy)",
+			metaVar = "<qbfSolver>")
 	private String qbfSolver = "SKIZZO";
 	
-	@Option(name = "--solverParams", aliases = { "-sp" }, usage = "Additional solver parameters", metaVar = "<solverParams>")
+	@Option(name = "--solverParams", aliases = { "-sp" }, usage = "additional solver parameters", metaVar = "<solverParams>")
 	private String solverParams = "";
 	
-	@Option(name = "--timeout", aliases = { "-to" }, usage = "QBF solver timeout (sec)", metaVar = "<timeout>")
+	@Option(name = "--timeout", aliases = { "-to" }, usage = "solver timeout (sec)", metaVar = "<timeout>")
 	private int timeout = 60 * 60 * 24;
 	
-	@Option(name = "--strategy", aliases = { "-str" }, usage = "solving mode: QSAT, EXP_SAT, ITERATIVE_SAT, BRANCHES_BOUNDS", metaVar = "<strategy>")
+	@Option(name = "--strategy", aliases = { "-str" }, usage = "solving mode: QSAT, EXP_SAT, ITERATIVE_SAT, BRANCHES_BOUNDS",
+			metaVar = "<strategy>")
 	private String strategy = "QSAT";
 	
 	@Option(name = "--bfsConstraints", aliases = { "-bfs" }, handler = BooleanOptionHandler.class,
 			usage = "include symmetry breaking BFS constraints")
 	private boolean bfsConstraints;
+	
+	@Option(name = "--useCoprocessor", aliases = { "-cp" }, handler = BooleanOptionHandler.class,
+			usage = "use the 'coprocessor' tool to simplify the formula before QBF solver execution (only for QSAT strategy)")
+	private boolean useCoprocessor;
+	
 	
 	private void launcher(String[] args) throws IOException {
 		Locale.setDefault(Locale.US);
@@ -85,8 +93,8 @@ public class QbfBuilderMain {
 		try {
 			parser.parseArgument(args);
 		} catch (CmdLineException e) {
-			System.out.println("TODO description");
-			System.out.println("Author: Vladimir Ulyantsev (ulyantsev@rain.ifmo.ru)\n");
+			System.out.println("QBF (QSAT) automaton builder from scenarios and LTL formulae");
+			System.out.println("Authors: Vladimir Ulyantsev (ulyantsev@rain.ifmo.ru), Igor Buzhinsky (igor.buzhinsky@gmail.com)\n");
 			System.out.print("Usage: ");
 			parser.printSingleLineUsage(System.out);
 			System.out.println();
@@ -164,7 +172,8 @@ public class QbfBuilderMain {
 			
 			Optional<Automaton> resultAutomaton = ss == SolvingStrategy.QSAT || ss == SolvingStrategy.SAT
 					? QbfAutomatonBuilder.build(logger, tree, formulae, size, depth, timeout,
-							solver, solverParams, extractSubterms, isComplete, ss == SolvingStrategy.SAT, bfsConstraints)
+							solver, solverParams, extractSubterms, isComplete, ss == SolvingStrategy.SAT,
+							bfsConstraints, useCoprocessor)
 					: ss == SolvingStrategy.ITERATIVE_SAT
 					? IterativeAutomatonBuilder.build(logger, tree, size, solverParams, isComplete,
 							timeout, resultFilePath, ltlFilePath, formulae, bfsConstraints)
@@ -196,7 +205,12 @@ public class QbfBuilderMain {
 				}
 
 				// verification
-				Verifier.verify(resultFilePath, ltlFilePath, size, formulae, logger);
+				boolean verified = Verifier.verify(resultFilePath, ltlFilePath, size, formulae, logger);
+				if (verified) {
+					logger.info("VERIFIED");
+				} else {
+					logger.severe("NOT VERIFIED");
+				}
 			}
 			logger.info("Automaton builder execution time: " + executionTime);
 		} catch (ParseException | LtlParseException e) {

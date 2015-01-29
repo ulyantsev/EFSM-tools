@@ -71,9 +71,9 @@ public class QuantifiedBooleanFormula {
 		return nums.toString().replaceAll("[,\\[\\]]", "");
 	}
 	
-	public QdimacsConversionInfo toQdimacs(Logger logger) throws IOException {
+	public QdimacsConversionInfo toQdimacs(Logger logger, boolean useCoprocessor) throws IOException {
 		StringBuilder sb = new StringBuilder();
-		DimacsConversionInfo info = formula().toDimacs(logger);
+		DimacsConversionInfo info = formula().toDimacs(logger, useCoprocessor);
 		
 		sb.append(info.title() + "\n");
 		sb.append("e " + varsToNumbers(existVars, info) + " 0\n");
@@ -196,8 +196,8 @@ public class QuantifiedBooleanFormula {
 		}
 	}
 	
-	public SolverResult solve(Logger logger, Solvers solver, String solverParams, int timeoutSeconds) throws IOException {
-		QdimacsConversionInfo qdimacs = toQdimacs(logger);
+	public SolverResult solve(Logger logger, Solvers solver, String solverParams, int timeoutSeconds, boolean useCoprocessor) throws IOException {
+		QdimacsConversionInfo qdimacs = toQdimacs(logger, useCoprocessor);
 		logger.info("DIMACS CNF: " + qdimacs.info.title());
 		
 		try (PrintWriter pw = new PrintWriter(QDIMACS_FILENAME)) {

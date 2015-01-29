@@ -3,7 +3,7 @@
 echo "Generating FSMs, scenarios and LTL formulas..."
 mkdir -p testing
 rm -f testing/*
-for ((size = 2; size <= 4; size++)); do
+for ((size = 2; size <= 10; size++)); do
     for ((events = 2; events <= 5; events++)); do
         for ((actions = 2; actions <= 5; actions++)); do
             name="testing/fsm_${size}s${events}e${actions}a"

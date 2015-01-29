@@ -1,1 +1,1 @@
-X(X(F(G(U((wasAction(co.z1)) , (wasAction(co.z3)))))))
+F(G((!(wasAction(co.z4))) || ((wasAction(co.z0)) and (wasAction(co.z3))) || ((!(wasAction(co.z0))) and (!(wasAction(co.z3))))))

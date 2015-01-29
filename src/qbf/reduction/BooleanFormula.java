@@ -20,8 +20,6 @@ import java.util.logging.Logger;
 import org.apache.commons.lang3.tuple.Pair;
 
 public abstract class BooleanFormula {
-	private static final boolean USE_COPROCESSOR = false;
-	
 	public static Optional<Assignment> fromDimacsToken(String token, DimacsConversionInfo dimacs) {
 		boolean isTrue = token.charAt(0) != '-';
 		if (!isTrue) {
@@ -34,7 +32,7 @@ public abstract class BooleanFormula {
 	
 	public static Pair<List<Assignment>, Long> solveAsSat(String formula, Logger logger, String solverParams, int timeoutSeconds) throws IOException {
 		logger.info("Final SAT formula length: " + formula.length());
-		DimacsConversionInfo info = BooleanFormula.toDimacs(formula, logger);
+		DimacsConversionInfo info = BooleanFormula.toDimacs(formula, logger, false);
 		final String dimaxFilename = "_tmp.dimacs";
 		try (PrintWriter pw = new PrintWriter(dimaxFilename)) {
 			pw.print(info.title() + "\n" + info.output());
@@ -43,11 +41,12 @@ public abstract class BooleanFormula {
 		
 		long time = System.currentTimeMillis();
 		List<Assignment> list = new ArrayList<>();
-		String solverStr = "cryptominisat --maxtime=" + timeoutSeconds + " " + dimaxFilename + " " + solverParams;
+		final int maxtime = Math.max(2, timeoutSeconds); // cryptominisat does not accept time=1
+		String solverStr = "cryptominisat --maxtime=" + maxtime + " " + dimaxFilename + " " + solverParams;
 		logger.info(solverStr);
-		Process depqbf = Runtime.getRuntime().exec(solverStr);
+		Process p = Runtime.getRuntime().exec(solverStr);
 		
-		try (BufferedReader input = new BufferedReader(new InputStreamReader(depqbf.getInputStream()))) {
+		try (BufferedReader input = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
 			input.lines().filter(s -> s.startsWith("v")).forEach(certificateLine ->
 				Arrays.stream(certificateLine.split(" ")).skip(1).forEach(token ->
 					fromDimacsToken(token, info).ifPresent(list::add)
@@ -106,7 +105,7 @@ public abstract class BooleanFormula {
 	
 	public abstract String toLimbooleString();
 	
-	public static DimacsConversionInfo toDimacs(String limbooleFormula, Logger logger) throws IOException {
+	public static DimacsConversionInfo toDimacs(String limbooleFormula, Logger logger, boolean useCoprocessor) throws IOException {
 		final String beforeLimbooleFilename = "_tmp.limboole";
 		final DimacsConversionInfo info = new DimacsConversionInfo();
 		final String afterLimbooleFilename = "_tmp.after.limboole.dimacs";
@@ -124,7 +123,7 @@ public abstract class BooleanFormula {
 			throw new AssertionError();
 		}
 		
-		if (!USE_COPROCESSOR) {
+		if (!useCoprocessor) {
 			try (BufferedReader input = new BufferedReader(new InputStreamReader(new FileInputStream(afterLimbooleFilename)))) {
 				input.lines().forEach(info::acceptLine);
 			}
@@ -155,8 +154,8 @@ public abstract class BooleanFormula {
 		return info;
 	}
 	
-	public DimacsConversionInfo toDimacs(Logger logger) throws IOException {
-		return toDimacs(toLimbooleString(), logger);
+	public DimacsConversionInfo toDimacs(Logger logger, boolean useCoprocessor) throws IOException {
+		return toDimacs(toLimbooleString(), logger, useCoprocessor);
 	}
 	
 	public BooleanFormula not() {

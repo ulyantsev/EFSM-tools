@@ -1,0 +1,1 @@
+!(F(((wasAction(co.z0)) and (!(X(wasAction(co.z1))))) || ((!(wasAction(co.z0))) and (X(wasAction(co.z1))))))

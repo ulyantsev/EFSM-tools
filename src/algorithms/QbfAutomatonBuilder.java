@@ -21,14 +21,14 @@ public class QbfAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 	public static Optional<Automaton> build(Logger logger, ScenariosTree tree,
 			List<LtlNode> formulae, int colorSize, int depth,
 			int timeoutSeconds, Solvers solver, String solverParams, boolean extractSubterms,
-			boolean complete, boolean useSat, boolean bfsConstraints) throws IOException {
+			boolean complete, boolean useSat, boolean bfsConstraints, boolean useCoprocessor) throws IOException {
 		deleteTrash();
 		QuantifiedBooleanFormula qbf = new QbfFormulaBuilder(logger, tree,
 			formulae, colorSize, depth, extractSubterms, complete, bfsConstraints).getFormula(useSat);
 		
 		SolverResult ass = useSat
 				? qbf.solveAsSat(tree, colorSize, depth, logger, solverParams, timeoutSeconds)
-				: qbf.solve(logger, solver, solverParams, timeoutSeconds);
+				: qbf.solve(logger, solver, solverParams, timeoutSeconds, useCoprocessor);
 
 		logger.info(ass.toString().split("\n")[0]);
 

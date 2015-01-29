@@ -1,1 +1,1 @@
-!(F(X(F(wasAction(co.z3)))))
+!(F((!(wasEvent(ep.A))) || (R((false) , (!(wasEvent(ep.C)))))))
