@@ -14,7 +14,7 @@ import actions.StringActions;
 public class StringScenario {
     
     public static List<StringScenario> loadScenarios(String filepath) throws ParseException, FileNotFoundException {
-        List<StringScenario> ans = new ArrayList<StringScenario>();
+        List<StringScenario> ans = new ArrayList<>();
         
         Scanner in = new Scanner(new File(filepath));
 
@@ -39,11 +39,11 @@ public class StringScenario {
     
     boolean isPositive;
     
-    private ArrayList<String> events = new ArrayList<String>();
+    private ArrayList<String> events = new ArrayList<>();
     
-    private ArrayList<MyBooleanExpression> expressions = new ArrayList<MyBooleanExpression>();
+    private ArrayList<MyBooleanExpression> expressions = new ArrayList<>();
     
-    private ArrayList<StringActions> actions = new ArrayList<StringActions>();
+    private ArrayList<StringActions> actions = new ArrayList<>();
     
     public StringScenario(boolean isPositive,
                           ArrayList<String> events,
@@ -56,9 +56,9 @@ public class StringScenario {
     									events.size() + " " + expressions.size() + " " + actions.size());
     	}
 
-    	this.events = new ArrayList<String>(events);
-    	this.expressions = new ArrayList<MyBooleanExpression>(expressions);
-    	this.actions = new ArrayList<StringActions>(actions);
+    	this.events = new ArrayList<>(events);
+    	this.expressions = new ArrayList<>(expressions);
+    	this.actions = new ArrayList<>(actions);
     }
     
     public StringScenario(String input, String output) throws ParseException {

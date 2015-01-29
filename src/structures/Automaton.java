@@ -9,13 +9,12 @@ import bool.MyBooleanExpression;
 import scenario.StringScenario;
 
 public class Automaton {
-    private Node startState;
-
-    private List<Node> states;
+    private final Node startState;
+    private final List<Node> states;
 
     public Automaton(int statesCount) {
         this.startState = new Node(0);
-        this.states = new ArrayList<Node>();
+        this.states = new ArrayList<>();
         this.states.add(startState);
         for (int i = 1; i < statesCount; i++) {
             this.states.add(new Node(i));
@@ -100,20 +99,22 @@ public class Automaton {
     }
 
     public String toString() {
-        String res = "# generated file, don't try to modify\n";
-        res += "# command: dot -Tpng <filename> > tree.png\n";
-        res += "digraph Automaton {\n";
-        res += "    node [shape = circle];\n";
-        res += "    0 [style = \"bold\"];\n";
+    	StringBuilder sb = new StringBuilder();
+    	sb.append("# generated file, don't try to modify\n"
+        	+ "# command: dot -Tpng <filename> > tree.png\n"
+        	+ "digraph Automaton {\n"
+        	+ "    node [shape = circle];\n"
+        	+ "    0 [style = \"bold\"];\n");
 
         for (Node state : states) {
             for (Transition t : state.getTransitions()) {
-                res += "    " + t.getSrc().getNumber() + " -> " + t.getDst().getNumber();
-                res += " [label = \"" + t.getEvent() + " [" + t.getExpr().toString() + "] (" + t.getActions().toString() + ") \"];\n";
+                sb.append("    " + t.getSrc().getNumber() + " -> " + t.getDst().getNumber());
+                sb.append(" [label = \"" + t.getEvent() + " [" + t.getExpr().toString()
+                	+ "] (" + t.getActions().toString() + ") \"];\n");
             }
         }
 
-        res += "}";
-        return res;
+        sb.append("}");
+        return sb.toString();
     }
 }

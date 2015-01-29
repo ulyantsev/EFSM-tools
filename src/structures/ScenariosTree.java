@@ -9,13 +9,12 @@ import bool.MyBooleanExpression;
 import scenario.StringScenario;
 
 public class ScenariosTree {
-    private Node root;
-
-    private List<Node> nodes;
+    private final Node root;
+    private final List<Node> nodes;
 
     public ScenariosTree() {
         this.root = new Node(0);
-        this.nodes = new ArrayList<Node>();
+        this.nodes = new ArrayList<>();
         this.nodes.add(root);
     }
 
@@ -37,12 +36,13 @@ public class ScenariosTree {
         }
     }
 
-    private void addTransition(Node src, String event, MyBooleanExpression expr, StringActions actions)
-            throws ParseException {
+    private void addTransition(Node src, String event, MyBooleanExpression expr,
+    		StringActions actions) throws ParseException {
         if (src.hasTransition(event, expr)) {
             Transition t = src.getTransition(event, expr);
             if (!t.getActions().equals(actions)) {
-                throw new ParseException("bad transition add in node " + src.getNumber() + ": " + t.getActions()
+                throw new ParseException("bad transition add in node "
+                		+ src.getNumber() + ": " + t.getActions()
                         + " != " + actions, 0);
             }
         } else {
@@ -61,7 +61,7 @@ public class ScenariosTree {
     }
 
     public String[] getEvents() {
-        Set<String> events = new HashSet<String>();
+        Set<String> events = new HashSet<>();
         for (Node node : nodes) {
             for (Transition transition : node.getTransitions()) {
                 events.add(transition.getEvent());
@@ -87,7 +87,7 @@ public class ScenariosTree {
     }
         
     public String[] getVariables() {
-        Set<String> variables = new HashSet<String>();
+        Set<String> variables = new HashSet<>();
         for (Node node : nodes) {
             for (Transition transition : node.getTransitions()) {
                 String[] transitionVars = transition.getExpr().getVariables();
@@ -102,7 +102,7 @@ public class ScenariosTree {
     }
     
     public Map<String, List<MyBooleanExpression>> getPairsEventExpression() {
-        Map<String, List<MyBooleanExpression>> ans = new HashMap<String, List<MyBooleanExpression>>();
+        Map<String, List<MyBooleanExpression>> ans = new HashMap<>();
         for (Node node : nodes) {
             for (Transition transition : node.getTransitions()) {
                 String event = transition.getEvent();
@@ -112,7 +112,7 @@ public class ScenariosTree {
                         ans.get(event).add(expr);
                     }
                 } else {
-                    ArrayList<MyBooleanExpression> exprList = new ArrayList<MyBooleanExpression>();
+                    ArrayList<MyBooleanExpression> exprList = new ArrayList<>();
                     exprList.add(expr);
                     ans.put(event, exprList);
                 }
@@ -123,7 +123,7 @@ public class ScenariosTree {
     }
     
     public Collection<MyBooleanExpression> getExpressions() {
-        List<MyBooleanExpression> ans = new ArrayList<MyBooleanExpression>();
+        List<MyBooleanExpression> ans = new ArrayList<>();
         for (Node node : this.nodes) {
             for (Transition t : node.getTransitions()) {
                 if (!ans.contains(t.getExpr())) {

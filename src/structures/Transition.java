@@ -17,15 +17,11 @@ public class Transition {
 		return true;
 	}
 
-	private String event;
-
-	private MyBooleanExpression expr;
-
-	private StringActions actions;
-
-	private Node src;
-
-	private Node dst;
+	private final String event;
+	private final MyBooleanExpression expr;
+	private final StringActions actions;
+	private final Node src;
+	private final Node dst;
 
 	public Transition(Node src, Node dst, String event, MyBooleanExpression expr, StringActions actions) {
 		this.src = src;
@@ -56,8 +52,7 @@ public class Transition {
 	}
 	
 	public String toString() {
-		String res = src.getNumber() + " -> " + dst.getNumber();
-		res += "  " + event + " [" + expr.toString() + "] " + actions.toString();
-		return res;
+		return src.getNumber() + " -> " + dst.getNumber()
+				+ "  " + event + " [" + expr.toString() + "] " + actions.toString();
 	}
 }

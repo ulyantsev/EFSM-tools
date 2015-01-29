@@ -28,7 +28,7 @@ public abstract class ScenarioAndLtlAutomatonBuilder {
 	protected static void deleteTrash() {
 		// delete files from the previous run
 		Arrays.stream(new File(".").listFiles())
-			.filter(f -> f.getName().contains("_tmp."))
+			.filter(f -> f.getName().startsWith("_tmp."))
 			.forEach(File::delete);
 	}
 	
