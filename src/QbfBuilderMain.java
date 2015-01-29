@@ -26,11 +26,11 @@ import qbf.reduction.Solvers;
 import scenario.StringScenario;
 import structures.Automaton;
 import structures.ScenariosTree;
+import algorithms.BacktrackingAutomatonBuilder;
 import algorithms.IterativeAutomatonBuilder;
 import algorithms.QbfAutomatonBuilder;
 
 public class QbfBuilderMain {
-
 	@Argument(usage = "paths to files with scenarios", metaVar = "files", required = true)
 	private List<String> arguments = new ArrayList<>();
 
@@ -73,7 +73,7 @@ public class QbfBuilderMain {
 	@Option(name = "--timeout", aliases = { "-to" }, usage = "solver timeout (sec)", metaVar = "<timeout>")
 	private int timeout = 60 * 60 * 24;
 	
-	@Option(name = "--strategy", aliases = { "-str" }, usage = "solving mode: QSAT, EXP_SAT, ITERATIVE_SAT, BRANCHES_BOUNDS",
+	@Option(name = "--strategy", aliases = { "-str" }, usage = "solving mode: QSAT, SAT, ITERATIVE_SAT, BACKTRACKING",
 			metaVar = "<strategy>")
 	private String strategy = "QSAT";
 	
@@ -177,7 +177,10 @@ public class QbfBuilderMain {
 					: ss == SolvingStrategy.ITERATIVE_SAT
 					? IterativeAutomatonBuilder.build(logger, tree, size, solverParams, isComplete,
 							timeout, resultFilePath, ltlFilePath, formulae, bfsConstraints)
-					: null;
+					: ss == SolvingStrategy.BACKTRACKING
+					? BacktrackingAutomatonBuilder.build(logger, tree, size, isComplete, timeout,
+							resultFilePath, ltlFilePath, formulae)
+					:null;
 			double executionTime = (System.currentTimeMillis() - startTime) / 1000.;
 			
 			if (!resultAutomaton.isPresent()) {
@@ -231,5 +234,4 @@ public class QbfBuilderMain {
 	public static void main(String[] args) {
 		new QbfBuilderMain().run(args);
 	}
-
 }
