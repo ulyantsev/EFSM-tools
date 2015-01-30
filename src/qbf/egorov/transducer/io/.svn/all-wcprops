@@ -1,0 +1,35 @@
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/!svn/ver/170/trunk/ru/ifmo/ctddev/genetic/transducer/io
+END
+OneGroupTestsReader.java
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svn/!svn/ver/151/trunk/ru/ifmo/ctddev/genetic/transducer/io/OneGroupTestsReader.java
+END
+TestsReader.java
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/svn/!svn/ver/170/trunk/ru/ifmo/ctddev/genetic/transducer/io/TestsReader.java
+END
+FileFormatException.java
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svn/!svn/ver/94/trunk/ru/ifmo/ctddev/genetic/transducer/io/FileFormatException.java
+END
+UnimodModelWriter.java
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svn/!svn/ver/111/trunk/ru/ifmo/ctddev/genetic/transducer/io/UnimodModelWriter.java
+END
+ITestsReader.java
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svn/!svn/ver/165/trunk/ru/ifmo/ctddev/genetic/transducer/io/ITestsReader.java
+END

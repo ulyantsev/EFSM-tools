@@ -1,0 +1,47 @@
+K 25
+svn:wc:ra_dav:version-url
+V 44
+/svn/!svn/ver/106/trunk/src/ru/ifmo/verifier
+END
+IInterNode.java
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/!svn/ver/102/trunk/src/ru/ifmo/verifier/IInterNode.java
+END
+AbstractDfs.java
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/!svn/ver/105/trunk/src/ru/ifmo/verifier/AbstractDfs.java
+END
+IVerifier.java
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/!svn/ver/105/trunk/src/ru/ifmo/verifier/IVerifier.java
+END
+IDfs.java
+K 25
+svn:wc:ra_dav:version-url
+V 54
+/svn/!svn/ver/105/trunk/src/ru/ifmo/verifier/IDfs.java
+END
+ISharedData.java
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/!svn/ver/96/trunk/src/ru/ifmo/verifier/ISharedData.java
+END
+NotifiableDfs.java
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/!svn/ver/106/trunk/src/ru/ifmo/verifier/NotifiableDfs.java
+END
+IDfsListener.java
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/!svn/ver/105/trunk/src/ru/ifmo/verifier/IDfsListener.java
+END

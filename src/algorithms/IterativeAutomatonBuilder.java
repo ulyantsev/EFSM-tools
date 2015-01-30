@@ -1,7 +1,5 @@
 package algorithms;
 
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.List;
@@ -11,7 +9,6 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.tuple.Pair;
 
-import qbf.Verifier;
 import qbf.ltl.LtlNode;
 import qbf.reduction.Assignment;
 import qbf.reduction.BinaryOperation;
@@ -19,6 +16,7 @@ import qbf.reduction.BinaryOperations;
 import qbf.reduction.BooleanFormula;
 import qbf.reduction.FormulaList;
 import qbf.reduction.SolverResult;
+import qbf.reduction.Verifier;
 import qbf.reduction.SolverResult.SolverResults;
 import structures.Automaton;
 import structures.ScenariosTree;
@@ -62,12 +60,7 @@ public class IterativeAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 			automaton = p.getLeft();
 			if (automaton.isPresent()) {
 				System.out.println(automaton.get());
-				try (PrintWriter resultPrintWriter = new PrintWriter(new File(resultFilePath))) {
-					resultPrintWriter.println(automaton);
-				} catch (FileNotFoundException e) {
-					logger.warning("File " + resultFilePath + " not found: " + e.getMessage());
-				}
-				if (Verifier.verify(resultFilePath, ltlFilePath, colorSize, formulae, logger)) {
+				if (new Verifier(resultFilePath, ltlFilePath, colorSize, formulae, logger, ltlFilePath).verify(automaton.get())) {
 					logger.info("ITERATIONS: " + iterations);
 					return automaton;
 				}

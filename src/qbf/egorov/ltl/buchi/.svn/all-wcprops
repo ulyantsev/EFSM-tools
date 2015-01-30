@@ -1,0 +1,35 @@
+K 25
+svn:wc:ra_dav:version-url
+V 44
+/svn/!svn/ver/93/trunk/src/ru/ifmo/ltl/buchi
+END
+IBuchiNode.java
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/!svn/ver/83/trunk/src/ru/ifmo/ltl/buchi/IBuchiNode.java
+END
+ITransitionCondition.java
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svn/!svn/ver/83/trunk/src/ru/ifmo/ltl/buchi/ITransitionCondition.java
+END
+IBuchiAutomata.java
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/!svn/ver/83/trunk/src/ru/ifmo/ltl/buchi/IBuchiAutomata.java
+END
+IBuchiNodeFactory.java
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/svn/!svn/ver/83/trunk/src/ru/ifmo/ltl/buchi/IBuchiNodeFactory.java
+END
+ITranslator.java
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/!svn/ver/83/trunk/src/ru/ifmo/ltl/buchi/ITranslator.java
+END

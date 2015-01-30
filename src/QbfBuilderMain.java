@@ -1,5 +1,4 @@
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.text.ParseException;
@@ -17,12 +16,12 @@ import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 import org.kohsuke.args4j.spi.BooleanOptionHandler;
 
-import qbf.SolvingStrategy;
-import qbf.Verifier;
 import qbf.ltl.LtlNode;
 import qbf.ltl.LtlParseException;
 import qbf.ltl.LtlParser;
 import qbf.reduction.Solvers;
+import qbf.reduction.SolvingStrategy;
+import qbf.reduction.Verifier;
 import scenario.StringScenario;
 import structures.Automaton;
 import structures.ScenariosTree;
@@ -188,13 +187,6 @@ public class QbfBuilderMain {
 			} else {
 				logger.info("Automaton with " + size + " states WAS FOUND!");
 				
-				// writing file
-				try (PrintWriter resultPrintWriter = new PrintWriter(new File(resultFilePath))) {
-					resultPrintWriter.println(resultAutomaton.get());
-				} catch (FileNotFoundException e) {
-					logger.warning("File " + resultFilePath + " not found: " + e.getMessage());
-				}
-				
 				// test compliance
 				List<StringScenario> scenarios = new ArrayList<>();
 				for (String scenarioPath : arguments) {
@@ -207,8 +199,8 @@ public class QbfBuilderMain {
 					logger.severe("NOT COMPLIES WITH SCENARIOS");
 				}
 
-				// verification
-				boolean verified = Verifier.verify(resultFilePath, ltlFilePath, size, formulae, logger);
+				// writing to a file, verification
+				boolean verified = new Verifier(resultFilePath, ltlFilePath, size, formulae, logger, ltlFilePath).verify(resultAutomaton.get());
 				if (verified) {
 					logger.info("VERIFIED");
 				} else {

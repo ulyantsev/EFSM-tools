@@ -1,0 +1,23 @@
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/!svn/ver/105/trunk/src/ru/ifmo/automata/statemachine/io
+END
+StateMachineReader.java
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svn/!svn/ver/105/trunk/src/ru/ifmo/automata/statemachine/io/StateMachineReader.java
+END
+UnimodXmlReader.java
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svn/!svn/ver/102/trunk/src/ru/ifmo/automata/statemachine/io/UnimodXmlReader.java
+END
+IAutomataReader.java
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svn/!svn/ver/102/trunk/src/ru/ifmo/automata/statemachine/io/IAutomataReader.java
+END

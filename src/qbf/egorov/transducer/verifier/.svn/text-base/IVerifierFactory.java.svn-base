@@ -1,0 +1,32 @@
+/* 
+ * Developed by eVelopers Corporation, 2009
+ */
+package ru.ifmo.ctddev.genetic.transducer.verifier;
+
+import ru.ifmo.automata.statemachine.IAutomataContext;
+import ru.ifmo.ltl.LtlParseException;
+import ru.ifmo.ctddev.genetic.transducer.algorithm.Transition;
+import ru.ifmo.ctddev.genetic.transducer.algorithm.FST;
+import ru.ifmo.ctddev.genetic.transducer.scenario.TestGroup;
+
+/**
+ * @author kegorov
+ *         Date: Jun 18, 2009
+ */
+public interface IVerifierFactory {
+
+    /**
+     * Prepare Buchi automata for formulas
+     * @param groups test groups
+     * @throws LtlParseException
+     */
+    void prepareFormulas(TestGroup[] groups) throws LtlParseException;
+
+    void configureStateMachine(FST fst);
+
+    /**
+     * Verify prepared formulas.
+     * @return number of marked transitions per group
+     */
+    int[] verify();
+}

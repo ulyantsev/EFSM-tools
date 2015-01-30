@@ -1,0 +1,23 @@
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/svn/!svn/ver/169/trunk/ru/ifmo/ctddev/genetic/transducer/algorithm/util
+END
+ITransitionChecker.java
+K 25
+svn:wc:ra_dav:version-url
+V 96
+/svn/!svn/ver/122/trunk/ru/ifmo/ctddev/genetic/transducer/algorithm/util/ITransitionChecker.java
+END
+Sequence.java
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svn/!svn/ver/12/trunk/ru/ifmo/ctddev/genetic/transducer/algorithm/util/Sequence.java
+END
+Pair.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/!svn/ver/169/trunk/ru/ifmo/ctddev/genetic/transducer/algorithm/util/Pair.java
+END

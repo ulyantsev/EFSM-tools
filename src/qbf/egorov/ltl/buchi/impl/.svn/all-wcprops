@@ -1,0 +1,47 @@
+K 25
+svn:wc:ra_dav:version-url
+V 49
+/svn/!svn/ver/83/trunk/src/ru/ifmo/ltl/buchi/impl
+END
+TransitionCondition.java
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/!svn/ver/83/trunk/src/ru/ifmo/ltl/buchi/impl/TransitionCondition.java
+END
+OgnlTransitionCondition.java
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svn/!svn/ver/59/trunk/src/ru/ifmo/ltl/buchi/impl/OgnlTransitionCondition.java
+END
+BuchiAutomata.java
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/!svn/ver/83/trunk/src/ru/ifmo/ltl/buchi/impl/BuchiAutomata.java
+END
+BuchiNodeFactory.java
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/!svn/ver/83/trunk/src/ru/ifmo/ltl/buchi/impl/BuchiNodeFactory.java
+END
+NullExpressionException.java
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svn/!svn/ver/59/trunk/src/ru/ifmo/ltl/buchi/impl/NullExpressionException.java
+END
+ExpressionMap.java
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/!svn/ver/59/trunk/src/ru/ifmo/ltl/buchi/impl/ExpressionMap.java
+END
+BuchiNode.java
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/!svn/ver/83/trunk/src/ru/ifmo/ltl/buchi/impl/BuchiNode.java
+END

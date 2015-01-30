@@ -1,0 +1,53 @@
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/svn/!svn/ver/173/trunk/ru/ifmo/ctddev/genetic/transducer/algorithm
+END
+SimpleGeneticAlgorithm.java
+K 25
+svn:wc:ra_dav:version-url
+V 95
+/svn/!svn/ver/169/trunk/ru/ifmo/ctddev/genetic/transducer/algorithm/SimpleGeneticAlgorithm.java
+END
+GeneticAlgorithmPlusHillClimber.java
+K 25
+svn:wc:ra_dav:version-url
+V 104
+/svn/!svn/ver/169/trunk/ru/ifmo/ctddev/genetic/transducer/algorithm/GeneticAlgorithmPlusHillClimber.java
+END
+Parameters.java
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svn/!svn/ver/170/trunk/ru/ifmo/ctddev/genetic/transducer/algorithm/Parameters.java
+END
+FitnessCalculator.java
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/svn/!svn/ver/173/trunk/ru/ifmo/ctddev/genetic/transducer/algorithm/FitnessCalculator.java
+END
+Const.java
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svn/!svn/ver/122/trunk/ru/ifmo/ctddev/genetic/transducer/algorithm/Const.java
+END
+Individual.java
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svn/!svn/ver/2/trunk/ru/ifmo/ctddev/genetic/transducer/algorithm/Individual.java
+END
+Transition.java
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svn/!svn/ver/173/trunk/ru/ifmo/ctddev/genetic/transducer/algorithm/Transition.java
+END
+FST.java
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svn/!svn/ver/173/trunk/ru/ifmo/ctddev/genetic/transducer/algorithm/FST.java
+END

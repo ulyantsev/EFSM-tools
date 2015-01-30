@@ -41,6 +41,10 @@ public class Automaton {
         state.addTransition(transition.getEvent(), transition.getExpr(), transition.getActions(), transition.getDst());
     }
     
+    public void removeTransition(Node state, Transition transition) {
+        state.removeTransition(transition);
+    }
+    
     private Node getNextNode(Node node, String event, MyBooleanExpression expr) {
         for (Transition tr : node.getTransitions()) {
             if (tr.getEvent().equals(event) && tr.getExpr() == expr) {

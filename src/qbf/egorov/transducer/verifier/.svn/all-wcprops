@@ -1,0 +1,41 @@
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/!svn/ver/149/trunk/ru/ifmo/ctddev/genetic/transducer/verifier
+END
+AutomataTransition.java
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/svn/!svn/ver/106/trunk/ru/ifmo/ctddev/genetic/transducer/verifier/AutomataTransition.java
+END
+TransitionCounter.java
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svn/!svn/ver/110/trunk/ru/ifmo/ctddev/genetic/transducer/verifier/TransitionCounter.java
+END
+TransitionMarker.java
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svn/!svn/ver/108/trunk/ru/ifmo/ctddev/genetic/transducer/verifier/TransitionMarker.java
+END
+IVerifierFactory.java
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svn/!svn/ver/110/trunk/ru/ifmo/ctddev/genetic/transducer/verifier/IVerifierFactory.java
+END
+ModifiableAutomataContext.java
+K 25
+svn:wc:ra_dav:version-url
+V 97
+/svn/!svn/ver/106/trunk/ru/ifmo/ctddev/genetic/transducer/verifier/ModifiableAutomataContext.java
+END
+VerifierFactory.java
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svn/!svn/ver/149/trunk/ru/ifmo/ctddev/genetic/transducer/verifier/VerifierFactory.java
+END

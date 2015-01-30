@@ -1,0 +1,154 @@
+/* 
+ * Developed by eVelopers Corporation, 2009
+ */
+package ru.ifmo.ctddev.genetic.transducer;
+
+import ru.ifmo.ctddev.genetic.transducer.algorithm.SimpleGeneticAlgorithm;
+import ru.ifmo.ctddev.genetic.transducer.io.ITestsReader;
+import ru.ifmo.ctddev.genetic.transducer.io.FileFormatException;
+import ru.ifmo.ctddev.genetic.transducer.io.OneGroupTestsReader;
+import ru.ifmo.ctddev.genetic.transducer.scenario.TestGroup;
+import ru.ifmo.ctddev.genetic.transducer.algorithm.GeneticAlgorithmPlusHillClimber;
+import ru.ifmo.ctddev.genetic.transducer.algorithm.FST;
+import ru.ifmo.ctddev.genetic.transducer.algorithm.guardconditions.ComplianceChecker;
+import ru.ifmo.ltl.LtlParseException;
+
+import java.text.ParseException;
+import java.util.List;
+import java.io.*;
+
+/**
+ * @author kegorov
+ *         Date: Jun 26, 2009
+ */
+public class Experiment {
+
+    private static int EXPERIMENT_COUNT = 1000;
+
+    private ITestsReader reader;
+    private Writer out;
+    private int i;
+//    private IVerifierFactory verifier;
+//    private List<Integer> formulasSize;
+
+    public Experiment(ITestsReader reader, File file) throws IOException, LtlParseException {
+        this.reader = reader;
+        goToLastResult(file);
+        out = new FileWriter(file, true);
+
+        /*verifier = new VerifierFactory(reader.getSetOfInputs(), reader.getSetOfOutputs());
+        verifier.prepareFormulas(reader.getGroups().toArray(new TestGroup[0]));
+        formulasSize = new ArrayList<Integer>();
+        for (TestGroup g : reader.getGroups()) {
+            formulasSize.add(g.getFormulas().size());
+            g.getFormulas().clear();
+        }*/
+    }
+
+    public static void main(String[] args) throws FileFormatException, IOException, LtlParseException {
+        if (args.length != 1) {
+            System.out.println("Usage: java [-options] -jar gabp.jar FILE\n\n" +
+                    "Where\n" +
+                    "\tFILE - xml file with tests and LTL-formulas.");
+            return;
+        }
+
+        Experiment e = new Experiment(new OneGroupTestsReader(new File(args[0]), false),
+                                      new File("avrFitness.csv"));
+        try {
+            while (e.getStep() < EXPERIMENT_COUNT) {
+            	FST.cntFitnessRun = 0;
+                System.out.println("================= experiment " + e.getStep() + " ============================");
+                e.run();
+                System.out.println("Fitness calculated: " + FST.cntFitnessRun);
+            }
+
+            System.out.println("Average fitness calculated.");
+        } finally {
+            e.close();
+        }
+    }
+
+    protected void goToLastResult(File f) throws IOException {
+        if (!f.exists()) {
+            return;
+        }
+        BufferedReader reader = new BufferedReader(new FileReader(f));
+        try {
+            //count line numbers, don't check format
+            for (i = 0; reader.readLine() != null; i++);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            reader.close();
+        }
+    }
+
+    protected void printResult(FST best) {
+        /*verifier.configureStateMachine(best);
+        int[] verRes = verifier.verify();
+        double ltlFF = 0;
+
+        for (int i = 0; i < verRes.length; i++) {
+            ltlFF = 1.0 * verRes[i]
+                    / formulasSize.get(i)
+                    / best.getUsedTransitionsCount();
+        }*/
+
+        String res = FST.cntFitnessRun + "\n";
+        try {
+            out.write(res);
+            out.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.out.println(res);
+        }
+    }
+
+    public int getStep() {
+        return i;
+    }
+
+    public void run() {
+        FST.cntFitnessRun = 0;
+
+        List<TestGroup> groups = reader.getGroups();
+
+		String[] setOfInputs = reader.getSetOfInputs();
+		String[] setOfOutputs = reader.getSetOfOutputs();
+
+		try {
+			ComplianceChecker.createComplianceChecker(setOfInputs);
+		} catch (ParseException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		
+		ComplianceChecker cc = ComplianceChecker.getComplianceChecker();
+//		System.err.println(cc.checkCompliancy("A", "M"));
+//		System.err.println(cc.checkCompliancy("T [x1]", "T [!x1 & !x2]"));
+//		System.err.println(cc.checkCompliancy("T [x1]", "T [x2]"));
+		
+//		GeneticAlgorithmPlusHillClimber sga = new GeneticAlgorithmPlusHillClimber(reader.getAlgorithmParameters(),
+//                setOfInputs, setOfOutputs, groups);
+        SimpleGeneticAlgorithm sga = new SimpleGeneticAlgorithm(reader.getAlgorithmParameters(),
+                setOfInputs, setOfOutputs, groups);
+
+		FST best = sga.go();
+
+        try {
+            Writer out = new PrintWriter(new File("best" + i + ".xml"));
+            FST.printAutomaton(out, best, sga.getTests());
+            out.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        printResult(best);
+        i++;
+    }
+
+    public void close() throws IOException {
+        out.close();
+    }
+}

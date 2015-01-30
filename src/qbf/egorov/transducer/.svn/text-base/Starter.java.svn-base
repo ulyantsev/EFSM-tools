@@ -1,0 +1,85 @@
+package ru.ifmo.ctddev.genetic.transducer;
+
+import java.io.File;
+import java.io.PrintWriter;
+import java.io.IOException;
+import java.io.Writer;
+import java.text.ParseException;
+import java.util.List;
+
+import ru.ifmo.ctddev.genetic.transducer.algorithm.FST;
+import ru.ifmo.ctddev.genetic.transducer.algorithm.SimpleGeneticAlgorithm;
+import ru.ifmo.ctddev.genetic.transducer.algorithm.guardconditions.ComplianceChecker;
+import ru.ifmo.ctddev.genetic.transducer.io.OneGroupTestsReader;
+import ru.ifmo.ctddev.genetic.transducer.io.TestsReader;
+import ru.ifmo.ctddev.genetic.transducer.scenario.Path;
+import ru.ifmo.ctddev.genetic.transducer.scenario.TestGroup;
+import ru.ifmo.ctddev.genetic.transducer.io.FileFormatException;
+import ru.ifmo.ctddev.genetic.transducer.io.ITestsReader;
+
+public class Starter {
+
+	public static void main(String[] args) throws IOException, FileFormatException {
+	    if (args.length != 1) {
+            System.out.println("Usage: java [-options] -jar gabp.jar FILE\n\n" +
+                    "Where\n" +
+                    "\tFILE - xml file with tests and LTL-formulas.");
+            return;
+        }
+
+//		ITestsReader reader = new TestsReader(new File(args[0]), false);
+        ITestsReader reader = new OneGroupTestsReader(new File(args[0]), false);
+
+        List<TestGroup> groups = reader.getGroups();
+
+		String[] setOfInputs = reader.getSetOfInputs();
+		String[] setOfOutputs = reader.getSetOfOutputs();
+
+        int i = 0;
+        for (TestGroup g : groups) {
+            System.out.println("--------------- Group " + i++ + " ----------------");
+            for (String f : g.getFormulas()) {
+                System.out.println(f);
+            }
+            System.out.println();
+
+            for (Path p : g.getTests()) {
+                for (String s1 : p.getInput()) {
+                    System.out.print(s1 + " ");
+                }
+                System.out.println();
+                for (String s2 : p.getOutput()) {
+                    System.out.print(s2 + " ");
+                }
+                System.out.println();
+            }
+            System.out.println();
+        }
+
+        try {
+            ComplianceChecker.createComplianceChecker(setOfInputs);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+
+        SimpleGeneticAlgorithm sga = new SimpleGeneticAlgorithm(reader.getAlgorithmParameters(),
+                setOfInputs, setOfOutputs, groups);
+
+		long startTime = System.currentTimeMillis();
+
+		FST best = sga.go();
+		{
+			Writer out = new PrintWriter(new File("best.xml"));
+			FST.printAutomaton(out, best, sga.getTests());
+			out.close();
+		}
+
+		// Скрещивание на основе тестов - сохранять переходы, используемые при обработке некоторых тестов
+		
+		long finishTime = System.currentTimeMillis();
+
+		System.out.println("Fitness calculated " + FST.cntFitnessRun + " times.");
+        System.out.println("Calculation time = " + (finishTime - startTime) / 1000 + " seconds.");
+	}
+	
+}

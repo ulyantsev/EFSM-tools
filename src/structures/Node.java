@@ -29,6 +29,10 @@ public class Node {
         transitions.put(event + "[" + expr.toString() + "]", transition);
     }
     
+    public void removeTransition(Transition transition) {
+        transitions.remove(transition.getEvent() + "[" + transition.getExpr().toString() + "]");
+    }
+    
     public Transition getTransition(String event, MyBooleanExpression expr) {
         return transitions.get(event + "[" + expr.toString() + "]");
     }

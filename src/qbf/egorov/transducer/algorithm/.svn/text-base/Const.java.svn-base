@@ -1,0 +1,28 @@
+/* 
+ * Developed by eVelopers Corporation, 2009
+ */
+package ru.ifmo.ctddev.genetic.transducer.algorithm;
+
+/**
+ * @author kegorov
+ *         Date: Jul 23, 2009
+ */
+public interface Const {
+
+    double MUTATION_THRESHOLD = 0.05;
+
+    /**
+     * Минимальное количество тестов, используемых при помечании используемых переходов
+     */
+    int MIN_USED_TESTS = 3;
+
+    /**
+     * Вероятность мутации перехода, если он оказался в контр примере верификатора
+     */
+    double VERIFIER_MUTATION_PROBABILITY = 0.1;
+
+    /**
+     * Вероятность примениния мутации или короссовера 
+     */
+    double MUTATION_PROBABILITY = 0.5;
+}

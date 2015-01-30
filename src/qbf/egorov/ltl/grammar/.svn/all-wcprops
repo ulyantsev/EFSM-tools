@@ -1,0 +1,77 @@
+K 25
+svn:wc:ra_dav:version-url
+V 47
+/svn/!svn/ver/109/trunk/src/ru/ifmo/ltl/grammar
+END
+IOperatorType.java
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/!svn/ver/83/trunk/src/ru/ifmo/ltl/grammar/IOperatorType.java
+END
+IExpression.java
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/!svn/ver/83/trunk/src/ru/ifmo/ltl/grammar/IExpression.java
+END
+UnaryOperator.java
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/!svn/ver/83/trunk/src/ru/ifmo/ltl/grammar/UnaryOperator.java
+END
+Operator.java
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/!svn/ver/83/trunk/src/ru/ifmo/ltl/grammar/Operator.java
+END
+LtlUtils.java
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/!svn/ver/83/trunk/src/ru/ifmo/ltl/grammar/LtlUtils.java
+END
+UnaryOperatorType.java
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svn/!svn/ver/83/trunk/src/ru/ifmo/ltl/grammar/UnaryOperatorType.java
+END
+INodeVisitor.java
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/!svn/ver/83/trunk/src/ru/ifmo/ltl/grammar/INodeVisitor.java
+END
+BinaryOperator.java
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/!svn/ver/83/trunk/src/ru/ifmo/ltl/grammar/BinaryOperator.java
+END
+Predicate.java
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/!svn/ver/83/trunk/src/ru/ifmo/ltl/grammar/Predicate.java
+END
+LtlNode.java
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/!svn/ver/83/trunk/src/ru/ifmo/ltl/grammar/LtlNode.java
+END
+BinaryOperatorType.java
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svn/!svn/ver/83/trunk/src/ru/ifmo/ltl/grammar/BinaryOperatorType.java
+END
+BooleanNode.java
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/!svn/ver/83/trunk/src/ru/ifmo/ltl/grammar/BooleanNode.java
+END
