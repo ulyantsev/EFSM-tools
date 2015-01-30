@@ -60,8 +60,8 @@ public class JLtl2baTranslator implements ITranslator {
             buchi = new BuchiAutomata();
             nodeFactory = new BuchiNodeFactory();
 
-            bNodes = new HashMap<IState, BuchiNode>();
-            acceptNodes = new HashSet<BuchiNode>();
+            bNodes = new HashMap<>();
+            acceptNodes = new HashSet<>();
 
             for (ITransition t: transitions) {
                 IState source = t.getSourceState();

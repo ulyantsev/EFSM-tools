@@ -34,7 +34,7 @@ public class Verifier {
 		this.ltlPath = ltlPath;
 	}
 
-	private static List<String> loadFormulas(String path) {
+	private static List<String> loadFormulae(String path) {
 		List<String> formulas = new ArrayList<>();
 		Scanner in = null;
 		try {
@@ -57,10 +57,9 @@ public class Verifier {
 			logger.warning("File " + resultFilePath + " not found: " + e.getMessage());
 		}
 		
-		
 		FST fst = new FST(a, size);
 
-		List<String> formulas = loadFormulas(ltlPath);
+		List<String> formulas = loadFormulae(ltlPath);
 		double numberOfUsedTransitions = fst.getUsedTransitionsCount();
 
 		for (int i = 0; i < formulas.size(); i++) {
@@ -74,11 +73,13 @@ public class Verifier {
 				System.err.println("Failed to parse formula: " + formulas.get(i));
 				continue;
 			}
-			double result = (double)verifier.verify()[0] / numberOfUsedTransitions;
+			double result = (double) verifier.verify()[0] / numberOfUsedTransitions;
 			if (Math.abs(result - 1.0) >= 1e-5) {
-				return false;				
+				logger.info("EGOROV VERIFICATION FALSE");
+				return false;		
 			}
 		}
+		logger.info("EGOROV VERIFICATION TRUE");
 		return true;
 	}
 }

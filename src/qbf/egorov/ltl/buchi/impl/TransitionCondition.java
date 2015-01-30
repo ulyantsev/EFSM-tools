@@ -21,8 +21,8 @@ public class TransitionCondition implements ITransitionCondition {
     private Set<IExpression<Boolean>> negExprs;
 
     public TransitionCondition() {
-        exprs = new HashSet<IExpression<Boolean>>();
-        negExprs = new HashSet<IExpression<Boolean>>();
+        exprs = new HashSet<>();
+        negExprs = new HashSet<>();
     }
 
     public TransitionCondition(Set<IExpression<Boolean>> exprs, Set<IExpression<Boolean>> negExprs) {

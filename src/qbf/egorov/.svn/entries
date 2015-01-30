@@ -1,43 +1,0 @@
-10
-
-dir
-110
-https://automataverificator.googlecode.com/svn/trunk/src/ru/ifmo
-https://automataverificator.googlecode.com/svn
-
-
-
-2013-06-19T13:39:02.772778Z
-109
-kegorof@gmail.com
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-1019b9a1-de4b-0410-b3bf-5fddcd4fe59e
-
-ltl
-dir
-
-verifier
-dir
-
-automata
-dir
-
-util
-dir
-
-test
-dir
-
