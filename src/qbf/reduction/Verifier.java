@@ -12,6 +12,8 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import qbf.egorov.ltl.LtlParseException;
+import qbf.egorov.ltl.buchi.translator.TranslationException;
 import qbf.egorov.transducer.algorithm.FST;
 import qbf.egorov.transducer.verifier.VerifierFactory;
 import structures.Automaton;
@@ -70,14 +72,21 @@ public class Verifier {
 			List<String> f = Arrays.asList(ltlFormulae.get(i));
 			VerifierFactory verifier = new VerifierFactory(fst.getSetOfInputs(), fst.getSetOfOutputs());
 			verifier.configureStateMachine(fst);
+			
 			try {
-				verifier.prepareFormulas(f);
-			} catch (Exception e) {
+				while (true) {
+					try {
+						verifier.prepareFormulas(f);
+						break;
+					} catch (TranslationException e) {
+					}
+				}
+			} catch (LtlParseException e) {
 				logger.warning("Failed to parse formula: " + ltlFormulae.get(i) + " ");
 				e.printStackTrace();
 				continue;
 			}
-			logger.info("Parsed formula: " + ltlFormulae.get(i));
+			
 			int result = verifier.verify()[0];
 			if (result != numberOfUsedTransitions) {
 				logger.info("EGOROV VERIFICATION FALSE");
