@@ -6,15 +6,15 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import qbf.egorov.transducer.algorithm.FST;
-import qbf.egorov.transducer.verifier.IVerifierFactory;
 import qbf.egorov.transducer.verifier.VerifierFactory;
 import structures.Automaton;
-import structures.Node;
-import structures.ScenariosTree;
-import structures.Transition;
 
 /**
  * (c) Igor Buzhinsky
@@ -24,12 +24,10 @@ public class Verifier {
 	private final Logger logger;
 	private final int size;
 	private final List<String> ltlFormulae;
-	private final ScenariosTree tree;
 	
-	public Verifier(ScenariosTree tree, String ltlFilePath, int size, Logger logger, String ltlPath) {
+	public Verifier(int size, Logger logger, String ltlPath) {
 		this.logger = logger;
 		this.size = size;
-		this.tree = tree;
 		ltlFormulae = loadFormulae(ltlPath);
 	}
 
@@ -45,31 +43,41 @@ public class Verifier {
 		return formulae;
 	}
 	
-	private void logAutomation(Logger logger, Automaton a) {
-		for (Node state : a.getStates()) {
-			for (Transition t : state.getTransitions()) {
-				logger.info(t.toString());
+	private void fillEventsAndActionsFromFormulae(Set<String> allEvents, Set<String> allActions) {
+		Pattern p1 = Pattern.compile("co\\.(\\w+)\\)");
+		Pattern p2 = Pattern.compile("ep\\.(\\w+)\\)");
+		Matcher m;
+		for (String formula : ltlFormulae) {
+			m = p1.matcher(formula);
+			while (m.find()) {
+				allActions.add(m.group(1));
+			}
+			m = p2.matcher(formula);
+			while (m.find()) {
+				allEvents.add(m.group(1));
 			}
 		}
 	}
 	
 	public boolean verify(Automaton a) {
-		FST fst = new FST(a, Arrays.asList(tree.getEvents()), tree.getActions(), size);
+		Set<String> allEvents = new TreeSet<>();
+		Set<String> allActions = new TreeSet<>();
+		fillEventsAndActionsFromFormulae(allEvents, allActions);
+		FST fst = new FST(a, allEvents, allActions, size);
 		int numberOfUsedTransitions = fst.getUsedTransitionsCount();
 
 		for (int i = 0; i < ltlFormulae.size(); i++) {
 			List<String> f = Arrays.asList(ltlFormulae.get(i));
-			IVerifierFactory verifier = new VerifierFactory(fst.getSetOfInputs(), fst.getSetOfOutputs());
+			VerifierFactory verifier = new VerifierFactory(fst.getSetOfInputs(), fst.getSetOfOutputs());
 			verifier.configureStateMachine(fst);
 			try {
 				verifier.prepareFormulas(f);
 			} catch (Exception e) {
 				logger.warning("Failed to parse formula: " + ltlFormulae.get(i) + " ");
-				logAutomation(logger, a);
+				e.printStackTrace();
 				continue;
 			}
 			logger.info("Parsed formula: " + ltlFormulae.get(i));
-			logAutomation(logger, a);
 			int result = verifier.verify()[0];
 			if (result != numberOfUsedTransitions) {
 				logger.info("EGOROV VERIFICATION FALSE");

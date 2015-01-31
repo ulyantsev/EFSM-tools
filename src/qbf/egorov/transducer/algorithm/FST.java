@@ -3,6 +3,7 @@ package qbf.egorov.transducer.algorithm;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.commons.lang3.ArrayUtils;
 
@@ -17,7 +18,7 @@ public class FST {
 	private final String[] setOfInputs;
 	private final String[] setOfOutputs;
 
-	public FST(Automaton ulyantsevAutomaton, List<String> events, List<String> actions, int numberOfStates) {
+	public FST(Automaton ulyantsevAutomaton, Set<String> events, Set<String> actions, int numberOfStates) {
 		this.stateNumber = numberOfStates;
 		initialState = ulyantsevAutomaton.getStartState().getNumber();
 		
@@ -31,6 +32,10 @@ public class FST {
 				Transition tr = new Transition(t.getEvent(), t.getActions().size(), t.getDst().getNumber());
 				tr.setOutput(t.getActions().getActions());
 				transitions.get(state.getNumber()).add(tr);
+				events.add(t.getEvent());
+				for (String action : t.getActions().getActions()) {
+					actions.add(action);
+				}
 			}
 		}
 		

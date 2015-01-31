@@ -60,7 +60,7 @@ public class IterativeAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 			automaton = p.getLeft();
 			if (automaton.isPresent()) {
 				System.out.println(automaton.get());
-				if (new Verifier(tree, ltlFilePath, colorSize, logger, ltlFilePath).verify(automaton.get())) {
+				if (new Verifier(colorSize, logger, ltlFilePath).verify(automaton.get())) {
 					logger.info("ITERATIONS: " + iterations);
 					return automaton;
 				}

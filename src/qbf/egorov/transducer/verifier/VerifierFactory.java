@@ -41,8 +41,7 @@ import qbf.egorov.verifier.impl.SimpleVerifier;
  * @author kegorov
  *         Date: Jun 18, 2009
  */
-public class VerifierFactory implements IVerifierFactory {
-//    private static Random RANDOM = new Random();
+public class VerifierFactory {
     private ModifiableAutomataContext context;
     private IPredicateFactory<IState> predicates = new PredicateFactory<IState>();
     private ILtlParser parser;
@@ -122,8 +121,7 @@ public class VerifierFactory implements IVerifierFactory {
 
     public int[] verify() {
         int[] res = new int[preparedFormulas.length];
-        IVerifier<IState> verifier = new SimpleVerifier<IState>(context.getStateMachine(null).getInitialState());
-//        List<IIntersectionTransition> longestList = Collections.emptyList();
+        IVerifier<IState> verifier = new SimpleVerifier<>(context.getStateMachine(null).getInitialState());
         int usedTransitions = fst.getUsedTransitionsCount();
 
         for (int i = 0; i < preparedFormulas.length; i++) {
@@ -132,19 +130,11 @@ public class VerifierFactory implements IVerifierFactory {
             for (IBuchiAutomata buchi : preparedFormulas[i]) {
                 counter.resetCounter();
                 
-                List<IIntersectionTransition> list;
-//                if (RANDOM.nextInt(length) < barrier) {
-                    list = verifier.verify(buchi, predicates, marker, counter);
-//                } else {
-//                    list = verifier.verify(buchi, predicates, counter);
-//                }
+                List<IIntersectionTransition> list = verifier.verify(buchi, predicates, marker, counter);
                 if ((list != null) && (!list.isEmpty())) {
-                    /*if (longestList.size() < list.size()) {
-                        longestList = list;
-                    }*/
+
                     ListIterator<IIntersectionTransition> iter = list.listIterator(list.size());
 
-//                    int failTransitions = (buchi.size() == 2) ? 1 : 2; //1 -- invariant, 2 -- pre(post) condition
                     int failTransitions = buchi.size() - 1;
 
                     for (int j = 0; iter.hasPrevious() && (j < failTransitions);) {
@@ -158,30 +148,14 @@ public class VerifierFactory implements IVerifierFactory {
                             }
                         }
                     }
-                    /*for (IIntersectionTransition t : list) {
-                        if ((t.getTransition() != null)
-                                && (t.getTransition().getClass() == AutomataTransition.class)) {
-                            AutomataTransition trans = (AutomataTransition) t.getTransition();
-                            if (trans.getAlgTransition() != null) {
-                                trans.getAlgTransition().setUsedByVerifier(true);
-                            }
-                        }
-                    }*/
+
                     marked += counter.countVerified() / 2;
-//                    System.out.println("verified = " + counter.countVerified());
                 } else {
                     marked += usedTransitions;
                 }
             }
             res[i] = marked;
         }
-
-        /*for (IIntersectionTransition t : longestList) {
-            AutomataTransition trans = (AutomataTransition) t.getTransition();
-            if ((trans != null) && (trans.getAlgTransition() != null)) {
-                trans.getAlgTransition().setUsedByVerifier(true);
-            }
-        }*/
 
         return res;
     }

@@ -127,7 +127,7 @@ public class BacktrackingAutomatonBuilder {
 		// TODO fix the problem with the verifier
 		
 		try {
-			new TraverseState(tree, new Verifier(tree, ltlFilePath, colorSize, logger, ltlFilePath), colorSize, timeoutSeconds).backtracking();
+			new TraverseState(tree, new Verifier(colorSize, logger, ltlFilePath), colorSize, timeoutSeconds).backtracking();
 		} catch (AutomatonFound e) {
 			return Optional.of(e.automaton);
 		} catch (TimeLimitExceeded e) {

@@ -207,7 +207,7 @@ public class QbfBuilderMain {
 					logger.warning("File " + resultFilePath + " not found: " + e.getMessage());
 				}
 				// verification
-				boolean verified = new Verifier(tree, ltlFilePath, size, logger, ltlFilePath).verify(resultAutomaton.get());
+				boolean verified = new Verifier(size, logger, ltlFilePath).verify(resultAutomaton.get());
 				if (verified) {
 					logger.info("VERIFIED");
 				} else {
