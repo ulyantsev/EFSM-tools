@@ -1,6 +1,5 @@
 package qbf.egorov.transducer.algorithm;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 
 import org.apache.commons.lang3.StringUtils;
@@ -8,7 +7,6 @@ import org.apache.commons.lang3.StringUtils;
 import qbf.egorov.transducer.RandomProvider;
 
 public class Transition {
-	
 	final String input;
 	private int outputSize;
 	private String[] output;
@@ -26,7 +24,7 @@ public class Transition {
 		this.input = input;
 		this.outputSize = outputSize;
 		this.newState = newState;
-		map = new HashMap<String, Integer>();
+		map = new HashMap<>();
 	}
 	
 	public boolean accepts(String s) {
@@ -93,19 +91,6 @@ public class Transition {
 		}
 	}
 	
-	private String[] mutateArray(String[] array, String[] setOfOutputs) {
-		ArrayList<String> list = new ArrayList<String>();
-		for (String s : array) {
-			list.add(s);
-		}
-		if (RandomProvider.getInstance().nextBoolean() && list.size() > 0) {
-			list.remove(RandomProvider.getInstance().nextInt(list.size()));
-		} else {
-			list.add(RandomProvider.getInstance().nextInt(list.size() + 1), setOfOutputs[RandomProvider.getInstance().nextInt(setOfOutputs.length)]);
-		}
-		return list.toArray(new String[list.size()]);
-	}
-
 	public int getOutputSize() {
 		return outputSize;
 	}

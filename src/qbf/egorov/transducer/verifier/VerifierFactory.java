@@ -30,10 +30,8 @@ import qbf.egorov.statemachine.impl.ControlledObjectStub;
 import qbf.egorov.statemachine.impl.EventProviderStub;
 import qbf.egorov.statemachine.impl.SimpleState;
 import qbf.egorov.statemachine.impl.StateMachine;
-import qbf.egorov.transducer.algorithm.Const;
 import qbf.egorov.transducer.algorithm.FST;
 import qbf.egorov.transducer.algorithm.Transition;
-import qbf.egorov.transducer.scenario.TestGroup;
 import qbf.egorov.verifier.IDfsListener;
 import qbf.egorov.verifier.IVerifier;
 import qbf.egorov.verifier.automata.IIntersectionTransition;
@@ -62,24 +60,6 @@ public class VerifierFactory implements IVerifierFactory {
 
         context = new ModifiableAutomataContext(co, ep);
         parser = new LtlParser(context, predicates);
-    }
-
-    public void prepareFormulas(TestGroup[] groups) throws LtlParseException {
-        ITranslator translator = new JLtl2baTranslator();
-
-        preparedFormulas = new IBuchiAutomata[groups.length][];
-
-        for (int i = 0; i < groups.length; i++) {
-            List<String> formulas = groups[i].getFormulas();
-            IBuchiAutomata[] group = new IBuchiAutomata[formulas.size()];
-            int j = 0;
-            for (String f : formulas) {
-                LtlNode node = parser.parse(f);
-                node = LtlUtils.getInstance().neg(node);
-                group[j++] = translator.translate(node);
-            }
-            preparedFormulas[i] = group;
-        }
     }
     
     public void prepareFormulas(List<String> formulas) throws LtlParseException {
@@ -149,9 +129,6 @@ public class VerifierFactory implements IVerifierFactory {
         for (int i = 0; i < preparedFormulas.length; i++) {
             int marked = 0;
 
-            int length = preparedFormulas[i].length;
-            int barrier = Math.max(Const.MIN_USED_TESTS, length / 10);
-
             for (IBuchiAutomata buchi : preparedFormulas[i]) {
                 counter.resetCounter();
                 
@@ -215,7 +192,7 @@ public class VerifierFactory implements IVerifierFactory {
      * @return events
      */
     private String[] getEvents(String[] inputs) {
-        Set<String> res = new HashSet<String>();
+        Set<String> res = new HashSet<>();
         for (String e: inputs) {
             res.add(extractEvent(e));
         }

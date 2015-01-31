@@ -3,13 +3,11 @@
  */
 package qbf.egorov.ltl.buchi.impl;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import qbf.egorov.ltl.buchi.ITransitionCondition;
 import qbf.egorov.ltl.grammar.IExpression;
-
-import java.util.Set;
-import java.util.HashSet;
-
-import org.apache.commons.lang3.BooleanUtils;
 
 /**
  * TODO: add comment
@@ -40,12 +38,12 @@ public class TransitionCondition implements ITransitionCondition {
 
     public boolean getValue() {
         for (IExpression<Boolean> expr: exprs) {
-            if (BooleanUtils.isNotTrue(expr.getValue())) {
+            if (expr.getValue() == null || !expr.getValue()) {
                 return false;
             }
         }
         for (IExpression<Boolean> expr: negExprs) {
-            if (BooleanUtils.isNotFalse(expr.getValue())) {
+            if (expr.getValue() == null || expr.getValue()) {
                 return false;
             }
         }
@@ -62,10 +60,10 @@ public class TransitionCondition implements ITransitionCondition {
 
     public String toString() {
         StringBuilder buf = new StringBuilder();
-        for (IExpression expr: exprs) {
+        for (IExpression<Boolean> expr: exprs) {
             buf.append(expr).append(" && ");
         }
-        for (IExpression expr: negExprs) {
+        for (IExpression<Boolean> expr: negExprs) {
             buf.append("!").append(expr).append(" && ");
         }
         if (exprs.isEmpty() && negExprs.isEmpty()) {

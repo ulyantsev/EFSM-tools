@@ -1,4 +1,5 @@
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.text.ParseException;
@@ -179,7 +180,7 @@ public class QbfBuilderMain {
 					: ss == SolvingStrategy.BACKTRACKING
 					? BacktrackingAutomatonBuilder.build(logger, tree, size, isComplete, timeout,
 							resultFilePath, ltlFilePath, formulae)
-					:null;
+					: null;
 			double executionTime = (System.currentTimeMillis() - startTime) / 1000.;
 			
 			if (!resultAutomaton.isPresent()) {
@@ -199,8 +200,14 @@ public class QbfBuilderMain {
 					logger.severe("NOT COMPLIES WITH SCENARIOS");
 				}
 
-				// writing to a file, verification
-				boolean verified = new Verifier(resultFilePath, ltlFilePath, size, formulae, logger, ltlFilePath).verify(resultAutomaton.get());
+				// writing to a file
+				try (PrintWriter resultPrintWriter = new PrintWriter(new File(resultFilePath))) {
+					resultPrintWriter.println(resultAutomaton.get());
+				} catch (FileNotFoundException e) {
+					logger.warning("File " + resultFilePath + " not found: " + e.getMessage());
+				}
+				// verification
+				boolean verified = new Verifier(tree, ltlFilePath, size, logger, ltlFilePath).verify(resultAutomaton.get());
 				if (verified) {
 					logger.info("VERIFIED");
 				} else {

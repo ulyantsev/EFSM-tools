@@ -3,10 +3,9 @@
  */
 package qbf.egorov.ltl.buchi;
 
-import qbf.egorov.ltl.grammar.IExpression;
-import qbf.egorov.ltl.grammar.Predicate;
-
 import java.util.Set;
+
+import qbf.egorov.ltl.grammar.IExpression;
 
 /**
  * TODO: add comment
@@ -14,12 +13,7 @@ import java.util.Set;
  * @author Kirill Egorov
  */
 public interface ITransitionCondition {
-
-    @Deprecated
     public Set<IExpression<Boolean>> getExpressions();
-
-    @Deprecated
     public Set<IExpression<Boolean>> getNegExpressions();
-
     public boolean getValue();
 }

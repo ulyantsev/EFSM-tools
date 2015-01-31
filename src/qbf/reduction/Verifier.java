@@ -2,9 +2,8 @@ package qbf.reduction;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
 import java.util.logging.Logger;
@@ -12,69 +11,67 @@ import java.util.logging.Logger;
 import qbf.egorov.transducer.algorithm.FST;
 import qbf.egorov.transducer.verifier.IVerifierFactory;
 import qbf.egorov.transducer.verifier.VerifierFactory;
-import qbf.ltl.LtlNode;
 import structures.Automaton;
+import structures.Node;
+import structures.ScenariosTree;
+import structures.Transition;
 
 /**
  * (c) Igor Buzhinsky
  */
 
 public class Verifier {
-	private final List<LtlNode> formulae;
-	private final String resultFilePath;
 	private final Logger logger;
 	private final int size;
-	private final String ltlPath;
+	private final List<String> ltlFormulae;
+	private final ScenariosTree tree;
 	
-	public Verifier(String resultFilePath, String ltlFilePath, int size, List<LtlNode> formulae, Logger logger, String ltlPath) {
-		this.formulae = formulae;
-		this.resultFilePath = resultFilePath;
+	public Verifier(ScenariosTree tree, String ltlFilePath, int size, Logger logger, String ltlPath) {
 		this.logger = logger;
 		this.size = size;
-		this.ltlPath = ltlPath;
+		this.tree = tree;
+		ltlFormulae = loadFormulae(ltlPath);
 	}
 
-	private static List<String> loadFormulae(String path) {
-		List<String> formulas = new ArrayList<>();
-		Scanner in = null;
-		try {
-			in = new Scanner(new File(path));
+	private List<String> loadFormulae(String path) {
+		List<String> formulae = new ArrayList<>();
+		try (Scanner in = new Scanner(new File(path))) {
+			while (in.hasNext()) {
+				formulae.add(in.nextLine());
+			}
 		} catch (FileNotFoundException e) {
-			e.printStackTrace();
+			logger.warning("File " + path + " not found: " + e.getMessage());
 		}
-		while (in.hasNext()) {
-			formulas.add(in.nextLine());
-		}
-		in.close();
-		
-		return formulas;
+		return formulae;
 	}
 	
-	public boolean verify(Automaton a) throws IOException {
-		try (PrintWriter resultPrintWriter = new PrintWriter(new File(resultFilePath))) {
-			resultPrintWriter.println(a);
-		} catch (FileNotFoundException e) {
-			logger.warning("File " + resultFilePath + " not found: " + e.getMessage());
+	private void logAutomation(Logger logger, Automaton a) {
+		for (Node state : a.getStates()) {
+			for (Transition t : state.getTransitions()) {
+				logger.info(t.toString());
+			}
 		}
-		
-		FST fst = new FST(a, size);
+	}
+	
+	public boolean verify(Automaton a) {
+		FST fst = new FST(a, Arrays.asList(tree.getEvents()), tree.getActions(), size);
+		int numberOfUsedTransitions = fst.getUsedTransitionsCount();
 
-		List<String> formulas = loadFormulae(ltlPath);
-		double numberOfUsedTransitions = fst.getUsedTransitionsCount();
-
-		for (int i = 0; i < formulas.size(); i++) {
-			List<String> f = new ArrayList<>();
-			f.add(formulas.get(i));
+		for (int i = 0; i < ltlFormulae.size(); i++) {
+			List<String> f = Arrays.asList(ltlFormulae.get(i));
 			IVerifierFactory verifier = new VerifierFactory(fst.getSetOfInputs(), fst.getSetOfOutputs());
 			verifier.configureStateMachine(fst);
 			try {
 				verifier.prepareFormulas(f);
 			} catch (Exception e) {
-				System.err.println("Failed to parse formula: " + formulas.get(i));
+				logger.warning("Failed to parse formula: " + ltlFormulae.get(i) + " ");
+				logAutomation(logger, a);
 				continue;
 			}
-			double result = (double) verifier.verify()[0] / numberOfUsedTransitions;
-			if (Math.abs(result - 1.0) >= 1e-5) {
+			logger.info("Parsed formula: " + ltlFormulae.get(i));
+			logAutomation(logger, a);
+			int result = verifier.verify()[0];
+			if (result != numberOfUsedTransitions) {
 				logger.info("EGOROV VERIFICATION FALSE");
 				return false;		
 			}

@@ -7,7 +7,6 @@ import java.util.List;
 
 import qbf.egorov.ltl.LtlParseException;
 import qbf.egorov.transducer.algorithm.FST;
-import qbf.egorov.transducer.scenario.TestGroup;
 
 /**
  * @author kegorov
@@ -15,13 +14,6 @@ import qbf.egorov.transducer.scenario.TestGroup;
  */
 public interface IVerifierFactory {
 
-    /**
-     * Prepare Buchi automata for formulas
-     * @param groups test groups
-     * @throws LtlParseException
-     */
-    void prepareFormulas(TestGroup[] groups) throws LtlParseException;
-    
     void prepareFormulas(List<String> formulas) throws LtlParseException;
 
     void configureStateMachine(FST fst);
