@@ -3,6 +3,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.text.ParseException;
+import java.util.Arrays;
 import java.util.logging.Logger;
 
 import actions.StringActions;
@@ -28,7 +29,7 @@ public class VerifierTester {
 		try (PrintWriter resultPrintWriter = new PrintWriter(new File("formula.ltl"))) {
 			resultPrintWriter.println(formula);
 		}
-		Verifier v = new Verifier(2, logger, "formula.ltl");
+		Verifier v = new Verifier(2, logger, "formula.ltl", Arrays.asList("A"), Arrays.asList("z0", "z1"));
 		v.verify(automaton);
 	}
 	
@@ -39,8 +40,8 @@ public class VerifierTester {
 					Automaton automaton = AutomatonGVLoader.load(
 							"qbf/testing/fsm_" + s + "s" + e + "e" + a + "a.dot"
 					);
-					Verifier v = new Verifier(s, logger, "qbf/testing/fsm_" + s + "s" + e + "e" + a + "a-true.ltl");
-					v.verify(automaton);
+					//Verifier v = new Verifier(s, logger, "qbf/testing/fsm_" + s + "s" + e + "e" + a + "a-true.ltl");
+					//v.verify(automaton);
 				}
 			}
 		}

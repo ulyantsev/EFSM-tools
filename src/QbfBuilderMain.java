@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
@@ -207,7 +208,7 @@ public class QbfBuilderMain {
 					logger.warning("File " + resultFilePath + " not found: " + e.getMessage());
 				}
 				// verification
-				boolean verified = new Verifier(size, logger, ltlFilePath).verify(resultAutomaton.get());
+				boolean verified = new Verifier(size, logger, ltlFilePath, Arrays.asList(tree.getEvents()), tree.getActions()).verify(resultAutomaton.get());
 				if (verified) {
 					logger.info("VERIFIED");
 				} else {

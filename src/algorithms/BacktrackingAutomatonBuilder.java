@@ -152,7 +152,7 @@ public class BacktrackingAutomatonBuilder {
 	public static Optional<Automaton> build(Logger logger, ScenariosTree tree, int colorSize, boolean complete,
 			int timeoutSeconds, String resultFilePath, String ltlFilePath, List<LtlNode> formulae) throws IOException {
 		try {
-			new TraverseState(tree, new Verifier(colorSize, logger, ltlFilePath),
+			new TraverseState(tree, new Verifier(colorSize, logger, ltlFilePath, Arrays.asList(tree.getEvents()), tree.getActions()),
 					colorSize, timeoutSeconds, complete, FormulaBuilder.getEventExpressionPairs(tree)).backtracking();
 		} catch (AutomatonFound e) {
 			return Optional.of(e.automaton);

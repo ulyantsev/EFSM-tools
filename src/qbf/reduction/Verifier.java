@@ -27,11 +27,36 @@ public class Verifier {
 	private final Logger logger;
 	private final int size;
 	private final List<String> ltlFormulae;
+	private final VerifierFactory verifier;
 	
-	public Verifier(int size, Logger logger, String ltlPath) {
+	public Verifier(int size, Logger logger, String ltlPath, List<String> events, List<String> actions) {
 		this.logger = logger;
 		this.size = size;
 		ltlFormulae = loadFormulae(ltlPath);
+		String joinedFormula = ltlFormulae.isEmpty()
+				? "true"
+				: "(" + String.join(") and (", ltlFormulae) + ")";
+		
+		Set<String> allEvents = new TreeSet<>(events);
+		Set<String> allActions = new TreeSet<>(actions);
+		fillEventsAndActionsFromFormulae(allEvents, allActions);
+		verifier = new VerifierFactory(allEvents.toArray(new String[allEvents.size()]), allActions.toArray(new String[allActions.size()]));
+		FST fst = new FST(new Automaton(size), allEvents, allActions, size);
+		verifier.configureStateMachine(fst);
+
+		List<String> f = Arrays.asList(joinedFormula);
+		try {
+			while (true) {
+				try {
+					verifier.prepareFormulas(f);
+					break;
+				} catch (TranslationException e) {
+				}
+			}
+		} catch (LtlParseException e) {
+			logger.warning("Failed to parse formula: " + joinedFormula + " ");
+			e.printStackTrace();
+		}
 	}
 
 	private List<String> loadFormulae(String path) {
@@ -98,30 +123,12 @@ public class Verifier {
 		FST fst = new FST(removeDeadEnds(a), allEvents, allActions, size);
 		int numberOfUsedTransitions = fst.getUsedTransitionsCount();
 
-		for (int i = 0; i < ltlFormulae.size(); i++) {
-			List<String> f = Arrays.asList(ltlFormulae.get(i));
-			VerifierFactory verifier = new VerifierFactory(fst.getSetOfInputs(), fst.getSetOfOutputs());
-			verifier.configureStateMachine(fst);
-			
-			try {
-				while (true) {
-					try {
-						verifier.prepareFormulas(f);
-						break;
-					} catch (TranslationException e) {
-					}
-				}
-			} catch (LtlParseException e) {
-				logger.warning("Failed to parse formula: " + ltlFormulae.get(i) + " ");
-				e.printStackTrace();
-				continue;
-			}
-			
-			int result = verifier.verify()[0];
-			if (result != numberOfUsedTransitions) {
-				logger.info("EGOROV VERIFICATION FALSE");
-				return false;		
-			}
+		verifier.configureStateMachine(fst);
+		
+		int result = verifier.verify()[0];
+		if (result != numberOfUsedTransitions) {
+			logger.info("EGOROV VERIFICATION FALSE");
+			return false;		
 		}
 		logger.info("EGOROV VERIFICATION TRUE");
 		return true;

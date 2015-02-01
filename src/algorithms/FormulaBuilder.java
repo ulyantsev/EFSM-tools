@@ -40,6 +40,11 @@ public abstract class FormulaBuilder {
 			this.event = event;
 			this.expression = expression;
 		}
+		
+		@Override
+		public String toString() {
+			return event + " [" + expression + "]";
+		}
 	}
 	
 	public static List<EventExpressionPair> getEventExpressionPairs(ScenariosTree tree) {

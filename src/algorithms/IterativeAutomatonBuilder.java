@@ -2,6 +2,7 @@ package algorithms;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.logging.Logger;
@@ -60,7 +61,7 @@ public class IterativeAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 			automaton = p.getLeft();
 			if (automaton.isPresent()) {
 				System.out.println(automaton.get());
-				if (new Verifier(colorSize, logger, ltlFilePath).verify(automaton.get())) {
+				if (new Verifier(colorSize, logger, ltlFilePath, Arrays.asList(tree.getEvents()), tree.getActions()).verify(automaton.get())) {
 					logger.info("ITERATIONS: " + iterations);
 					return automaton;
 				}
