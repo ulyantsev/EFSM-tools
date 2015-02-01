@@ -5,9 +5,9 @@ package qbf.egorov.statemachine.impl;
 
 import org.apache.commons.lang3.StringUtils;
 
+import qbf.egorov.ognl.Ognl;
+import qbf.egorov.ognl.OgnlException;
 import qbf.egorov.statemachine.ICondition;
-import ognl.Ognl;
-import ognl.OgnlException;
 
 /**
  * TODO: add comment

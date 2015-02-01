@@ -17,7 +17,6 @@
     <property name="choco.path" value="lib/choco-solver-2.1.5-with-sources.jar"/>
     <property name="args4j.path" value="lib/args4j-2.0.21.jar"/>
     <property name="commons.lang3.path" value="lib/commons-lang3-3.1.jar"/>
-    <property name="ognl.path" value="lib/ognl-2.6.9.jar"/>
     <property name="javassist.path" value="lib/javassist.jar"/>
     <property name="ltl2ba.path" value="lib/ltl2ba4j.jar"/>
 
@@ -227,7 +226,7 @@
         <mkdir dir="${bin.dir}"/>
         <javac srcdir="${src.dir}"
                destdir="${bin.dir}"
-               classpath="${args4j.path}:${commons.lang3.path}:${ognl.path}:${javassist.path}:${ltl2ba.path}"
+               classpath="${args4j.path}:${commons.lang3.path}:${javassist.path}:${ltl2ba.path}"
                includeantruntime="false"
                debug="true"
                debuglevel="lines,vars,source">
@@ -242,7 +241,6 @@
 
             <zipfileset src="${args4j.path}" excludes="META-INF/*.SF"/>
             <zipfileset src="${commons.lang3.path}" excludes="META-INF/*.SF"/>
-            <zipfileset src="${ognl.path}" excludes="META-INF/*.SF"/>
             <zipfileset src="${javassist.path}" excludes="META-INF/*.SF"/>
             <zipfileset src="${ltl2ba.path}" excludes="META-INF/*.SF"/>
         </jar>

@@ -12,7 +12,7 @@ import java.util.HashMap;
 
 import org.apache.commons.lang3.BooleanUtils;
 
-import ognl.*;
+import qbf.egorov.ognl.*;
 
 public class OgnlTransitionCondition implements ITransitionCondition {
 

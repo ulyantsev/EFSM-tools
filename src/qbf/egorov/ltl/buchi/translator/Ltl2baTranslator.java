@@ -8,6 +8,7 @@ import qbf.egorov.ltl.buchi.ITransitionCondition;
 import qbf.egorov.ltl.buchi.ITranslator;
 import qbf.egorov.ltl.buchi.impl.*;
 import qbf.egorov.ltl.grammar.*;
+import qbf.egorov.ognl.OgnlException;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -16,8 +17,6 @@ import java.io.File;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import ognl.OgnlException;
 
 /**
  * Ltl formula to automata Buchi translator.
@@ -140,7 +139,6 @@ public class Ltl2baTranslator implements ITranslator {
     }
 
     protected ITransitionCondition extractCondition(String condStr) {
-//        TransitionCondition cond = new TransitionCondition();
         if (condStr.trim().equals("(1)")) {
             return new TransitionCondition();
         }
@@ -149,17 +147,6 @@ public class Ltl2baTranslator implements ITranslator {
         } catch (OgnlException e) {
             throw new TranslationException("Unexpected transition condition: " + condStr, e);
         }
-//        String[] arr = condStr.split("&&");
-//
-//        for (String c: arr) {
-//            c = c.trim();
-//            if (c.charAt(0) == '!') {
-//                cond.addNegExpression(expr.get(c.substring(1)));
-//            } else {
-//                cond.addExpression(expr.get(c));
-//            }
-//        }
-//        return cond;
     }
 
     protected String extractName(String state) {
