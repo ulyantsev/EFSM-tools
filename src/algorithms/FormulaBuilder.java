@@ -26,7 +26,6 @@ public abstract class FormulaBuilder {
 	protected final int colorSize;
 	protected final List<String> events;
 	protected final List<String> actions;
-	//protected final Map<String, List<MyBooleanExpression>> pairsEventExpression;
 	protected final List<EventExpressionPair> efPairs = new ArrayList<>();
 	protected final ScenariosTree tree;
 	protected final boolean eventCompleteness;

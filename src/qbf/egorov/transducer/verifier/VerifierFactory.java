@@ -74,7 +74,6 @@ public class VerifierFactory {
              group[j++] = translator.translate(node);
          }
          preparedFormulas[0] = group;
-//         System.out.println("Buchi automaton hash = " + Digest.RSHash(group[0].toString()));
     }
 
     public void configureStateMachine(FST fst) {
@@ -131,7 +130,7 @@ public class VerifierFactory {
                 counter.resetCounter();
                 
                 List<IIntersectionTransition> list = verifier.verify(buchi, predicates, marker, counter);
-                if ((list != null) && (!list.isEmpty())) {
+                if (list != null && !list.isEmpty()) {
 
                     ListIterator<IIntersectionTransition> iter = list.listIterator(list.size());
 

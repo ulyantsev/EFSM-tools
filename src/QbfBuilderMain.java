@@ -36,7 +36,7 @@ public class QbfBuilderMain {
 
 	@Option(name = "--size", aliases = { "-s" }, usage = "automaton size", metaVar = "<size>", required = true)
 	private int size;
-
+	
 	@Option(name = "--log", aliases = { "-l" }, usage = "write log to this file", metaVar = "<file>")
 	private String logFilePath;
 

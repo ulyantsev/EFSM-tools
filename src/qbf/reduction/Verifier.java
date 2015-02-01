@@ -17,6 +17,7 @@ import qbf.egorov.ltl.buchi.translator.TranslationException;
 import qbf.egorov.transducer.algorithm.FST;
 import qbf.egorov.transducer.verifier.VerifierFactory;
 import structures.Automaton;
+import structures.Transition;
 
 /**
  * (c) Igor Buzhinsky
@@ -61,11 +62,40 @@ public class Verifier {
 		}
 	}
 	
+	private Automaton removeDeadEnds(Automaton automaton) {
+		Automaton currentA = automaton;
+		while (true) {
+			boolean changed = false;
+			Automaton newA = new Automaton(automaton.statesCount());
+			boolean[] deadEnd = new boolean[automaton.statesCount()];
+			for (int i = 0; i < automaton.statesCount(); i++) {
+				if (currentA.getState(i).getTransitions().isEmpty()) {
+					deadEnd[i] = true;
+				}
+			}
+			for (int i = 0; i < automaton.statesCount(); i++) {
+				for (Transition t : currentA.getState(i).getTransitions()) {
+					if (!deadEnd[t.getDst().getNumber()]) {
+						newA.addTransition(newA.getState(i), new Transition(newA.getState(i),
+								newA.getState(t.getDst().getNumber()), t.getEvent(),
+								t.getExpr(), t.getActions()));
+					} else {
+						changed = true;
+					}
+				}
+			}
+			if (!changed) {
+				return currentA;
+			}
+			currentA = newA;
+		}
+	}
+	
 	public boolean verify(Automaton a) {
 		Set<String> allEvents = new TreeSet<>();
 		Set<String> allActions = new TreeSet<>();
 		fillEventsAndActionsFromFormulae(allEvents, allActions);
-		FST fst = new FST(a, allEvents, allActions, size);
+		FST fst = new FST(removeDeadEnds(a), allEvents, allActions, size);
 		int numberOfUsedTransitions = fst.getUsedTransitionsCount();
 
 		for (int i = 0; i < ltlFormulae.size(); i++) {
