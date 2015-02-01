@@ -26,13 +26,13 @@ public abstract class FormulaBuilder {
 	protected final int colorSize;
 	protected final List<String> events;
 	protected final List<String> actions;
-	protected final List<EventExpressionPair> efPairs = new ArrayList<>();
+	protected final List<EventExpressionPair> efPairs;
 	protected final ScenariosTree tree;
 	protected final boolean eventCompleteness;
 	private final boolean bfsConstraints;
 	protected final List<BooleanVariable> existVars = new ArrayList<>();
 	
-	protected static class EventExpressionPair {
+	public static class EventExpressionPair {
 		public final String event;
 		public final MyBooleanExpression expression;
 		
@@ -42,16 +42,21 @@ public abstract class FormulaBuilder {
 		}
 	}
 	
-	public FormulaBuilder(int colorSize, ScenariosTree tree, boolean eventCompleteness, boolean bfsConstraints) {
-		this.colorSize = colorSize;
-		this.events = Arrays.asList(tree.getEvents());
-		this.actions = tree.getActions();
-		//this.pairsEventExpression = tree.getPairsEventExpression();
-		for (String event : events) {
+	public static List<EventExpressionPair> getEventExpressionPairs(ScenariosTree tree) {
+		final List<EventExpressionPair> efPairs = new ArrayList<>();
+		for (String event : tree.getEvents()) {
 			for (MyBooleanExpression f : tree.getPairsEventExpression().get(event)) {
 				efPairs.add(new EventExpressionPair(event, f));
 			}
 		}
+		return efPairs;
+	}
+	
+	public FormulaBuilder(int colorSize, ScenariosTree tree, boolean eventCompleteness, boolean bfsConstraints) {
+		this.colorSize = colorSize;
+		this.events = Arrays.asList(tree.getEvents());
+		this.actions = tree.getActions();
+		efPairs = getEventExpressionPairs(tree);
 		this.tree = tree;
 		this.eventCompleteness = eventCompleteness;
 		this.bfsConstraints = bfsConstraints;

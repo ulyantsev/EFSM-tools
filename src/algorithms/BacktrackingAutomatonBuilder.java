@@ -10,9 +10,11 @@ import java.util.logging.Logger;
 import qbf.ltl.LtlNode;
 import qbf.reduction.Verifier;
 import structures.Automaton;
+import structures.Node;
 import structures.ScenariosTree;
 import structures.Transition;
 import actions.StringActions;
+import algorithms.FormulaBuilder.EventExpressionPair;
 import bool.MyBooleanExpression;
 
 public class BacktrackingAutomatonBuilder {
@@ -29,6 +31,8 @@ public class BacktrackingAutomatonBuilder {
 	
 	private static class TraverseState {
 		private final int colorSize;
+		private final boolean searchComplete;
+		private final List<EventExpressionPair> efPairs;
 		
 		private final Automaton automaton;
 		private int[] coloring;
@@ -43,7 +47,7 @@ public class BacktrackingAutomatonBuilder {
 		private final int timeoutSec;
 		private final long startTime = System.currentTimeMillis();
 		
-		public TraverseState(ScenariosTree tree, Verifier verifier, int colorSize, int timeoutSec) {
+		public TraverseState(ScenariosTree tree, Verifier verifier, int colorSize, int timeoutSec, boolean searchComplete, List<EventExpressionPair> efPairs) {
 			this.colorSize = colorSize;
 			this.automaton = new Automaton(colorSize);
 			this.coloring = new int[tree.nodesCount()];
@@ -53,6 +57,8 @@ public class BacktrackingAutomatonBuilder {
 			this.verifier = verifier;
 			this.timeoutSec = timeoutSec;
 			incomingTransitionNumbers = new int[colorSize];
+			this.searchComplete = searchComplete;
+			this.efPairs = efPairs;
 		}
 		
 		private boolean verify() throws IOException {
@@ -65,7 +71,7 @@ public class BacktrackingAutomatonBuilder {
 			final List<Transition> finalFrontier = new ArrayList<>();
 			final List<Transition> currentFrontier = new ArrayList<>();
 			currentFrontier.addAll(frontier);
-			int[] newColoring = coloring.clone();
+			final int[] newColoring = coloring.clone();
 			while (!currentFrontier.isEmpty()) {
 				final Transition t = currentFrontier.get(currentFrontier.size() - 1);
 				currentFrontier.remove(currentFrontier.size() - 1);
@@ -84,6 +90,21 @@ public class BacktrackingAutomatonBuilder {
 			frontier = finalFrontier;
 			coloring = newColoring;
 			return true;
+		}
+		
+		private boolean isComplete() {
+			for (Node s : automaton.getStates()) {
+				for (EventExpressionPair p : efPairs) {
+					if (s.getTransition(p.event, p.expression) == null) {
+						return false;
+					}
+				}
+			}
+			return true;
+		}
+		
+		private boolean isCompleteIfNecessary() {
+			return !searchComplete || isComplete();
 		}
 		
 		public void backtracking() throws AutomatonFound, TimeLimitExceeded, IOException {
@@ -113,7 +134,7 @@ public class BacktrackingAutomatonBuilder {
 					final boolean verified = verify();
 					
 					if (compliant && verified) {
-						if (frontier.isEmpty()) {
+						if (frontier.isEmpty() && isCompleteIfNecessary()) {
 							throw new AutomatonFound(automaton);
 						}
 						backtracking();
@@ -131,7 +152,8 @@ public class BacktrackingAutomatonBuilder {
 	public static Optional<Automaton> build(Logger logger, ScenariosTree tree, int colorSize, boolean complete,
 			int timeoutSeconds, String resultFilePath, String ltlFilePath, List<LtlNode> formulae) throws IOException {
 		try {
-			new TraverseState(tree, new Verifier(colorSize, logger, ltlFilePath), colorSize, timeoutSeconds).backtracking();
+			new TraverseState(tree, new Verifier(colorSize, logger, ltlFilePath),
+					colorSize, timeoutSeconds, complete, FormulaBuilder.getEventExpressionPairs(tree)).backtracking();
 		} catch (AutomatonFound e) {
 			return Optional.of(e.automaton);
 		} catch (TimeLimitExceeded e) {
