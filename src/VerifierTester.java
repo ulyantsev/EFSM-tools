@@ -13,7 +13,6 @@ import structures.Automaton;
 import tools.AutomatonGVLoader;
 
 public class VerifierTester {
-
 	private static final Logger logger = Logger.getLogger("Logger");
 	
 	private static void test1() throws ParseException, FileNotFoundException {

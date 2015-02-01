@@ -45,7 +45,9 @@ public class BinaryOperation extends BooleanFormula {
 				.map(f -> f.toLimbooleString())
 				.collect(Collectors.toList());
 		
-		return "(" + String.join(" " + type + " ", strChildren) + ")";
+		// limboole does not like '->' without the left space
+		return "(" + String.join((type == BinaryOperations.IMPLIES ? " " : "")
+				+ type, strChildren) + ")";
 	}
 	
 	private String commentStringStart() {

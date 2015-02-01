@@ -1,2 +1,2 @@
 #!/bin/bash
-ant qbf-automaton-generator-jar && java -ea -jar jars/qbf-automaton-generator.jar qbf/testing/fsm_4s2e2a_20.sc --ltl qbf/testing/fsm_4s2e2a-true.ltl --size 4 --timeout 30 --complete --result qbf/generated-fsm.gv --strategy ITERATIVE_SAT --bfsConstraints
+ant qbf-automaton-generator-jar && java -ea -jar jars/qbf-automaton-generator.jar qbf/testing/fsm_3s3e3a_80.sc --ltl qbf/testing/fsm_3s3e3a-true.ltl --size 3 --timeout 300 --complete --result qbf/generated-fsm.gv --strategy ITERATIVE_SAT --bfsConstraints

@@ -22,10 +22,11 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.tuple.Pair;
 
-import bool.MyBooleanExpression;
 import qbf.reduction.BooleanFormula.DimacsConversionInfo;
 import qbf.reduction.SolverResult.SolverResults;
 import structures.ScenariosTree;
+import algorithms.FormulaBuilder;
+import algorithms.FormulaBuilder.EventExpressionPair;
 
 public class QuantifiedBooleanFormula {
 	private final List<BooleanVariable> existVars;
@@ -37,7 +38,8 @@ public class QuantifiedBooleanFormula {
 		return formulaExist.and(formulaTheRest);
 	}
 	
-	public QuantifiedBooleanFormula(List<BooleanVariable> existVars, List<BooleanVariable> forallVars, BooleanFormula formulaExist, BooleanFormula formulaTheRest) {
+	public QuantifiedBooleanFormula(List<BooleanVariable> existVars, List<BooleanVariable> forallVars,
+			BooleanFormula formulaExist, BooleanFormula formulaTheRest) {
 		this.existVars = existVars;
 		this.forallVars = forallVars;
 		this.formulaExist = formulaExist;
@@ -99,7 +101,8 @@ public class QuantifiedBooleanFormula {
 
 	private static final String QDIMACS_FILENAME = "_tmp.qdimacs";
 	
-	private SolverResult depqbfSolve(Logger logger, int timeoutSeconds, QdimacsConversionInfo qdimacs, String params) throws IOException {
+	private SolverResult depqbfSolve(Logger logger, int timeoutSeconds,
+			QdimacsConversionInfo qdimacs, String params) throws IOException {
 		long time = System.currentTimeMillis();
 		List<Assignment> list = new ArrayList<>();
 		String depqbfStr = "depqbf --max-secs=" + timeoutSeconds + " --qdo " + QDIMACS_FILENAME + " " + params;
@@ -130,7 +133,8 @@ public class QuantifiedBooleanFormula {
 		return properVars.equals(actualVars);
 	}
 	
-	private SolverResult skizzoSolve(Logger logger, int timeoutSeconds, QdimacsConversionInfo qdimacs, String params) throws IOException {
+	private SolverResult skizzoSolve(Logger logger, int timeoutSeconds,
+			QdimacsConversionInfo qdimacs, String params) throws IOException {
 		long time = System.currentTimeMillis();
 		List<Assignment> list = new ArrayList<>();
 		File skizzoLog = new File(QDIMACS_FILENAME + ".sKizzo.log");
@@ -144,7 +148,8 @@ public class QuantifiedBooleanFormula {
 		try {
 			code = skizzo.waitFor();
 		} catch (InterruptedException e) {
-			throw new AssertionError();
+			assert false;
+			return null;
 		}
 		time = System.currentTimeMillis() - time;
 
@@ -162,7 +167,8 @@ public class QuantifiedBooleanFormula {
 			try {
 				ozziks.waitFor();
 			} catch (InterruptedException e) {
-				throw new AssertionError();
+				assert false;
+				return null;
 			}
 			if (!certificate.exists()) {
 				logger.warning("NO CERTIFICATE PRODUCED BY OZZIKS, TRYING DEPQBF");
@@ -196,7 +202,8 @@ public class QuantifiedBooleanFormula {
 		}
 	}
 	
-	public SolverResult solve(Logger logger, Solvers solver, String solverParams, int timeoutSeconds, boolean useCoprocessor) throws IOException {
+	public SolverResult solve(Logger logger, Solvers solver, String solverParams,
+			int timeoutSeconds, boolean useCoprocessor) throws IOException {
 		QdimacsConversionInfo qdimacs = toQdimacs(logger, useCoprocessor);
 		logger.info("DIMACS CNF: " + qdimacs.info.title());
 		
@@ -213,7 +220,8 @@ public class QuantifiedBooleanFormula {
 		case SKIZZO:
 			return skizzoSolve(logger, timeoutSeconds, qdimacs, solverParams);
 		default:
-			throw new AssertionError();
+			assert false;
+			return null;
 		}
 	}
 	
@@ -222,15 +230,19 @@ public class QuantifiedBooleanFormula {
 	 * Enumerates 2^exponentialAssignmentVars.size() variable values.
 	 */
 	private static void findAllAssignmentsOther(int pos, BooleanVariable[] otherAssignmentVars,
-			BooleanFormula formulaToAppend, FormulaList listToAppend) {
+			BooleanFormula formulaToAppend, List<String> listToAppend) {
+		formulaToAppend = formulaToAppend.simplify();
 		if (pos == otherAssignmentVars.length) {
-			listToAppend.add(formulaToAppend);
+			assert formulaToAppend != FalseFormula.INSTANCE; // in this case the formula is obviously unsatisfiable
+			if (formulaToAppend != TrueFormula.INSTANCE) {
+				listToAppend.add(formulaToAppend.toLimbooleString());
+			}
 		} else {
 			BooleanVariable currentVar = otherAssignmentVars[pos];
 			findAllAssignmentsOther(pos + 1, otherAssignmentVars,
-					formulaToAppend.substitute(currentVar, FalseFormula.INSTANCE).simplify(), listToAppend);
+					formulaToAppend.substitute(currentVar, FalseFormula.INSTANCE), listToAppend);
 			findAllAssignmentsOther(pos + 1, otherAssignmentVars,
-					formulaToAppend.substitute(currentVar, TrueFormula.INSTANCE).simplify(), listToAppend);
+					formulaToAppend.substitute(currentVar, TrueFormula.INSTANCE), listToAppend);
 		}
 	}
 	
@@ -238,36 +250,37 @@ public class QuantifiedBooleanFormula {
 	/*
 	 * Equivalent to constraints sigma_0_0 = 0 and A_1 and A_2 and B.
 	 */
-	private void findAllAssignmentsSigmaEps(ScenariosTree tree, int statesNum, int k, int j, BooleanFormula formulaToAppend,
-			FormulaList listToAppend) {
+	private void findAllAssignmentsSigmaEps(List<EventExpressionPair> efPairs, int statesNum,
+			int k, int j, BooleanFormula formulaToAppend, List<String> listToAppend) {
+		formulaToAppend = formulaToAppend.simplify();
 		if (j == k + 1) {
-			List<BooleanVariable> otherAssignmentVars = forallVars.stream()
+			final List<BooleanVariable> otherAssignmentVars = forallVars.stream()
 					.filter(v -> !v.name.startsWith("sigma") && !v.name.startsWith("eps"))
 					.collect(Collectors.toList());
 			findAllAssignmentsOther(0, otherAssignmentVars.toArray(new BooleanVariable[otherAssignmentVars.size()]),
-					formulaToAppend.simplify(), listToAppend);
+					formulaToAppend, listToAppend);
 		} else {
-			int iMax = (k == 0 ? 0 : statesNum);
+			final int iMax = (j == 0 ? 1 : statesNum);
 			for (int i = 0; i < iMax; i++) {
 				BooleanFormula curFormula1 = formulaToAppend.substitute(BooleanVariable.byName("sigma", i, j).get(),
 						TrueFormula.INSTANCE);
 				for (int iOther = 0; iOther < statesNum; iOther++) {
-					curFormula1 = curFormula1.substitute(BooleanVariable.byName("sigma", iOther, j).get(),
-							FalseFormula.INSTANCE);
-				}
-				for (String event : tree.getEvents()) {
-					for (MyBooleanExpression f : tree.getPairsEventExpression().get(event)) {
-						BooleanFormula curFormula2 = curFormula1.substitute(BooleanVariable.byName("eps", event, f, j).get(),
-								TrueFormula.INSTANCE);
-						for (String eventOther : tree.getEvents()) {
-							for (MyBooleanExpression fOther : tree.getPairsEventExpression().get(eventOther)) {
-								curFormula2 = curFormula2.substitute(BooleanVariable.byName("eps", eventOther, fOther, j).get(),
-										FalseFormula.INSTANCE);
-							}
-						}
-						// recursive call
-						findAllAssignmentsSigmaEps(tree, statesNum, k, j + 1, curFormula2.simplify(), listToAppend);
+					if (iOther != i) {
+						curFormula1 = curFormula1.substitute(BooleanVariable.byName("sigma", iOther, j).get(),
+								FalseFormula.INSTANCE);
 					}
+				}
+				for (EventExpressionPair p : efPairs) {
+					BooleanFormula curFormula2 = curFormula1.substitute(BooleanVariable.byName("eps", p.event, p.expression, j).get(),
+							TrueFormula.INSTANCE);
+					for (EventExpressionPair pOther : efPairs) {
+						if (pOther != p) {
+							curFormula2 = curFormula2.substitute(BooleanVariable.byName("eps", pOther.event, pOther.expression, j).get(),
+										FalseFormula.INSTANCE);
+						}
+					}
+					// recursive call
+					findAllAssignmentsSigmaEps(efPairs, statesNum, k, j + 1, curFormula2, listToAppend);
 				}
 			}
 		}
@@ -278,22 +291,24 @@ public class QuantifiedBooleanFormula {
 	 * The size of the formula is exponential of forallVars.size().
 	 */
 	private String flatten(ScenariosTree tree, int statesNum, int k, Logger logger) {
-		FormulaList mainList = new FormulaList(BinaryOperations.AND);
+		List<String> mainList = new ArrayList<>();
 		logger.info("Number of 'forall' variables: " + forallVars.size());
 		logger.info("List of 'forall' variables: " + forallVars);
 		
 		long time = System.currentTimeMillis();
 		
-		mainList.add(formulaExist);
-		findAllAssignmentsSigmaEps(tree, statesNum, k, 0, formulaTheRest, mainList);
+		mainList.add(formulaExist.simplify().toLimbooleString());
+		findAllAssignmentsSigmaEps(FormulaBuilder.getEventExpressionPairs(tree),
+				statesNum, k, 0, formulaTheRest, mainList);
 		
 		time = System.currentTimeMillis() - time;
 		logger.info("Formula generation time: " + time + " ms.");
 		
-		return mainList.assemble().simplify().toLimbooleString();
+		return String.join("&", mainList);
 	}
 
-	public SolverResult solveAsSat(ScenariosTree tree, int statesNum, int k, Logger logger, String solverParams, int timeoutSeconds) throws IOException {
+	public SolverResult solveAsSat(ScenariosTree tree, int statesNum, int k,
+			Logger logger, String solverParams, int timeoutSeconds) throws IOException {
 		String flatFormula = flatten(tree, statesNum, k, logger);
 		Pair<List<Assignment>, Long> solution = BooleanFormula.solveAsSat(flatFormula, logger, solverParams, timeoutSeconds);
 		List<Assignment> list = solution.getLeft();

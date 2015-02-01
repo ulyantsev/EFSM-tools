@@ -28,7 +28,7 @@ public class IterativeAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 		try (PrintWriter pw = new PrintWriter("_tmp.pretty")) {
 			pw.print(bf.toString());
 		}
-		final String strBf = bf.toLimbooleString();
+		final String strBf = bf.simplify().toLimbooleString();
 		final Pair<List<Assignment>, Long> solution = BooleanFormula.solveAsSat(strBf, logger, solverParams, timeoutSeconds);
 		final List<Assignment> list = solution.getLeft();
 		final long time = solution.getRight();
