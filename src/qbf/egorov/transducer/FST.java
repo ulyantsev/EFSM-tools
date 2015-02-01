@@ -30,10 +30,6 @@ public class FST {
 				Transition tr = new Transition(t.getEvent(), t.getActions().size(), t.getDst().getNumber());
 				tr.setOutput(t.getActions().getActions());
 				transitions.get(state.getNumber()).add(tr);
-				events.add(t.getEvent());
-				for (String action : t.getActions().getActions()) {
-					actions.add(action);
-				}
 			}
 		}
 		

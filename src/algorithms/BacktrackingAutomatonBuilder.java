@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.logging.Logger;
 
+import org.apache.commons.lang3.tuple.Pair;
+
 import qbf.egorov.ltl.grammar.LtlNode;
 import qbf.reduction.Verifier;
 import structures.Automaton;
@@ -61,7 +63,7 @@ public class BacktrackingAutomatonBuilder {
 			this.efPairs = efPairs;
 		}
 		
-		private boolean verify() throws IOException {
+		private boolean verify() {
 			return verifier.verify(automaton);
 		}
 		
@@ -103,14 +105,42 @@ public class BacktrackingAutomatonBuilder {
 			return true;
 		}
 		
-		private boolean isCompleteIfNecessary() {
-			return !searchComplete || isComplete();
+		private List<Pair<Integer, EventExpressionPair>> missingTransitions() {
+			List<Pair<Integer, EventExpressionPair>> missing = new ArrayList<>();
+			for (Node s : automaton.getStates()) {
+				for (EventExpressionPair p : efPairs) {
+					if (s.getTransition(p.event, p.expression) == null) {
+						missing.add(Pair.of(s.getNumber(), p));
+					}
+				}
+			}
+			return missing;
 		}
 		
-		public void backtracking() throws AutomatonFound, TimeLimitExceeded, IOException {
+		private void checkTime() throws TimeLimitExceeded {
 			if ((System.currentTimeMillis() - startTime) > timeoutSec * 1000) {
 				throw new TimeLimitExceeded();
 			}
+		}
+		
+		private void ensureCompleteness() throws AutomatonFound, TimeLimitExceeded {
+			checkTime();
+			for (Pair<Integer, EventExpressionPair> missing : missingTransitions()) {
+				int stateFrom = missing.getLeft();
+				EventExpressionPair p = missing.getRight();
+				
+				for (int dst = 0; dst < colorSize; dst++) {
+					//structures.Transition autoT = new Transition(automaton.getState(stateFrom),
+					//		automaton.getState(dst), p.event, p.expression, actions);
+					//automaton.addTransition(automaton.getState(stateFrom), autoT);
+					
+					//automaton.getState(stateFrom).removeTransition(autoT);
+				}
+			}
+		}
+		
+		public void backtracking() throws AutomatonFound, TimeLimitExceeded {
+			checkTime();
 			for (Transition t : frontier) {
 				// further edges should be added from this state:
 				int stateFrom = coloring[t.getSrc().getNumber()];
@@ -134,10 +164,19 @@ public class BacktrackingAutomatonBuilder {
 					final boolean verified = verify();
 					
 					if (compliant && verified) {
-						if (frontier.isEmpty() && isCompleteIfNecessary()) {
-							throw new AutomatonFound(automaton);
+						if (frontier.isEmpty()) {
+							if (searchComplete) {
+								if (isComplete()) {
+									throw new AutomatonFound(automaton);
+								} else {
+									ensureCompleteness();
+								}
+							} else {
+								throw new AutomatonFound(automaton);
+							}
+						} else {
+							backtracking();
 						}
-						backtracking();
 					}
 					
 					coloring = coloringBackup;

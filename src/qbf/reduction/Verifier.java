@@ -28,6 +28,8 @@ public class Verifier {
 	private final int size;
 	private final List<String> ltlFormulae;
 	private final VerifierFactory verifier;
+	private final Set<String> allEvents;
+	private final Set<String> allActions;
 	
 	public Verifier(int size, Logger logger, String ltlPath, List<String> events, List<String> actions) {
 		this.logger = logger;
@@ -37,8 +39,8 @@ public class Verifier {
 				? "true"
 				: "(" + String.join(") and (", ltlFormulae) + ")";
 		
-		Set<String> allEvents = new TreeSet<>(events);
-		Set<String> allActions = new TreeSet<>(actions);
+		allEvents = new TreeSet<>(events);
+		allActions = new TreeSet<>(actions);
 		fillEventsAndActionsFromFormulae(allEvents, allActions);
 		verifier = new VerifierFactory(allEvents.toArray(new String[allEvents.size()]), allActions.toArray(new String[allActions.size()]));
 		FST fst = new FST(new Automaton(size), allEvents, allActions, size);
@@ -117,9 +119,6 @@ public class Verifier {
 	}
 	
 	public boolean verify(Automaton a) {
-		Set<String> allEvents = new TreeSet<>();
-		Set<String> allActions = new TreeSet<>();
-		fillEventsAndActionsFromFormulae(allEvents, allActions);
 		FST fst = new FST(removeDeadEnds(a), allEvents, allActions, size);
 		int numberOfUsedTransitions = fst.getUsedTransitionsCount();
 
