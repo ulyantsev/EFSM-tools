@@ -9,8 +9,6 @@ package qbf.egorov.statemachine;
  * @author Kirill Egorov
  */
 public interface IAction {
-
-    public String getName();
-
-    public String getDescription();
+    String getName();
+    String getDescription();
 }

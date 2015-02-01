@@ -17,8 +17,7 @@ import java.util.HashMap;
  */
 public class BuchiNode implements IBuchiNode {
     private int id;
-    private Map<ITransitionCondition, IBuchiNode> transitions =
-            new HashMap<ITransitionCondition, IBuchiNode>();
+    private Map<ITransitionCondition, IBuchiNode> transitions = new HashMap<>();
 
     public BuchiNode(int id) {
         this.id = id;
@@ -54,7 +53,6 @@ public class BuchiNode implements IBuchiNode {
         }
 
         return id == ((BuchiNode) o).id;
-
     }
 
     public int hashCode() {

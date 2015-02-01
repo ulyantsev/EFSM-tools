@@ -18,17 +18,6 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author Kirill Egorov
  */
 public class SharedData implements ISharedData {
-
-    /**
-     * Threads that finished their work and waiting for new one
-     */
-    private final Queue<DfsThread> unoccupiedThreads = new ConcurrentLinkedQueue<DfsThread>();
-
-    /**
-     * Number of threads
-     */
-    private final int threadNumber;
-
     /**
      * Thread checked not emptytness of automatas intersection,
      * write his cotrary instance stack and other threads can terminate their execution.
@@ -41,12 +30,11 @@ public class SharedData implements ISharedData {
      */
     private final Set<IntersectionNode> visited;
 
-    public SharedData(Set<IntersectionNode> visited, int threadNumber) {
+    public SharedData(Set<IntersectionNode> visited) {
         if (visited == null) {
             throw new IllegalArgumentException();
         }
         this.visited = visited;
-        this.threadNumber = threadNumber;
     }
 
     public DfsStackTreeNode<IIntersectionTransition> getContraryInstance() {
@@ -59,23 +47,5 @@ public class SharedData implements ISharedData {
 
     public Set<IntersectionNode> getVisited() {
         return visited;
-    }
-
-    public boolean offerUnoccupiedThread(DfsThread t) {
-        return unoccupiedThreads.offer(t) && (unoccupiedThreads.size() < threadNumber);
-    }
-
-    public DfsThread getUnoccupiedThread() {
-        return unoccupiedThreads.poll();
-    }
-
-    public void notifyAllUnoccupiedThreads() {
-        if (unoccupiedThreads != null) {
-            for (DfsThread t: unoccupiedThreads) {
-                synchronized (t) {
-                    t.notifyAll();
-                }
-            }
-        }
     }
 }

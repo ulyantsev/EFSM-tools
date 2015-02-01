@@ -13,14 +13,8 @@ import java.util.Collection;
  * @author Kirill Egorov
  */
 public interface IEventProvider {
-
-    public String getName();
-
-    public IEvent getEvent(String eventName);
-
-    public Collection<IEvent> getEvents();
-
-//    public Collection<IStateMachine> getTargets();
-
-    public Class getImplClass();
+    String getName();
+    IEvent getEvent(String eventName);
+    Collection<IEvent> getEvents();
+    Class getImplClass();
 }

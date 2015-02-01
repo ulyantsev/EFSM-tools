@@ -10,8 +10,6 @@ import qbf.egorov.statemachine.IState;
  *         Date: Nov 2, 2009
  */
 public interface IDfsListener {
-
     void enterState(IState state);
-
     void leaveState(IState state);
 }

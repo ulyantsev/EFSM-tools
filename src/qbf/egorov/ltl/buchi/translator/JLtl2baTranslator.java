@@ -48,7 +48,6 @@ public class JLtl2baTranslator implements ITranslator {
         return root.accept(visitor, null);
     }
 
-
     private class BuchiConverter {
         BuchiAutomata buchi;
         IBuchiNodeFactory<BuchiNode> nodeFactory;

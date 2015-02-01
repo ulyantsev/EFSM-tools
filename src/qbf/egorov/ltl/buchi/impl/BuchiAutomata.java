@@ -14,10 +14,9 @@ import java.util.*;
  * @author Kirill Egorov
  */
 public class BuchiAutomata implements IBuchiAutomata {
-
     private IBuchiNode startNode;
-    private Set<IBuchiNode> nodes = new HashSet<IBuchiNode>();
-    private Map<Integer, Set<? extends IBuchiNode>> accept = new HashMap<Integer, Set<? extends IBuchiNode>>();
+    private Set<IBuchiNode> nodes = new HashSet<>();
+    private Map<Integer, Set<? extends IBuchiNode>> accept = new HashMap<>();
     private int acceptSetsCount = 0;
 
     public IBuchiNode getStartNode() {

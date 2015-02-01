@@ -12,6 +12,5 @@ import qbf.egorov.ltl.grammar.LtlNode;
  * @author Kirill Egorov
  */
 public interface ILtlParser {
-
     LtlNode parse(String ltlExpr) throws LtlParseException;
 }

@@ -13,10 +13,7 @@ import java.util.List;
  * @author Kirill Egorov
  */
 public interface IStateTransition extends ITransition<IState> {
-
     IEvent getEvent();
-
     List<IAction> getActions();
-
     ICondition getCondition();
 }

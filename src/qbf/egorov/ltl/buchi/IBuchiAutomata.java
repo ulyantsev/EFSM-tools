@@ -11,14 +11,8 @@ import java.util.Set;
  * @author Kirill Egorov
  */
 public interface IBuchiAutomata {
-
     IBuchiNode getStartNode();
-
-    Set<IBuchiNode> getNodes();
-
     Set<? extends IBuchiNode> getAcceptSet(int i);
-
     int getAcceptSetsCount();
-
     int size();
 }

@@ -6,10 +6,7 @@ import qbf.egorov.ltl.grammar.predicate.IPredicateFactory;
 import qbf.egorov.statemachine.IState;
 
 public interface IIntersectionAutomata<S extends IState> {
-
     IBuchiAutomata getBuchiAutomata();
-
     IPredicateFactory<S> getPredicates();
-
     IntersectionNode<S> getNode(S state, IBuchiNode node, int acceptSet);
 }

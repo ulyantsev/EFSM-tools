@@ -14,7 +14,7 @@ import java.util.regex.Pattern;
 
 import qbf.egorov.ltl.LtlParseException;
 import qbf.egorov.ltl.buchi.translator.TranslationException;
-import qbf.egorov.transducer.algorithm.FST;
+import qbf.egorov.transducer.FST;
 import qbf.egorov.transducer.verifier.VerifierFactory;
 import structures.Automaton;
 import structures.Transition;

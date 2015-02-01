@@ -11,16 +11,10 @@ import java.util.Collection;
  * @author Kirill Egorov
  */
 public interface IControlledObject {
-
-    public String getName();
-
-    public IAction getAction(String actionName);
-
-    public Collection<IAction> getActions();
-
-    public IFunction getFunction(String funName);
-
-    public Collection<IFunction> getFunctions();
-
-    public Class getImplClass();
+    String getName();
+    IAction getAction(String actionName);
+    Collection<IAction> getActions();
+    IFunction getFunction(String funName);
+    Collection<IFunction> getFunctions();
+    Class getImplClass();
 }

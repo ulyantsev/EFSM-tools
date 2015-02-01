@@ -11,6 +11,5 @@ import qbf.egorov.ltl.grammar.LtlNode;
  * @author Kirill Egorov
  */
 public interface ITranslator {
-
-    public IBuchiAutomata translate(LtlNode root);
+    IBuchiAutomata translate(LtlNode root);
 }

@@ -30,8 +30,8 @@ import qbf.egorov.statemachine.impl.ControlledObjectStub;
 import qbf.egorov.statemachine.impl.EventProviderStub;
 import qbf.egorov.statemachine.impl.SimpleState;
 import qbf.egorov.statemachine.impl.StateMachine;
-import qbf.egorov.transducer.algorithm.FST;
-import qbf.egorov.transducer.algorithm.Transition;
+import qbf.egorov.transducer.FST;
+import qbf.egorov.transducer.Transition;
 import qbf.egorov.verifier.IDfsListener;
 import qbf.egorov.verifier.IVerifier;
 import qbf.egorov.verifier.automata.IIntersectionTransition;
@@ -43,7 +43,7 @@ import qbf.egorov.verifier.impl.SimpleVerifier;
  */
 public class VerifierFactory {
     private ModifiableAutomataContext context;
-    private IPredicateFactory<IState> predicates = new PredicateFactory<IState>();
+    private IPredicateFactory<IState> predicates = new PredicateFactory<>();
     private ILtlParser parser;
     private IBuchiAutomata[][] preparedFormulas;
 

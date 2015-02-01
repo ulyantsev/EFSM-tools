@@ -9,8 +9,6 @@ package qbf.egorov.statemachine;
  * @author Kirill Egorov
  */
 public interface IFunction extends IAction {
-
-    public Object getCurValue();
-
-    public Class getReturnType();
+    Object getCurValue();
+    Class getReturnType();
 }

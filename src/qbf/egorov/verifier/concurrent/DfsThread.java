@@ -3,14 +3,13 @@
  */
 package qbf.egorov.verifier.concurrent;
 
+import java.io.PrintStream;
+import java.util.Map;
+
 import qbf.egorov.util.concurrent.DfsStackTree;
 import qbf.egorov.verifier.IDfsListener;
 import qbf.egorov.verifier.ISharedData;
 import qbf.egorov.verifier.automata.IIntersectionTransition;
-import qbf.egorov.verifier.automata.IntersectionNode;
-
-import java.util.Map;
-import java.io.PrintStream;
 
 /**
  * TODO: add comment
@@ -18,7 +17,6 @@ import java.io.PrintStream;
  * @author Kirill Egorov
  */
 public class DfsThread extends Thread {
-
     private DfsStackTree<IIntersectionTransition> stackTree;
     private ISharedData sharedData;
     private int threadId;
@@ -37,14 +35,6 @@ public class DfsThread extends Thread {
 
     public int getThreadId() {
         return threadId;
-    }
-
-    public void setDfsStackTree(DfsStackTree<IIntersectionTransition> stackTree) {
-        this.stackTree = stackTree;
-    }
-
-    public void setDfsListeners(IDfsListener ... listeners) {
-        this.listeners = listeners;     //TODO: move listeners to shared data?
     }
 
     public void run() {

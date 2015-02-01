@@ -14,14 +14,9 @@ import java.util.Set;
  * @author Kirill Egorov
  */
 public interface IState extends INode<IStateTransition> {
-
     String getName();
-
     StateType getType();
-
     List<IAction> getActions();
-
     Set<IStateMachine<? extends IState>> getNestedStateMachines();
-
     String getUniqueName();
 }

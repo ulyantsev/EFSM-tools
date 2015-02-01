@@ -30,8 +30,8 @@ public class ControlledObject implements IControlledObject {
     }
 
     protected void findMethods(Class clazz) {
-        actions = new HashMap<String, IAction>();
-        functions = new HashMap<String, IFunction>();
+        actions = new HashMap<>();
+        functions = new HashMap<>();
         for (Method m: clazz.getMethods()) {
             Class[] params = m.getParameterTypes();
             if (params.length == 1 && StateMachineContext.class.isAssignableFrom(params[0])) {

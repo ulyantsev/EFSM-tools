@@ -5,7 +5,7 @@ package qbf.egorov.transducer.verifier;
 
 import qbf.egorov.statemachine.IState;
 import qbf.egorov.statemachine.IStateTransition;
-import qbf.egorov.transducer.algorithm.Transition;
+import qbf.egorov.transducer.Transition;
 import qbf.egorov.verifier.IDfsListener;
 
 import java.util.Map;
@@ -16,10 +16,9 @@ import java.util.HashMap;
  *         Date: Feb 19, 2010
  */
 public class TransitionCounter implements IDfsListener {
-    private Map<Transition, Boolean> transitions = new HashMap<Transition, Boolean>();
+    private Map<Transition, Boolean> transitions = new HashMap<>();
 
     public void enterState(IState state) {
-//        markTransitions(state, false);
     }
 
     public void leaveState(IState state) {
@@ -35,13 +34,6 @@ public class TransitionCounter implements IDfsListener {
      * @return
      */
     public int countVerified() {
-//        int res = 0;
-//        for (Map.Entry<Transition, Boolean> e : transitions.entrySet()) {
-//            if (e.getValue()) {
-//                res++;
-//            }
-//        }
-//        return res;
         return transitions.size();
     }
 

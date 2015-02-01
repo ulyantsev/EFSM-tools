@@ -9,10 +9,7 @@ package qbf.egorov.statemachine;
  * @author Kirill Egorov
  */
 public interface IAutomataContext {
-
-    public IControlledObject getControlledObject(String name);
-
-    public IEventProvider getEventProvider(String name);
-
-    public IStateMachine<? extends IState> getStateMachine(String name);
+    IControlledObject getControlledObject(String name);
+    IEventProvider getEventProvider(String name);
+    IStateMachine<? extends IState> getStateMachine(String name);
 }

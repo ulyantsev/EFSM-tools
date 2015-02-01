@@ -13,7 +13,6 @@ import qbf.egorov.statemachine.IStateTransition;
  * @author Kirill Egorov
  */
 public abstract class AbstractPredicateFactory<S extends IState> implements IPredicateFactory<S>, Cloneable {
-
     protected S state;
     protected IStateTransition transition;
 

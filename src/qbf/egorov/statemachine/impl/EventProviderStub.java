@@ -14,13 +14,13 @@ import java.util.*;
  */
 public class EventProviderStub implements IEventProvider {
     private String name;
-    private Map<String, IEvent> events = new HashMap<String, IEvent>();
+    private Map<String, IEvent> events = new HashMap<>();
 
     public EventProviderStub(String name, String ... events) {
         this(name, Arrays.asList(events));
     }
 
-    public EventProviderStub(String name, Collection<String> events) {
+    private EventProviderStub(String name, Collection<String> events) {
         this.name = name;
 
         for (String e: events) {

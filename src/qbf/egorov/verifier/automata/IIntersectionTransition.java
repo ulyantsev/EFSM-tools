@@ -13,6 +13,5 @@ import qbf.egorov.automata.ITransition;
  */
 public interface IIntersectionTransition<S extends IState> extends ITransition<IntersectionNode<S>> {
     IStateTransition getTransition();
-
     IntersectionNode<S> getTarget();
 }

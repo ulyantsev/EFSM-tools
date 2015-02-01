@@ -15,20 +15,17 @@ import java.util.regex.Matcher;
  * @author Kirill Egorov
  */
 public class StateMachine<S extends IState> implements IStateMachine<S> {
-
     private String name;
     private S initialState;
-    private Map<String, S> states = new HashMap<String, S>();
-    private Set<IEventProvider> eventProviders = new HashSet<IEventProvider>();
-    private Map<String, IControlledObject> ctrlObjects = new HashMap<String, IControlledObject>();
+    private Map<String, S> states = new HashMap<>();
+    private Set<IEventProvider> eventProviders = new HashSet<>();
+    private Map<String, IControlledObject> ctrlObjects = new HashMap<>();
 
     private Map<String, Map<String, ?>> sources;
     private Map<S, List<IFunction>> functions;
 
     private IStateMachine<S> parentStateMachine;
-    private Map<S, IStateMachine<S>> parentStates = new HashMap<S, IStateMachine<S>>();
-
-    private Set<IStateMachine<S>> nestedStateMachines = new LinkedHashSet<IStateMachine<S>>();
+    private Map<S, IStateMachine<S>> parentStates = new HashMap<>();
 
     public StateMachine(String name) {
         this.name = name;
@@ -53,37 +50,8 @@ public class StateMachine<S extends IState> implements IStateMachine<S> {
         return parentStateMachine;
     }
 
-    public Set<IStateMachine<S>> getNestedStateMachines() {
-        return nestedStateMachines;
-    }
-
     public Map<S, IStateMachine<S>> getParentStates() {
         return parentStates;
-    }
-
-    public <T extends IStateMachine<S>> void setParent(T parentStateMachine, S parentState) {
-        if (parentStateMachine == null || parentState == null) {
-            throw new IllegalArgumentException("parent parameters can't be null");
-        }
-        if (this.parentStateMachine != null && this.parentStateMachine != parentStateMachine) {
-            throw new UnsupportedOperationException("State machine can't have more than one parent");
-        }
-//        if (!parentState.equals(parentStateMachine.getState(parentState.getName()))) {
-//            throw new IllegalArgumentException("parentState isn't parentStateMachine state");
-//        }
-        if (!parentState.getNestedStateMachines().contains(this)) {
-            throw new IllegalArgumentException("This stateMachine isn't nested stateMachine for parentState");
-        }
-        this.parentStateMachine = parentStateMachine;
-        parentStates.put(parentState, parentStateMachine);
-    }
-
-    public void addNestedStateMachine(IStateMachine<S> stateMachine) {
-        nestedStateMachines.add(stateMachine);
-    }
-
-    public boolean isNested() {
-        return parentStateMachine != null;
     }
 
     public S getInitialState() {

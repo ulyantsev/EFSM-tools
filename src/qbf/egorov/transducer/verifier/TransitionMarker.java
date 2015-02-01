@@ -5,7 +5,7 @@ package qbf.egorov.transducer.verifier;
 
 import qbf.egorov.statemachine.IState;
 import qbf.egorov.statemachine.IStateTransition;
-import qbf.egorov.transducer.algorithm.Transition;
+import qbf.egorov.transducer.Transition;
 import qbf.egorov.verifier.IDfsListener;
 
 /**

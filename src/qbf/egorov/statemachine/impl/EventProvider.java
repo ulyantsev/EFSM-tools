@@ -18,18 +18,16 @@ import java.lang.reflect.Modifier;
 public class EventProvider implements IEventProvider {
     private String name;
     private Map<String, IEvent> events;
-//    private Collection<IStateMachine> targets;
     private Class implClass;
 
     public EventProvider(String name, Class implClass) {
         this.name = name;
-//        this.targets = targets;
         this.implClass = implClass;
         findEvents(implClass);
     }
 
     protected void findEvents(Class clazz) {
-        events = new HashMap<String, IEvent>();
+        events = new HashMap<>();
         for (Field f: clazz.getFields()) {
             int mod = f.getModifiers();
             if (Modifier.isStatic(mod) && Modifier.isPublic(mod) && Modifier.isFinal(mod)) {
@@ -57,10 +55,6 @@ public class EventProvider implements IEventProvider {
     public Collection<IEvent> getEvents() {
         return Collections.unmodifiableCollection(events.values());
     }
-
-//    public Collection<IStateMachine> getTargets() {
-//        return Collections.unmodifiableCollection(targets);
-//    }
 
     public Class getImplClass() {
         return implClass;

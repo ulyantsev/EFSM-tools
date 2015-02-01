@@ -11,7 +11,6 @@ import java.util.Collection;
  * @author Kirill Egorov
  */
 public interface INode<T extends ITransition> {
-
     boolean isTerminal();
     Collection<T> getOutcomingTransitions();
 }

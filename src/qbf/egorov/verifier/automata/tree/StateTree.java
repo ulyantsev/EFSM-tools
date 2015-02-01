@@ -15,7 +15,6 @@ import java.util.Iterator;
  * @author Kirill Egorov
  */
 public class StateTree<S extends IState> implements ITree<S> {
-
     private ITreeNode<S> root;
     private int hash = -1;
 

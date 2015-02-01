@@ -9,8 +9,6 @@ package qbf.egorov.statemachine;
  * @author Kirill Egorov
  */
 public interface ICondition {
-
-    public String getExpression();
-
-    public boolean evaluate(Object source);
+    String getExpression();
+    boolean evaluate(Object source);
 }

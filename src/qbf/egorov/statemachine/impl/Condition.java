@@ -3,8 +3,6 @@
  */
 package qbf.egorov.statemachine.impl;
 
-import org.apache.commons.lang3.StringUtils;
-
 import qbf.egorov.ognl.Ognl;
 import qbf.egorov.ognl.OgnlException;
 import qbf.egorov.statemachine.ICondition;
@@ -17,19 +15,6 @@ import qbf.egorov.statemachine.ICondition;
 public class Condition implements ICondition {
     private String expr;
     private Object tree;
-
-    public Condition(String expr) {
-        this.expr = expr;
-        try {
-            if (StringUtils.isNotBlank(expr)) {
-                tree = Ognl.parseExpression(expr);
-            } else {
-                this.expr = null;
-            }
-        } catch (OgnlException e) {
-            throw new ParseException(e);
-        }
-    }
 
     public String getExpression() {
         return expr;

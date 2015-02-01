@@ -13,27 +13,14 @@ import java.util.Set;
  * @author Kirill Egorov
  */
 public interface IStateMachine<S extends IState> {
-
     String getName();
-
     IStateMachine<S> getParentStateMachine();
-
-    Set<IStateMachine<S>> getNestedStateMachines();
-
     Map<S, IStateMachine<S>> getParentStates();
-
-    boolean isNested();
-
     S getInitialState();
-
     S getState(String stateName);
-
     Collection<S> getStates();
-
     Set<IEventProvider> getEventProviders();
-
     IControlledObject getControlledObject(String association);
-
     Collection<IControlledObject> getControlledObjects();
 
     /**

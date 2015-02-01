@@ -21,7 +21,7 @@ public class ControlledObjectStub implements IControlledObject {
         this(name, Arrays.asList(actions));
     }
 
-    public ControlledObjectStub(String name, Collection<String> actions) {
+    private ControlledObjectStub(String name, Collection<String> actions) {
         this.name = name;
         for (String a: actions) {
             this.actions.put(a, new Action(a, null));

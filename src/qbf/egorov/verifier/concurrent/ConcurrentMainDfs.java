@@ -14,10 +14,6 @@ import qbf.egorov.verifier.automata.IntersectionNode;
 import java.util.*;
 
 public class ConcurrentMainDfs extends NotifiableDfs<Void> {
-//    private long childVisit = 0;
-//    private int childDepth = 0;
-//    private int maxChildDepth = 0;
-
     private DfsStackTree<IIntersectionTransition> stackTree;
     //current dfs stack tree node
     private DfsStackTreeNode<IIntersectionTransition> stackTreeNode;
@@ -77,11 +73,6 @@ public class ConcurrentMainDfs extends NotifiableDfs<Void> {
                 if (stackTreeNode.hasChildren()) {
                     for (DfsStackTreeNode<IIntersectionTransition> childNode: stackTreeNode.getChildren()) {
                         if (!childNode.wasLeft.get()) {
-                            //TODO
-//                            childVisit++;
-//                            childDepth++;
-                            //----------
-
                             flag = false;
                             stackTreeNode = childNode;
                             stackTreeNode.getItem().getTarget().addOwner(threadId);
@@ -93,17 +84,11 @@ public class ConcurrentMainDfs extends NotifiableDfs<Void> {
                     if (leaveNode()) {
                         break;
                     }
-//                    if (childDepth > 0) {
-//                        maxChildDepth = Math.max(childDepth, maxChildDepth);
-//                        childDepth--;
-//                    }
                     stackTreeNode.getItem().getTarget().removeOwner(threadId);
                     stackTreeNode = stackTreeNode.getParent();
                 }
             }
         }
-//        System.out.println("Child visit: " + childVisit);
-//        System.out.println("Child depth: " + maxChildDepth);
         return null;
     }
 }

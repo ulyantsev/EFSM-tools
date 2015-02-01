@@ -28,14 +28,6 @@ public class TransitionCondition implements ITransitionCondition {
         this.negExprs = negExprs;
     }
 
-    public Set<IExpression<Boolean>> getExpressions() {
-        return exprs;
-    }
-
-    public Set<IExpression<Boolean>> getNegExpressions() {
-        return negExprs;
-    }
-
     public boolean getValue() {
         for (IExpression<Boolean> expr: exprs) {
             if (expr.getValue() == null || !expr.getValue()) {

@@ -3,8 +3,6 @@
  */
 package qbf.egorov.ltl.grammar.exception;
 
-import java.lang.reflect.Method;
-
 /**
  * TODO: add comment
  *

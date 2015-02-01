@@ -20,10 +20,9 @@ import java.util.*;
  * @author Kirill Egorov
  */
 public class SimpleTranslator implements ITranslator {
-
-    private Set<RecordNode> nodes = new HashSet<RecordNode>();;
+    private Set<RecordNode> nodes = new HashSet<>();
     private INodeVisitor<Void, RecordNode> visitor = new ExpandVisitor();
-    private Map<BinaryOperator, Set<RecordNode>> accept = new LinkedHashMap<BinaryOperator, Set<RecordNode>>();
+    private Map<BinaryOperator, Set<RecordNode>> accept = new LinkedHashMap<>();
 
     public IBuchiAutomata translate(LtlNode root) {
         LtlNode nnfRoot = LtlUtils.getInstance().toNnf(root);
@@ -73,7 +72,7 @@ public class SimpleTranslator implements ITranslator {
 
     protected IBuchiAutomata createBuchi(LtlNode root, RecordNode init, Set<RecordNode> nodes) {
         BuchiAutomata buchi = new BuchiAutomata();
-        Map<RecordNode, BuchiNode> map = new HashMap<RecordNode, BuchiNode>();
+        Map<RecordNode, BuchiNode> map = new HashMap<>();
         int idSeq = 0;
 
         accept.clear();
@@ -90,7 +89,7 @@ public class SimpleTranslator implements ITranslator {
 
         //set accept nodes set
         for (Map.Entry<BinaryOperator, Set<RecordNode>> entry: accept.entrySet()) {
-            Set<IBuchiNode> acceptSet = new HashSet<IBuchiNode>();
+            Set<IBuchiNode> acceptSet = new HashSet<>();
             for (RecordNode q: entry.getValue()) {
                 acceptSet.add(map.get(q));
             }

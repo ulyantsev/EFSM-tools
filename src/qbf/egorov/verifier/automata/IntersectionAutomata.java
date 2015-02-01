@@ -16,14 +16,9 @@ import java.util.*;
  * @author Kirill Egorov
  */
 public class IntersectionAutomata<S extends IState> implements IIntersectionAutomata<S> {
-
     private IPredicateFactory<S> predicates;
     private IBuchiAutomata buchiAutomata;
-
-//    private Map<S, Map<IBuchiNode, Map<Integer, IntersectionNode<S>>>> nodeMap
-//            = new HashMap<S, Map<IBuchiNode, Map<Integer, IntersectionNode<S>>>>();
-    private Map<String, IntersectionNode<S>> nodeMap
-            = new HashMap<String, IntersectionNode<S>>();
+    private Map<String, IntersectionNode<S>> nodeMap = new HashMap<>();
 
     public IntersectionAutomata(IPredicateFactory<S> predicates, IBuchiAutomata buchi) {
         if (buchi == null || predicates == null) {
@@ -38,30 +33,11 @@ public class IntersectionAutomata<S extends IState> implements IIntersectionAuto
     }
 
     public IntersectionNode<S> getNode(S state, IBuchiNode node, int acceptSet) {
-//        Map<IBuchiNode, Map<Integer, IntersectionNode<S>>> buchiMap = nodeMap.get(state);
-//        if (buchiMap == null) {
-//            buchiMap = new HashMap<IBuchiNode, Map<Integer, IntersectionNode<S>>>();
-//            nodeMap.put(state, buchiMap);
-//        }
-//
-//        Map<Integer, IntersectionNode<S>> acceptMap = buchiMap.get(node);
-//        if (acceptMap == null) {
-//            acceptMap = new HashMap<Integer, IntersectionNode<S>>();
-//            buchiMap.put(node, acceptMap);
-//        }
-//
-//        IntersectionNode<S> res = acceptMap.get(acceptSet);
-//        if (res == null) {
-//            res = new IntersectionNode<S>(this, state, node, acceptSet);
-//            acceptMap.put(acceptSet, res);
-//            nodes.add(res);
-//        }
-//        return res;
         String key = getUniqueKey(state, node, acceptSet);
 
         IntersectionNode<S> res = nodeMap.get(key);
         if (res == null) {
-            res = new IntersectionNode<S>(this, state, node, acceptSet);
+            res = new IntersectionNode<>(this, state, node, acceptSet);
             nodeMap.put(key, res);
         }
         return res;
