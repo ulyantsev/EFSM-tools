@@ -4,13 +4,13 @@ package qbf.reduction;
  * (c) Igor Buzhinsky
  */
 
-import qbf.ltl.BinaryOperator;
-import qbf.ltl.BinaryOperatorType;
-import qbf.ltl.BooleanNode;
-import qbf.ltl.LtlNode;
-import qbf.ltl.Predicate;
-import qbf.ltl.UnaryOperator;
-import qbf.ltl.UnaryOperatorType;
+import qbf.egorov.ltl.grammar.BinaryOperator;
+import qbf.egorov.ltl.grammar.BinaryOperatorType;
+import qbf.egorov.ltl.grammar.BooleanNode;
+import qbf.egorov.ltl.grammar.LtlNode;
+import qbf.egorov.ltl.grammar.Predicate;
+import qbf.egorov.ltl.grammar.UnaryOperator;
+import qbf.egorov.ltl.grammar.UnaryOperatorType;
 
 public class LtlNormalizer {
 	public static UnaryOperator future(LtlNode node) {
@@ -51,22 +51,6 @@ public class LtlNormalizer {
 	
 	public static BinaryOperator binary(LtlNode left, LtlNode right, BinaryOperatorType type) {
 		return new BinaryOperator(type, left, right);
-	}
-
-	public static LtlNode removeImplications(LtlNode node) {
-		if (node instanceof BinaryOperator) {
-			BinaryOperator bo = (BinaryOperator) node;
-			if (bo.getType() == BinaryOperatorType.IMPLIES) {
-				return or(not(removeImplications(bo.getLeftOperand())), removeImplications(bo.getRightOperand()));
-			} else {
-				return binary(removeImplications(bo.getLeftOperand()), removeImplications(bo.getRightOperand()), bo.getType());
-			}
-		} else if (node instanceof UnaryOperator) {
-			UnaryOperator uo = (UnaryOperator) node;
-			return unary(removeImplications(uo.getOperand()), uo.getType());
-		} else {
-			return node;
-		}
 	}
 	
 	public static LtlNode toNegationNormalForm(LtlNode node) {
@@ -126,5 +110,4 @@ public class LtlNormalizer {
 			throw new AssertionError();
 		}
 	}
-	
 }

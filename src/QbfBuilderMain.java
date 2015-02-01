@@ -17,9 +17,9 @@ import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 import org.kohsuke.args4j.spi.BooleanOptionHandler;
 
-import qbf.ltl.LtlNode;
-import qbf.ltl.LtlParseException;
-import qbf.ltl.LtlParser;
+import qbf.egorov.ltl.LtlParseException;
+import qbf.egorov.ltl.converter.LtlParser;
+import qbf.egorov.ltl.grammar.LtlNode;
 import qbf.reduction.Solvers;
 import qbf.reduction.SolvingStrategy;
 import qbf.reduction.Verifier;

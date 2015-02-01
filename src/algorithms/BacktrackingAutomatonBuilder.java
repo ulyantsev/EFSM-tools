@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.logging.Logger;
 
-import qbf.ltl.LtlNode;
+import qbf.egorov.ltl.grammar.LtlNode;
 import qbf.reduction.Verifier;
 import structures.Automaton;
 import structures.Node;

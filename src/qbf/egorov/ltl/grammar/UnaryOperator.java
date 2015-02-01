@@ -9,7 +9,6 @@ package qbf.egorov.ltl.grammar;
  * @author Kirill Egorov
  */
 public class UnaryOperator extends Operator<UnaryOperatorType> {
-
     private LtlNode operand;
 
     public UnaryOperator(UnaryOperatorType type) {
@@ -48,4 +47,9 @@ public class UnaryOperator extends Operator<UnaryOperatorType> {
     public <R, D> R accept(INodeVisitor<R, D> visitor, D data) {
         return getType().accept(this, visitor, data);
     }
+    
+    @Override
+    public String toString() {
+	    return getName() + "(" + operand + ")";
+	}
 }

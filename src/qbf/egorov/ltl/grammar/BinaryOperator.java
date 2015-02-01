@@ -9,12 +9,17 @@ package qbf.egorov.ltl.grammar;
  * @author Kirill Egorov
  */
 public class BinaryOperator extends Operator<BinaryOperatorType> {
-
     private LtlNode leftOperand;
     private LtlNode rightOperand;
 
     public BinaryOperator(BinaryOperatorType type) {
         super(type);
+    }
+    
+    public BinaryOperator(BinaryOperatorType type, LtlNode leftOperand, LtlNode rightOperand) {
+        super(type);
+        setLeftOperand(leftOperand);
+        setRightOperand(rightOperand);
     }
 
     public LtlNode getLeftOperand() {
@@ -51,5 +56,10 @@ public class BinaryOperator extends Operator<BinaryOperatorType> {
 
     public <R, D> R accept(INodeVisitor<R, D> visitor, D data) {
         return getType().accept(this, visitor, data);
+    }
+    
+    @Override
+    public String toString() {
+        return "(" + leftOperand + " " + getName() + " " + rightOperand + ")"; 
     }
 }

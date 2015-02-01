@@ -9,7 +9,6 @@ package qbf.egorov.ltl.grammar;
  * @author Kirill Egorov
  */
 public abstract class Operator<E extends IOperatorType> extends LtlNode {
-
     private E type;
 
     public Operator(E type) {

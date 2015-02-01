@@ -5,6 +5,9 @@ package qbf.egorov.ltl.grammar;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * TODO: add comment
@@ -16,6 +19,23 @@ public class Predicate extends LtlNode implements IExpression<Boolean> {
     protected Method method;
     protected Object target;
 
+    /*
+     * For simplified usage.
+     */
+    public List<String> args() {
+    	return Arrays.stream(args).map(Object::toString).collect(Collectors.toList());
+    }
+    
+    /*
+     * For simplified usage.
+     */
+    public Predicate(String name, List<String> args) {
+    	super(name);
+    	target = null;
+    	method = null;
+    	this.args = args.toArray();
+    }
+    
     public Predicate(Object target, Method m, Object ... args) {
         super(m.getName());
         if (!boolean.class.equals(m.getReturnType()) && !Boolean.class.equals(m.getReturnType())) {
@@ -42,7 +62,6 @@ public class Predicate extends LtlNode implements IExpression<Boolean> {
         this.args = args;
         this.method = m;
         this.target = target;
-
     }
 
     public Boolean getValue() {
@@ -76,7 +95,14 @@ public class Predicate extends LtlNode implements IExpression<Boolean> {
         return method.hashCode();
     }
 
+    @Override
     public String toString() {
+    	if (method == null) {
+    		// simplified version
+        	return getName() + "(" + String.join(", ", Arrays.stream(args)
+        			.map(Object::toString).collect(Collectors.toList())) + ")";
+    	}
+    	
         StringBuilder buf = new StringBuilder(method.getName());
         buf.append("(");
         for (Object obj: args) {
@@ -93,7 +119,7 @@ public class Predicate extends LtlNode implements IExpression<Boolean> {
     public String getUniqueName() {
         StringBuilder buf = new StringBuilder();
         buf.append(method.getName());
-        for (Object o: args) {
+        for (Object o : args) {
             buf.append(o);
         }
         return buf.toString().replace(' ', '_');

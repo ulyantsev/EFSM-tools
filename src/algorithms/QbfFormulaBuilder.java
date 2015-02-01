@@ -15,11 +15,11 @@ import java.util.logging.Logger;
 
 import org.apache.commons.lang3.tuple.Pair;
 
-import qbf.ltl.BinaryOperator;
-import qbf.ltl.BooleanNode;
-import qbf.ltl.LtlNode;
-import qbf.ltl.Predicate;
-import qbf.ltl.UnaryOperator;
+import qbf.egorov.ltl.grammar.BinaryOperator;
+import qbf.egorov.ltl.grammar.BooleanNode;
+import qbf.egorov.ltl.grammar.LtlNode;
+import qbf.egorov.ltl.grammar.Predicate;
+import qbf.egorov.ltl.grammar.UnaryOperator;
 import qbf.reduction.BinaryOperation;
 import qbf.reduction.BinaryOperations;
 import qbf.reduction.BooleanFormula;
@@ -90,7 +90,6 @@ public class QbfFormulaBuilder extends FormulaBuilder{
 		}
 		
 		LtlNode f = formulae.stream().skip(1).reduce(formulae.get(0), (f1, f2) -> LtlNormalizer.and(f1, f2));
-		f = LtlNormalizer.removeImplications(f);
 		f = LtlNormalizer.toNegationNormalForm(LtlNormalizer.not(f));
 		
 		return f;
@@ -273,14 +272,6 @@ public class QbfFormulaBuilder extends FormulaBuilder{
 				}
 			}
 			return options.assemble();
-		case "wasVariable":
-			//FormulaList options = new FormulaList(BinaryOperations.OR);
-			//for (MyBooleanExpression f : pairsEventExpression.get(arg)) {
-			//	options.add(epsVar(arg, f, index));
-			//}
-			//return options.assemble();
-			// TODO
-			throw new RuntimeException("Not implemented yet");
 		case "wasAction":
 			return zetaVar(arg, index);
 		default:

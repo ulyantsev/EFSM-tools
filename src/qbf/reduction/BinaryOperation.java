@@ -14,15 +14,15 @@ public class BinaryOperation extends BooleanFormula {
 	private final BinaryOperations type;
 	private final String comment;
 	
-	public BinaryOperation(BooleanFormula left, BooleanFormula right, BinaryOperations type) {
+	private BinaryOperation(BooleanFormula left, BooleanFormula right, BinaryOperations type) {
 		this(Arrays.asList(left, right), type, null);
 	}
 	
-	public BinaryOperation(List<BooleanFormula> children, BinaryOperations type) {
+	private BinaryOperation(List<BooleanFormula> children, BinaryOperations type) {
 		this(children, type, null);
 	}
 	
-	public BinaryOperation(List<BooleanFormula> children, BinaryOperations type, String comment) {
+	private BinaryOperation(List<BooleanFormula> children, BinaryOperations type, String comment) {
 		for (BooleanFormula f : children) {
 			assert f != null;
 		}
@@ -32,6 +32,38 @@ public class BinaryOperation extends BooleanFormula {
 		this.children = new ArrayList<>(children);
 		this.type = type;
 		this.comment = comment;
+	}
+	
+	public static BooleanFormula and(List<BooleanFormula> elements) {
+		return and(elements, null);
+	}
+	
+	public static BooleanFormula or(List<BooleanFormula> elements) {
+		return or(elements, null);
+	}
+	
+	public static BooleanFormula and(List<BooleanFormula> elements, String comment) {
+		return new BinaryOperation(elements, BinaryOperations.AND, comment);
+	}
+	
+	public static BooleanFormula or(List<BooleanFormula> elements, String comment) {
+		return new BinaryOperation(elements, BinaryOperations.OR, comment);
+	}
+	
+	public static BooleanFormula and(BooleanFormula... elements) {
+		return new BinaryOperation(Arrays.asList(elements), BinaryOperations.AND);
+	}
+	
+	public static BooleanFormula or(BooleanFormula... elements) {
+		return new BinaryOperation(Arrays.asList(elements), BinaryOperations.OR);
+	}
+	
+	public static BooleanFormula implies(BooleanFormula left, BooleanFormula right) {
+		return new BinaryOperation(left, right, BinaryOperations.IMPLIES);
+	}
+	
+	public static BooleanFormula equivalent(BooleanFormula left, BooleanFormula right) {
+		return new BinaryOperation(left, right, BinaryOperations.EQ);
 	}
 	
 	@Override
@@ -79,30 +111,6 @@ public class BinaryOperation extends BooleanFormula {
 		
 		List<String> strChildren = children.stream().map(f -> f.toString()).collect(Collectors.toList());
 		return "(" + comment(String.join(" " + type + " ", strChildren)) + ")";
-	}
-	
-	public static BooleanFormula and(List<BooleanFormula> elements) {
-		return and(elements, null);
-	}
-	
-	public static BooleanFormula and(List<BooleanFormula> elements, String comment) {
-		return new BinaryOperation(elements, BinaryOperations.AND, comment);
-	}
-	
-	public static BooleanFormula and(BooleanFormula... elements) {
-		return new BinaryOperation(Arrays.asList(elements), BinaryOperations.AND);
-	}
-	
-	public static BooleanFormula or(List<BooleanFormula> elements) {
-		return or(elements, null);
-	}
-	
-	public static BooleanFormula or(List<BooleanFormula> elements, String comment) {
-		return new BinaryOperation(elements, BinaryOperations.OR, comment);
-	}
-	
-	public static BooleanFormula or(BooleanFormula... elements) {
-		return new BinaryOperation(Arrays.asList(elements), BinaryOperations.OR);
 	}
 
 	@Override

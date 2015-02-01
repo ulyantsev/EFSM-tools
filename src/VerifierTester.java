@@ -7,7 +7,7 @@ import java.util.logging.Logger;
 
 import actions.StringActions;
 import bool.MyBooleanExpression;
-import qbf.ltl.LtlParseException;
+import qbf.egorov.ltl.LtlParseException;
 import qbf.reduction.Verifier;
 import structures.Automaton;
 import tools.AutomatonGVLoader;

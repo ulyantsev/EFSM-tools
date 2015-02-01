@@ -31,6 +31,11 @@ public enum BinaryOperatorType implements IOperatorType {
 
     private String name;
 
+    @Override
+    public String toString() {
+    	return name;
+    }
+    
     private BinaryOperatorType(String name) {
         this.name = name;
     }

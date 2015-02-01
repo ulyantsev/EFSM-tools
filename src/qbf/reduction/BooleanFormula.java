@@ -163,25 +163,25 @@ public abstract class BooleanFormula {
 	}
 	
 	public BooleanFormula and(BooleanFormula other) {
-		return new BinaryOperation(this, other, BinaryOperations.AND);
+		return BinaryOperation.and(this, other);
 	}
 	
 	public BooleanFormula or(BooleanFormula other) {
-		return new BinaryOperation(this, other, BinaryOperations.OR);
+		return BinaryOperation.or(this, other);
 	}
 	
 	public BooleanFormula implies(BooleanFormula other) {
-		return new BinaryOperation(this, other, BinaryOperations.IMPLIES);
+		return BinaryOperation.implies(this, other);
 	}
 	
 	public BooleanFormula equivalent(BooleanFormula other) {
-		return new BinaryOperation(this, other, BinaryOperations.EQ);
+		return BinaryOperation.equivalent(this, other);
 	}
 	
 	public abstract BooleanFormula substitute(BooleanVariable v, BooleanFormula replacement);
 	
 	/*
-	 * Remove TRUE and FALSE.
+	 * Removes TRUE and FALSE.
 	 */
 	public abstract BooleanFormula simplify();
 	

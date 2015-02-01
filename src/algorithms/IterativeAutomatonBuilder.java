@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.tuple.Pair;
 
-import qbf.ltl.LtlNode;
+import qbf.egorov.ltl.grammar.LtlNode;
 import qbf.reduction.Assignment;
 import qbf.reduction.BinaryOperation;
 import qbf.reduction.BinaryOperations;

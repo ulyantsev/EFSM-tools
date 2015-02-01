@@ -32,6 +32,11 @@ public enum UnaryOperatorType implements IOperatorType {
 
     private String name;
 
+    @Override
+    public String toString() {
+    	return name;
+    }
+    
     private UnaryOperatorType(String name) {
         this.name = name;
     }

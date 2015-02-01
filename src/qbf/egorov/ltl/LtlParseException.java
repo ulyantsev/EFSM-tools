@@ -9,7 +9,6 @@ package qbf.egorov.ltl;
  * @author Kirill Egorov
  */
 public class LtlParseException extends Exception {
-
     public LtlParseException() {
 	    super();
     }
