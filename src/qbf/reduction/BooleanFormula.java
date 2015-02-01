@@ -155,7 +155,7 @@ public abstract class BooleanFormula {
 	}
 	
 	public DimacsConversionInfo toDimacs(Logger logger, boolean useCoprocessor) throws IOException {
-		return toDimacs(toLimbooleString(), logger, useCoprocessor);
+		return toDimacs(simplify().toLimbooleString(), logger, useCoprocessor);
 	}
 	
 	public BooleanFormula not() {

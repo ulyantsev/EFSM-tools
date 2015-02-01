@@ -21,8 +21,10 @@ public class BooleanVariable extends BooleanFormula implements Comparable<Boolea
 	
 	private static String createName(String prefix, Object... indices) {
 		assert indices.length == 0 || !prefix.contains("_");
-		return indices.length == 0 ? prefix :
-			Arrays.deepToString(indices).replace("[", prefix + "_").replace(", ", "_").replace("]", "");
+		return indices.length == 0
+				? prefix
+				: Arrays.deepToString(indices).replace("[", prefix + "_")
+					.replace(", ", "_").replace("]", "");
 	}
 
 	private static int auxiliaryCounter = 1;

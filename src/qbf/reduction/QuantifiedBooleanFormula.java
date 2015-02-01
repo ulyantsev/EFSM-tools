@@ -222,9 +222,9 @@ public class QuantifiedBooleanFormula {
 	 * Enumerates 2^exponentialAssignmentVars.size() variable values.
 	 */
 	private static void findAllAssignmentsOther(int pos, BooleanVariable[] otherAssignmentVars,
-			BooleanFormula formulaToAppend, List<String> listToAppend) {
+			BooleanFormula formulaToAppend, FormulaList listToAppend) {
 		if (pos == otherAssignmentVars.length) {
-			listToAppend.add(formulaToAppend.toLimbooleString().replace(" ", ""));
+			listToAppend.add(formulaToAppend);
 		} else {
 			BooleanVariable currentVar = otherAssignmentVars[pos];
 			findAllAssignmentsOther(pos + 1, otherAssignmentVars,
@@ -236,16 +236,16 @@ public class QuantifiedBooleanFormula {
 	
 	// recursive
 	/*
-	 * Equivalent to constrains sigma_0_0 = 0 and A_1 and A_2 and B.
+	 * Equivalent to constraints sigma_0_0 = 0 and A_1 and A_2 and B.
 	 */
 	private void findAllAssignmentsSigmaEps(ScenariosTree tree, int statesNum, int k, int j, BooleanFormula formulaToAppend,
-			List<String> listToAppend) {
+			FormulaList listToAppend) {
 		if (j == k + 1) {
 			List<BooleanVariable> otherAssignmentVars = forallVars.stream()
 					.filter(v -> !v.name.startsWith("sigma") && !v.name.startsWith("eps"))
 					.collect(Collectors.toList());
 			findAllAssignmentsOther(0, otherAssignmentVars.toArray(new BooleanVariable[otherAssignmentVars.size()]),
-					formulaToAppend, listToAppend);
+					formulaToAppend.simplify(), listToAppend);
 		} else {
 			int iMax = (k == 0 ? 0 : statesNum);
 			for (int i = 0; i < iMax; i++) {
@@ -278,20 +278,19 @@ public class QuantifiedBooleanFormula {
 	 * The size of the formula is exponential of forallVars.size().
 	 */
 	private String flatten(ScenariosTree tree, int statesNum, int k, Logger logger) {
-		List<String> mainList = new ArrayList<>();
+		FormulaList mainList = new FormulaList(BinaryOperations.AND);
 		logger.info("Number of 'forall' variables: " + forallVars.size());
 		logger.info("List of 'forall' variables: " + forallVars);
-		logger.info("Initial 'inner' SAT formula length: " + formulaTheRest.toLimbooleString().length());
 		
 		long time = System.currentTimeMillis();
 		
+		mainList.add(formulaExist);
 		findAllAssignmentsSigmaEps(tree, statesNum, k, 0, formulaTheRest, mainList);
 		
 		time = System.currentTimeMillis() - time;
 		logger.info("Formula generation time: " + time + " ms.");
 		
-		return formulaExist.toLimbooleString().replace(" ", "")
-				+ "&" + String.join("&", mainList);
+		return mainList.assemble().simplify().toLimbooleString();
 	}
 
 	public SolverResult solveAsSat(ScenariosTree tree, int statesNum, int k, Logger logger, String solverParams, int timeoutSeconds) throws IOException {

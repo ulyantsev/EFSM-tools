@@ -26,6 +26,9 @@ public class BinaryOperation extends BooleanFormula {
 		for (BooleanFormula f : children) {
 			assert f != null;
 		}
+		if (type == BinaryOperations.EQ || type == BinaryOperations.IMPLIES) {
+			assert children.size() == 2;
+		}
 		this.children = new ArrayList<>(children);
 		this.type = type;
 		this.comment = comment;
@@ -33,26 +36,15 @@ public class BinaryOperation extends BooleanFormula {
 	
 	@Override
 	public String toLimbooleString() {
-		if (children.size() < 2 && type != BinaryOperations.AND && type != BinaryOperations.OR) {
-			throw new RuntimeException("Only AND and OR [0 or 1]-length formulae are possible.");
-		}
-		if (children.isEmpty()) {
-			switch (type) {
-			case AND:
-				return TrueFormula.INSTANCE.toLimbooleString();
-			case OR:
-				return FalseFormula.INSTANCE.toLimbooleString();
-			default:
-				assert false;
-			}
-		} else if (children.size() == 1) {
+		assert !children.isEmpty();
+		if (children.size() == 1) {
 			return children.get(0).toLimbooleString();
 		}
 		
-		List<String> strChildren = new ArrayList<>();
-		for (BooleanFormula f : children) {
-			strChildren.add(f.toLimbooleString());
-		}
+		final List<String> strChildren = children.stream()
+				.map(f -> f.toLimbooleString())
+				.collect(Collectors.toList());
+		
 		return "(" + String.join(" " + type + " ", strChildren) + ")";
 	}
 	
@@ -70,9 +62,6 @@ public class BinaryOperation extends BooleanFormula {
 	
 	@Override
 	public String toString() {
-		if (children.size() < 2 && type != BinaryOperations.AND && type != BinaryOperations.OR) {
-			throw new RuntimeException("Only AND and OR [0 or 1]-length formulae are possible.");
-		}
 		if (children.isEmpty()) {
 			switch (type) {
 			case AND:
@@ -124,52 +113,57 @@ public class BinaryOperation extends BooleanFormula {
 	
 	@Override
 	public BooleanFormula simplify() {
-		List<BooleanFormula> childrenSimpl = children.stream()
+		final List<BooleanFormula> childrenSimpl = children.stream()
 				.map(BooleanFormula::simplify).collect(Collectors.toList());
+		BooleanFormula left;
+		BooleanFormula right;
 		switch (type) {
 		case AND:
 			if (childrenSimpl.contains(FalseFormula.INSTANCE)) {
 				return FalseFormula.INSTANCE;
 			}
 			childrenSimpl.removeIf(elem -> elem == TrueFormula.INSTANCE);
-			return and(childrenSimpl);
+			return childrenSimpl.isEmpty() ? TrueFormula.INSTANCE
+				: childrenSimpl.size() == 1 ? childrenSimpl.get(0) : and(childrenSimpl);
 		case OR:
 			if (childrenSimpl.contains(TrueFormula.INSTANCE)) {
 				return TrueFormula.INSTANCE;
 			}
 			childrenSimpl.removeIf(elem -> elem == FalseFormula.INSTANCE);
-			return or(childrenSimpl);
+			return childrenSimpl.isEmpty() ? FalseFormula.INSTANCE
+					: childrenSimpl.size() == 1 ? childrenSimpl.get(0) : or(childrenSimpl);
 		case EQ:
-			boolean hasTrue = childrenSimpl.stream().anyMatch(elem -> elem == TrueFormula.INSTANCE);
-			boolean hasFalse = childrenSimpl.stream().anyMatch(elem -> elem == FalseFormula.INSTANCE);
-			if (hasTrue && hasFalse) {
+			left = childrenSimpl.get(0);
+			right = childrenSimpl.get(1);
+			if (left == right) { // both TRUE or both FALSE
+				return TrueFormula.INSTANCE;
+			} else if (left == TrueFormula.INSTANCE && right == FalseFormula.INSTANCE) {
 				return FalseFormula.INSTANCE;
-			} else if (hasTrue) {
-				childrenSimpl.removeIf(elem -> elem == TrueFormula.INSTANCE);
-				childrenSimpl.add(TrueFormula.INSTANCE);
-			} else if (hasFalse) {
-				childrenSimpl.removeIf(elem -> elem == FalseFormula.INSTANCE);
-				childrenSimpl.add(FalseFormula.INSTANCE);
+			} else if (left == FalseFormula.INSTANCE && right == TrueFormula.INSTANCE) {
+				return FalseFormula.INSTANCE;
+			} else if (left == TrueFormula.INSTANCE) {
+				return right;
+			} else if (right == TrueFormula.INSTANCE) {
+				return left;
+			} else if (left == FalseFormula.INSTANCE) {
+				return right.not();
+			} else if (right == FalseFormula.INSTANCE) {
+				return left.not();
 			}
 			return new BinaryOperation(childrenSimpl, BinaryOperations.EQ);
 		case IMPLIES:
-			if (children.size() == 2) {
-				BooleanFormula left = childrenSimpl.get(0);
-				BooleanFormula right = childrenSimpl.get(1);
-				if (left == FalseFormula.INSTANCE || right == TrueFormula.INSTANCE) {
-					return TrueFormula.INSTANCE;
-				} else if (left == TrueFormula.INSTANCE && right == FalseFormula.INSTANCE) {
-					return FalseFormula.INSTANCE;
-				} else if (left == TrueFormula.INSTANCE) {
-					return right;
-				} else if (right == FalseFormula.INSTANCE) {
-					return left.not();
-				} else {
-					return new BinaryOperation(childrenSimpl, BinaryOperations.IMPLIES);
-				}
-			} else {
-				return new BinaryOperation(childrenSimpl, BinaryOperations.IMPLIES);
+			left = childrenSimpl.get(0);
+			right = childrenSimpl.get(1);
+			if (left == FalseFormula.INSTANCE || right == TrueFormula.INSTANCE) {
+				return TrueFormula.INSTANCE;
+			} else if (left == TrueFormula.INSTANCE && right == FalseFormula.INSTANCE) {
+				return FalseFormula.INSTANCE;
+			} else if (left == TrueFormula.INSTANCE) {
+				return right;
+			} else if (right == FalseFormula.INSTANCE) {
+				return left.not();
 			}
+			return new BinaryOperation(childrenSimpl, BinaryOperations.IMPLIES);
 		}
 		assert false;
 		return null;

@@ -65,7 +65,7 @@ public class QbfBuilderMain {
 	
 	@Option(name = "--qbfSolver", aliases = { "-qs" }, usage = "QBF solver: SKIZZO or DEPQBF (only for QSAT strategy)",
 			metaVar = "<qbfSolver>")
-	private String qbfSolver = "SKIZZO";
+	private String qbfSolver = Solvers.SKIZZO.toString();
 	
 	@Option(name = "--solverParams", aliases = { "-sp" }, usage = "additional solver parameters", metaVar = "<solverParams>")
 	private String solverParams = "";
@@ -73,9 +73,9 @@ public class QbfBuilderMain {
 	@Option(name = "--timeout", aliases = { "-to" }, usage = "solver timeout (sec)", metaVar = "<timeout>")
 	private int timeout = 60 * 60 * 24;
 	
-	@Option(name = "--strategy", aliases = { "-str" }, usage = "solving mode: QSAT, SAT, ITERATIVE_SAT, BACKTRACKING",
+	@Option(name = "--strategy", aliases = { "-str" }, usage = "solving mode: QSAT, EXP_SAT, ITERATIVE_SAT, BACKTRACKING",
 			metaVar = "<strategy>")
-	private String strategy = "QSAT";
+	private String strategy = SolvingStrategy.QSAT.toString();
 	
 	@Option(name = "--bfsConstraints", aliases = { "-bfs" }, handler = BooleanOptionHandler.class,
 			usage = "include symmetry breaking BFS constraints")
@@ -170,9 +170,9 @@ public class QbfBuilderMain {
 				return;
 			}
 			
-			Optional<Automaton> resultAutomaton = ss == SolvingStrategy.QSAT || ss == SolvingStrategy.SAT
+			Optional<Automaton> resultAutomaton = ss == SolvingStrategy.QSAT || ss == SolvingStrategy.EXP_SAT
 					? QbfAutomatonBuilder.build(logger, tree, formulae, size, depth, timeout,
-							solver, solverParams, extractSubterms, isComplete, ss == SolvingStrategy.SAT,
+							solver, solverParams, extractSubterms, isComplete, ss == SolvingStrategy.EXP_SAT,
 							bfsConstraints, useCoprocessor)
 					: ss == SolvingStrategy.ITERATIVE_SAT
 					? IterativeAutomatonBuilder.build(logger, tree, size, solverParams, isComplete,

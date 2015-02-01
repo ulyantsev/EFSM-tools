@@ -5,5 +5,5 @@ package qbf.reduction;
  */
 
 public enum SolvingStrategy {
-	QSAT, SAT, ITERATIVE_SAT, BACKTRACKING
+	QSAT, EXP_SAT, ITERATIVE_SAT, BACKTRACKING
 }

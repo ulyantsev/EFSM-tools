@@ -12,7 +12,8 @@ public class FalseFormula extends BooleanFormula {
 	
 	@Override
 	public String toLimbooleString() {
-		return BooleanVariable.byName("x", 0, 0).get().not().toLimbooleString();
+		assert false;
+		return null;
 	}
 	
 	@Override
