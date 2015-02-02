@@ -16,17 +16,9 @@ import java.lang.reflect.Modifier;
  * @author Kirill Egorov
  */
 public class EventProvider implements IEventProvider {
-    private String name;
     private Map<String, IEvent> events;
-    private Class implClass;
 
-    public EventProvider(String name, Class implClass) {
-        this.name = name;
-        this.implClass = implClass;
-        findEvents(implClass);
-    }
-
-    protected void findEvents(Class clazz) {
+    protected void findEvents(Class<?> clazz) {
         events = new HashMap<>();
         for (Field f: clazz.getFields()) {
             int mod = f.getModifiers();
@@ -35,7 +27,7 @@ public class EventProvider implements IEventProvider {
                     Object o = f.get(null);
                     if (o instanceof String) {
                         String name = (String) o;
-                        events.put(name, new Event(name, null));
+                        events.put(name, new Event(name));
                     }
                 } catch (IllegalAccessException e) {
                     //
@@ -44,19 +36,7 @@ public class EventProvider implements IEventProvider {
         }
     }
 
-    public String getName() {
-        return name;
-    }
-
     public IEvent getEvent(String eventName) {
         return events.get(eventName);
-    }
-
-    public Collection<IEvent> getEvents() {
-        return Collections.unmodifiableCollection(events.values());
-    }
-
-    public Class getImplClass() {
-        return implClass;
     }
 }

@@ -21,7 +21,6 @@ public class StateMachine<S extends IState> implements IStateMachine<S> {
     private Set<IEventProvider> eventProviders = new HashSet<>();
     private Map<String, IControlledObject> ctrlObjects = new HashMap<>();
 
-    private Map<String, Map<String, ?>> sources;
     private Map<S, List<IFunction>> functions;
 
     private IStateMachine<S> parentStateMachine;
@@ -29,17 +28,6 @@ public class StateMachine<S extends IState> implements IStateMachine<S> {
 
     public StateMachine(String name) {
         this.name = name;
-    }
-
-    protected void createSource() {
-        sources = new HashMap<String, Map<String, ?>>();
-        for (Map.Entry<String, IControlledObject> e: ctrlObjects.entrySet()) {
-            Map<String, Object> functions = new HashMap<String, Object>();
-            for (IFunction f: e.getValue().getFunctions()) {
-                functions.put(f.getName(), f.getCurValue());
-            }
-            sources.put(e.getKey(), functions);
-        }
     }
 
     public String getName() {
@@ -65,31 +53,8 @@ public class StateMachine<S extends IState> implements IStateMachine<S> {
         return states.get(stateName);
     }
 
-    public Collection<S> getStates() {
-        return states.values();
-    }
-
-    public Set<IEventProvider> getEventProviders() {
-        return eventProviders;
-    }
-
     public void addEventProvider(IEventProvider provider) {
         eventProviders.add(provider);
-    }
-
-    public IControlledObject getControlledObject(String association) {
-        return ctrlObjects.get(association);
-    }
-
-    public Collection<IControlledObject> getControlledObjects() {
-        return ctrlObjects.values();
-    }
-
-    public Map<String, Map<String, ?>> getSources() {
-        if (sources == null) {
-            createSource();
-        }
-        return sources;
     }
 
     public void addState(S s) {
@@ -169,6 +134,7 @@ public class StateMachine<S extends IState> implements IStateMachine<S> {
         return invocations;
     }
 
+    @Override
     public String toString() {
         return name; 
     }

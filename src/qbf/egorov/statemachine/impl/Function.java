@@ -13,15 +13,15 @@ import qbf.egorov.statemachine.IFunction;
 public class Function implements IFunction {
     private String name;
     private String description;
-    private Class returnType;
+    private Class<?> returnType;
 
-    protected Function(String name, String description, Class returnType) {
+    protected Function(String name, String description, Class<?> returnType) {
         this.name = name;
         this.description = description;
         this.returnType = returnType;
     }
 
-    public Function(String name, Class returnType) {
+    public Function(String name, Class<?> returnType) {
         this(name, null, returnType);
     }
 
@@ -31,15 +31,6 @@ public class Function implements IFunction {
 
     public String getDescription() {
         return description;
-    }
-
-    public Object getCurValue() {
-        throw new AssertionError();
-        // not implemented
-    }
-
-    public Class getReturnType() {
-        return returnType;
     }
 
     public int hashCode() {

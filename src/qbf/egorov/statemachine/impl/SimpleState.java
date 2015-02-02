@@ -16,8 +16,7 @@ public class SimpleState implements IState {
     private String name;
     private StateType type;
     private List<IAction> actions;
-    private Collection<IStateTransition> outTransitions =
-            new ArrayList<IStateTransition>();
+    private Collection<IStateTransition> outTransitions = new ArrayList<>();
 
     public SimpleState(String name, StateType type, List<IAction> actions) {
         this.name = name;
@@ -47,10 +46,6 @@ public class SimpleState implements IState {
         return outTransitions;
     }
 
-    public Set<IStateMachine<? extends IState>> getNestedStateMachines() {
-        throw new UnsupportedOperationException();
-    }
-
     public String getUniqueName() {
         return name + '@' + Integer.toHexString(super.hashCode());
     }
@@ -59,10 +54,7 @@ public class SimpleState implements IState {
         outTransitions.add(t);
     }
 
-    public void addNestedStateMachine(IStateMachine<? extends IState> m) {
-        throw new UnsupportedOperationException();
-    }
-
+    @Override
     public String toString() {
         return name;
     }

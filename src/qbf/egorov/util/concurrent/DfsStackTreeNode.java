@@ -11,7 +11,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.Collection;
 
 public class DfsStackTreeNode<E> {
-
     private E item;
     private ConcurrentMap<E, DfsStackTreeNode<E>> children;
 

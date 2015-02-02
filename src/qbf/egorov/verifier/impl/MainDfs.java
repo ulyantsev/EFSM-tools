@@ -16,16 +16,16 @@ import java.util.Deque;
  *
  * @author Kirill Egorov
  */
-public class MainDfs extends AbstractDfs<Deque<IIntersectionTransition>> {
+public class MainDfs extends AbstractDfs<Deque<IIntersectionTransition<?>>> {
     private final int curThreadId;
     
     public MainDfs(ISharedData sharedData, int curThreadId) {
         super(sharedData, sharedData.getVisited(), -1);
-        setResult(CollectionUtils.<IIntersectionTransition>emptyDeque());
+        setResult(CollectionUtils.<IIntersectionTransition<?>>emptyDeque());
         this.curThreadId = curThreadId;
     }
 
-    protected boolean leaveNode(IntersectionNode node) {
+    protected boolean leaveNode(IntersectionNode<?> node) {
         super.leaveNode(node);
         assert node.next(threadId) == null;
         if (node.isTerminal()) {

@@ -17,13 +17,13 @@ import qbf.egorov.verifier.automata.IIntersectionTransition;
  * @author Kirill Egorov
  */
 public class DfsThread extends Thread {
-    private DfsStackTree<IIntersectionTransition> stackTree;
+    private DfsStackTree<IIntersectionTransition<?>> stackTree;
     private ISharedData sharedData;
     private int threadId;
 
     private IDfsListener[] listeners = new IDfsListener[0];
 
-    public DfsThread(DfsStackTree<IIntersectionTransition> stackTree, ISharedData sharedData, int threadId) {
+    public DfsThread(DfsStackTree<IIntersectionTransition<?>> stackTree, ISharedData sharedData, int threadId) {
         super();
         if (sharedData == null) {
             throw new IllegalArgumentException();

@@ -3,9 +3,7 @@
  */
 package qbf.egorov.statemachine;
 
-import java.util.Collection;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * State machine
@@ -18,14 +16,4 @@ public interface IStateMachine<S extends IState> {
     Map<S, IStateMachine<S>> getParentStates();
     S getInitialState();
     S getState(String stateName);
-    Collection<S> getStates();
-    Set<IEventProvider> getEventProviders();
-    IControlledObject getControlledObject(String association);
-    Collection<IControlledObject> getControlledObjects();
-
-    /**
-     * Get sources for condition evaluation.
-     * @return
-     */
-    Map<String, Map<String, ?>> getSources();
 }

@@ -48,7 +48,7 @@ public class ContextClassLoader extends ClassLoader
     /*===================================================================
         Overridden methods
       ===================================================================*/
-    protected Class findClass(String name) throws ClassNotFoundException
+    protected Class<?> findClass(String name) throws ClassNotFoundException
     {
         if ((context != null) && (context.getClassResolver() != null)) {
             return context.getClassResolver().classForName(name, context);

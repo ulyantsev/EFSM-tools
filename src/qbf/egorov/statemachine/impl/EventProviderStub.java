@@ -24,7 +24,7 @@ public class EventProviderStub implements IEventProvider {
         this.name = name;
 
         for (String e: events) {
-            this.events.put(e, new Event(e, null));
+            this.events.put(e, new Event(e));
         }
     }
 
@@ -38,9 +38,5 @@ public class EventProviderStub implements IEventProvider {
 
     public Collection<IEvent> getEvents() {
         return Collections.unmodifiableCollection(events.values());
-    }
-
-    public Class getImplClass() {
-        return null;
     }
 }

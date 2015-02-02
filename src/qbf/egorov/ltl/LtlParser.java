@@ -1,7 +1,7 @@
 /**
  * LtlParser.java, 06.04.2008
  */
-package qbf.egorov.ltl.converter;
+package qbf.egorov.ltl;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -10,7 +10,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Scanner;
 
-import qbf.egorov.ltl.LtlParseException;
 import qbf.egorov.ltl.grammar.BinaryOperator;
 import qbf.egorov.ltl.grammar.BinaryOperatorType;
 import qbf.egorov.ltl.grammar.BooleanNode;
@@ -30,10 +29,10 @@ import qbf.egorov.statemachine.IAutomataContext;
  *
  * @author Kirill Egorov
  */
-public class LtlParser implements ILtlParser {
+public class LtlParser {
     private EgorovGrammarConverter converter;
 
-    public LtlParser(IAutomataContext context, IPredicateFactory predicatesObj) {
+    public LtlParser(IAutomataContext context, IPredicateFactory<?> predicatesObj) {
         converter = new EgorovGrammarConverter(context, predicatesObj);
     }
     

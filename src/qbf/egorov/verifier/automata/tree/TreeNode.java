@@ -59,7 +59,7 @@ public class TreeNode<S extends IState> implements ITreeNode<S> {
         if (this == o) return true;
         if (!(o instanceof TreeNode)) return false;
 
-        TreeNode treeNode = (TreeNode) o;
+        TreeNode<?> treeNode = (TreeNode<?>) o;
 
         if (state != null ? !state.equals(treeNode.state) : treeNode.state != null) return false;
 

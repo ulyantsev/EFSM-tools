@@ -3,13 +3,14 @@
  */
 package qbf.egorov.verifier;
 
-import qbf.egorov.statemachine.IState;
+import java.util.Deque;
+import java.util.LinkedList;
+import java.util.Set;
+
 import qbf.egorov.util.DequeSet;
 import qbf.egorov.verifier.automata.IIntersectionTransition;
 import qbf.egorov.verifier.automata.IntersectionNode;
 import qbf.egorov.verifier.automata.IntersectionTransition;
-
-import java.util.*;
 
 /**
  * TODO: add comment
@@ -17,39 +18,39 @@ import java.util.*;
  * @author Kirill Egorov
  */
 public abstract class AbstractDfs<R> extends NotifiableDfs<R> {
-    private final Deque<IntersectionNode> stack = new DequeSet<IntersectionNode>();
-    private final Deque<IIntersectionTransition> transStack = new LinkedList<IIntersectionTransition>();
+    private final Deque<IntersectionNode<?>> stack = new DequeSet<>();
+    private final Deque<IIntersectionTransition<?>> transStack = new LinkedList<>();
     
-    private final Set<IntersectionNode> visited;
+    private final Set<IntersectionNode<?>> visited;
     private R result;
 
     protected final ISharedData sharedData;
     protected final int threadId;
 
-    public AbstractDfs(ISharedData sharedData, Set<IntersectionNode> visited, int threadId) {
+    public AbstractDfs(ISharedData sharedData, Set<IntersectionNode<?>> visited, int threadId) {
         this.sharedData = sharedData;
         this.visited = visited;
         this.threadId = threadId;
     }
 
-    protected void enterNode(IntersectionNode node) {
+    protected void enterNode(IntersectionNode<?> node) {
         notifyEnterState(node.getState());
     }
 
-    protected boolean visitNode(IntersectionNode node) {
+    protected boolean visitNode(IntersectionNode<?> node) {
         return false;
     }
 
-    protected boolean leaveNode(IntersectionNode node) {
+    protected boolean leaveNode(IntersectionNode<?> node) {
         notifyLeaveState(node.getState());
         return false;
     }
 
-    protected Deque<IntersectionNode> getStack() {
+    protected Deque<IntersectionNode<?>> getStack() {
         return stack;
     }
 
-    protected Deque<IIntersectionTransition> getTransitionStack() {
+    protected Deque<IIntersectionTransition<?>> getTransitionStack() {
         return transStack;
     }
 
@@ -57,19 +58,19 @@ public abstract class AbstractDfs<R> extends NotifiableDfs<R> {
         this.result = result;
     }
 
-    public R dfs(IntersectionNode node) {
+    public R dfs(IntersectionNode<?> node) {
         stack.clear();
         transStack.clear();
 
         enterNode(node);
         visited.add(node);
         stack.push(node);
-        transStack.push(new IntersectionTransition<IState>(null, node));
+        transStack.push(new IntersectionTransition<>(null, node));
 
         while (!stack.isEmpty() && sharedData.getContraryInstance() == null) {
-            IntersectionNode n = stack.getFirst();
-            IIntersectionTransition trans = n.next(threadId);
-            IntersectionNode child = (trans != null) ? trans.getTarget() : null;
+            IntersectionNode<?> n = stack.getFirst();
+            IIntersectionTransition<?> trans = n.next(threadId);
+            IntersectionNode<?> child = (trans != null) ? trans.getTarget() : null;
             if (child != null) {
                 if (visitNode(child)) {
                     break;

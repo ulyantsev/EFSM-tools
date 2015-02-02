@@ -8,6 +8,5 @@ package qbf.egorov.ltl.buchi;
  *         Date: Apr 6, 2009
  */
 public interface IBuchiNodeFactory<N extends IBuchiNode> {
-
     N createBuchiNode();
 }

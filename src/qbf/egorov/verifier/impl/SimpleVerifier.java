@@ -37,22 +37,22 @@ public class SimpleVerifier<S extends IState> implements IVerifier<S> {
     }
 
     @Override
-    public List<IIntersectionTransition> verify(IBuchiAutomata buchi, IPredicateFactory<S> predicates,
+    public List<IIntersectionTransition<?>> verify(IBuchiAutomata buchi, IPredicateFactory<S> predicates,
                                                 IDfsListener... listeners) {
         IntersectionAutomata<S> automata = new IntersectionAutomata<S>(predicates, buchi);
-        IntersectionNode initial = automata.getNode(initState, buchi.getStartNode(), 0);
+        IntersectionNode<?> initial = automata.getNode(initState, buchi.getStartNode(), 0);
         ISharedData sharedData = new SharedData(new HashSet<>());
 
-        IDfs<Deque<IIntersectionTransition>> dfs = new MainDfs(sharedData, -1);
+        IDfs<Deque<IIntersectionTransition<?>>> dfs = new MainDfs(sharedData, -1);
         for (IDfsListener l : listeners) {
             dfs.add(l);
         }
 
-        Deque<IIntersectionTransition> stack = dfs.dfs(initial);
+        Deque<IIntersectionTransition<?>> stack = dfs.dfs(initial);
 
-        List<IIntersectionTransition> res = new ArrayList<IIntersectionTransition>(stack.size());
+        List<IIntersectionTransition<?>> res = new ArrayList<>(stack.size());
 
-        for (Iterator<IIntersectionTransition> iter = stack.descendingIterator(); iter.hasNext();) {
+        for (Iterator<IIntersectionTransition<?>> iter = stack.descendingIterator(); iter.hasNext();) {
             res.add(iter.next());
         }
         return res;

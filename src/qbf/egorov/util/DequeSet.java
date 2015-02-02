@@ -15,8 +15,8 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 public class DequeSet<E> implements Deque<E> {
-    private Deque<E> deque = new LinkedList<E>();
-    private Map<E, Integer> elements = new HashMap<E, Integer>();
+    private Deque<E> deque = new LinkedList<>();
+    private Map<E, Integer> elements = new HashMap<>();
 
     public DequeSet() {
         elements = new HashMap<E, Integer>();
@@ -92,7 +92,8 @@ public class DequeSet<E> implements Deque<E> {
         return deque.peekLast();
     }
 
-    public boolean removeFirstOccurrence(Object o) {
+    @SuppressWarnings("unchecked")
+	public boolean removeFirstOccurrence(Object o) {
         if (deque.removeFirstOccurrence(o)) {
             removeElement((E) o);
             return true;
@@ -100,7 +101,8 @@ public class DequeSet<E> implements Deque<E> {
         return false;
     }
 
-    public boolean removeLastOccurrence(Object o) {
+    @SuppressWarnings("unchecked")
+	public boolean removeLastOccurrence(Object o) {
         if (deque.removeLastOccurrence(o)) {
             removeElement((E) o);
             return true;
@@ -155,7 +157,8 @@ public class DequeSet<E> implements Deque<E> {
         return res;
     }
 
-    public boolean remove(Object o) {
+    @SuppressWarnings("unchecked")
+	public boolean remove(Object o) {
         if (deque.remove(o)) {
             removeElement((E) o);
             return true;

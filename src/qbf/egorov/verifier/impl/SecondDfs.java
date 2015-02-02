@@ -3,13 +3,12 @@
  */
 package qbf.egorov.verifier.impl;
 
-import qbf.egorov.verifier.AbstractDfs;
-import qbf.egorov.verifier.IInterNode;
-import qbf.egorov.verifier.ISharedData;
-import qbf.egorov.verifier.automata.IntersectionNode;
-
 import java.util.Deque;
 import java.util.HashSet;
+
+import qbf.egorov.verifier.AbstractDfs;
+import qbf.egorov.verifier.ISharedData;
+import qbf.egorov.verifier.automata.IntersectionNode;
 
 /**
  * TODO: add comment
@@ -17,52 +16,27 @@ import java.util.HashSet;
  * @author Kirill Egorov
  */
 public class SecondDfs extends AbstractDfs<Boolean> {
-    private Deque<IntersectionNode> mainDfsStack;
+    private Deque<IntersectionNode<?>> mainDfsStack;
 
-    public SecondDfs(ISharedData sharedData, Deque<IntersectionNode> mainDfsStack,  int threadId) {
-        super(sharedData, new HashSet<IntersectionNode>(), threadId);
+    public SecondDfs(ISharedData sharedData, Deque<IntersectionNode<?>> mainDfsStack,  int threadId) {
+        super(sharedData, new HashSet<>(), threadId);
         this.mainDfsStack = mainDfsStack;
         setResult(false);
     }
 
-    protected void enterNode(IntersectionNode node) {
+    protected void enterNode(IntersectionNode<?> node) {
         node.resetIterator(threadId);
     }
 
-    protected boolean visitNode(IntersectionNode node) {
+    protected boolean visitNode(IntersectionNode<?> node) {
         if (mainDfsStack.contains(node)) {
-//            sharedData.setContraryInstance(mainDfsStack);
-//            sharedData.notifyAllUnoccupiedThreads();
-            
             setResult(true);
-
-            //TODO: delete stack print  ------------------------
-            /*synchronized (System.out) {
-                if (getStack().isEmpty()) {
-                    System.out.println("Stack is empty");
-                } else {
-                    System.out.println("DFS 2 stack:");
-                }
-                final int MAX_LEN = 80;
-                int len = 0;
-                for (IInterNode n: getStack()) {
-                    String tmp = n.toString();
-                    len += tmp.length();
-                    if (len > MAX_LEN) {
-                        len = tmp.length();
-                        System.out.println();
-                    }
-                    System.out.print("-->" + tmp);
-                }
-                System.out.println("-->" + node);
-            }*/
-            //--------------------------------------------------
             return true;
         }
         return false;
     }
 
-    protected boolean leaveNode(IntersectionNode node) {
+    protected boolean leaveNode(IntersectionNode<?> node) {
         return false;
     }
 }

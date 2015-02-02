@@ -16,7 +16,7 @@ import qbf.egorov.verifier.automata.IIntersectionTransition;
  * @author Kirill Egorov
  */
 public interface IVerifier<S extends IState> {
-    List<IIntersectionTransition> verify(IBuchiAutomata buchi,
+    List<IIntersectionTransition<?>> verify(IBuchiAutomata buchi,
                                          IPredicateFactory<S> predicates,
                                          IDfsListener... listeners);
 }

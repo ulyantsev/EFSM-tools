@@ -46,7 +46,8 @@ public class StateTree<S extends IState> implements ITree<S> {
 
     protected ITreeNode<S> copy(ITreeNode<S> node, ITreeNode<S> fromNode, IStateTransition trans) {
         boolean isTransNode = (node == fromNode);
-        S state = isTransNode ? (S) trans.getTarget() : node.getState();
+        @SuppressWarnings("unchecked")
+		S state = isTransNode ? (S) trans.getTarget() : node.getState();
         TreeNode<S> newNode = new TreeNode<S>(state, node.getStateMachine(), node.isActive());
 
         if (isTransNode) {
@@ -80,7 +81,8 @@ public class StateTree<S extends IState> implements ITree<S> {
         if (!(o instanceof StateTree)) {
             return false;
         }
-        StateTree<S> tree = (StateTree) o;
+        @SuppressWarnings("unchecked")
+		StateTree<S> tree = (StateTree<S>) o;
 
         return equals(root, tree.getRoot());
     }

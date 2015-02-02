@@ -10,5 +10,4 @@ package qbf.egorov.statemachine;
  */
 public interface ICondition {
     String getExpression();
-    boolean evaluate(Object source);
 }

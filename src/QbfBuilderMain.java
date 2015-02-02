@@ -18,7 +18,7 @@ import org.kohsuke.args4j.Option;
 import org.kohsuke.args4j.spi.BooleanOptionHandler;
 
 import qbf.egorov.ltl.LtlParseException;
-import qbf.egorov.ltl.converter.LtlParser;
+import qbf.egorov.ltl.LtlParser;
 import qbf.egorov.ltl.grammar.LtlNode;
 import qbf.reduction.Solvers;
 import qbf.reduction.SolvingStrategy;

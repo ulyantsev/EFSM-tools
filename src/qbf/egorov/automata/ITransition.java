@@ -8,7 +8,6 @@ package qbf.egorov.automata;
  *
  * @author Kirill Egorov
  */
-public interface ITransition<N extends INode> {
-
+public interface ITransition<N extends INode<?>> {
     N getTarget();
 }

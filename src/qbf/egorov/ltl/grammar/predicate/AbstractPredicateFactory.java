@@ -26,7 +26,8 @@ public abstract class AbstractPredicateFactory<S extends IState> implements IPre
         this.transition = transition;
     }
 
-    public AbstractPredicateFactory<S> clone() throws CloneNotSupportedException {
+    @SuppressWarnings("unchecked")
+	public AbstractPredicateFactory<S> clone() throws CloneNotSupportedException {
         return (AbstractPredicateFactory<S>) super.clone();
     }
 

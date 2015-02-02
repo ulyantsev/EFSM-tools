@@ -60,7 +60,7 @@ public class IntersectionNode<S extends IState>
         iterator = new TransitionIterator();
 
         threadIterators = new ArrayList<TransitionIterator>(threads.size());
-        for (DfsThread t: threads) {
+        for (int i = 0; i < threads.size(); i++) {
             threadIterators.add(new TransitionIterator());
         }
         owners = new boolean[threads.size()];
@@ -176,7 +176,8 @@ public class IntersectionNode<S extends IState>
                 if (nodeIter.hasNext()) {
                     nextBuchiTransition = nodeIter.next();
                     if (nextBuchiTransition.getKey().getValue()) {
-                        IntersectionNode<S> node = automata.getNode((S) nextStateTransition.getTarget(),
+                        @SuppressWarnings("unchecked")
+						IntersectionNode<S> node = automata.getNode((S) nextStateTransition.getTarget(),
                                 nextBuchiTransition.getValue(), nextAcceptSet);
                         next = new IntersectionTransition<S>(nextStateTransition, node);
                         return true;

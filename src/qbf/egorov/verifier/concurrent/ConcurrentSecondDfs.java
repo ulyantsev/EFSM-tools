@@ -12,19 +12,19 @@ import qbf.egorov.verifier.automata.IIntersectionTransition;
 import qbf.egorov.verifier.automata.IntersectionNode;
 
 public class ConcurrentSecondDfs extends AbstractDfs<Boolean> {
-    private DfsStackTreeNode<IIntersectionTransition> mainDfsStack;
+    private DfsStackTreeNode<IIntersectionTransition<?>> mainDfsStack;
 
-    public ConcurrentSecondDfs(ISharedData sharedData, DfsStackTreeNode<IIntersectionTransition> mainDfsStack,  int threadId) {
-        super(sharedData, new HashSet<IntersectionNode>(), threadId);
+    public ConcurrentSecondDfs(ISharedData sharedData, DfsStackTreeNode<IIntersectionTransition<?>> mainDfsStack,  int threadId) {
+        super(sharedData, new HashSet<>(), threadId);
         this.mainDfsStack = mainDfsStack;
         setResult(false);
     }
 
-    protected void enterNode(IntersectionNode node) {
+    protected void enterNode(IntersectionNode<?> node) {
         node.resetIterator(threadId);
     }
 
-    protected boolean visitNode(IntersectionNode node) {
+    protected boolean visitNode(IntersectionNode<?> node) {
         if (node.isOwner(threadId)) {
             if (sharedData.setContraryInstance(mainDfsStack)) {
                 setResult(true);
@@ -34,7 +34,7 @@ public class ConcurrentSecondDfs extends AbstractDfs<Boolean> {
         return false;
     }
 
-    protected boolean leaveNode(IntersectionNode node) {
+    protected boolean leaveNode(IntersectionNode<?> node) {
         return false;
     }
 }

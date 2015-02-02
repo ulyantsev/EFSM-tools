@@ -11,10 +11,6 @@ import java.util.Map;
  * @author Kirill Egorov
  */
 public interface IBuchiNode {
-
     int getID();
-
-    IBuchiNode getNext();
-
     Map<ITransitionCondition, IBuchiNode> getTransitions();
 }

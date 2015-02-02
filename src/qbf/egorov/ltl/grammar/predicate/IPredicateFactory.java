@@ -12,7 +12,6 @@ import qbf.egorov.statemachine.*;
  * @author Kirill Egorov
  */
 public interface IPredicateFactory<S extends IState> {
-
     void setAutomataState(S state, IStateTransition transition);
 
     @Predicate

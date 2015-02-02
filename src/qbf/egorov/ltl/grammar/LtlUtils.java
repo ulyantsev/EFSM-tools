@@ -3,14 +3,12 @@
  */
 package qbf.egorov.ltl.grammar;
 
-import qbf.egorov.ltl.ILtlUtils;
-
 /**
  * TODO: add comment
  *
  * @author Kirill Egorov
  */
-public class LtlUtils implements ILtlUtils {
+public class LtlUtils {
     private static LtlUtils instance;
 
     public synchronized static LtlUtils getInstance() {

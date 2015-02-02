@@ -13,8 +13,6 @@ import java.util.Collection;
 public interface IControlledObject {
     String getName();
     IAction getAction(String actionName);
-    Collection<IAction> getActions();
     IFunction getFunction(String funName);
     Collection<IFunction> getFunctions();
-    Class getImplClass();
 }

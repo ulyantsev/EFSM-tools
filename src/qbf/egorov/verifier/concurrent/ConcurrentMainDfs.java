@@ -14,16 +14,16 @@ import qbf.egorov.verifier.automata.IntersectionNode;
 import java.util.*;
 
 public class ConcurrentMainDfs extends NotifiableDfs<Void> {
-    private DfsStackTree<IIntersectionTransition> stackTree;
+    private DfsStackTree<IIntersectionTransition<?>> stackTree;
     //current dfs stack tree node
-    private DfsStackTreeNode<IIntersectionTransition> stackTreeNode;
+    private DfsStackTreeNode<IIntersectionTransition<?>> stackTreeNode;
 
-    private final Set<IntersectionNode> visited;
+    private final Set<IntersectionNode<?>> visited;
 
     private final ISharedData sharedData;
     private final int threadId;
 
-    public ConcurrentMainDfs(ISharedData sharedData, DfsStackTree<IIntersectionTransition> stackTree, int threadId) {
+    public ConcurrentMainDfs(ISharedData sharedData, DfsStackTree<IIntersectionTransition<?>> stackTree, int threadId) {
         this.sharedData = sharedData;
         this.visited = sharedData.getVisited();
         this.threadId = threadId;
@@ -33,7 +33,7 @@ public class ConcurrentMainDfs extends NotifiableDfs<Void> {
 
     protected boolean leaveNode() {
         if (stackTreeNode.wasLeft.compareAndSet(false, true)) {
-            IntersectionNode node = stackTreeNode.getItem().getTarget();
+            IntersectionNode<?> node = stackTreeNode.getItem().getTarget();
 
             notifyLeaveState(node.getState());
             stackTreeNode.remove();
@@ -48,7 +48,7 @@ public class ConcurrentMainDfs extends NotifiableDfs<Void> {
         return false;
     }
 
-    public Void dfs(IntersectionNode node) {
+    public Void dfs(IntersectionNode<?> node) {
         if (node != stackTreeNode.getItem().getTarget()) {
             throw new IllegalArgumentException();
         }
@@ -56,14 +56,14 @@ public class ConcurrentMainDfs extends NotifiableDfs<Void> {
         visited.add(node);
         node.addOwner(threadId);
         while (stackTreeNode != null && sharedData.getContraryInstance() == null) {
-            IIntersectionTransition trans = stackTreeNode.getItem().getTarget().next(-1);
-            IntersectionNode child = (trans != null) ? trans.getTarget() : null;
+            IIntersectionTransition<?> trans = stackTreeNode.getItem().getTarget().next(-1);
+            IntersectionNode<?> child = (trans != null) ? trans.getTarget() : null;
             if (child != null) {
                 if (!visited.contains(child)) {
                     if (visited.add(child)) {
                         stackTreeNode = stackTree.addChild(stackTreeNode, trans);
 
-                        IntersectionNode n = stackTreeNode.getItem().getTarget();
+                        IntersectionNode<?> n = stackTreeNode.getItem().getTarget();
                         n.addOwner(threadId);
                         notifyEnterState(n.getState());
                     }
@@ -71,7 +71,7 @@ public class ConcurrentMainDfs extends NotifiableDfs<Void> {
             } else {
                 boolean flag = true;
                 if (stackTreeNode.hasChildren()) {
-                    for (DfsStackTreeNode<IIntersectionTransition> childNode: stackTreeNode.getChildren()) {
+                    for (DfsStackTreeNode<IIntersectionTransition<?>> childNode: stackTreeNode.getChildren()) {
                         if (!childNode.wasLeft.get()) {
                             flag = false;
                             stackTreeNode = childNode;

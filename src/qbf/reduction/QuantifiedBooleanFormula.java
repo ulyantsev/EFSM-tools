@@ -25,7 +25,6 @@ import org.apache.commons.lang3.tuple.Pair;
 import qbf.reduction.BooleanFormula.DimacsConversionInfo;
 import qbf.reduction.SolverResult.SolverResults;
 import structures.ScenariosTree;
-import algorithms.FormulaBuilder;
 import algorithms.FormulaBuilder.EventExpressionPair;
 
 public class QuantifiedBooleanFormula {

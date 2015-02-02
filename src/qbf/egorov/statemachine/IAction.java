@@ -10,5 +10,4 @@ package qbf.egorov.statemachine;
  */
 public interface IAction {
     String getName();
-    String getDescription();
 }

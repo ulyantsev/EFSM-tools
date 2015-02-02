@@ -3,39 +3,40 @@
  */
 package qbf.egorov.ltl.buchi.impl;
 
-import qbf.egorov.ltl.buchi.ITransitionCondition;
-import qbf.egorov.ltl.grammar.IExpression;
-
-import java.util.Set;
-import java.util.Map;
 import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.commons.lang3.BooleanUtils;
 
-import qbf.egorov.ognl.*;
+import qbf.egorov.ltl.buchi.ITransitionCondition;
+import qbf.egorov.ltl.grammar.IExpression;
+import qbf.egorov.ognl.MapPropertyAccessor;
+import qbf.egorov.ognl.NullHandler;
+import qbf.egorov.ognl.Ognl;
+import qbf.egorov.ognl.OgnlException;
+import qbf.egorov.ognl.OgnlRuntime;
 
 public class OgnlTransitionCondition implements ITransitionCondition {
-
     static {
         OgnlRuntime.setNullHandler(ExpressionMap.class, new NullHandler() {
-            public Object nullMethodResult(Map context, Object target, String methodName, Object[] args) {
+            public Object nullMethodResult(@SuppressWarnings("rawtypes") Map context, Object target, String methodName, Object[] args) {
                 return null;
             }
 
-            public Object nullPropertyValue(Map context, Object target, Object property) {
+            public Object nullPropertyValue(@SuppressWarnings("rawtypes") Map context, Object target, Object property) {
                 throw new NullExpressionException();
             }
         });
         OgnlRuntime.setPropertyAccessor(ExpressionMap.class, new MapPropertyAccessor() {
-            public Object getProperty(Map context, Object target, Object name) throws OgnlException {
+            public Object getProperty(@SuppressWarnings("rawtypes") Map context, Object target, Object name) throws OgnlException {
                 Object res = super.getProperty(context, target, name);
                 if (res instanceof IExpression) {
-                    return ((IExpression) res).getValue();
+                    return ((IExpression<?>) res).getValue();
                 }
                 return res;
             }
 
-            public void setProperty(Map context, Object target, Object name, Object value) throws OgnlException {
+            public void setProperty(@SuppressWarnings("rawtypes") Map context, Object target, Object name, Object value) throws OgnlException {
                 throw new UnsupportedOperationException();
             }
         });
@@ -43,22 +44,12 @@ public class OgnlTransitionCondition implements ITransitionCondition {
 
     private String cond;
     private Object tree;
-    private Map root = new HashMap();
+    private Map<?, ?> root = new HashMap<>();
 
     public OgnlTransitionCondition(String cond, ExpressionMap exprs) throws OgnlException {
         this.cond = cond.trim();
         tree = Ognl.parseExpression(this.cond);
         this.root = exprs;
-    }
-
-    @Deprecated
-    public Set<IExpression<Boolean>> getExpressions() {
-        throw new UnsupportedOperationException();
-    }
-
-    @Deprecated
-    public Set<IExpression<Boolean>> getNegExpressions() {
-        throw new UnsupportedOperationException();
     }
 
     public boolean getValue() {
@@ -72,6 +63,7 @@ public class OgnlTransitionCondition implements ITransitionCondition {
         }
     }
 
+    @Override
     public String toString() {
         return cond;
     }

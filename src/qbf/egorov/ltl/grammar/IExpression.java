@@ -9,6 +9,5 @@ package qbf.egorov.ltl.grammar;
  * @author Kirill Egorov
  */
 public interface IExpression<R> {
-
-    public R getValue();
+    R getValue();
 }

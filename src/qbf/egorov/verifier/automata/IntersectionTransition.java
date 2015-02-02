@@ -12,7 +12,6 @@ import qbf.egorov.statemachine.IStateTransition;
  * @author Kirill Egorov
  */
 public class IntersectionTransition<S extends IState> implements IIntersectionTransition<S> {
-
     private IntersectionNode<S> target;
     private IStateTransition transition;
 
@@ -37,7 +36,7 @@ public class IntersectionTransition<S extends IState> implements IIntersectionTr
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        IntersectionTransition that = (IntersectionTransition) o;
+        IntersectionTransition<?> that = (IntersectionTransition<?>) o;
 
         if (!target.equals(that.target)) return false;
         if (transition != null ? !transition.equals(that.transition) : that.transition != null) return false;

@@ -24,7 +24,7 @@ public class ControlledObjectStub implements IControlledObject {
     private ControlledObjectStub(String name, Collection<String> actions) {
         this.name = name;
         for (String a: actions) {
-            this.actions.put(a, new Action(a, null));
+            this.actions.put(a, new Action(a));
         }
     }
 
@@ -46,9 +46,5 @@ public class ControlledObjectStub implements IControlledObject {
 
     public Collection<IFunction> getFunctions() {
         return Collections.emptyList();
-    }
-
-    public Class getImplClass() {
-        return null;
     }
 }

@@ -27,15 +27,6 @@ public class BuchiNode implements IBuchiNode {
         return id;
     }
 
-    public IBuchiNode getNext() {
-        for (ITransitionCondition cond: transitions.keySet()) {
-            if (cond.getValue()) {
-                return transitions.get(cond);
-            }
-        }
-        return null;
-    }
-
     public Map<ITransitionCondition, IBuchiNode> getTransitions() {
         return Collections.unmodifiableMap(transitions);
     }

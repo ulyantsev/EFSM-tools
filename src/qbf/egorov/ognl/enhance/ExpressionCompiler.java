@@ -10,7 +10,7 @@ import qbf.egorov.ognl.*;
 
 /**
  * Responsible for managing/providing functionality related to compiling generated java source
- * expressions via bytecode enhancements for a given ognl expression.
+ * expressions via becode enhancements for a given ognl expression.
  */
 public class ExpressionCompiler implements OgnlExpressionCompiler {
 

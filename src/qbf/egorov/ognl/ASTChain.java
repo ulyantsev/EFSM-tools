@@ -43,8 +43,8 @@ import qbf.egorov.ognl.enhance.UnsupportedCompilationException;
 public class ASTChain extends SimpleNode implements NodeType, OrderedReturn
 {
 
-    private Class _getterClass;
-    private Class _setterClass;
+    private Class<?> _getterClass;
+    private Class<?> _setterClass;
 
     private String _lastExpression;
 
@@ -246,12 +246,12 @@ public class ASTChain extends SimpleNode implements NodeType, OrderedReturn
         return result;
     }
 
-    public Class getGetterClass()
+    public Class<?> getGetterClass()
     {
         return _getterClass;
     }
 
-    public Class getSetterClass()
+    public Class<?> getSetterClass()
     {
         return _setterClass;
     }

@@ -12,11 +12,10 @@ import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 
 import qbf.egorov.ltl.LtlParseException;
+import qbf.egorov.ltl.LtlParser;
 import qbf.egorov.ltl.buchi.IBuchiAutomata;
 import qbf.egorov.ltl.buchi.ITranslator;
 import qbf.egorov.ltl.buchi.translator.JLtl2baTranslator;
-import qbf.egorov.ltl.converter.ILtlParser;
-import qbf.egorov.ltl.converter.LtlParser;
 import qbf.egorov.ltl.grammar.LtlNode;
 import qbf.egorov.ltl.grammar.LtlUtils;
 import qbf.egorov.ltl.grammar.predicate.IPredicateFactory;
@@ -44,7 +43,7 @@ import qbf.egorov.verifier.impl.SimpleVerifier;
 public class VerifierFactory {
     private ModifiableAutomataContext context;
     private IPredicateFactory<IState> predicates = new PredicateFactory<>();
-    private ILtlParser parser;
+    private LtlParser parser;
     private IBuchiAutomata[][] preparedFormulas;
 
     private IDfsListener marker = new TransitionMarker();
@@ -129,15 +128,15 @@ public class VerifierFactory {
             for (IBuchiAutomata buchi : preparedFormulas[i]) {
                 counter.resetCounter();
                 
-                List<IIntersectionTransition> list = verifier.verify(buchi, predicates, marker, counter);
+                List<IIntersectionTransition<?>> list = verifier.verify(buchi, predicates, marker, counter);
                 if (list != null && !list.isEmpty()) {
 
-                    ListIterator<IIntersectionTransition> iter = list.listIterator(list.size());
+                    ListIterator<IIntersectionTransition<?>> iter = list.listIterator(list.size());
 
                     int failTransitions = buchi.size() - 1;
 
                     for (int j = 0; iter.hasPrevious() && (j < failTransitions);) {
-                        IIntersectionTransition t = iter.previous();
+                        IIntersectionTransition<?> t = iter.previous();
                         if ((t.getTransition() != null)
                                 && (t.getTransition().getClass() == AutomataTransition.class)) {
                             AutomataTransition trans = (AutomataTransition) t.getTransition();
