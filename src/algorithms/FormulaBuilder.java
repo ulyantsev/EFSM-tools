@@ -105,8 +105,9 @@ public abstract class FormulaBuilder {
 		}
 	}
 	
-	protected void addTransitionVars() {
+	protected void addTransitionVars(boolean addActionVars) {
 		// transition variables y_event_formula_color_childColor
+		// action variables z_event_formula_color_action
 		for (Node node : tree.getNodes()) {
 			for (Transition t : node.getTransitions()) {
 				if (!BooleanVariable.byName("y", 0, 0, t.getEvent(), t.getExpr()).isPresent()) { // why (0, 0)?
@@ -114,8 +115,10 @@ public abstract class FormulaBuilder {
 						for (int childColor = 0; childColor < colorSize; childColor++) {
 							existVars.add(new BooleanVariable("y", nodeColor, childColor, t.getEvent(), t.getExpr()));
 						}
-						for (String action : actions) {
-							existVars.add(new BooleanVariable("z", nodeColor, action, t.getEvent(), t.getExpr()));
+						if (addActionVars) {
+							for (String action : actions) {
+								existVars.add(new BooleanVariable("z", nodeColor, action, t.getEvent(), t.getExpr()));
+							}
 						}
 					}
 				}
@@ -126,7 +129,6 @@ public abstract class FormulaBuilder {
 	/*
 	 * Each node has some color (can be derived from the action consistency)
 	 */
-	@SuppressWarnings("unused")
 	private BooleanFormula eachNodeHasColorConstraints() {
 		FormulaList constraints = new FormulaList(BinaryOperations.AND);
 		for (Node node : tree.getNodes()) {
@@ -280,7 +282,7 @@ public abstract class FormulaBuilder {
 		return constraints.assemble("induce a complete FSM");
 	}
 	
-	protected FormulaList scenarioConstraints() {
+	protected FormulaList scenarioConstraints(boolean includeActionConstrains) {
 		FormulaList constraints = new FormulaList(BinaryOperations.AND);
 		// first node has color 0
 		constraints.add(xVar(0, 0));
@@ -290,11 +292,18 @@ public abstract class FormulaBuilder {
 		constraints.add(notMoreThanOneEdgeConstraints());
 		constraints.add(transitionConstraints());
 		
-		constraints.add(actionScenarioConsistencyConstraints());
-		constraints.add(eventCompleteness
-				? eventCompletenessConstraints()
-				: actionTransitionExistenceConstraints()
-		);
+		if (eventCompleteness) {
+			constraints.add(eventCompletenessConstraints());
+		}
+		
+		if (includeActionConstrains) {
+			constraints.add(actionScenarioConsistencyConstraints());
+			if (!eventCompleteness) {
+				constraints.add(actionTransitionExistenceConstraints());
+			}
+		} else {
+			constraints.add(eachNodeHasColorConstraints());
+		}
 		
 		if (bfsConstraints) {
 			addBFSVars();

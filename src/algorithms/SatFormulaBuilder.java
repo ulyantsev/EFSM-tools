@@ -17,7 +17,7 @@ public class SatFormulaBuilder extends FormulaBuilder {
 
 	public BooleanFormula getFormula() {
 		addColorVars();
-		addTransitionVars();
-		return scenarioConstraints().assemble();
+		addTransitionVars(false);
+		return scenarioConstraints(false).assemble();
 	}
 }

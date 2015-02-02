@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.TreeSet;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -32,35 +31,37 @@ public abstract class ScenarioAndLtlAutomatonBuilder {
 			.forEach(File::delete);
 	}
 	
-	protected static Optional<Automaton> constructAutomatonFromAssignment(Logger logger, SolverResult ass, ScenariosTree tree, int colorSize) {
-		try {
-			int[] nodeColors = new int[tree.nodesCount()];
+	protected static Automaton constructAutomatonFromAssignment(Logger logger, SolverResult ass,
+			ScenariosTree tree, int colorSize, boolean includeActionsFromAssignment) {
+		int[] nodeColors = new int[tree.nodesCount()];
 
-			ass.list().stream()
-					.filter(a -> a.value && a.var.name.startsWith("x"))
-					.forEach(a -> {
-						String[] tokens = a.var.name.split("_");
-						assert tokens.length == 3;
-						int node = Integer.parseInt(tokens[1]);
-						int color = Integer.parseInt(tokens[2]);
-						nodeColors[node] = color;
-					});
+		// color the scenario tree codes according to the assignment
+		ass.list().stream()
+				.filter(a -> a.value && a.var.name.startsWith("x"))
+				.forEach(a -> {
+					String[] tokens = a.var.name.split("_");
+					assert tokens.length == 3;
+					int node = Integer.parseInt(tokens[1]);
+					int color = Integer.parseInt(tokens[2]);
+					nodeColors[node] = color;
+				});
 
-			// add transitions from scenarios
-			Automaton ans = new Automaton(colorSize);
-			for (int i = 0; i < tree.nodesCount(); i++) {
-				int color = nodeColors[i];
-				Node state = ans.getState(color);
-				for (Transition t : tree.getNodes().get(i).getTransitions()) {
-					if (!state.hasTransition(t.getEvent(), t.getExpr())) {
-						int childColor = nodeColors[t.getDst().getNumber()];
-						state.addTransition(t.getEvent(), t.getExpr(),
-							t.getActions(), ans.getState(childColor));
-					}
+		// add transitions from scenarios
+		Automaton ans = new Automaton(colorSize);
+		for (int i = 0; i < tree.nodesCount(); i++) {
+			int color = nodeColors[i];
+			Node state = ans.getState(color);
+			for (Transition t : tree.getNodes().get(i).getTransitions()) {
+				if (!state.hasTransition(t.getEvent(), t.getExpr())) {
+					int childColor = nodeColors[t.getDst().getNumber()];
+					state.addTransition(t.getEvent(), t.getExpr(),
+						t.getActions(), ans.getState(childColor));
 				}
 			}
+		}
 
-			// add other transitions
+		// add other transitions
+		if (includeActionsFromAssignment) {
 			for (Assignment a : ass.list().stream()
 					.filter(a -> a.value && a.var.name.startsWith("y"))
 					.collect(Collectors.toList())) {
@@ -69,7 +70,12 @@ public abstract class ScenarioAndLtlAutomatonBuilder {
 				int from = Integer.parseInt(tokens[1]);
 				int to = Integer.parseInt(tokens[2]);
 				String event = tokens[3];
-				MyBooleanExpression expr = MyBooleanExpression.get(tokens[4]);
+				MyBooleanExpression expr;
+				try {
+					expr = MyBooleanExpression.get(tokens[4]);
+				} catch (ParseException e) {
+					throw new AssertionError();
+				}
 
 				Node state = ans.getState(from);
 
@@ -101,10 +107,8 @@ public abstract class ScenarioAndLtlAutomatonBuilder {
 					}
 				}
 			}
-			return Optional.of(ans);
-		} catch (ParseException e) {
-			e.printStackTrace();
-			return Optional.empty();
 		}
+		
+		return ans;
 	}
 }

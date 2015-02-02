@@ -9,11 +9,11 @@ solver_params=""
 
 for suffix in true false; do
     echo SUFFIX $suffix
-    for ((size = 2; size <= 10; size++)); do
+    for ((size = 2; size <= 8; size++)); do
         for ((events = 2; events <= 5; events++)); do
             for ((actions = 2; actions <= 5; actions++)); do
                 name="qbf/testing/fsm_${size}s${events}e${actions}a"
-                for i in 20 40 80 160; do
+                for i in 20 40 80 160 320; do
                     fullname=${name}_$i.sc
                     echo ">>> $fullname"
                     rm -f "$fsm"

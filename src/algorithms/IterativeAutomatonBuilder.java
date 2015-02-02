@@ -23,12 +23,14 @@ import structures.ScenariosTree;
 import algorithms.FormulaBuilder.EventExpressionPair;
 
 public class IterativeAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
-	private static Pair<Optional<Automaton>, List<Assignment>> automatonFromFormula(BooleanFormula bf, Logger logger, String solverParams,
-			int timeoutSeconds, ScenariosTree tree, int colorSize) throws IOException {
+	private static Optional<Automaton> automatonFromFormula(BooleanFormula bf, Logger logger, String solverParams,
+			int timeoutSeconds, ScenariosTree tree, int colorSize, FormulaList additionalConstraints) throws IOException {
 		deleteTrash();
 		try (PrintWriter pw = new PrintWriter("_tmp.pretty")) {
 			pw.print(bf.toString());
 		}
+		
+		// SAT-solve
 		final String strBf = bf.simplify().toLimbooleString();
 		final Pair<List<Assignment>, Long> solution = BooleanFormula.solveAsSat(strBf, logger, solverParams, timeoutSeconds);
 		final List<Assignment> list = solution.getLeft();
@@ -39,10 +41,22 @@ public class IterativeAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 			: new SolverResult(list, (int) time);
 		logger.info(ass.toString().split("\n")[0]);
 
-		return Pair.of(ass.type() != SolverResults.SAT
-				? Optional.empty()
-				: constructAutomatonFromAssignment(logger, ass, tree, colorSize), list
-		);
+		// add new constraints
+		final List<Assignment> assList = list.stream()
+				.filter(a -> !a.var.name.startsWith("x"))
+				.collect(Collectors.toList());
+		final List<BooleanFormula> constraints = assList.stream()
+				.map(a -> a.value ? a.var : a.var.not())
+				.collect(Collectors.toList());
+		additionalConstraints.add(BinaryOperation.and(constraints).not());
+		
+		return ass.type() != SolverResults.SAT ? Optional.empty()
+				: Optional.of(constructAutomatonFromAssignment(logger, ass, tree, colorSize, false));
+	}
+	
+	private static Optional<Automaton> reportResult(Logger logger, int iterations, Optional<Automaton> a) {
+		logger.info("ITERATIONS: " + iterations);
+		return a;
 	}
 	
 	public static Optional<Automaton> build(Logger logger, ScenariosTree tree, int colorSize, String solverParams, boolean complete,
@@ -58,29 +72,30 @@ public class IterativeAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 			iterations++;
 			BooleanFormula actualFormula = initialBf.and(additionalConstraints.assemble());
 			final int secondsLeft = timeoutSeconds - (int) (System.currentTimeMillis() - time) / 1000 + 1;
-			final Pair<Optional<Automaton>, List<Assignment>> p = automatonFromFormula(actualFormula, logger, solverParams,
-					secondsLeft, tree, colorSize);
-			automaton = p.getLeft();
+			automaton = automatonFromFormula(actualFormula, logger, solverParams,
+					secondsLeft, tree, colorSize, additionalConstraints);
 			if (automaton.isPresent()) {
-				System.out.println(automaton.get());
 				if (verifier.verify(automaton.get())) {
-					logger.info("ITERATIONS: " + iterations);
-					return automaton;
+					if (complete) {
+						try {
+							// extra transition search with verification
+							new AutomatonCompleter(verifier, automaton.get(), efPairs, actions).ensureCompleteness();
+						} catch (AutomatonFound e) {
+							// verified, complete
+							return reportResult(logger, iterations, Optional.of(e.automaton));
+						}
+						// no complete extensions, continue search
+					} else {
+						// verified, completeness is not required
+						return reportResult(logger, iterations, automaton);
+					}
 				}
-				final List<Assignment> assList = p.getRight().stream()
-						.filter(ass -> !ass.var.name.startsWith("x"))
-						.collect(Collectors.toList());
-				final List<BooleanFormula> constraints = assList.stream()
-						.map(ass -> ass.value ? ass.var : ass.var.not())
-						.collect(Collectors.toList());
-				additionalConstraints.add(BinaryOperation.and(constraints).not());
 			} else {
-				// no solution
-				logger.info("ITERATIONS: " + iterations);
-				return automaton;
+				// no solution due to UNSAT or UNKNOWN, stop search
+				return reportResult(logger, iterations, Optional.empty());
 			}
 		}
-		logger.info("TOTAL TIME LIMIT EXCEEDED, ANSWER IS UNKNOWN.");
+		logger.info("TOTAL TIME LIMIT EXCEEDED, ANSWER IS UNKNOWN");
 		return Optional.empty();
 	}
 }

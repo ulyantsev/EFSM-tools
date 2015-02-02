@@ -36,6 +36,6 @@ public class QbfAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 		logger.info(ass.toString().split("\n")[0]);
 
 		return ass.type() != SolverResults.SAT
-				? Optional.empty() : constructAutomatonFromAssignment(logger, ass, tree, colorSize);
+				? Optional.empty() : Optional.of(constructAutomatonFromAssignment(logger, ass, tree, colorSize, true));
 	}
 }

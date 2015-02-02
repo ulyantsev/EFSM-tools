@@ -98,7 +98,7 @@ public class QbfFormulaBuilder extends FormulaBuilder {
 	
 	public QuantifiedBooleanFormula getFormula(boolean forFurtherSatReduction) {
 		addColorVars(); // exist
-		addTransitionVars(); // exist
+		addTransitionVars(true); // exist
 		
 		addSigmaVars(); // forall
 		addEpsVars(); // forall
@@ -106,7 +106,7 @@ public class QbfFormulaBuilder extends FormulaBuilder {
 		
 		LtlNode formulaToCheck = formulaToCheck();
 		logger.info(formulaToCheck.toString());
-		BooleanFormula scenarioConstraints = scenarioConstraints().assemble();
+		BooleanFormula scenarioConstraints = scenarioConstraints(true).assemble();
 		
 		BooleanFormula pathIsCorrect = forFurtherSatReduction
 				? cTerm().and(dTerm())

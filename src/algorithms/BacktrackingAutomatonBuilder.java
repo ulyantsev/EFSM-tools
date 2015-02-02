@@ -3,18 +3,13 @@ package algorithms;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.logging.Logger;
-
-import org.apache.commons.lang3.tuple.Pair;
 
 import qbf.egorov.ltl.grammar.LtlNode;
 import qbf.reduction.Verifier;
 import structures.Automaton;
-import structures.Node;
 import structures.ScenariosTree;
 import structures.Transition;
 import actions.StringActions;
@@ -22,14 +17,6 @@ import algorithms.FormulaBuilder.EventExpressionPair;
 import bool.MyBooleanExpression;
 
 public class BacktrackingAutomatonBuilder {
-	private static class AutomatonFound extends Exception {
-		public final Automaton automaton;
-
-		public AutomatonFound(Automaton automaton) {
-			this.automaton = automaton;
-		}
-	}
-	
 	private static class TimeLimitExceeded extends Exception {
 	}
 	
@@ -37,7 +24,7 @@ public class BacktrackingAutomatonBuilder {
 		private final int colorSize;
 		private final boolean searchComplete;
 		private final List<EventExpressionPair> efPairs;
-		private final List<StringActions> preparedActions = new ArrayList<>();
+		private final List<String> actions;
 		
 		private final Automaton automaton;
 		private int[] coloring;
@@ -65,20 +52,7 @@ public class BacktrackingAutomatonBuilder {
 			incomingTransitionNumbers = new int[colorSize];
 			this.searchComplete = searchComplete;
 			this.efPairs = efPairs;
-			
-			// prepare all action combinations (will be used while trying to enforce FSM completeness)
-			final int actionsNum = actions.size();
-			assert actionsNum <= 20;
-			final int maxI = 1 << actionsNum;
-			for (int i = 0; i < maxI; i++) {
-				final List<String> sequence = new ArrayList<>();
-				for (int j = 0; j < actionsNum; j++) {
-					if (((i >> j) & 1) == 1) {
-						sequence.add(actions.get(j));
-					}
-				}
-				preparedActions.add(new StringActions(String.join(",", sequence)));
-			}
+			this.actions = actions;
 		}
 		
 		private boolean verify() {
@@ -112,47 +86,9 @@ public class BacktrackingAutomatonBuilder {
 			return true;
 		}
 
-		private Set<Pair<Integer, EventExpressionPair>> missingTransitions() {
-			final List<Pair<Integer, EventExpressionPair>> missing = new ArrayList<>();
-			for (Node s : automaton.getStates()) {
-				for (EventExpressionPair p : efPairs) {
-					if (s.getTransition(p.event, p.expression) == null) {
-						missing.add(Pair.of(s.getNumber(), p));
-					}
-				}
-			}
-			return new HashSet<>(missing);
-		}
-		
 		private void checkTime() throws TimeLimitExceeded {
 			if ((System.currentTimeMillis() - startTime) > timeoutSec * 1000) {
 				throw new TimeLimitExceeded();
-			}
-		}
-		
-		private void ensureCompleteness(Set<Pair<Integer, EventExpressionPair>> missingTransitions) throws AutomatonFound, TimeLimitExceeded {
-			if (missingTransitions.isEmpty()) {
-				throw new AutomatonFound(automaton);
-			}
-			checkTime();
-			
-			for (Pair<Integer, EventExpressionPair> missing : new HashSet<>(missingTransitions)) {
-				missingTransitions.remove(missing);
-				int stateFrom = missing.getLeft();
-				EventExpressionPair p = missing.getRight();
-				
-				for (StringActions actions : preparedActions) {
-					for (int dst = 0; dst < colorSize; dst++) {
-						structures.Transition autoT = new Transition(automaton.getState(stateFrom),
-								automaton.getState(dst), p.event, p.expression, actions);
-						automaton.addTransition(automaton.getState(stateFrom), autoT);
-						if (verify()) {
-							ensureCompleteness(missingTransitions);
-						}
-						automaton.getState(stateFrom).removeTransition(autoT);
-					}
-				}
-				missingTransitions.add(missing);
 			}
 		}
 		
@@ -163,7 +99,7 @@ public class BacktrackingAutomatonBuilder {
 				int stateFrom = coloring[t.getSrc().getNumber()];
 				final String event = t.getEvent();
 				final MyBooleanExpression expression = t.getExpr();
-				final StringActions actions = t.getActions();
+				final StringActions stringActions = t.getActions();
 				assert automaton.getState(stateFrom).getTransition(event, expression) == null;
 				for (int dst = 0; dst < colorSize; dst++) {
 					if (dst > 1 && incomingTransitionNumbers[dst - 1] == 0) {
@@ -172,7 +108,7 @@ public class BacktrackingAutomatonBuilder {
 					}
 					
 					structures.Transition autoT = new Transition(automaton.getState(stateFrom),
-							automaton.getState(dst), event, expression, actions);
+							automaton.getState(dst), event, expression, stringActions);
 					automaton.addTransition(automaton.getState(stateFrom), autoT);
 					incomingTransitionNumbers[automaton.getState(dst).getNumber()]++;
 					final int[] coloringBackup = coloring;
@@ -181,7 +117,7 @@ public class BacktrackingAutomatonBuilder {
 					if (findNewFrontier() && verify()) {
 						if (frontier.isEmpty()) {
 							if (searchComplete) {
-								ensureCompleteness(missingTransitions());
+								new AutomatonCompleter(verifier, automaton, efPairs, actions).ensureCompleteness();
 							} else {
 								throw new AutomatonFound(automaton);
 							}
