@@ -8,4 +8,9 @@ public class AutomatonFound extends Exception {
 	public AutomatonFound(Automaton automaton) {
 		this.automaton = automaton;
 	}
+	
+	@Override
+	public Throwable fillInStackTrace() {
+		return this;
+	}
 }

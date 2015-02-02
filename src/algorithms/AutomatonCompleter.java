@@ -1,9 +1,7 @@
 package algorithms;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -20,15 +18,17 @@ public class AutomatonCompleter {
 	private final int colorSize;
 	private final List<EventExpressionPair> efPairs;
 	private final List<StringActions> preparedActions = new ArrayList<>();
+	private final long finishTime;
 	
 	/*
 	 * The automaton should be verified!
 	 */
-	public AutomatonCompleter(Verifier verifier, Automaton automaton, List<EventExpressionPair> efPairs, List<String> actions) {
+	public AutomatonCompleter(Verifier verifier, Automaton automaton, List<EventExpressionPair> efPairs, List<String> actions, long finishTime) {
 		this.verifier = verifier;
 		this.automaton = automaton;
 		colorSize = automaton.statesCount();
 		this.efPairs = efPairs;
+		this.finishTime = finishTime;
 		
 		// prepare all action combinations (will be used while trying to enforce FSM completeness)
 		final int actionsNum = actions.size();
@@ -45,7 +45,7 @@ public class AutomatonCompleter {
 		}
 	}
 	
-	public static Set<Pair<Integer, EventExpressionPair>> missingTransitions(Automaton automaton, List<EventExpressionPair> efPairs) {
+	private List<Pair<Integer, EventExpressionPair>> missingTransitions() {
 		final List<Pair<Integer, EventExpressionPair>> missing = new ArrayList<>();
 		for (Node s : automaton.getStates()) {
 			for (EventExpressionPair p : efPairs) {
@@ -54,35 +54,40 @@ public class AutomatonCompleter {
 				}
 			}
 		}
-		return new HashSet<>(missing);
+		return missing;
 	}
 	
-	public void ensureCompleteness() throws AutomatonFound {
-		ensureCompleteness(missingTransitions(automaton, efPairs));
+	public void ensureCompleteness() throws AutomatonFound, TimeLimitExceeded {
+		ensureCompleteness(missingTransitions());
 	}
 	
-	private void ensureCompleteness(Set<Pair<Integer, EventExpressionPair>> missingTransitions) throws AutomatonFound {
+	private void ensureCompleteness(List<Pair<Integer, EventExpressionPair>> missingTransitions)
+			throws AutomatonFound, TimeLimitExceeded {
 		if (missingTransitions.isEmpty()) {
 			throw new AutomatonFound(automaton);
 		}
-		
-		for (Pair<Integer, EventExpressionPair> missing : new HashSet<>(missingTransitions)) {
-			missingTransitions.remove(missing);
-			int stateFrom = missing.getLeft();
-			EventExpressionPair p = missing.getRight();
-			
-			for (StringActions actions : preparedActions) {
-				for (int dst = 0; dst < colorSize; dst++) {
-					structures.Transition autoT = new Transition(automaton.getState(stateFrom),
-							automaton.getState(dst), p.event, p.expression, actions);
-					automaton.addTransition(automaton.getState(stateFrom), autoT);
-					if (verifier.verify(automaton)) {
-						ensureCompleteness(missingTransitions);
-					}
-					automaton.getState(stateFrom).removeTransition(autoT);
-				}
-			}
-			missingTransitions.add(missing);
+		if (System.currentTimeMillis() > finishTime) {
+			throw new TimeLimitExceeded();
 		}
+		
+		final Pair<Integer, EventExpressionPair> missing = missingTransitions.get(missingTransitions.size() - 1);
+		missingTransitions.remove(missingTransitions.size() - 1);
+		
+		final Node stateFrom = automaton.getState(missing.getLeft());
+		final EventExpressionPair p = missing.getRight();
+		
+		for (StringActions actions : preparedActions) {
+			for (int dst = 0; dst < colorSize; dst++) {
+				structures.Transition autoT = new Transition(stateFrom,
+						automaton.getState(dst), p.event, p.expression, actions);
+				automaton.addTransition(stateFrom, autoT);
+				if (verifier.verify(automaton)) {
+					ensureCompleteness(missingTransitions);
+				}
+				stateFrom.removeTransition(autoT);
+			}
+		}
+		
+		missingTransitions.add(missing);
 	}
 }

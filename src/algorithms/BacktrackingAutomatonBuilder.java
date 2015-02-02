@@ -17,14 +17,12 @@ import algorithms.FormulaBuilder.EventExpressionPair;
 import bool.MyBooleanExpression;
 
 public class BacktrackingAutomatonBuilder {
-	private static class TimeLimitExceeded extends Exception {
-	}
-	
 	private static class TraverseState {
 		private final int colorSize;
 		private final boolean searchComplete;
 		private final List<EventExpressionPair> efPairs;
 		private final List<String> actions;
+		private final long finishTime;
 		
 		private final Automaton automaton;
 		private int[] coloring;
@@ -36,10 +34,8 @@ public class BacktrackingAutomatonBuilder {
 		private final int[] incomingTransitionNumbers;
 		
 		private final Verifier verifier;
-		private final int timeoutSec;
-		private final long startTime = System.currentTimeMillis();
 		
-		public TraverseState(ScenariosTree tree, Verifier verifier, int colorSize, int timeoutSec, boolean searchComplete,
+		public TraverseState(ScenariosTree tree, Verifier verifier, int colorSize, long finishTime, boolean searchComplete,
 				List<EventExpressionPair> efPairs, List<String> actions) {
 			this.colorSize = colorSize;
 			this.automaton = new Automaton(colorSize);
@@ -48,7 +44,7 @@ public class BacktrackingAutomatonBuilder {
 			frontier = new ArrayList<>(tree.getRoot().getTransitions());
 			coloring[tree.getRoot().getNumber()] = 0;
 			this.verifier = verifier;
-			this.timeoutSec = timeoutSec;
+			this.finishTime = finishTime;
 			incomingTransitionNumbers = new int[colorSize];
 			this.searchComplete = searchComplete;
 			this.efPairs = efPairs;
@@ -86,14 +82,11 @@ public class BacktrackingAutomatonBuilder {
 			return true;
 		}
 
-		private void checkTime() throws TimeLimitExceeded {
-			if ((System.currentTimeMillis() - startTime) > timeoutSec * 1000) {
+		public void backtracking() throws AutomatonFound, TimeLimitExceeded {
+			if (System.currentTimeMillis() > finishTime) {
 				throw new TimeLimitExceeded();
 			}
-		}
-		
-		public void backtracking() throws AutomatonFound, TimeLimitExceeded {
-			checkTime();
+			
 			for (Transition t : frontier) {
 				// further edges should be added from this state:
 				int stateFrom = coloring[t.getSrc().getNumber()];
@@ -117,7 +110,7 @@ public class BacktrackingAutomatonBuilder {
 					if (findNewFrontier() && verify()) {
 						if (frontier.isEmpty()) {
 							if (searchComplete) {
-								new AutomatonCompleter(verifier, automaton, efPairs, actions).ensureCompleteness();
+								new AutomatonCompleter(verifier, automaton, efPairs, actions, finishTime).ensureCompleteness();
 							} else {
 								throw new AutomatonFound(automaton);
 							}
@@ -138,9 +131,10 @@ public class BacktrackingAutomatonBuilder {
 	public static Optional<Automaton> build(Logger logger, ScenariosTree tree, int colorSize, boolean complete,
 			int timeoutSeconds, String resultFilePath, String ltlFilePath, List<LtlNode> formulae,
 			List<EventExpressionPair> efPairs, List<String> actions) throws IOException {
+		long finishTime = System.currentTimeMillis() + timeoutSeconds * 1000;
 		try {
 			new TraverseState(tree, new Verifier(colorSize, logger, ltlFilePath, EventExpressionPair.getEvents(efPairs), actions),
-					colorSize, timeoutSeconds, complete, efPairs, actions).backtracking();
+					colorSize, finishTime, complete, efPairs, actions).backtracking();
 		} catch (AutomatonFound e) {
 			return Optional.of(e.automaton);
 		} catch (TimeLimitExceeded e) {

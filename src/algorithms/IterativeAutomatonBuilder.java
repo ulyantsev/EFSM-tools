@@ -65,24 +65,26 @@ public class IterativeAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 		final BooleanFormula initialBf = new SatFormulaBuilder(tree, colorSize, complete, bfsConstraints, efPairs, actions).getFormula();
 		final FormulaList additionalConstraints = new FormulaList(BinaryOperations.AND);
 		
-		Optional<Automaton> automaton = Optional.empty();
-		final long time = System.currentTimeMillis();
+		final long finishTime = System.currentTimeMillis() + timeoutSeconds * 1000;
 		final Verifier verifier = new Verifier(colorSize, logger, ltlFilePath, EventExpressionPair.getEvents(efPairs), actions);
-		for (int iterations = 0; (System.currentTimeMillis() - time) < timeoutSeconds * 1000; iterations++) {
+		for (int iterations = 0; System.currentTimeMillis() < finishTime; iterations++) {
 			iterations++;
 			BooleanFormula actualFormula = initialBf.and(additionalConstraints.assemble());
-			final int secondsLeft = timeoutSeconds - (int) (System.currentTimeMillis() - time) / 1000 + 1;
-			automaton = automatonFromFormula(actualFormula, logger, solverParams,
+			final int secondsLeft = (int) ((finishTime - System.currentTimeMillis()) / 1000 + 1);
+			Optional<Automaton> automaton = automatonFromFormula(actualFormula, logger, solverParams,
 					secondsLeft, tree, colorSize, additionalConstraints);
 			if (automaton.isPresent()) {
 				if (verifier.verify(automaton.get())) {
 					if (complete) {
 						try {
 							// extra transition search with verification
-							new AutomatonCompleter(verifier, automaton.get(), efPairs, actions).ensureCompleteness();
+							new AutomatonCompleter(verifier, automaton.get(), efPairs, actions, finishTime).ensureCompleteness();
 						} catch (AutomatonFound e) {
 							// verified, complete
 							return reportResult(logger, iterations, Optional.of(e.automaton));
+						} catch (TimeLimitExceeded e) {
+							// terminate the loop
+							break;
 						}
 						// no complete extensions, continue search
 					} else {

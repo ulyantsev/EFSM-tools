@@ -9,7 +9,7 @@ solver_params=""
 
 for suffix in true false; do
     echo SUFFIX $suffix
-    for ((size = 2; size <= 8; size++)); do
+    for ((size = 10; size <= 10; size++)); do
         for ((events = 2; events <= 5; events++)); do
             for ((actions = 2; actions <= 5; actions++)); do
                 name="qbf/testing/fsm_${size}s${events}e${actions}a"
