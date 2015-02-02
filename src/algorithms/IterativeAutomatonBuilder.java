@@ -2,7 +2,6 @@ package algorithms;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.logging.Logger;
@@ -17,10 +16,11 @@ import qbf.reduction.BinaryOperations;
 import qbf.reduction.BooleanFormula;
 import qbf.reduction.FormulaList;
 import qbf.reduction.SolverResult;
-import qbf.reduction.Verifier;
 import qbf.reduction.SolverResult.SolverResults;
+import qbf.reduction.Verifier;
 import structures.Automaton;
 import structures.ScenariosTree;
+import algorithms.FormulaBuilder.EventExpressionPair;
 
 public class IterativeAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 	private static Pair<Optional<Automaton>, List<Assignment>> automatonFromFormula(BooleanFormula bf, Logger logger, String solverParams,
@@ -46,12 +46,14 @@ public class IterativeAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 	}
 	
 	public static Optional<Automaton> build(Logger logger, ScenariosTree tree, int colorSize, String solverParams, boolean complete,
-			int timeoutSeconds, String resultFilePath, String ltlFilePath, List<LtlNode> formulae, boolean bfsConstraints) throws IOException {
-		final BooleanFormula initialBf = new SatFormulaBuilder(tree, colorSize, complete, bfsConstraints).getFormula();
+			int timeoutSeconds, String resultFilePath, String ltlFilePath, List<LtlNode> formulae, boolean bfsConstraints,
+			List<EventExpressionPair> efPairs, List<String> actions) throws IOException {
+		final BooleanFormula initialBf = new SatFormulaBuilder(tree, colorSize, complete, bfsConstraints, efPairs, actions).getFormula();
 		final FormulaList additionalConstraints = new FormulaList(BinaryOperations.AND);
 		
 		Optional<Automaton> automaton = Optional.empty();
 		final long time = System.currentTimeMillis();
+		final Verifier verifier = new Verifier(colorSize, logger, ltlFilePath, EventExpressionPair.getEvents(efPairs), actions);
 		for (int iterations = 0; (System.currentTimeMillis() - time) < timeoutSeconds * 1000; iterations++) {
 			iterations++;
 			BooleanFormula actualFormula = initialBf.and(additionalConstraints.assemble());
@@ -61,7 +63,7 @@ public class IterativeAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 			automaton = p.getLeft();
 			if (automaton.isPresent()) {
 				System.out.println(automaton.get());
-				if (new Verifier(colorSize, logger, ltlFilePath, Arrays.asList(tree.getEvents()), tree.getActions()).verify(automaton.get())) {
+				if (verifier.verify(automaton.get())) {
 					logger.info("ITERATIONS: " + iterations);
 					return automaton;
 				}

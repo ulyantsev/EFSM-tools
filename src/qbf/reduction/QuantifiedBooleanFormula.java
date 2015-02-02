@@ -290,7 +290,7 @@ public class QuantifiedBooleanFormula {
 	 * Produce an equivalent Boolean formula as a Limboole string.
 	 * The size of the formula is exponential of forallVars.size().
 	 */
-	private String flatten(ScenariosTree tree, int statesNum, int k, Logger logger) {
+	private String flatten(ScenariosTree tree, int statesNum, int k, Logger logger, List<EventExpressionPair> efPairs) {
 		List<String> mainList = new ArrayList<>();
 		logger.info("Number of 'forall' variables: " + forallVars.size());
 		logger.info("List of 'forall' variables: " + forallVars);
@@ -298,8 +298,7 @@ public class QuantifiedBooleanFormula {
 		long time = System.currentTimeMillis();
 		
 		mainList.add(formulaExist.simplify().toLimbooleString());
-		findAllAssignmentsSigmaEps(FormulaBuilder.getEventExpressionPairs(tree),
-				statesNum, k, 0, formulaTheRest, mainList);
+		findAllAssignmentsSigmaEps(efPairs, statesNum, k, 0, formulaTheRest, mainList);
 		
 		time = System.currentTimeMillis() - time;
 		logger.info("Formula generation time: " + time + " ms.");
@@ -307,9 +306,9 @@ public class QuantifiedBooleanFormula {
 		return String.join("&", mainList);
 	}
 
-	public SolverResult solveAsSat(ScenariosTree tree, int statesNum, int k,
-			Logger logger, String solverParams, int timeoutSeconds) throws IOException {
-		String flatFormula = flatten(tree, statesNum, k, logger);
+	public SolverResult solveAsSat(ScenariosTree tree, int statesNum, int k, Logger logger,
+			String solverParams, int timeoutSeconds, List<EventExpressionPair> efPairs) throws IOException {
+		String flatFormula = flatten(tree, statesNum, k, logger, efPairs);
 		Pair<List<Assignment>, Long> solution = BooleanFormula.solveAsSat(flatFormula, logger, solverParams, timeoutSeconds);
 		List<Assignment> list = solution.getLeft();
 		long time = solution.getRight();

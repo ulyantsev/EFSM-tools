@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
@@ -28,8 +27,10 @@ import scenario.StringScenario;
 import structures.Automaton;
 import structures.ScenariosTree;
 import algorithms.BacktrackingAutomatonBuilder;
+import algorithms.FormulaBuilder.EventExpressionPair;
 import algorithms.IterativeAutomatonBuilder;
 import algorithms.QbfAutomatonBuilder;
+import bool.MyBooleanExpression;
 
 public class QbfBuilderMain {
 	@Argument(usage = "paths to files with scenarios", metaVar = "files", required = true)
@@ -37,6 +38,12 @@ public class QbfBuilderMain {
 
 	@Option(name = "--size", aliases = { "-s" }, usage = "automaton size", metaVar = "<size>", required = true)
 	private int size;
+	
+	@Option(name = "--eventNumber", aliases = { "-en" }, usage = "number of events (A, B, ...)", metaVar = "<eventNumber>", required = true)
+	private int eventNumber;
+	
+	@Option(name = "--actionNumber", aliases = { "-an" }, usage = "number of actions (z0, z1, ...)", metaVar = "<actionNumber>", required = true)
+	private int actionNumber;
 	
 	@Option(name = "--log", aliases = { "-l" }, usage = "write log to this file", metaVar = "<file>")
 	private String logFilePath;
@@ -171,16 +178,25 @@ public class QbfBuilderMain {
 				return;
 			}
 			
+			List<EventExpressionPair> efPairs = new ArrayList<>();
+			for (int i = 0; i < eventNumber; i++) {
+				efPairs.add(new EventExpressionPair(String.valueOf((char) ('A' +  i)), MyBooleanExpression.get("1")));
+			}
+			List<String> actions = new ArrayList<>();
+			for (int i = 0; i < actionNumber; i++) {
+				actions.add("z" + i);
+			}
+			
 			Optional<Automaton> resultAutomaton = ss == SolvingStrategy.QSAT || ss == SolvingStrategy.EXP_SAT
 					? QbfAutomatonBuilder.build(logger, tree, formulae, size, depth, timeout,
 							solver, solverParams, extractSubterms, isComplete, ss == SolvingStrategy.EXP_SAT,
-							bfsConstraints, useCoprocessor)
+							bfsConstraints, useCoprocessor, efPairs, actions)
 					: ss == SolvingStrategy.ITERATIVE_SAT
 					? IterativeAutomatonBuilder.build(logger, tree, size, solverParams, isComplete,
-							timeout, resultFilePath, ltlFilePath, formulae, bfsConstraints)
+							timeout, resultFilePath, ltlFilePath, formulae, bfsConstraints, efPairs, actions)
 					: ss == SolvingStrategy.BACKTRACKING
 					? BacktrackingAutomatonBuilder.build(logger, tree, size, isComplete, timeout,
-							resultFilePath, ltlFilePath, formulae)
+							resultFilePath, ltlFilePath, formulae, efPairs, actions)
 					: null;
 			double executionTime = (System.currentTimeMillis() - startTime) / 1000.;
 			
@@ -208,7 +224,7 @@ public class QbfBuilderMain {
 					logger.warning("File " + resultFilePath + " not found: " + e.getMessage());
 				}
 				// verification
-				boolean verified = new Verifier(size, logger, ltlFilePath, Arrays.asList(tree.getEvents()), tree.getActions()).verify(resultAutomaton.get());
+				boolean verified = new Verifier(size, logger, ltlFilePath, EventExpressionPair.getEvents(efPairs), actions).verify(resultAutomaton.get());
 				if (verified) {
 					logger.info("VERIFIED");
 				} else {

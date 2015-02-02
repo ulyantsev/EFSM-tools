@@ -32,7 +32,7 @@ import qbf.reduction.TrueFormula;
 import structures.ScenariosTree;
 import bool.MyBooleanExpression;
 
-public class QbfFormulaBuilder extends FormulaBuilder{
+public class QbfFormulaBuilder extends FormulaBuilder {
 	private final Logger logger;
 	private final int k; // depth
 	private final List<LtlNode> formulae;
@@ -40,8 +40,9 @@ public class QbfFormulaBuilder extends FormulaBuilder{
 	private final Map<SubtermIdentifier, Pair<BooleanFormula, BooleanVariable>> subterms = new LinkedHashMap<>();	
 	private final boolean extractSubterms;
 
-	public QbfFormulaBuilder(Logger logger, ScenariosTree tree, List<LtlNode> formulae, int colorSize, int depth, boolean extractSubterms, boolean eventCompleteness, boolean bfsConstraints) {
-		super(colorSize, tree, eventCompleteness, bfsConstraints);
+	public QbfFormulaBuilder(Logger logger, ScenariosTree tree, List<LtlNode> formulae, int colorSize, int depth,
+			boolean extractSubterms, boolean eventCompleteness, boolean bfsConstraints, List<EventExpressionPair> efPairs, List<String> actions) {
+		super(colorSize, tree, eventCompleteness, bfsConstraints, efPairs, actions);
 		this.logger = logger;
 		this.formulae = formulae;
 		this.k = depth;

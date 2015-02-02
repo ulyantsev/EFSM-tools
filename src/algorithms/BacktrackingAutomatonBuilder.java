@@ -3,8 +3,10 @@ package algorithms;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.logging.Logger;
 
 import org.apache.commons.lang3.tuple.Pair;
@@ -35,6 +37,7 @@ public class BacktrackingAutomatonBuilder {
 		private final int colorSize;
 		private final boolean searchComplete;
 		private final List<EventExpressionPair> efPairs;
+		private final List<StringActions> preparedActions = new ArrayList<>();
 		
 		private final Automaton automaton;
 		private int[] coloring;
@@ -49,7 +52,8 @@ public class BacktrackingAutomatonBuilder {
 		private final int timeoutSec;
 		private final long startTime = System.currentTimeMillis();
 		
-		public TraverseState(ScenariosTree tree, Verifier verifier, int colorSize, int timeoutSec, boolean searchComplete, List<EventExpressionPair> efPairs) {
+		public TraverseState(ScenariosTree tree, Verifier verifier, int colorSize, int timeoutSec, boolean searchComplete,
+				List<EventExpressionPair> efPairs, List<String> actions) {
 			this.colorSize = colorSize;
 			this.automaton = new Automaton(colorSize);
 			this.coloring = new int[tree.nodesCount()];
@@ -61,6 +65,20 @@ public class BacktrackingAutomatonBuilder {
 			incomingTransitionNumbers = new int[colorSize];
 			this.searchComplete = searchComplete;
 			this.efPairs = efPairs;
+			
+			// prepare all action combinations (will be used while trying to enforce FSM completeness)
+			final int actionsNum = actions.size();
+			assert actionsNum <= 20;
+			final int maxI = 1 << actionsNum;
+			for (int i = 0; i < maxI; i++) {
+				final List<String> sequence = new ArrayList<>();
+				for (int j = 0; j < actionsNum; j++) {
+					if (((i >> j) & 1) == 1) {
+						sequence.add(actions.get(j));
+					}
+				}
+				preparedActions.add(new StringActions(String.join(",", sequence)));
+			}
 		}
 		
 		private boolean verify() {
@@ -93,20 +111,9 @@ public class BacktrackingAutomatonBuilder {
 			coloring = newColoring;
 			return true;
 		}
-		
-		private boolean isComplete() {
-			for (Node s : automaton.getStates()) {
-				for (EventExpressionPair p : efPairs) {
-					if (s.getTransition(p.event, p.expression) == null) {
-						return false;
-					}
-				}
-			}
-			return true;
-		}
-		
-		private List<Pair<Integer, EventExpressionPair>> missingTransitions() {
-			List<Pair<Integer, EventExpressionPair>> missing = new ArrayList<>();
+
+		private Set<Pair<Integer, EventExpressionPair>> missingTransitions() {
+			final List<Pair<Integer, EventExpressionPair>> missing = new ArrayList<>();
 			for (Node s : automaton.getStates()) {
 				for (EventExpressionPair p : efPairs) {
 					if (s.getTransition(p.event, p.expression) == null) {
@@ -114,7 +121,7 @@ public class BacktrackingAutomatonBuilder {
 					}
 				}
 			}
-			return missing;
+			return new HashSet<>(missing);
 		}
 		
 		private void checkTime() throws TimeLimitExceeded {
@@ -123,19 +130,29 @@ public class BacktrackingAutomatonBuilder {
 			}
 		}
 		
-		private void ensureCompleteness() throws AutomatonFound, TimeLimitExceeded {
+		private void ensureCompleteness(Set<Pair<Integer, EventExpressionPair>> missingTransitions) throws AutomatonFound, TimeLimitExceeded {
+			if (missingTransitions.isEmpty()) {
+				throw new AutomatonFound(automaton);
+			}
 			checkTime();
-			for (Pair<Integer, EventExpressionPair> missing : missingTransitions()) {
+			
+			for (Pair<Integer, EventExpressionPair> missing : new HashSet<>(missingTransitions)) {
+				missingTransitions.remove(missing);
 				int stateFrom = missing.getLeft();
 				EventExpressionPair p = missing.getRight();
 				
-				for (int dst = 0; dst < colorSize; dst++) {
-					//structures.Transition autoT = new Transition(automaton.getState(stateFrom),
-					//		automaton.getState(dst), p.event, p.expression, actions);
-					//automaton.addTransition(automaton.getState(stateFrom), autoT);
-					
-					//automaton.getState(stateFrom).removeTransition(autoT);
+				for (StringActions actions : preparedActions) {
+					for (int dst = 0; dst < colorSize; dst++) {
+						structures.Transition autoT = new Transition(automaton.getState(stateFrom),
+								automaton.getState(dst), p.event, p.expression, actions);
+						automaton.addTransition(automaton.getState(stateFrom), autoT);
+						if (verify()) {
+							ensureCompleteness(missingTransitions);
+						}
+						automaton.getState(stateFrom).removeTransition(autoT);
+					}
 				}
+				missingTransitions.add(missing);
 			}
 		}
 		
@@ -160,17 +177,11 @@ public class BacktrackingAutomatonBuilder {
 					incomingTransitionNumbers[automaton.getState(dst).getNumber()]++;
 					final int[] coloringBackup = coloring;
 					final List<Transition> frontierBackup = frontier;
-					final boolean compliant = findNewFrontier();
-					final boolean verified = verify();
 					
-					if (compliant && verified) {
+					if (findNewFrontier() && verify()) {
 						if (frontier.isEmpty()) {
 							if (searchComplete) {
-								if (isComplete()) {
-									throw new AutomatonFound(automaton);
-								} else {
-									ensureCompleteness();
-								}
+								ensureCompleteness(missingTransitions());
 							} else {
 								throw new AutomatonFound(automaton);
 							}
@@ -189,10 +200,11 @@ public class BacktrackingAutomatonBuilder {
 	}
 	
 	public static Optional<Automaton> build(Logger logger, ScenariosTree tree, int colorSize, boolean complete,
-			int timeoutSeconds, String resultFilePath, String ltlFilePath, List<LtlNode> formulae) throws IOException {
+			int timeoutSeconds, String resultFilePath, String ltlFilePath, List<LtlNode> formulae,
+			List<EventExpressionPair> efPairs, List<String> actions) throws IOException {
 		try {
-			new TraverseState(tree, new Verifier(colorSize, logger, ltlFilePath, Arrays.asList(tree.getEvents()), tree.getActions()),
-					colorSize, timeoutSeconds, complete, FormulaBuilder.getEventExpressionPairs(tree)).backtracking();
+			new TraverseState(tree, new Verifier(colorSize, logger, ltlFilePath, EventExpressionPair.getEvents(efPairs), actions),
+					colorSize, timeoutSeconds, complete, efPairs, actions).backtracking();
 		} catch (AutomatonFound e) {
 			return Optional.of(e.automaton);
 		} catch (TimeLimitExceeded e) {

@@ -41,7 +41,7 @@ public class Verifier {
 		
 		allEvents = new TreeSet<>(events);
 		allActions = new TreeSet<>(actions);
-		fillEventsAndActionsFromFormulae(allEvents, allActions);
+		ensureContextSufficiency();
 		verifier = new VerifierFactory(allEvents.toArray(new String[allEvents.size()]), allActions.toArray(new String[allActions.size()]));
 		FST fst = new FST(new Automaton(size), allEvents, allActions, size);
 		verifier.configureStateMachine(fst);
@@ -73,18 +73,18 @@ public class Verifier {
 		return formulae;
 	}
 	
-	private void fillEventsAndActionsFromFormulae(Set<String> allEvents, Set<String> allActions) {
+	private void ensureContextSufficiency() {
 		Pattern p1 = Pattern.compile("co\\.(\\w+)\\)");
 		Pattern p2 = Pattern.compile("ep\\.(\\w+)\\)");
 		Matcher m;
 		for (String formula : ltlFormulae) {
 			m = p1.matcher(formula);
 			while (m.find()) {
-				allActions.add(m.group(1));
+				assert allActions.contains(m.group(1));
 			}
 			m = p2.matcher(formula);
 			while (m.find()) {
-				allEvents.add(m.group(1));
+				assert allEvents.contains(m.group(1));
 			}
 		}
 	}
@@ -119,17 +119,10 @@ public class Verifier {
 	}
 	
 	public boolean verify(Automaton a) {
-		FST fst = new FST(removeDeadEnds(a), allEvents, allActions, size);
-		int numberOfUsedTransitions = fst.getUsedTransitionsCount();
-
+		final FST fst = new FST(removeDeadEnds(a), allEvents, allActions, size);
+		final int numberOfUsedTransitions = fst.getUsedTransitionsCount();
 		verifier.configureStateMachine(fst);
-		
-		int result = verifier.verify()[0];
-		if (result != numberOfUsedTransitions) {
-			logger.info("EGOROV VERIFICATION FALSE");
-			return false;		
-		}
-		logger.info("EGOROV VERIFICATION TRUE");
-		return true;
+		final int result = verifier.verify()[0];
+		return result == numberOfUsedTransitions;
 	}
 }

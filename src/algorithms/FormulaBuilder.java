@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import qbf.reduction.BinaryOperation;
@@ -45,9 +46,13 @@ public abstract class FormulaBuilder {
 		public String toString() {
 			return event + " [" + expression + "]";
 		}
+		
+		public static List<String> getEvents(List<EventExpressionPair> efPairs) {
+			return new ArrayList<>(new TreeSet<>(efPairs.stream().map(p -> p.event).collect(Collectors.toList())));
+		}
 	}
 	
-	public static List<EventExpressionPair> getEventExpressionPairs(ScenariosTree tree) {
+	/*public static List<EventExpressionPair> getEventExpressionPairs(ScenariosTree tree) {
 		final List<EventExpressionPair> efPairs = new ArrayList<>();
 		for (String event : tree.getEvents()) {
 			for (MyBooleanExpression f : tree.getPairsEventExpression().get(event)) {
@@ -55,13 +60,13 @@ public abstract class FormulaBuilder {
 			}
 		}
 		return efPairs;
-	}
+	}*/
 	
-	public FormulaBuilder(int colorSize, ScenariosTree tree, boolean eventCompleteness, boolean bfsConstraints) {
+	public FormulaBuilder(int colorSize, ScenariosTree tree, boolean eventCompleteness, boolean bfsConstraints, List<EventExpressionPair> efPairs, List<String> actions) {
 		this.colorSize = colorSize;
-		this.events = Arrays.asList(tree.getEvents());
-		this.actions = tree.getActions();
-		efPairs = getEventExpressionPairs(tree);
+		this.events = EventExpressionPair.getEvents(efPairs);
+		this.actions = actions;
+		this.efPairs = efPairs;
 		this.tree = tree;
 		this.eventCompleteness = eventCompleteness;
 		this.bfsConstraints = bfsConstraints;

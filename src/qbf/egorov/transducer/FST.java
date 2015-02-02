@@ -42,8 +42,8 @@ public class FST {
 			}
 		}
 		
-		this.setOfInputs = events.toArray(new String[0]);
-		this.setOfOutputs = actions.toArray(new String[0]);
+		this.setOfInputs = events.toArray(new String[events.size()]);
+		this.setOfOutputs = actions.toArray(new String[actions.size()]);
 	}
 	
 	public String[] getSetOfInputs() {

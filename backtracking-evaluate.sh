@@ -16,7 +16,7 @@ for suffix in true false; do
                     fullname=${name}_$i.sc
                     echo ">>> $fullname"
                     rm -f "$fsm"
-                    java -ea -jar jars/qbf-automaton-generator.jar "$fullname" --ltl "$name-$suffix.ltl" --size "$size" --timeout "$timeout" --complete --strategy BACKTRACKING --result "$fsm" 2>&1 | grep "\\(INFO\\|WARNING\\|SEVERE\\|Exception\\)"
+                    java -ea -jar jars/qbf-automaton-generator.jar "$fullname" --ltl "$name-$suffix.ltl" --size $size --eventNumber $events --actionNumber $actions --timeout "$timeout" --complete --strategy BACKTRACKING --result "$fsm" 2>&1 | grep "\\(INFO\\|WARNING\\|SEVERE\\|Exception\\)"
                     if [ -f "$fsm" ]; then
                         if [[ $(diff -u "$name.dot" "$fsm" | wc -l) == 0 ]]; then
                             echo "FSM MATCH"
