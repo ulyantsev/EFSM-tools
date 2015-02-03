@@ -106,20 +106,16 @@ public abstract class FormulaBuilder {
 	}
 	
 	protected void addTransitionVars(boolean addActionVars) {
-		// transition variables y_event_formula_color_childColor
-		// action variables z_event_formula_color_action
-		for (Node node : tree.getNodes()) {
-			for (Transition t : node.getTransitions()) {
-				if (!BooleanVariable.byName("y", 0, 0, t.getEvent(), t.getExpr()).isPresent()) { // why (0, 0)?
-					for (int nodeColor = 0; nodeColor < colorSize; nodeColor++) {
-						for (int childColor = 0; childColor < colorSize; childColor++) {
-							existVars.add(new BooleanVariable("y", nodeColor, childColor, t.getEvent(), t.getExpr()));
-						}
-						if (addActionVars) {
-							for (String action : actions) {
-								existVars.add(new BooleanVariable("z", nodeColor, action, t.getEvent(), t.getExpr()));
-							}
-						}
+		for (int nodeColor = 0; nodeColor < colorSize; nodeColor++) {
+			for (EventExpressionPair p : efPairs) {
+				// transition variables y_color_childColor_event_formula
+				for (int childColor = 0; childColor < colorSize; childColor++) {
+					existVars.add(new BooleanVariable("y", nodeColor, childColor, p.event, p.expression));
+				}
+				if (addActionVars) {
+					// action variables z_color_action_event_formula
+					for (String action : actions) {
+						existVars.add(new BooleanVariable("z", nodeColor, action, p.event, p.expression));
 					}
 				}
 			}

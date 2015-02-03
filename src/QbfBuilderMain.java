@@ -62,9 +62,6 @@ public class QbfBuilderMain {
 
 	@Option(name = "--ltl", aliases = { "-lt" }, usage = "file with LTL properties", metaVar = "<file>")
 	private String ltlFilePath;
-
-	@Option(name = "--depth", aliases = { "-d" }, usage = "BMC depth (k)", metaVar = "<depth>")
-	private int depth = 0;
 	
 	@Option(name = "--extractSubterms", aliases = { "-es" }, handler = BooleanOptionHandler.class,
 			usage = "whether subterms should be extracted to separate variables (only for QSAT strategy)",
@@ -188,7 +185,7 @@ public class QbfBuilderMain {
 			}
 			
 			Optional<Automaton> resultAutomaton = ss == SolvingStrategy.QSAT || ss == SolvingStrategy.EXP_SAT
-					? QbfAutomatonBuilder.build(logger, tree, formulae, size, depth, timeout,
+					? QbfAutomatonBuilder.build(logger, tree, formulae, size, ltlFilePath, timeout,
 							solver, solverParams, extractSubterms, isComplete, ss == SolvingStrategy.EXP_SAT,
 							bfsConstraints, useCoprocessor, efPairs, actions)
 					: ss == SolvingStrategy.ITERATIVE_SAT

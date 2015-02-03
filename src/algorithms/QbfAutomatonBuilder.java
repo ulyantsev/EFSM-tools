@@ -13,6 +13,7 @@ import algorithms.FormulaBuilder.EventExpressionPair;
 import qbf.egorov.ltl.grammar.LtlNode;
 import qbf.reduction.QuantifiedBooleanFormula;
 import qbf.reduction.SolverResult;
+import qbf.reduction.Verifier;
 import qbf.reduction.SolverResult.SolverResults;
 import qbf.reduction.Solvers;
 import structures.Automaton;
@@ -20,22 +21,34 @@ import structures.ScenariosTree;
 
 public class QbfAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 	public static Optional<Automaton> build(Logger logger, ScenariosTree tree,
-			List<LtlNode> formulae, int colorSize, int depth,
+			List<LtlNode> formulae, int colorSize, String ltlFilePath,
 			int timeoutSeconds, Solvers solver, String solverParams, boolean extractSubterms,
 			boolean complete, boolean useSat, boolean bfsConstraints, boolean useCoprocessor,
 			List<EventExpressionPair> efPairs, List<String> actions) throws IOException {
-		deleteTrash();
 		
-		QuantifiedBooleanFormula qbf = new QbfFormulaBuilder(logger, tree,
-			formulae, colorSize, depth, extractSubterms, complete, bfsConstraints, efPairs, actions).getFormula(useSat);
-		
-		SolverResult ass = useSat
-				? qbf.solveAsSat(tree, colorSize, depth, logger, solverParams, timeoutSeconds, efPairs)
-				: qbf.solve(logger, solver, solverParams, timeoutSeconds, useCoprocessor);
+		final Verifier verifier = new Verifier(colorSize, logger, ltlFilePath, EventExpressionPair.getEvents(efPairs), actions);
+		for (int k = 0; ; k++) {
+			logger.info("TRYING k = " + k);
+			deleteTrash();
+			QuantifiedBooleanFormula qbf = new QbfFormulaBuilder(logger, tree,
+					formulae, colorSize, k, extractSubterms, complete, bfsConstraints, efPairs, actions).getFormula(useSat);
+				
+			SolverResult ass = useSat
+					? qbf.solveAsSat(tree, colorSize, k, logger, solverParams, timeoutSeconds, efPairs)
+					: qbf.solve(logger, solver, solverParams, timeoutSeconds, useCoprocessor);
 
-		logger.info(ass.toString().split("\n")[0]);
+			logger.info(ass.toString().split("\n")[0]);
 
-		return ass.type() != SolverResults.SAT
-				? Optional.empty() : Optional.of(constructAutomatonFromAssignment(logger, ass, tree, colorSize, true));
+			if (ass.type() == SolverResults.SAT) {
+				final Automaton a = constructAutomatonFromAssignment(logger, ass, tree, colorSize, true);
+				if (verifier.verify(a)) {
+					return Optional.of(a);
+				} else {
+					continue;
+				}
+			} else {
+				return Optional.empty();
+			}
+		}
 	}
 }

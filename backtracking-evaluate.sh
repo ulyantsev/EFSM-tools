@@ -8,7 +8,7 @@ fsm="qbf/generated-fsm.gv"
 
 for suffix in true false; do
     echo SUFFIX $suffix
-    for ((size = 2; size <= 5; size++)); do
+    for ((size = 5; size <= 5; size++)); do
         for ((events = 2; events <= 5; events++)); do
             for ((actions = 2; actions <= 5; actions++)); do
                 name="qbf/testing/fsm_${size}s${events}e${actions}a"

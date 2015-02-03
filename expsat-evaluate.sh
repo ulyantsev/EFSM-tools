@@ -6,11 +6,10 @@ echo "Evaluating..."
 timeout=15
 fsm="qbf/generated-fsm.gv"
 solver_params=""
-depth=2
 
 for suffix in true false; do
     echo SUFFIX $suffix
-    for ((size = 2; size <= 5; size++)); do
+    for ((size = 10; size <= 10; size++)); do
         for ((events = 2; events <= 5; events++)); do
             for ((actions = 2; actions <= 5; actions++)); do
                 name="qbf/testing/fsm_${size}s${events}e${actions}a"
@@ -18,7 +17,7 @@ for suffix in true false; do
                     fullname=${name}_$i.sc
                     echo ">>> $fullname"
                     rm -f "$fsm"
-                    java -Xms2G -ea -jar jars/qbf-automaton-generator.jar "$fullname" --ltl "$name-$suffix.ltl" --size $size --eventNumber $events --actionNumber $actions --timeout "$timeout" --depth "$depth"  --solverParams "$solver_params" --complete --bfsConstraints --result "$fsm" --strategy EXP_SAT 2>&1 | grep "\\(INFO\\|WARNING\\|SEVERE\\|Exception\\)"
+                    java -Xms2G -ea -jar jars/qbf-automaton-generator.jar "$fullname" --ltl "$name-$suffix.ltl" --size $size --eventNumber $events --actionNumber $actions --timeout "$timeout" --solverParams "$solver_params" --complete --bfsConstraints --result "$fsm" --strategy EXP_SAT 2>&1 | grep "\\(INFO\\|WARNING\\|SEVERE\\|Exception\\)"
                     if [ -f "$fsm" ]; then
                         if [[ $(diff -u "$name.dot" "$fsm" | wc -l) == 0 ]]; then
                             echo "FSM MATCH"
