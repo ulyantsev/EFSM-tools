@@ -10,6 +10,7 @@ import java.util.logging.Logger;
 import qbf.egorov.ltl.grammar.LtlNode;
 import qbf.reduction.Verifier;
 import structures.Automaton;
+import structures.Node;
 import structures.ScenariosTree;
 import structures.Transition;
 import actions.StringActions;
@@ -89,20 +90,20 @@ public class BacktrackingAutomatonBuilder {
 			
 			for (Transition t : frontier) {
 				// further edges should be added from this state:
-				int stateFrom = coloring[t.getSrc().getNumber()];
+				final Node stateFrom = automaton.getState(coloring[t.getSrc().getNumber()]);
 				final String event = t.getEvent();
 				final MyBooleanExpression expression = t.getExpr();
 				final StringActions stringActions = t.getActions();
-				assert automaton.getState(stateFrom).getTransition(event, expression) == null;
+				assert stateFrom.getTransition(event, expression) == null;
 				for (int dst = 0; dst < colorSize; dst++) {
 					if (dst > 1 && incomingTransitionNumbers[dst - 1] == 0) {
 						break;
 						// this is done to reduce repeated checks (similar to BFS constraints)
 					}
 					
-					structures.Transition autoT = new Transition(automaton.getState(stateFrom),
+					Transition autoT = new Transition(stateFrom,
 							automaton.getState(dst), event, expression, stringActions);
-					automaton.addTransition(automaton.getState(stateFrom), autoT);
+					automaton.addTransition(stateFrom, autoT);
 					incomingTransitionNumbers[automaton.getState(dst).getNumber()]++;
 					final int[] coloringBackup = coloring;
 					final List<Transition> frontierBackup = frontier;
@@ -121,7 +122,7 @@ public class BacktrackingAutomatonBuilder {
 					
 					coloring = coloringBackup;
 					frontier = frontierBackup;
-					automaton.getState(stateFrom).removeTransition(autoT);
+					stateFrom.removeTransition(autoT);
 					incomingTransitionNumbers[automaton.getState(dst).getNumber()]--;
 				}
 			}

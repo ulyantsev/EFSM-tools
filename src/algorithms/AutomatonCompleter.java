@@ -78,7 +78,7 @@ public class AutomatonCompleter {
 		
 		for (StringActions actions : preparedActions) {
 			for (int dst = 0; dst < colorSize; dst++) {
-				structures.Transition autoT = new Transition(stateFrom,
+				Transition autoT = new Transition(stateFrom,
 						automaton.getState(dst), p.event, p.expression, actions);
 				automaton.addTransition(stateFrom, autoT);
 				if (verifier.verify(automaton)) {
