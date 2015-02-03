@@ -3,9 +3,11 @@ package algorithms;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import qbf.egorov.ltl.grammar.LtlNode;
 import qbf.reduction.Verifier;
@@ -56,7 +58,12 @@ public class BacktrackingAutomatonBuilder {
 			return verifier.verify(automaton);
 		}
 		
-		private boolean findNewFrontier() {
+		/*
+		 * Returns the number of passed scenario transitions
+		 * or -1 if the automaton is inconsistent with scenarios.
+		 */
+		private int findNewFrontier() {
+			int passed = 0;
 			// proper sorting of the frontier is required to prevent losing feasible solutions
 			// due to the BFS constraint
 			final List<Transition> finalFrontier = new ArrayList<>();
@@ -74,16 +81,17 @@ public class BacktrackingAutomatonBuilder {
 				} else if (autoT.getActions().equals(t.getActions())) {
 					currentFrontier.addAll(t.getDst().getTransitions());
 					newColoring[t.getDst().getNumber()] = autoT.getDst().getNumber();
+					passed++;
 				} else {
-					return false;
+					return -1;
 				}
 			}
 			frontier = finalFrontier;
 			coloring = newColoring;
-			return true;
+			return passed;
 		}
 
-		public void backtracking() throws AutomatonFound, TimeLimitExceeded {
+		public void backtrackingWithoutEvaluation() throws AutomatonFound, TimeLimitExceeded {
 			if (System.currentTimeMillis() > finishTime) {
 				throw new TimeLimitExceeded();
 			}
@@ -108,7 +116,7 @@ public class BacktrackingAutomatonBuilder {
 					final int[] coloringBackup = coloring;
 					final List<Transition> frontierBackup = frontier;
 					
-					if (findNewFrontier() && verify()) {
+					if (findNewFrontier() != -1 && verify()) {
 						if (frontier.isEmpty()) {
 							if (searchComplete) {
 								new AutomatonCompleter(verifier, automaton, efPairs, actions, finishTime).ensureCompleteness();
@@ -125,6 +133,91 @@ public class BacktrackingAutomatonBuilder {
 					stateFrom.removeTransition(autoT);
 					incomingTransitionNumbers[automaton.getState(dst).getNumber()]--;
 				}
+			}
+		}
+		
+		public void backtracking() throws AutomatonFound, TimeLimitExceeded {
+			if (System.currentTimeMillis() > finishTime) {
+				throw new TimeLimitExceeded();
+			}
+			
+			class EvaluatedTransition implements Comparable<EvaluatedTransition> {
+				final Transition transition;
+				final int destinationState;
+				final int passed;
+				
+				EvaluatedTransition(Transition transition, int destinationState, int passed) {
+					this.transition = transition;
+					this.destinationState = destinationState;
+					this.passed = passed;
+				}
+
+				@Override
+				public int compareTo(EvaluatedTransition o) {
+					return -Integer.compare(passed, o.passed);
+				}
+			}
+			
+			
+			List<EvaluatedTransition> rankedTransitions = new ArrayList<>();
+			for (Transition t : frontier) {
+				// further edges should be added from this state:
+				final Node stateFrom = automaton.getState(coloring[t.getSrc().getNumber()]);
+				final String event = t.getEvent();
+				final MyBooleanExpression expression = t.getExpr();
+				final StringActions stringActions = t.getActions();
+				assert stateFrom.getTransition(event, expression) == null;
+				for (int dst = 0; dst < colorSize; dst++) {
+					if (dst > 1 && incomingTransitionNumbers[dst - 1] == 0) {
+						break;
+						// this is done to reduce repeated checks (similar to BFS constraints)
+					}
+					
+					Transition autoT = new Transition(stateFrom,
+							automaton.getState(dst), event, expression, stringActions);
+					automaton.addTransition(stateFrom, autoT);
+					incomingTransitionNumbers[automaton.getState(dst).getNumber()]++;
+					final int[] coloringBackup = coloring;
+					final List<Transition> frontierBackup = frontier;
+					
+					int passed = findNewFrontier();
+					
+					if (passed != -1 && verify()) {
+						if (frontier.isEmpty()) {
+							if (searchComplete) {
+								new AutomatonCompleter(verifier, automaton, efPairs, actions, finishTime).ensureCompleteness();
+							} else {
+								throw new AutomatonFound(automaton);
+							}
+						} else {
+							rankedTransitions.add(new EvaluatedTransition(t, dst, passed));
+						}
+					}
+					
+					coloring = coloringBackup;
+					frontier = frontierBackup;
+					stateFrom.removeTransition(autoT);
+					incomingTransitionNumbers[automaton.getState(dst).getNumber()]--;
+				}
+			}
+			Collections.sort(rankedTransitions);
+			for (EvaluatedTransition et : rankedTransitions) {
+				final Node stateFrom = automaton.getState(coloring[et.transition.getSrc().getNumber()]);
+				final String event = et.transition.getEvent();
+				final MyBooleanExpression expression = et.transition.getExpr();
+				final StringActions stringActions = et.transition.getActions();
+				Transition autoT = new Transition(stateFrom,
+						automaton.getState(et.destinationState), event, expression, stringActions);
+				automaton.addTransition(stateFrom, autoT);
+				incomingTransitionNumbers[automaton.getState(et.destinationState).getNumber()]++;
+				final int[] coloringBackup = coloring;
+				final List<Transition> frontierBackup = frontier;
+				findNewFrontier();
+				backtracking();
+				coloring = coloringBackup;
+				frontier = frontierBackup;
+				stateFrom.removeTransition(autoT);
+				incomingTransitionNumbers[automaton.getState(et.destinationState).getNumber()]--;
 			}
 		}
 	}
