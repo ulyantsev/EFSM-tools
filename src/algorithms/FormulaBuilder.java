@@ -282,7 +282,6 @@ public abstract class FormulaBuilder {
 		FormulaList constraints = new FormulaList(BinaryOperations.AND);
 		// first node has color 0
 		constraints.add(xVar(0, 0));
-		//constraints.add(eachNodeHasColorConstraints());
 		constraints.add(eachNodeHasOnlyColorConstraints());
 		constraints.add(consistencyConstraints());
 		constraints.add(notMoreThanOneEdgeConstraints());

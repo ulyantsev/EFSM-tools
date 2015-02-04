@@ -23,7 +23,7 @@ public class QbfAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 	public static Optional<Automaton> build(Logger logger, ScenariosTree tree,
 			List<LtlNode> formulae, int colorSize, String ltlFilePath,
 			int timeoutSeconds, Solvers solver, String solverParams, boolean extractSubterms,
-			boolean complete, boolean useSat, boolean bfsConstraints, boolean useCoprocessor,
+			boolean complete, boolean useSat, boolean bfsConstraints,
 			List<EventExpressionPair> efPairs, List<String> actions) throws IOException {
 		
 		final Verifier verifier = new Verifier(colorSize, logger, ltlFilePath, EventExpressionPair.getEvents(efPairs), actions);
@@ -35,7 +35,7 @@ public class QbfAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 				
 			SolverResult ass = useSat
 					? qbf.solveAsSat(tree, colorSize, k, logger, solverParams, timeoutSeconds, efPairs)
-					: qbf.solve(logger, solver, solverParams, timeoutSeconds, useCoprocessor);
+					: qbf.solve(logger, solver, solverParams, timeoutSeconds);
 
 			logger.info(ass.toString().split("\n")[0]);
 

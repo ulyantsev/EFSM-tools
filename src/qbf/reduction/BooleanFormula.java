@@ -32,7 +32,7 @@ public abstract class BooleanFormula {
 	
 	public static Pair<List<Assignment>, Long> solveAsSat(String formula, Logger logger, String solverParams, int timeoutSeconds) throws IOException {
 		logger.info("Final SAT formula length: " + formula.length());
-		DimacsConversionInfo info = BooleanFormula.toDimacs(formula, logger, false);
+		DimacsConversionInfo info = BooleanFormula.toDimacs(formula, logger);
 		final String dimaxFilename = "_tmp.dimacs";
 		try (PrintWriter pw = new PrintWriter(dimaxFilename)) {
 			pw.print(info.title() + "\n" + info.output());
@@ -105,7 +105,7 @@ public abstract class BooleanFormula {
 	
 	public abstract String toLimbooleString();
 	
-	public static DimacsConversionInfo toDimacs(String limbooleFormula, Logger logger, boolean useCoprocessor) throws IOException {
+	public static DimacsConversionInfo toDimacs(String limbooleFormula, Logger logger) throws IOException {
 		final String beforeLimbooleFilename = "_tmp.limboole";
 		final DimacsConversionInfo info = new DimacsConversionInfo();
 		final String afterLimbooleFilename = "_tmp.after.limboole.dimacs";
@@ -123,39 +123,15 @@ public abstract class BooleanFormula {
 			throw new AssertionError();
 		}
 		
-		if (!useCoprocessor) {
-			try (BufferedReader input = new BufferedReader(new InputStreamReader(new FileInputStream(afterLimbooleFilename)))) {
-				input.lines().forEach(info::acceptLine);
-			}
-		} else {
-			final String mapFilename = "_tmp.map";
-			final String whiteVarFilename = "_tmp.white.var";
-			
-			// obtaining variable name mapping
-			try (BufferedReader input = new BufferedReader(new InputStreamReader(new FileInputStream(afterLimbooleFilename)))) {
-				input.lines().filter(l -> l.startsWith("c")).forEach(info::acceptLine);
-			}
-			
-			// writing variables we cannot exclude from DIMACS CNF
-			try (PrintWriter pw = new PrintWriter(whiteVarFilename)) {
-				info.dimacsNumberToLimboole.keySet().forEach(pw::println);
-			}
-			
-			// simplifying CNF, not excluding important variables
-			final String coprocessorStr = "coprocessor " + afterLimbooleFilename + " -CP_mapFile=" + mapFilename + " -CP_print=1 -CP_whiteFile=" + whiteVarFilename;
-			logger.info(coprocessorStr);
-			Process coprocessor = Runtime.getRuntime().exec(coprocessorStr);
-			
-			try (BufferedReader input = new BufferedReader(new InputStreamReader(coprocessor.getInputStream()))) {
-				input.lines().forEach(info::acceptLine);
-			}
+		try (BufferedReader input = new BufferedReader(new InputStreamReader(new FileInputStream(afterLimbooleFilename)))) {
+			input.lines().forEach(info::acceptLine);
 		}
 
 		return info;
 	}
 	
-	public DimacsConversionInfo toDimacs(Logger logger, boolean useCoprocessor) throws IOException {
-		return toDimacs(simplify().toLimbooleString(), logger, useCoprocessor);
+	public DimacsConversionInfo toDimacs(Logger logger) throws IOException {
+		return toDimacs(simplify().toLimbooleString(), logger);
 	}
 	
 	public BooleanFormula not() {

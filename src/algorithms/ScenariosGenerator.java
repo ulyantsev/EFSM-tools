@@ -15,22 +15,22 @@ import bool.MyBooleanExpression;
 public class ScenariosGenerator {
 	
     static public ArrayList<ArrayList<Transition>> getBFSPaths(Automaton automaton) {
-    	ArrayList<ArrayList<Transition>> ans = new ArrayList<ArrayList<Transition>>();
+    	ArrayList<ArrayList<Transition>> ans = new ArrayList<>();
     	
     	int size = automaton.statesCount();
     	@SuppressWarnings("unchecked")
 		ArrayList<Transition>[] shortestPaths = new ArrayList[size];
     	
-    	ArrayList<Node> order = new ArrayList<Node>();
+    	ArrayList<Node> order = new ArrayList<>();
     	order.add(automaton.getStartState());
-    	shortestPaths[automaton.getStartState().getNumber()] = new ArrayList<Transition>();
+    	shortestPaths[automaton.getStartState().getNumber()] = new ArrayList<>();
     	
     	for (int i = 0; i < size; i++) {
     		Node current = order.get(i);
     		ArrayList<Transition> path = shortestPaths[current.getNumber()];
     		
     		for (Transition t : current.getTransitions()) {
-    			ArrayList<Transition> newPath = new ArrayList<Transition>(path);
+    			ArrayList<Transition> newPath = new ArrayList<>(path);
     			newPath.add(t);
     			ans.add(newPath);
     			
@@ -46,8 +46,8 @@ public class ScenariosGenerator {
 	
     static public String pathToScenario(ArrayList<Transition> path) {
     	ArrayList<String> events = new ArrayList<String>();
-    	ArrayList<MyBooleanExpression> expressions = new ArrayList<MyBooleanExpression>();
-    	ArrayList<StringActions> actions = new ArrayList<StringActions>();
+    	ArrayList<MyBooleanExpression> expressions = new ArrayList<>();
+    	ArrayList<StringActions> actions = new ArrayList<>();
     	
     	for (Transition t : path) {
     		events.add(t.getEvent());
@@ -104,9 +104,9 @@ public class ScenariosGenerator {
     	int[] length = getRandomLength(scenariosCount, minLength, maxLength, sumLength, random);
 
     	
-    	List<Collection<Transition>> visitedTransitions = new ArrayList<Collection<Transition>>(); 
+    	List<Collection<Transition>> visitedTransitions = new ArrayList<>(); 
     	for (Node node : automaton.getStates()) {
-    		visitedTransitions.add(new ArrayList<Transition>());
+    		visitedTransitions.add(new ArrayList<>());
     	}
     	
         StringBuilder sb = new StringBuilder();

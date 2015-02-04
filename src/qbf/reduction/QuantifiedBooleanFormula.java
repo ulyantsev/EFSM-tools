@@ -73,9 +73,9 @@ public class QuantifiedBooleanFormula {
 		return nums.toString().replaceAll("[,\\[\\]]", "");
 	}
 	
-	public QdimacsConversionInfo toQdimacs(Logger logger, boolean useCoprocessor) throws IOException {
+	public QdimacsConversionInfo toQdimacs(Logger logger) throws IOException {
 		StringBuilder sb = new StringBuilder();
-		DimacsConversionInfo info = formula().toDimacs(logger, useCoprocessor);
+		DimacsConversionInfo info = formula().toDimacs(logger);
 		
 		sb.append(info.title() + "\n");
 		sb.append("e " + varsToNumbers(existVars, info) + " 0\n");
@@ -171,8 +171,8 @@ public class QuantifiedBooleanFormula {
 				return null;
 			}
 			if (!certificate.exists()) {
-				logger.warning("NO CERTIFICATE PRODUCED BY OZZIKS, TRYING DEPQBF");
-				return depqbfSolve(logger, timeoutSeconds, qdimacs, "");
+				logger.severe("NO CERTIFICATE PRODUCED BY OZZIKS, GIVING UP");
+				return new SolverResult(SolverResults.UNKNOWN, (int) time);
 			}
 			
 			try (BufferedReader input = new BufferedReader(new FileReader(certificate))) {
@@ -184,8 +184,8 @@ public class QuantifiedBooleanFormula {
 			}
 
 			if (!assignmentIsOk(list)) {
-				logger.warning("NOT ALL VARS ARE PRESENT IN CERTIFICATE, TRYING DEPQBF");
-				return depqbfSolve(logger, timeoutSeconds, qdimacs, "");
+				logger.warning("NOT ALL VARS ARE PRESENT IN THE CERTIFICATE, GIVING UP");
+				return new SolverResult(SolverResults.UNKNOWN, (int) time);
 			}
 			
 			return new SolverResult(list, (int) time);
@@ -203,8 +203,8 @@ public class QuantifiedBooleanFormula {
 	}
 	
 	public SolverResult solve(Logger logger, Solvers solver, String solverParams,
-			int timeoutSeconds, boolean useCoprocessor) throws IOException {
-		QdimacsConversionInfo qdimacs = toQdimacs(logger, useCoprocessor);
+			int timeoutSeconds) throws IOException {
+		QdimacsConversionInfo qdimacs = toQdimacs(logger);
 		logger.info("DIMACS CNF: " + qdimacs.info.title());
 		
 		try (PrintWriter pw = new PrintWriter(QDIMACS_FILENAME)) {

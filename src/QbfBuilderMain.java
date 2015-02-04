@@ -86,11 +86,6 @@ public class QbfBuilderMain {
 			usage = "include symmetry breaking BFS constraints")
 	private boolean bfsConstraints;
 	
-	@Option(name = "--useCoprocessor", aliases = { "-cp" }, handler = BooleanOptionHandler.class,
-			usage = "use the 'coprocessor' tool to simplify the formula before QBF solver execution (only for QSAT strategy)")
-	private boolean useCoprocessor;
-	
-	
 	private void launcher(String[] args) throws IOException {
 		Locale.setDefault(Locale.US);
 
@@ -187,7 +182,7 @@ public class QbfBuilderMain {
 			Optional<Automaton> resultAutomaton = ss == SolvingStrategy.QSAT || ss == SolvingStrategy.EXP_SAT
 					? QbfAutomatonBuilder.build(logger, tree, formulae, size, ltlFilePath, timeout,
 							solver, solverParams, extractSubterms, isComplete, ss == SolvingStrategy.EXP_SAT,
-							bfsConstraints, useCoprocessor, efPairs, actions)
+							bfsConstraints, efPairs, actions)
 					: ss == SolvingStrategy.ITERATIVE_SAT
 					? IterativeAutomatonBuilder.build(logger, tree, size, solverParams, isComplete,
 							timeout, resultFilePath, ltlFilePath, formulae, bfsConstraints, efPairs, actions)
