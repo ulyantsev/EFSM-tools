@@ -3,20 +3,20 @@
 digraph Automaton {
     node [shape = circle];
     0 [style = "bold"];
-    0 -> 1 [label = "A [1] (z0) "];
-    0 -> 0 [label = "B [1] (z0) "];
-    0 -> 1 [label = "C [1] (z2) "];
-    0 -> 0 [label = "D [1] (z2, z1) "];
-    1 -> 2 [label = "A [1] (z2, z2, z1) "];
-    1 -> 0 [label = "B [1] (z1) "];
-    1 -> 0 [label = "C [1] (z2, z0) "];
-    1 -> 2 [label = "D [1] (z0, z0, z0) "];
-    2 -> 3 [label = "A [1] (z0) "];
-    2 -> 1 [label = "B [1] (z1) "];
-    2 -> 0 [label = "C [1] (z1, z2, z1) "];
-    2 -> 3 [label = "D [1] (z2) "];
-    3 -> 0 [label = "A [1] (z2, z2, z1) "];
-    3 -> 3 [label = "B [1] (z1, z2) "];
-    3 -> 1 [label = "C [1] (z2, z1, z2) "];
-    3 -> 1 [label = "D [1] (z0, z2, z0) "];
+    0 -> 1 [label = "A [1] (z0, z0, z1) "];
+    0 -> 0 [label = "B [1] (z1, z0, z1) "];
+    0 -> 3 [label = "C [1] (z2, z2) "];
+    0 -> 1 [label = "D [1] (z1, z2, z2) "];
+    1 -> 2 [label = "A [1] (z2, z1, z0) "];
+    1 -> 0 [label = "B [1] (z1, z0) "];
+    1 -> 0 [label = "C [1] (z2, z1) "];
+    1 -> 1 [label = "D [1] (z0) "];
+    2 -> 3 [label = "A [1] (z0, z0, z1) "];
+    2 -> 1 [label = "B [1] (z0) "];
+    2 -> 1 [label = "C [1] (z1, z2) "];
+    2 -> 2 [label = "D [1] (z1) "];
+    3 -> 0 [label = "A [1] (z0, z1, z1) "];
+    3 -> 1 [label = "B [1] (z1, z2) "];
+    3 -> 0 [label = "C [1] (z2) "];
+    3 -> 1 [label = "D [1] (z2, z0, z2) "];
 }

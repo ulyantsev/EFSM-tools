@@ -1,0 +1,1 @@
+!(F(((wasAction(co.z2)) and (wasAction(co.z3))) || ((!(wasAction(co.z2))) and (!(wasAction(co.z3))))))

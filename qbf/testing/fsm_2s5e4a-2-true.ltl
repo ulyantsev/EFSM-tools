@@ -1,0 +1,2 @@
+F(((!(X(wasEvent(ep.A)))) and (!(U((!(wasEvent(ep.E))) , ((!(wasEvent(ep.E))) and (R((false) , (wasEvent(ep.A))))))))) || ((X(wasEvent(ep.A))) and (U((!(wasEvent(ep.E))) , ((!(wasEvent(ep.E))) and (R((false) , (wasEvent(ep.A)))))))))
+G(((wasEvent(ep.C)) and (wasEvent(ep.E)) and (!((wasEvent(ep.B)) || (!((wasEvent(ep.B)) and (wasEvent(ep.D))))))) || (((wasEvent(ep.B)) || (!((wasEvent(ep.B)) and (wasEvent(ep.D))))) and (!((wasEvent(ep.C)) and (wasEvent(ep.E))))))

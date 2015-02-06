@@ -1,0 +1,1 @@
+F(((wasEvent(ep.A)) and (!(((wasAction(co.z0)) and (!(wasEvent(ep.B)))) || ((!(wasAction(co.z0))) and (wasEvent(ep.B)))))) || ((!(wasEvent(ep.A))) and (((wasAction(co.z0)) and (!(wasEvent(ep.B)))) || ((!(wasAction(co.z0))) and (wasEvent(ep.B))))))

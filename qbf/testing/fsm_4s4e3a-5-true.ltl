@@ -1,0 +1,5 @@
+G((wasAction(co.z1)) || (!(wasAction(co.z2))) || ((!(wasAction(co.z0))) and (!(wasEvent(ep.D)))) || ((wasAction(co.z0)) and (wasEvent(ep.D))))
+X(R((false) , (F((!(wasAction(co.z2))) || (wasEvent(ep.C))))))
+X((!(wasEvent(ep.A))) || (!((!(wasAction(co.z0))) and (F(wasEvent(ep.B))))))
+X((!(wasAction(co.z0))) || ((wasAction(co.z1)) and (!(wasEvent(ep.D)))) || ((!(wasAction(co.z1))) and (wasEvent(ep.D))) || (X(wasAction(co.z1))))
+G((!(wasAction(co.z1))) || (F(G((wasAction(co.z2)) || (!(wasEvent(ep.C)))))))

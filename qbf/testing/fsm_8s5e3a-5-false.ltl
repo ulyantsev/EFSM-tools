@@ -1,0 +1,5 @@
+!(F(wasAction(co.z2)))
+!(F(wasAction(co.z2)))
+!(F(wasAction(co.z2)))
+!(F((wasAction(co.z2)) || (!((wasAction(co.z0)) || (!(wasEvent(ep.D)))))))
+!(F(wasAction(co.z2)))
