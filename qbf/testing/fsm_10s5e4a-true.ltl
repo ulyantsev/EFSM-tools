@@ -1,1 +1,0 @@
-F((!(wasAction(co.z3))) || (F(R((wasEvent(ep.D)) , ((wasEvent(ep.A)) || (wasEvent(ep.D)))))))

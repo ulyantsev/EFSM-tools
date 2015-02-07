@@ -31,7 +31,7 @@ for ((size = 2; size <= 10; size++)); do
             done
             echo $name : creating scenarios
             for cnt in 5 10 20; do
-                for l in 20 30 40 60 80 120 160 240 320 480 640; do
+                for l in 20 30 40 60 80 120 160 240; do
                     java -jar ../jars/scenarios-generator.jar -a $name.dot -cnt $cnt -minl 1 -suml $l -o ${name}_${cnt}_$l.sc
                 done
             done

@@ -1,0 +1,2 @@
+!(X(wasAction(co.z3)))
+!(X(R((wasAction(co.z3)) , ((wasAction(co.z3)) || (G(!(wasEvent(ep.B))))))))

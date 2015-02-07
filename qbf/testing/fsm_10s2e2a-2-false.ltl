@@ -1,0 +1,2 @@
+!(X(wasAction(co.z0)))
+!(X((wasAction(co.z0)) || (!(((!(wasAction(co.z0))) and (!(X(G(!(wasAction(co.z1))))))) || ((wasAction(co.z0)) and (X(G(!(wasAction(co.z1))))))))))

@@ -1,5 +1,8 @@
 #!/bin/bash
-for ((size = 10; size <= 10; size++)); do
+
+timeout=300s
+
+for ((size = 2; size <= 10; size++)); do
     for ((events = 2; events <= 5; events++)); do
         for ((actions = 2; actions <= 5; actions++)); do
             if [ ! -f testing/fsm_${size}s${events}e${actions}a.done ]; then
@@ -7,9 +10,9 @@ for ((size = 10; size <= 10; size++)); do
                 continue
             fi
             for cnt in 5 10 20; do
-                for l in 20 30 40 60 80 120 160 240 320 480 640; do
+                for l in 20 30 40 60 80 120 160 240; do
                     rm -f generated-fsm.gv
-                    timeout -s TERM 300s java -jar ../jars/sat-builder.jar testing/fsm_${size}s${events}e${actions}a_${cnt}_$l.sc --result generated-fsm.gv --size $size 2>/dev/null
+                    timeout -s TERM $timeout java -jar ../jars/sat-builder.jar testing/fsm_${size}s${events}e${actions}a_${cnt}_$l.sc --result generated-fsm.gv --size $size 2>/dev/null
                     if [ -f generated-fsm.gv ]; then
                         fsm_complete=$(java -jar ../jars/completeness-checker.jar generated-fsm.gv)
                     fi

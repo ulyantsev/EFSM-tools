@@ -1,0 +1,2 @@
+X((wasAction(co.z4)) || (!(U((!(wasAction(co.z0))) , ((!(wasAction(co.z0))) and (wasAction(co.z1)))))))
+G(R(((wasAction(co.z4)) || ((!(wasAction(co.z2))) and (!(wasAction(co.z3)))) || ((wasAction(co.z2)) and (wasAction(co.z3)))) , ((wasAction(co.z1)) || (wasAction(co.z4)) || ((!(wasAction(co.z2))) and (!(wasAction(co.z3)))) || ((wasAction(co.z2)) and (wasAction(co.z3))))))
