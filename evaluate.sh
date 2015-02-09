@@ -28,7 +28,7 @@ for suffix in true; do
                             ltl_name=$name-$formula_num-$suffix.ltl
                             echo ">>> $instance_description"
                             rm -f "$fsm"
-                            java -Xms2G -ea -jar jars/qbf-automaton-generator.jar "$sc_name" \
+                            java -Xms2G -jar jars/qbf-automaton-generator.jar "$sc_name" \
                                 --ltl "$ltl_name" --size $size --eventNumber $events --actionNumber $actions \
                                 --timeout $timeout -qs SKIZZO --complete --bfsConstraints \
                                 --result  "$fsm" --strategy $strategy \

@@ -3,13 +3,16 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.text.ParseException;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.logging.FileHandler;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
+import java.util.stream.Collectors;
 
 import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.CmdLineException;
@@ -26,6 +29,7 @@ import qbf.reduction.Verifier;
 import scenario.StringScenario;
 import structures.Automaton;
 import structures.ScenariosTree;
+import structures.Transition;
 import algorithms.BacktrackingAutomatonBuilder;
 import algorithms.FormulaBuilder.EventExpressionPair;
 import algorithms.IterativeAutomatonBuilder;
@@ -83,7 +87,7 @@ public class QbfBuilderMain {
 	private String strategy = SolvingStrategy.QSAT.toString();
 	
 	@Option(name = "--bfsConstraints", aliases = { "-bfs" }, handler = BooleanOptionHandler.class,
-			usage = "include symmetry breaking BFS constraints")
+			usage = "include symmetry breaking BFS constraints (not for BACKTRACKING)")
 	private boolean bfsConstraints;
 	
 	private void launcher(String[] args) throws IOException {
@@ -222,6 +226,14 @@ public class QbfBuilderMain {
 				} else {
 					logger.severe("NOT VERIFIED");
 				}
+				// bfs check
+				if (bfsConstraints && ss != SolvingStrategy.BACKTRACKING) {
+					if (checkBfs(resultAutomaton.get(), efPairs, logger)) {
+						logger.info("BFS");
+					} else {
+						logger.severe("NOT BFS");
+					}
+				}
 			}
 			logger.info("Automaton builder execution time: " + executionTime);
 		} catch (ParseException | LtlParseException e) {
@@ -230,6 +242,35 @@ public class QbfBuilderMain {
 		}
 	}
 
+	private boolean checkBfs(Automaton a, List<EventExpressionPair> efPairs, Logger logger) {
+		final Deque<Integer> queue = new ArrayDeque<>();
+		final boolean[] visited = new boolean[a.statesCount()];
+		visited[a.getStartState().getNumber()] = true;
+		queue.add(a.getStartState().getNumber());
+		final List<Integer> dequedStates = new ArrayList<>();
+		while (!queue.isEmpty()) {
+			final int stateNum = queue.pollFirst();
+			dequedStates.add(stateNum);
+			for (EventExpressionPair p : efPairs) {
+				Transition t = a.getState(stateNum).getTransition(p.event, p.expression);
+				if (t != null) {
+					final int dst = t.getDst().getNumber();
+					if (!visited[dst]) {
+						queue.add(dst);
+					}
+					visited[dst] = true;
+				}
+			}
+		}
+		final List<Integer> sortedList = dequedStates.stream().sorted().collect(Collectors.toList());
+		if (sortedList.equals(dequedStates)) {
+			return true;
+		} else {
+			logger.severe(dequedStates + " instead of " + sortedList);
+			return false;
+		}
+	}
+	
 	public void run(String[] args) {
 		try {
 			launcher(args);
