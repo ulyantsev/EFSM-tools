@@ -1,4 +1,0 @@
-!(G((F(((!(wasAction(co.z1))) and (!(wasEvent(ep.B)))) || ((wasAction(co.z1)) and (wasEvent(ep.B))))) || (!(F(wasAction(co.z1))))))
-!(F(X(((!(G(wasAction(co.z4)))) and (!(G(wasEvent(ep.C))))) || ((G(wasEvent(ep.C))) and (G(wasAction(co.z4)))))))
-!(X(G(F(X((wasAction(co.z3)) || (F(wasAction(co.z0))))))))
-!(F(!(U((X(wasAction(co.z1))) , ((wasEvent(ep.C)) and (X(wasAction(co.z1))))))))

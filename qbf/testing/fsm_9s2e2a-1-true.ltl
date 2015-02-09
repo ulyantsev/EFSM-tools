@@ -1,1 +1,0 @@
-X(U((((!(wasAction(co.z1))) and (!(X(F(wasAction(co.z0)))))) || ((wasAction(co.z1)) and (X(F(wasAction(co.z0)))))) , (R((wasAction(co.z1)) , ((wasAction(co.z1)) || (wasEvent(ep.B)))))))

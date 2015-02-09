@@ -1,2 +1,0 @@
-X((!(wasAction(co.z0))) || (wasAction(co.z1)))
-X(((wasAction(co.z0)) and (((!(wasAction(co.z2))) and (!(wasEvent(ep.C)))) || ((wasAction(co.z2)) and (wasEvent(ep.C))))) || ((!(wasAction(co.z0))) and (!((wasAction(co.z0)) and (((!(wasAction(co.z2))) and (!(wasEvent(ep.C)))) || ((wasAction(co.z2)) and (wasEvent(ep.C))))))))

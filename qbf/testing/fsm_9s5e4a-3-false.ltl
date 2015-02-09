@@ -1,3 +1,0 @@
-!(F(!(wasAction(co.z3))))
-!(F((!(wasAction(co.z3))) || (G(wasEvent(ep.C))) || (G(wasEvent(ep.A)))))
-!(F(!(G(wasAction(co.z3)))))

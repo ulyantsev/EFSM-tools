@@ -1,2 +1,0 @@
-F(((wasAction(co.z1)) and (wasAction(co.z3))) || (G(X(wasAction(co.z4)))))
-F(wasAction(co.z1))
