@@ -254,7 +254,8 @@ public class QuantifiedBooleanFormula {
 	 * Equivalent to constraints sigma_0_0 = 0 and A_1 and A_2 and B.
 	 */
 	private void findAllAssignmentsSigmaEps(List<EventExpressionPair> efPairs, int statesNum,
-			int k, int j, BooleanFormula formulaToAppend, List<String> listToAppend, long finishTime) throws TimeLimitExceeded {
+			int k, int j, BooleanFormula formulaToAppend, List<String> listToAppend, long finishTime,
+			boolean bfsConstraints, int lastStateIndex, int lastPairIndex) throws TimeLimitExceeded {
 		if (System.currentTimeMillis() > finishTime) {
 			throw new TimeLimitExceeded();
 		}
@@ -266,7 +267,11 @@ public class QuantifiedBooleanFormula {
 			findAllAssignmentsOther(0, otherAssignmentVars.toArray(new BooleanVariable[otherAssignmentVars.size()]),
 					formulaToAppend, listToAppend, finishTime);
 		} else {
-			final int iMax = (j == 0 ? 1 : statesNum);
+			int iMax = j == 0 ? 1 : statesNum;
+			if (lastStateIndex == 0 && bfsConstraints) {
+				// optimization
+				iMax = Math.min(iMax, lastPairIndex + 2);
+			}
 			for (int i = 0; i < iMax; i++) {
 				BooleanFormula curFormula1 = formulaToAppend.substitute(BooleanVariable.byName("sigma", i, j).get(),
 						TrueFormula.INSTANCE);
@@ -276,7 +281,8 @@ public class QuantifiedBooleanFormula {
 								FalseFormula.INSTANCE);
 					}
 				}
-				for (EventExpressionPair p : efPairs) {
+				for (int pIndex = 0; pIndex < efPairs.size(); pIndex++) {
+					EventExpressionPair p = efPairs.get(pIndex);
 					BooleanFormula curFormula2 = curFormula1.substitute(BooleanVariable.byName("eps", p.event, p.expression, j).get(),
 							TrueFormula.INSTANCE);
 					for (EventExpressionPair pOther : efPairs) {
@@ -286,7 +292,7 @@ public class QuantifiedBooleanFormula {
 						}
 					}
 					// recursive call
-					findAllAssignmentsSigmaEps(efPairs, statesNum, k, j + 1, curFormula2, listToAppend, finishTime);
+					findAllAssignmentsSigmaEps(efPairs, statesNum, k, j + 1, curFormula2, listToAppend, finishTime, bfsConstraints, i, pIndex);
 				}
 			}
 		}
@@ -297,7 +303,7 @@ public class QuantifiedBooleanFormula {
 	 * The size of the formula is exponential of forallVars.size().
 	 */
 	private String flatten(ScenariosTree tree, int statesNum, int k, Logger logger,
-			List<EventExpressionPair> efPairs, long finishTime) throws TimeLimitExceeded {
+			List<EventExpressionPair> efPairs, long finishTime, boolean bfsConstraints) throws TimeLimitExceeded {
 		List<String> mainList = new ArrayList<>();
 		logger.info("Number of 'forall' variables: " + forallVars.size());
 		logger.info("List of 'forall' variables: " + forallVars);
@@ -305,7 +311,7 @@ public class QuantifiedBooleanFormula {
 		long time = System.currentTimeMillis();
 		
 		mainList.add(formulaExist.simplify().toLimbooleString());
-		findAllAssignmentsSigmaEps(efPairs, statesNum, k, 0, formulaTheRest, mainList, finishTime);
+		findAllAssignmentsSigmaEps(efPairs, statesNum, k, 0, formulaTheRest, mainList, finishTime, bfsConstraints, -1, -1);
 		
 		time = System.currentTimeMillis() - time;
 		logger.info("Formula generation time: " + time + " ms.");
@@ -314,12 +320,12 @@ public class QuantifiedBooleanFormula {
 	}
 
 	public SolverResult solveAsSat(ScenariosTree tree, int statesNum, int k, Logger logger,
-			String solverParams, int timeoutSeconds, List<EventExpressionPair> efPairs) throws IOException {
+			String solverParams, int timeoutSeconds, List<EventExpressionPair> efPairs, boolean bfsConstraints) throws IOException {
 		// timeoutSec for flatten, timeoutSec for the solver
 		final long flattenFinishTime = System.currentTimeMillis() + timeoutSeconds * 1000;
 		String flatFormula;
 		try {
-			flatFormula = flatten(tree, statesNum, k, logger, efPairs, flattenFinishTime);
+			flatFormula = flatten(tree, statesNum, k, logger, efPairs, flattenFinishTime, bfsConstraints);
 		} catch (TimeLimitExceeded e) {
 			logger.info("TIME LIMIT EXCEEDED WHILE FLATTENING THE FORMULA");
 			return new SolverResult(SolverResults.UNKNOWN, 0);

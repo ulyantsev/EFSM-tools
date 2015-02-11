@@ -30,7 +30,7 @@ public abstract class FormulaBuilder {
 	protected final List<EventExpressionPair> efPairs;
 	protected final ScenariosTree tree;
 	protected final boolean eventCompleteness;
-	private final boolean bfsConstraints;
+	protected final boolean bfsConstraints;
 	protected final List<BooleanVariable> existVars = new ArrayList<>();
 	
 	public static class EventExpressionPair {

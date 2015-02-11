@@ -34,7 +34,7 @@ public class QbfAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 					formulae, colorSize, k, extractSubterms, complete, bfsConstraints, efPairs, actions).getFormula(useSat);
 				
 			SolverResult ass = useSat
-					? qbf.solveAsSat(tree, colorSize, k, logger, solverParams, timeoutSeconds, efPairs)
+					? qbf.solveAsSat(tree, colorSize, k, logger, solverParams, timeoutSeconds, efPairs, bfsConstraints)
 					: qbf.solve(logger, solver, solverParams, timeoutSeconds);
 
 			logger.info(ass.toString().split("\n")[0]);
