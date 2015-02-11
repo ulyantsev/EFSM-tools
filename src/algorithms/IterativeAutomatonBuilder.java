@@ -67,7 +67,7 @@ public class IterativeAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 	public static Optional<Automaton> build(Logger logger, ScenariosTree tree, int colorSize, String solverParams, boolean complete,
 			int timeoutSeconds, String resultFilePath, String ltlFilePath, List<LtlNode> formulae, boolean bfsConstraints,
 			List<EventExpressionPair> efPairs, List<String> actions) throws IOException {
-		final BooleanFormula initialBf = new SatFormulaBuilder(tree, colorSize, complete, bfsConstraints, efPairs, actions).getFormula();
+		final BooleanFormula initialBf = new SatFormulaBuilder(tree, colorSize, false, bfsConstraints, efPairs, actions).getFormula();
 		final FormulaList additionalConstraints = new FormulaList(BinaryOperations.AND);
 		
 		final long finishTime = System.currentTimeMillis() + timeoutSeconds * 1000;
