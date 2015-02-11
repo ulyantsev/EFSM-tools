@@ -231,7 +231,11 @@ public class QbfBuilderMain {
 					if (checkBfs(resultAutomaton.get(), efPairs, logger)) {
 						logger.info("BFS");
 					} else {
-						logger.severe("NOT BFS");
+						if (ss == SolvingStrategy.ITERATIVE_SAT) {
+							logger.info("NOT BFS (possibly due to transition redirections)");
+						} else {
+							logger.severe("NOT BFS");
+						}
 					}
 				}
 			}
@@ -266,7 +270,7 @@ public class QbfBuilderMain {
 		if (sortedList.equals(dequedStates)) {
 			return true;
 		} else {
-			logger.severe(dequedStates + " instead of " + sortedList);
+			logger.warning(dequedStates + " instead of " + sortedList);
 			return false;
 		}
 	}

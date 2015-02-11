@@ -40,7 +40,7 @@ public class QbfAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 			logger.info(ass.toString().split("\n")[0]);
 
 			if (ass.type() == SolverResults.SAT) {
-				final Automaton a = constructAutomatonFromAssignment(logger, ass, tree, colorSize, true);
+				final Automaton a = constructAutomatonFromAssignment(logger, ass, tree, colorSize, true).getLeft();
 				if (verifier.verify(a)) {
 					return Optional.of(a);
 				} else {

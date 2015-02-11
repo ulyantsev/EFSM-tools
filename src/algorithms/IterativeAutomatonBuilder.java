@@ -41,17 +41,22 @@ public class IterativeAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 			: new SolverResult(list, (int) time);
 		logger.info(ass.toString().split("\n")[0]);
 
-		// add new constraints
-		final List<Assignment> assList = list.stream()
-				.filter(a -> !a.var.name.startsWith("x"))
-				.collect(Collectors.toList());
-		final List<BooleanFormula> constraints = assList.stream()
-				.map(a -> a.value ? a.var : a.var.not())
-				.collect(Collectors.toList());
-		additionalConstraints.add(BinaryOperation.and(constraints).not());
+		if (ass.type() == SolverResults.SAT) {
+			Pair<Automaton, List<Assignment>> p = constructAutomatonFromAssignment(logger, ass, tree, colorSize, false);
+
+			// add new constraints
+			// important: scenario-unsupported y-variables are not included!
+			// (because we will try all the redirections of such transitions)
+			final List<BooleanFormula> constraints = p.getRight().stream()
+					.map(a -> a.value ? a.var : a.var.not())
+					.collect(Collectors.toList());
+			additionalConstraints.add(BinaryOperation.and(constraints).not());
+
+			return Optional.of(p.getLeft());
+		} else {
+			return Optional.empty();
+		}
 		
-		return ass.type() != SolverResults.SAT ? Optional.empty()
-				: Optional.of(constructAutomatonFromAssignment(logger, ass, tree, colorSize, false));
 	}
 	
 	private static Optional<Automaton> reportResult(Logger logger, int iterations, Optional<Automaton> a) {

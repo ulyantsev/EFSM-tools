@@ -10,6 +10,8 @@ import java.util.TreeSet;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.tuple.Pair;
+
 import qbf.reduction.Assignment;
 import qbf.reduction.SolverResult;
 import structures.Automaton;
@@ -31,8 +33,12 @@ public abstract class ScenarioAndLtlAutomatonBuilder {
 			.forEach(File::delete);
 	}
 	
-	protected static Automaton constructAutomatonFromAssignment(Logger logger, SolverResult ass,
+	/*
+	 * Returns (automaton, transition variables supported by scenarios).
+	 */
+	protected static Pair<Automaton, List<Assignment>> constructAutomatonFromAssignment(Logger logger, SolverResult ass,
 			ScenariosTree tree, int colorSize, boolean includeActionsFromAssignment) {
+		List<Assignment> filteredYVars = new ArrayList<>();
 		int[] nodeColors = new int[tree.nodesCount()];
 
 		// color the scenario tree codes according to the assignment
@@ -61,24 +67,28 @@ public abstract class ScenarioAndLtlAutomatonBuilder {
 		}
 
 		// add other transitions
-		if (includeActionsFromAssignment) {
-			for (Assignment a : ass.list().stream()
-					.filter(a -> a.value && a.var.name.startsWith("y"))
-					.collect(Collectors.toList())) {
-				String[] tokens = a.var.name.split("_");
-				assert tokens.length == 5;
-				int from = Integer.parseInt(tokens[1]);
-				int to = Integer.parseInt(tokens[2]);
-				String event = tokens[3];
-				MyBooleanExpression expr;
-				try {
-					expr = MyBooleanExpression.get(tokens[4]);
-				} catch (ParseException e) {
-					throw new AssertionError();
-				}
+		for (Assignment a : ass.list().stream()
+				.filter(a -> a.value && a.var.name.startsWith("y"))
+				.collect(Collectors.toList())) {
+			String[] tokens = a.var.name.split("_");
+			assert tokens.length == 5;
+			int from = Integer.parseInt(tokens[1]);
+			int to = Integer.parseInt(tokens[2]);
+			String event = tokens[3];
+			MyBooleanExpression expr;
+			try {
+				expr = MyBooleanExpression.get(tokens[4]);
+			} catch (ParseException e) {
+				throw new AssertionError();
+			}
 
-				Node state = ans.getState(from);
+			Node state = ans.getState(from);
 
+			if (state.hasTransition(event, expr)) {
+				filteredYVars.add(a);
+			}
+			
+			if (includeActionsFromAssignment) {
 				List<String> properUniqueActions = new ArrayList<>();
 				for (Assignment az : ass.list()) {
 					if (az.value && az.var.name.startsWith("z_" + from + "_")
@@ -87,7 +97,7 @@ public abstract class ScenarioAndLtlAutomatonBuilder {
 					}
 				}
 				Collections.sort(properUniqueActions);
-
+	
 				if (!state.hasTransition(event, expr)) {
 					// add
 					state.addTransition(event, expr,
@@ -109,6 +119,6 @@ public abstract class ScenarioAndLtlAutomatonBuilder {
 			}
 		}
 		
-		return ans;
+		return Pair.of(ans, filteredYVars);
 	}
 }
