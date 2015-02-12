@@ -40,7 +40,7 @@ public abstract class BooleanFormula {
 		logger.info("CREATED DIMACS FILE");
 		
 		long time = System.currentTimeMillis();
-		List<Assignment> list = new ArrayList<>();
+		Map<String, Assignment> list = new LinkedHashMap<>();
 		final int maxtime = Math.max(2, timeoutSeconds); // cryptominisat does not accept time=1
 		String solverStr = "cryptominisat --maxtime=" + maxtime + " " + dimaxFilename + " " + solverParams;
 		logger.info(solverStr);
@@ -49,13 +49,16 @@ public abstract class BooleanFormula {
 		try (BufferedReader input = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
 			input.lines().filter(s -> s.startsWith("v")).forEach(certificateLine ->
 				Arrays.stream(certificateLine.split(" ")).skip(1).forEach(token ->
-					fromDimacsToken(token, info).ifPresent(list::add)
+					fromDimacsToken(token, info).ifPresent(ass -> {
+						assert !list.containsKey(ass.var.name);
+						list.put(ass.var.name, ass);
+					})
 				)
 			);
 		}
 		
 		time = System.currentTimeMillis() - time;
-		return Pair.of(list, time);
+		return Pair.of(new ArrayList<>(list.values()), time);
 	}
 	
 	public static class DimacsConversionInfo {
@@ -71,6 +74,8 @@ public abstract class BooleanFormula {
 				assert tokens.length == 3;
 				int first = Integer.parseInt(tokens[1]);
 				int second = Integer.parseInt(tokens[2]);
+				assert !limbooleNumberToDimacs.containsKey(second);
+				assert !dimacsNumberToLimboole.containsKey(first);
 				limbooleNumberToDimacs.put(second, first);
 				dimacsNumberToLimboole.put(first, second);
 			} else if (line.startsWith("p")) {

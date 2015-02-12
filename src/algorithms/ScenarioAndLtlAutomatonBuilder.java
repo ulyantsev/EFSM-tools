@@ -13,7 +13,6 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.tuple.Pair;
 
 import qbf.reduction.Assignment;
-import qbf.reduction.SolverResult;
 import structures.Automaton;
 import structures.Node;
 import structures.ScenariosTree;
@@ -36,13 +35,13 @@ public abstract class ScenarioAndLtlAutomatonBuilder {
 	/*
 	 * Returns (automaton, transition variables supported by scenarios).
 	 */
-	protected static Pair<Automaton, List<Assignment>> constructAutomatonFromAssignment(Logger logger, SolverResult ass,
+	public static Pair<Automaton, List<Assignment>> constructAutomatonFromAssignment(Logger logger, List<Assignment> ass,
 			ScenariosTree tree, int colorSize, boolean includeActionsFromAssignment) {
 		List<Assignment> filteredYVars = new ArrayList<>();
 		int[] nodeColors = new int[tree.nodesCount()];
 
 		// color the scenario tree codes according to the assignment
-		ass.list().stream()
+		ass.stream()
 				.filter(a -> a.value && a.var.name.startsWith("x"))
 				.forEach(a -> {
 					String[] tokens = a.var.name.split("_");
@@ -67,7 +66,7 @@ public abstract class ScenarioAndLtlAutomatonBuilder {
 		}
 
 		// add other transitions
-		for (Assignment a : ass.list().stream()
+		for (Assignment a : ass.stream()
 				.filter(a -> a.value && a.var.name.startsWith("y"))
 				.collect(Collectors.toList())) {
 			String[] tokens = a.var.name.split("_");
@@ -90,7 +89,7 @@ public abstract class ScenarioAndLtlAutomatonBuilder {
 			
 			if (includeActionsFromAssignment) {
 				List<String> properUniqueActions = new ArrayList<>();
-				for (Assignment az : ass.list()) {
+				for (Assignment az : ass) {
 					if (az.value && az.var.name.startsWith("z_" + from + "_")
 							&& az.var.name.endsWith("_" + event + "_" + expr)) {
 						properUniqueActions.add(az.var.name.split("_")[2]);

@@ -20,8 +20,6 @@ import java.util.TreeSet;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.tuple.Pair;
-
 import qbf.reduction.BooleanFormula.DimacsConversionInfo;
 import qbf.reduction.SolverResult.SolverResults;
 import structures.ScenariosTree;
@@ -127,7 +125,7 @@ public class QuantifiedBooleanFormula {
 		}
 	}
 	
-	private boolean assignmentIsOk(List<Assignment> assignments) {
+	public boolean assignmentIsOk(List<Assignment> assignments) {
 		Set<String> properVars = existVars.stream().map(v -> v.name).collect(Collectors.toCollection(TreeSet::new));
 		Set<String> actualVars = assignments.stream().map(a -> a.var.name).collect(Collectors.toCollection(TreeSet::new));
 		return properVars.equals(actualVars);
@@ -230,23 +228,40 @@ public class QuantifiedBooleanFormula {
 	 * Enumerates 2^exponentialAssignmentVars.size() variable values.
 	 */
 	private static void findAllAssignmentsOther(int pos, BooleanVariable[] otherAssignmentVars,
-			BooleanFormula formulaToAppend, List<String> listToAppend, long finishTime) throws TimeLimitExceeded {
-		if (System.currentTimeMillis() > finishTime) {
-			throw new TimeLimitExceeded();
-		}
+			BooleanFormula formulaToAppend, FormulaBuffer buffer) throws FormulaSizeException, TimeLimitExceeded {
 		formulaToAppend = formulaToAppend.simplify();
 		if (pos == otherAssignmentVars.length) {
 			assert formulaToAppend != FalseFormula.INSTANCE; // in this case the formula is obviously unsatisfiable
 			if (formulaToAppend != TrueFormula.INSTANCE) {
-				listToAppend.add(formulaToAppend.toLimbooleString());
+				buffer.append(formulaToAppend);
 			}
 		} else {
 			BooleanVariable currentVar = otherAssignmentVars[pos];
 			findAllAssignmentsOther(pos + 1, otherAssignmentVars,
-					formulaToAppend.substitute(currentVar, FalseFormula.INSTANCE), listToAppend, finishTime);
+					formulaToAppend.substitute(currentVar, FalseFormula.INSTANCE), buffer);
 			findAllAssignmentsOther(pos + 1, otherAssignmentVars,
-					formulaToAppend.substitute(currentVar, TrueFormula.INSTANCE), listToAppend, finishTime);
+					formulaToAppend.substitute(currentVar, TrueFormula.INSTANCE), buffer);
 		}
+	}
+
+	/*
+	 * Produce an equivalent Boolean formula as a Limboole string.
+	 * The size of the formula is exponential of forallVars.size().
+	 */
+	public String flatten(ScenariosTree tree, int statesNum, int k, Logger logger,
+			List<EventExpressionPair> efPairs, boolean bfsConstraints) throws FormulaSizeException, TimeLimitExceeded {
+		FormulaBuffer buffer = new FormulaBuffer();
+		logger.info("Number of 'forall' variables: " + forallVars.size());
+		
+		long time = System.currentTimeMillis();
+		
+		buffer.append(formulaExist.simplify());
+		findAllAssignmentsSigmaEps(efPairs, statesNum, k, 0, formulaTheRest, buffer, bfsConstraints, -1, -1);
+		
+		time = System.currentTimeMillis() - time;
+		logger.info("Formula generation time: " + time + " ms.");
+		
+		return buffer.toString();
 	}
 	
 	// recursive
@@ -254,24 +269,24 @@ public class QuantifiedBooleanFormula {
 	 * Equivalent to constraints sigma_0_0 = 0 and A_1 and A_2 and B.
 	 */
 	private void findAllAssignmentsSigmaEps(List<EventExpressionPair> efPairs, int statesNum,
-			int k, int j, BooleanFormula formulaToAppend, List<String> listToAppend, long finishTime,
-			boolean bfsConstraints, int lastStateIndex, int lastPairIndex) throws TimeLimitExceeded {
-		if (System.currentTimeMillis() > finishTime) {
-			throw new TimeLimitExceeded();
-		}
+			int k, int j, BooleanFormula formulaToAppend, FormulaBuffer buffer,
+			boolean bfsConstraints, int lastStateIndex, int lastPairIndex) throws FormulaSizeException, TimeLimitExceeded {
 		formulaToAppend = formulaToAppend.simplify();
 		if (j == k + 1) {
 			final List<BooleanVariable> otherAssignmentVars = forallVars.stream()
 					.filter(v -> !v.name.startsWith("sigma") && !v.name.startsWith("eps"))
 					.collect(Collectors.toList());
 			findAllAssignmentsOther(0, otherAssignmentVars.toArray(new BooleanVariable[otherAssignmentVars.size()]),
-					formulaToAppend, listToAppend, finishTime);
+					formulaToAppend, buffer);
 		} else {
 			int iMax = j == 0 ? 1 : statesNum;
 			if (lastStateIndex == 0 && bfsConstraints) {
 				// optimization
 				iMax = Math.min(iMax, lastPairIndex + 2);
-			}
+			}/* else if (lastStateIndex == 1 && bfsConstraints) {
+				// further optimization
+				iMax = Math.min(iMax, efPairs.size() + lastPairIndex + 1);
+			}*/
 			for (int i = 0; i < iMax; i++) {
 				BooleanFormula curFormula1 = formulaToAppend.substitute(BooleanVariable.byName("sigma", i, j).get(),
 						TrueFormula.INSTANCE);
@@ -292,55 +307,41 @@ public class QuantifiedBooleanFormula {
 						}
 					}
 					// recursive call
-					findAllAssignmentsSigmaEps(efPairs, statesNum, k, j + 1, curFormula2, listToAppend, finishTime, bfsConstraints, i, pIndex);
+					findAllAssignmentsSigmaEps(efPairs, statesNum, k, j + 1, curFormula2, buffer, bfsConstraints, i, pIndex);
 				}
 			}
 		}
 	}
-	
-	/*
-	 * Produce an equivalent Boolean formula as a Limboole string.
-	 * The size of the formula is exponential of forallVars.size().
-	 */
-	private String flatten(ScenariosTree tree, int statesNum, int k, Logger logger,
-			List<EventExpressionPair> efPairs, long finishTime, boolean bfsConstraints) throws TimeLimitExceeded {
-		List<String> mainList = new ArrayList<>();
-		logger.info("Number of 'forall' variables: " + forallVars.size());
-		logger.info("List of 'forall' variables: " + forallVars);
-		
-		long time = System.currentTimeMillis();
-		
-		mainList.add(formulaExist.simplify().toLimbooleString());
-		findAllAssignmentsSigmaEps(efPairs, statesNum, k, 0, formulaTheRest, mainList, finishTime, bfsConstraints, -1, -1);
-		
-		time = System.currentTimeMillis() - time;
-		logger.info("Formula generation time: " + time + " ms.");
-		
-		return String.join("&", mainList);
-	}
 
-	public SolverResult solveAsSat(ScenariosTree tree, int statesNum, int k, Logger logger,
-			String solverParams, int timeoutSeconds, List<EventExpressionPair> efPairs, boolean bfsConstraints) throws IOException {
-		// timeoutSec for flatten, timeoutSec for the solver
-		final long flattenFinishTime = System.currentTimeMillis() + timeoutSeconds * 1000;
-		String flatFormula;
-		try {
-			flatFormula = flatten(tree, statesNum, k, logger, efPairs, flattenFinishTime, bfsConstraints);
-		} catch (TimeLimitExceeded e) {
-			logger.info("TIME LIMIT EXCEEDED WHILE FLATTENING THE FORMULA");
-			return new SolverResult(SolverResults.UNKNOWN, 0);
+	static class FormulaBuffer {
+		private final StringBuilder formula = new StringBuilder();
+		private final long finishTime = System.currentTimeMillis() + SECONDS_TO_CONSTRUCT_FORMULA * 1000;
+		private static final int MAX_SIZE = 25000000;
+		private final static int SECONDS_TO_CONSTRUCT_FORMULA = 5;
+		
+		public void append(BooleanFormula f) throws FormulaSizeException, TimeLimitExceeded {
+			if (System.currentTimeMillis() > finishTime) {
+				throw new TimeLimitExceeded();
+			}
+			if (formula.length() > 0) {
+				formula.append("&");
+			}
+			formula.append(f.toLimbooleString());
+			if (formula.length() > MAX_SIZE) {
+				throw new FormulaSizeException();
+			}
 		}
 		
-		Pair<List<Assignment>, Long> solution = BooleanFormula.solveAsSat(flatFormula, logger, solverParams, timeoutSeconds);
-		List<Assignment> list = solution.getLeft();
-		long time = solution.getRight();
-		
-		if (list.isEmpty()) {
-			return new SolverResult(time >= timeoutSeconds * 1000 ? SolverResults.UNKNOWN : SolverResults.UNSAT, (int) time);
-		} else if (assignmentIsOk(list)) {
-			return new SolverResult(list, (int) time);
-		} else {
-			throw new AssertionError();
+		@Override
+		public String toString() {
+			return formula.toString();
+		}
+	}
+	
+	public static class FormulaSizeException extends Exception {
+		@Override
+		public Throwable fillInStackTrace() {
+			return this;
 		}
 	}
 }

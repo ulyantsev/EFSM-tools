@@ -42,7 +42,7 @@ public class IterativeAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 		logger.info(ass.toString().split("\n")[0]);
 
 		if (ass.type() == SolverResults.SAT) {
-			Pair<Automaton, List<Assignment>> p = constructAutomatonFromAssignment(logger, ass, tree, colorSize, false);
+			Pair<Automaton, List<Assignment>> p = constructAutomatonFromAssignment(logger, ass.list(), tree, colorSize, false);
 
 			// add new constraints
 			// important: scenario-unsupported y-variables are not included!

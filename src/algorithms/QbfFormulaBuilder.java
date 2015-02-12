@@ -43,6 +43,7 @@ public class QbfFormulaBuilder extends FormulaBuilder {
 	public QbfFormulaBuilder(Logger logger, ScenariosTree tree, List<LtlNode> formulae, int colorSize, int depth,
 			boolean extractSubterms, boolean eventCompleteness, boolean bfsConstraints, List<EventExpressionPair> efPairs, List<String> actions) {
 		super(colorSize, tree, eventCompleteness, bfsConstraints, efPairs, actions);
+		BooleanVariable.eraseVariables();
 		this.logger = logger;
 		this.formulae = formulae;
 		this.k = depth;
@@ -135,7 +136,7 @@ public class QbfFormulaBuilder extends FormulaBuilder {
 				subtermEquations.assemble().not(),
 				pathIsCorrect.not(),
 				pathFormula.not()
-		),"main QBF constraint");
+		), "main QBF constraint");
 
 		return new QuantifiedBooleanFormula(existVars, forallVars, scenarioConstraints, mainQbfConstraint);
 	}
