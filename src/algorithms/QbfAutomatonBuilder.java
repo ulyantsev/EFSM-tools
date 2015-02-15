@@ -83,11 +83,11 @@ public class QbfAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 								formulae, colorSize, k, extractSubterms, complete, bfsConstraints,
 								inlineZVars, efPairs, actions).getFormula(true);
 						time = System.currentTimeMillis();
-						formula = qbf.flatten(tree, colorSize, k, logger, efPairs, actions, bfsConstraints, forbiddenYs);
+						formula = qbf.flatten(tree, colorSize, k, logger, efPairs, actions, bfsConstraints, forbiddenYs, finishTime);
 						curFormula = formula;
 						additionalConstraints = new FormulaList(BinaryOperations.AND);
-					} catch (FormulaSizeException e) {
-						logger.info("FORMULA FOR k = " + k + " IS TOO LARGE, STARTING ITERATIONS");
+					} catch (FormulaSizeException | TimeLimitExceeded e) {
+						logger.info("FORMULA FOR k = " + k + " IS TOO LARGE OR REQUIRES TOO MUCH TIME TO CONSTRUCT, STARTING ITERATIONS");
 						logger.info("TRIED CREATING FORMULA FOR " + (System.currentTimeMillis() - time) + "ms");
 						k--;
 						maxKFound = true;

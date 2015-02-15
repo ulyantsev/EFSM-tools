@@ -26,6 +26,7 @@ import qbf.reduction.BooleanFormula.DimacsConversionInfo;
 import qbf.reduction.SolverResult.SolverResults;
 import structures.ScenariosTree;
 import algorithms.FormulaBuilder.EventExpressionPair;
+import algorithms.TimeLimitExceeded;
 
 public class QuantifiedBooleanFormula {
 	private final List<BooleanVariable> existVars;
@@ -230,8 +231,8 @@ public class QuantifiedBooleanFormula {
 	 */
 	public String flatten(ScenariosTree tree, int statesNum, int k, Logger logger,
 			List<EventExpressionPair> efPairs, List<String> actions, boolean bfsConstraints,
-			Set<String> forbiddenYs) throws FormulaSizeException {
-		FormulaBuffer buffer = new FormulaBuffer();
+			Set<String> forbiddenYs, long timeToFinish) throws FormulaSizeException, TimeLimitExceeded {
+		FormulaBuffer buffer = new FormulaBuffer(timeToFinish);
 		logger.info("Number of 'forall' variables: " + forallVars.size());
 		
 		long time = System.currentTimeMillis();
@@ -252,7 +253,7 @@ public class QuantifiedBooleanFormula {
 	 */
 	private void findAllAssignmentsSigmaEps(List<EventExpressionPair> efPairs, int statesNum, List<String> actions,
 			int k, int j, BooleanFormula formulaToAppend, FormulaBuffer buffer,
-			boolean bfsConstraints, int lastStateIndex, int lastPairIndex, Map<String, Integer> yAssignment, Set<String> forbiddenYs) throws FormulaSizeException {
+			boolean bfsConstraints, int lastStateIndex, int lastPairIndex, Map<String, Integer> yAssignment, Set<String> forbiddenYs) throws FormulaSizeException, TimeLimitExceeded {
 		formulaToAppend = formulaToAppend.simplify();
 		if (j == k + 1) {
 			assert formulaToAppend != FalseFormula.INSTANCE; // in this case the formula is obviously unsatisfiable
@@ -321,8 +322,16 @@ public class QuantifiedBooleanFormula {
 	static class FormulaBuffer {
 		private final StringBuilder formula = new StringBuilder();
 		private final static int MAX_SIZE = 5 * 1000 * 1000;
+		private final long timeToFinish;
 		
-		public void append(BooleanFormula f) throws FormulaSizeException {
+		public FormulaBuffer(long timeToFinish) {
+			this.timeToFinish = Math.min(timeToFinish, System.currentTimeMillis() + 5000);
+		}
+		
+		public void append(BooleanFormula f) throws FormulaSizeException, TimeLimitExceeded {
+			if (System.currentTimeMillis() > timeToFinish) {
+				throw new TimeLimitExceeded();
+			}
 			if (formula.length() > 0) {
 				formula.append("&");
 			}
