@@ -236,21 +236,21 @@ public class QuantifiedBooleanFormula {
 		long time = System.currentTimeMillis();
 		
 		buffer.append(formulaExist.simplify());
-		findAllAssignmentsSigmaEps(efPairs, statesNum, actions, k, 0, formulaTheRest, buffer, bfsConstraints, -1, -1);
+		findAllAssignmentsSigmaEps(efPairs, statesNum, actions, k, 0, formulaTheRest, buffer, bfsConstraints, -1, -1, new HashMap<>());
 		
 		time = System.currentTimeMillis() - time;
 		logger.info("Formula generation time: " + time + " ms.");
 		
 		return buffer.toString();
 	}
-	
+
 	// recursive
 	/*
 	 * Equivalent to constraints sigma_0_0 = 0 and A_1 and A_2 and B.
 	 */
 	private void findAllAssignmentsSigmaEps(List<EventExpressionPair> efPairs, int statesNum, List<String> actions,
 			int k, int j, BooleanFormula formulaToAppend, FormulaBuffer buffer,
-			boolean bfsConstraints, int lastStateIndex, int lastPairIndex) throws FormulaSizeException {
+			boolean bfsConstraints, int lastStateIndex, int lastPairIndex, Map<String, Integer> yAssignment) throws FormulaSizeException {
 		formulaToAppend = formulaToAppend.simplify();
 		if (j == k + 1) {
 			assert formulaToAppend != FalseFormula.INSTANCE; // in this case the formula is obviously unsatisfiable
@@ -262,12 +262,27 @@ public class QuantifiedBooleanFormula {
 			if (lastStateIndex == 0 && bfsConstraints) {
 				// optimization
 				iMax = Math.min(iMax, lastPairIndex + 2);
-			}/* else if (lastStateIndex == 1 && bfsConstraints) {
-				// further optimization
-				iMax = Math.min(iMax, efPairs.size() + lastPairIndex + 1);
-			}*/
-			final Map<BooleanVariable, BooleanFormula> replacement = new HashMap<>();
+			}
 			for (int i = 0; i < iMax; i++) {
+				final Map<BooleanVariable, BooleanFormula> replacement = new HashMap<>();
+				
+				// deal with ys
+				String yKey = null;
+				boolean wasNull = false;
+				if (j > 0) {
+					final int i1 = lastStateIndex;
+					final EventExpressionPair ef = efPairs.get(lastPairIndex);
+					final int i2 = i;
+					yKey = i1 + "_" + ef.event + "_" + ef.expression;
+					final Integer curYValue = yAssignment.get(yKey);
+					wasNull = curYValue == null;
+					if (wasNull) {
+						yAssignment.put(yKey, i2); // assign
+					} else if (curYValue != i2) {
+						continue; // already assigned to a different variable
+					}
+				}
+				
 				for (int iOther = 0; iOther < statesNum; iOther++) {
 					replacement.put(BooleanVariable.byName("sigma", iOther, j).get(),
 							FalseFormula.INSTANCE);
@@ -282,6 +297,7 @@ public class QuantifiedBooleanFormula {
 					replacement.put(BooleanVariable.byName("eps", p.event, p.expression, j).get(),
 							TrueFormula.INSTANCE);
 					
+					// deal with zetas
 					for (String action : actions) {
 						replacement.put(BooleanVariable.byName("zeta", action, j).get(),
 								BooleanVariable.byName("z", i, action, p.event, p.expression).get());
@@ -289,15 +305,19 @@ public class QuantifiedBooleanFormula {
 					
 					// recursive call
 					findAllAssignmentsSigmaEps(efPairs, statesNum, actions, k, j + 1,
-							formulaToAppend.multipleSubstitute(replacement), buffer, bfsConstraints, i, pIndex);
-				}			
+							formulaToAppend.multipleSubstitute(replacement), buffer, bfsConstraints, i, pIndex, yAssignment);
+				}		
+				
+				if (j > 0 && wasNull) {
+					yAssignment.remove(yKey);
+				}
 			}
 		}
 	}
 
 	static class FormulaBuffer {
 		private final StringBuilder formula = new StringBuilder();
-		private final static int MAX_SIZE = 2 * 1000 * 1000;
+		private final static int MAX_SIZE = 5 * 1000 * 1000;
 		
 		public void append(BooleanFormula f) throws FormulaSizeException {
 			if (formula.length() > 0) {
