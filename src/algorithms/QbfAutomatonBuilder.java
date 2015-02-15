@@ -4,9 +4,14 @@ package algorithms;
  * (c) Igor Buzhinsky
  */
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
+import java.util.Scanner;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -29,6 +34,18 @@ import structures.ScenariosTree;
 import algorithms.FormulaBuilder.EventExpressionPair;
 
 public class QbfAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {	
+	public final static String PRECOMPUTED_DIR_NAME = "qbf/bfs-prohibited-ys";
+	
+	private static Set<String> getForbiddenYs(int states, int events) throws FileNotFoundException {
+		Set<String> ys = new TreeSet<>();
+		try (Scanner sc = new Scanner(new File(PRECOMPUTED_DIR_NAME + "/" + states + "_" + events))) {
+			while (sc.hasNext()) {
+				ys.add(sc.next());
+			}
+		}
+		return ys;
+	}
+	
 	public static Optional<Automaton> build(Logger logger, ScenariosTree tree,
 			List<LtlNode> formulae, int colorSize, String ltlFilePath,
 			int timeoutSeconds, Solvers solver, String solverParams, boolean extractSubterms,
@@ -45,6 +62,8 @@ public class QbfAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 			int iteration = 1;
 			String curFormula = null;
 			FormulaList additionalConstraints = new FormulaList(BinaryOperations.AND);
+			final Set<String> forbiddenYs = getForbiddenYs(colorSize, efPairs.size());
+			logger.info("FORBIDDEN YS: " + forbiddenYs);
 			while (true) {
 				if (System.currentTimeMillis() > finishTime) {
 					logger.info("TIME LIMIT EXCEEDED");
@@ -64,7 +83,7 @@ public class QbfAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 								formulae, colorSize, k, extractSubterms, complete, bfsConstraints,
 								inlineZVars, efPairs, actions).getFormula(true);
 						time = System.currentTimeMillis();
-						formula = qbf.flatten(tree, colorSize, k, logger, efPairs, actions, bfsConstraints);
+						formula = qbf.flatten(tree, colorSize, k, logger, efPairs, actions, bfsConstraints, forbiddenYs);
 						curFormula = formula;
 						additionalConstraints = new FormulaList(BinaryOperations.AND);
 					} catch (FormulaSizeException e) {

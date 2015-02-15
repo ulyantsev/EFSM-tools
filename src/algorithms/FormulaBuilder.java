@@ -233,8 +233,8 @@ public abstract class FormulaBuilder {
 					was.add(key);
 					for (int parentColor = 0; parentColor < colorSize; parentColor++) {
 						for (int color1 = 0; color1 < colorSize; color1++) {
+							BooleanVariable v1 = yVar(parentColor, color1, t.getEvent(), t.getExpr());
 							for (int color2 = 0; color2 < color1; color2++) {
-								BooleanVariable v1 = yVar(parentColor, color1, t.getEvent(), t.getExpr());
 								BooleanVariable v2 = yVar(parentColor, color2, t.getEvent(), t.getExpr());
 								constraints.add(v1.not().or(v2.not()));
 							}

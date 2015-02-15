@@ -229,14 +229,16 @@ public class QuantifiedBooleanFormula {
 	 * The size of the formula is exponential of forallVars.size().
 	 */
 	public String flatten(ScenariosTree tree, int statesNum, int k, Logger logger,
-			List<EventExpressionPair> efPairs, List<String> actions, boolean bfsConstraints) throws FormulaSizeException {
+			List<EventExpressionPair> efPairs, List<String> actions, boolean bfsConstraints,
+			Set<String> forbiddenYs) throws FormulaSizeException {
 		FormulaBuffer buffer = new FormulaBuffer();
 		logger.info("Number of 'forall' variables: " + forallVars.size());
 		
 		long time = System.currentTimeMillis();
 		
 		buffer.append(formulaExist.simplify());
-		findAllAssignmentsSigmaEps(efPairs, statesNum, actions, k, 0, formulaTheRest, buffer, bfsConstraints, -1, -1, new HashMap<>());
+		findAllAssignmentsSigmaEps(efPairs, statesNum, actions, k, 0, formulaTheRest,
+				buffer, bfsConstraints, -1, -1, new HashMap<>(), forbiddenYs);
 		
 		time = System.currentTimeMillis() - time;
 		logger.info("Formula generation time: " + time + " ms.");
@@ -250,7 +252,7 @@ public class QuantifiedBooleanFormula {
 	 */
 	private void findAllAssignmentsSigmaEps(List<EventExpressionPair> efPairs, int statesNum, List<String> actions,
 			int k, int j, BooleanFormula formulaToAppend, FormulaBuffer buffer,
-			boolean bfsConstraints, int lastStateIndex, int lastPairIndex, Map<String, Integer> yAssignment) throws FormulaSizeException {
+			boolean bfsConstraints, int lastStateIndex, int lastPairIndex, Map<String, Integer> yAssignment, Set<String> forbiddenYs) throws FormulaSizeException {
 		formulaToAppend = formulaToAppend.simplify();
 		if (j == k + 1) {
 			assert formulaToAppend != FalseFormula.INSTANCE; // in this case the formula is obviously unsatisfiable
@@ -259,10 +261,6 @@ public class QuantifiedBooleanFormula {
 			}
 		} else {
 			int iMax = j == 0 ? 1 : statesNum;
-			if (lastStateIndex == 0 && bfsConstraints) {
-				// optimization
-				iMax = Math.min(iMax, lastPairIndex + 2);
-			}
 			for (int i = 0; i < iMax; i++) {
 				final Map<BooleanVariable, BooleanFormula> replacement = new HashMap<>();
 				
@@ -273,6 +271,10 @@ public class QuantifiedBooleanFormula {
 					final int i1 = lastStateIndex;
 					final EventExpressionPair ef = efPairs.get(lastPairIndex);
 					final int i2 = i;
+					if (bfsConstraints && forbiddenYs.contains("y_" + i1 + "_" + i2 + "_" + ef.event + "_" + ef.expression)) {
+						// this y is forbidden due to BFS constraints
+						continue;
+					}
 					yKey = i1 + "_" + ef.event + "_" + ef.expression;
 					final Integer curYValue = yAssignment.get(yKey);
 					wasNull = curYValue == null;
@@ -305,7 +307,8 @@ public class QuantifiedBooleanFormula {
 					
 					// recursive call
 					findAllAssignmentsSigmaEps(efPairs, statesNum, actions, k, j + 1,
-							formulaToAppend.multipleSubstitute(replacement), buffer, bfsConstraints, i, pIndex, yAssignment);
+							formulaToAppend.multipleSubstitute(replacement), buffer, bfsConstraints,
+							i, pIndex, yAssignment, forbiddenYs);
 				}		
 				
 				if (j > 0 && wasNull) {
