@@ -90,6 +90,10 @@ public class QbfBuilderMain {
 			usage = "include symmetry breaking BFS constraints (not for BACKTRACKING)")
 	private boolean bfsConstraints;
 	
+	@Option(name = "--inlineZetaVars", aliases = { "-iz" }, handler = BooleanOptionHandler.class,
+			usage = "inline zeta variables (only for QSAT and EXP_SAT")
+	private boolean inlineZetaVars;
+	
 	private void launcher(String[] args) throws IOException {
 		Locale.setDefault(Locale.US);
 
@@ -186,7 +190,7 @@ public class QbfBuilderMain {
 			Optional<Automaton> resultAutomaton = ss == SolvingStrategy.QSAT || ss == SolvingStrategy.EXP_SAT
 					? QbfAutomatonBuilder.build(logger, tree, formulae, size, ltlFilePath, timeout,
 							solver, solverParams, extractSubterms, isComplete, ss == SolvingStrategy.EXP_SAT,
-							bfsConstraints, efPairs, actions)
+							bfsConstraints, inlineZetaVars, efPairs, actions)
 					: ss == SolvingStrategy.ITERATIVE_SAT
 					? IterativeAutomatonBuilder.build(logger, tree, size, solverParams, isComplete,
 							timeout, resultFilePath, ltlFilePath, formulae, bfsConstraints, efPairs, actions)

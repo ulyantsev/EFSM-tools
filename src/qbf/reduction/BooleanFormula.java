@@ -159,7 +159,8 @@ public abstract class BooleanFormula {
 		return BinaryOperation.equivalent(this, other);
 	}
 	
-	public abstract BooleanFormula substitute(BooleanVariable v, BooleanFormula replacement);
+	//public abstract BooleanFormula substitute(BooleanVariable v, BooleanFormula replacement);
+	public abstract BooleanFormula multipleSubstitute(Map<BooleanVariable, BooleanFormula> replacement);
 	
 	/*
 	 * Removes TRUE and FALSE.

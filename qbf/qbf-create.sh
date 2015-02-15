@@ -24,10 +24,8 @@ for ((size = 2; size <= 10; size++)); do
                 if (( formula_num > 1 )); then
                     last_num=$(( formula_num - 1 ))
                     cp $name-$last_num-true.ltl $name-$formula_num-true.ltl
-                    cp $name-$last_num-false.ltl $name-$formula_num-false.ltl
                 fi
                 cat formulae >> $name-$formula_num-true.ltl
-                echo "!("`cat formulae`")" >> $name-$formula_num-false.ltl
             done
             echo $name : creating scenarios
             for cnt in 5 10 20; do
@@ -40,3 +38,4 @@ for ((size = 2; size <= 10; size++)); do
         done
     done
 done
+./false-create.sh

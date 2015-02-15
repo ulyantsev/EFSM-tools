@@ -7,6 +7,7 @@ package qbf.reduction;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class BinaryOperation extends BooleanFormula {
@@ -114,10 +115,9 @@ public class BinaryOperation extends BooleanFormula {
 	}
 
 	@Override
-	public BooleanFormula substitute(BooleanVariable v, BooleanFormula replacement) {
+	public BooleanFormula multipleSubstitute(Map<BooleanVariable, BooleanFormula> replacement) {
 		List<BooleanFormula> newChildren = children.stream().map(c ->
-			c.substitute(v, replacement)).collect(Collectors.toList()
-		);
+			c.multipleSubstitute(replacement)).collect(Collectors.toList());
 		return new BinaryOperation(newChildren, type);
 	}
 	

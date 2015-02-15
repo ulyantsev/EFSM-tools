@@ -62,7 +62,8 @@ public abstract class FormulaBuilder {
 		return efPairs;
 	}*/
 	
-	public FormulaBuilder(int colorSize, ScenariosTree tree, boolean eventCompleteness, boolean bfsConstraints, List<EventExpressionPair> efPairs, List<String> actions) {
+	public FormulaBuilder(int colorSize, ScenariosTree tree, boolean eventCompleteness, boolean bfsConstraints,
+			List<EventExpressionPair> efPairs, List<String> actions) {
 		this.colorSize = colorSize;
 		this.events = EventExpressionPair.getEvents(efPairs);
 		this.actions = actions;

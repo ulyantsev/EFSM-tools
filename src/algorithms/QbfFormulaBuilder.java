@@ -39,15 +39,18 @@ public class QbfFormulaBuilder extends FormulaBuilder {
 	private final List<BooleanVariable> forallVars = new ArrayList<>();
 	private final Map<SubtermIdentifier, Pair<BooleanFormula, BooleanVariable>> subterms = new LinkedHashMap<>();	
 	private final boolean extractSubterms;
+	private final boolean inlineZetaVars;
 
 	public QbfFormulaBuilder(Logger logger, ScenariosTree tree, List<LtlNode> formulae, int colorSize, int depth,
-			boolean extractSubterms, boolean eventCompleteness, boolean bfsConstraints, List<EventExpressionPair> efPairs, List<String> actions) {
+			boolean extractSubterms, boolean eventCompleteness, boolean bfsConstraints, boolean inlineZVars,
+			List<EventExpressionPair> efPairs, List<String> actions) {
 		super(colorSize, tree, eventCompleteness, bfsConstraints, efPairs, actions);
 		BooleanVariable.eraseVariables();
 		this.logger = logger;
 		this.formulae = formulae;
 		this.k = depth;
 		this.extractSubterms = extractSubterms;
+		this.inlineZetaVars = inlineZVars;
 	}
 
 	private BooleanVariable sigmaVar(int state, int pathIndex) {
@@ -59,6 +62,7 @@ public class QbfFormulaBuilder extends FormulaBuilder {
 	}
 	
 	private BooleanVariable zetaVar(String action, int pathIndex) {
+		assert !inlineZetaVars;
 		return BooleanVariable.byName("zeta", action, pathIndex).get();
 	}
 	
@@ -103,7 +107,9 @@ public class QbfFormulaBuilder extends FormulaBuilder {
 		
 		addSigmaVars(); // forall
 		addEpsVars(); // forall
-		addZetaVars(); // forall
+		if (!inlineZetaVars) {
+			addZetaVars(); // forall
+		}
 		
 		LtlNode formulaToCheck = formulaToCheck();
 		logger.info(formulaToCheck.toString());
@@ -215,6 +221,9 @@ public class QbfFormulaBuilder extends FormulaBuilder {
 	
 	// forall-variables are consistent with z's
 	private BooleanFormula dTerm() {
+		if (inlineZetaVars) {
+			return TrueFormula.INSTANCE;
+		}
 		FormulaList constraints = new FormulaList(BinaryOperations.AND);
 		for (int j = 0; j <= k; j++) {
 			for (int i1 = 0; i1 < colorSize; i1++) {
@@ -266,7 +275,7 @@ public class QbfFormulaBuilder extends FormulaBuilder {
 	private BooleanFormula translatePredicate(Predicate p, int index) {
 		String arg = p.args().get(0).toString();
 		switch (p.getName()) {
-		case "wasEvent":
+		case "wasEvent": {
 			FormulaList options = new FormulaList(BinaryOperations.OR);
 			for (EventExpressionPair pair : efPairs) {
 				if (pair.event.equals(arg)) {
@@ -274,8 +283,23 @@ public class QbfFormulaBuilder extends FormulaBuilder {
 				}
 			}
 			return options.assemble();
-		case "wasAction":
-			return zetaVar(arg, index);
+		}
+		case "wasAction": {
+			if (!inlineZetaVars) {
+				return zetaVar(arg, index);
+			}
+			FormulaList options = new FormulaList(BinaryOperations.OR);
+			for (int i = 0; i < colorSize; i++) {
+				for (EventExpressionPair pair : efPairs) {
+					options.add(BinaryOperation.and(
+							sigmaVar(i, index),
+							epsVar(pair.event, pair.expression, index),
+							zVar(i, arg, pair.event, pair.expression)
+					));
+				}
+			}
+			return options.assemble();
+		}
 		default:
 			throw new RuntimeException("Unsupported predicate " + p.getName());
 		}

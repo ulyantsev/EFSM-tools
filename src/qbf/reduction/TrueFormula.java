@@ -1,5 +1,7 @@
 package qbf.reduction;
 
+import java.util.Map;
+
 /**
  * (c) Igor Buzhinsky
  */
@@ -20,9 +22,9 @@ public class TrueFormula extends BooleanFormula {
 	public String toString() {
 		return "TRUE";
 	}
-
+	
 	@Override
-	public BooleanFormula substitute(BooleanVariable v, BooleanFormula replacement) {
+	public BooleanFormula multipleSubstitute(Map<BooleanVariable, BooleanFormula> replacement) {
 		return this;
 	}
 	

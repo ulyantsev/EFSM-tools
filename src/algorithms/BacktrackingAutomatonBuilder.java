@@ -8,6 +8,8 @@ import java.util.Optional;
 import java.util.logging.Logger;
 
 import qbf.egorov.ltl.grammar.LtlNode;
+import qbf.reduction.SolverResult;
+import qbf.reduction.SolverResult.SolverResults;
 import qbf.reduction.Verifier;
 import structures.Automaton;
 import structures.Node;
@@ -148,6 +150,7 @@ public class BacktrackingAutomatonBuilder {
 			logger.info("TOTAL TIME LIMIT EXCEEDED, ANSWER IS UNKNOWN.");
 			return Optional.empty();
 		}
+		logger.info(new SolverResult(SolverResults.UNSAT, timeoutSeconds * 1000).toString());
 		return Optional.empty();
 	}
 }

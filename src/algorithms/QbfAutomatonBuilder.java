@@ -32,7 +32,7 @@ public class QbfAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 	public static Optional<Automaton> build(Logger logger, ScenariosTree tree,
 			List<LtlNode> formulae, int colorSize, String ltlFilePath,
 			int timeoutSeconds, Solvers solver, String solverParams, boolean extractSubterms,
-			boolean complete, boolean useSat, boolean bfsConstraints,
+			boolean complete, boolean useSat, boolean bfsConstraints, boolean inlineZVars,
 			List<EventExpressionPair> efPairs, List<String> actions) throws IOException {
 		
 		final Verifier verifier = new Verifier(colorSize, logger, ltlFilePath,
@@ -62,13 +62,13 @@ public class QbfAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 					try {
 						QuantifiedBooleanFormula qbf = new QbfFormulaBuilder(logger, tree,
 								formulae, colorSize, k, extractSubterms, complete, bfsConstraints,
-								efPairs, actions).getFormula(true);
+								inlineZVars, efPairs, actions).getFormula(true);
 						time = System.currentTimeMillis();
-						formula = qbf.flatten(tree, colorSize, k, logger, efPairs, bfsConstraints);
+						formula = qbf.flatten(tree, colorSize, k, logger, efPairs, actions, bfsConstraints);
 						curFormula = formula;
 						additionalConstraints = new FormulaList(BinaryOperations.AND);
-					} catch (FormulaSizeException | TimeLimitExceeded e) {
-						logger.info("FORMULA FOR k = " + k + " IS TOO LARGE OR REQUIRES TOO MUCH TIME TO CONSTRUCT, STARTING ITERATIONS");
+					} catch (FormulaSizeException e) {
+						logger.info("FORMULA FOR k = " + k + " IS TOO LARGE, STARTING ITERATIONS");
 						logger.info("TRIED CREATING FORMULA FOR " + (System.currentTimeMillis() - time) + "ms");
 						k--;
 						maxKFound = true;
@@ -111,7 +111,7 @@ public class QbfAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 				deleteTrash();
 				QuantifiedBooleanFormula qbf = new QbfFormulaBuilder(logger, tree,
 						formulae, colorSize, k, extractSubterms, complete, bfsConstraints,
-						efPairs, actions).getFormula(false);
+						inlineZVars, efPairs, actions).getFormula(false);
 				final int timeLeft = (int) (finishTime - System.currentTimeMillis()) / 1000 + 1;
 				SolverResult ass = qbf.solve(logger, solver, solverParams, timeLeft);
 				logger.info(ass.toString().split("\n")[0]);
