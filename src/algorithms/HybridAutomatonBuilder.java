@@ -21,30 +21,42 @@ import qbf.reduction.BooleanFormula;
 import qbf.reduction.FormulaList;
 import qbf.reduction.QuantifiedBooleanFormula;
 import qbf.reduction.QuantifiedBooleanFormula.FormulaSizeException;
-import qbf.reduction.SolverResult;
-import qbf.reduction.SolverResult.SolverResults;
-import qbf.reduction.Solvers;
+import qbf.reduction.QbfSolver;
+import qbf.reduction.SatSolver;
 import qbf.reduction.Verifier;
 import structures.Automaton;
 import structures.ScenariosTree;
 import algorithms.FormulaBuilder.EventExpressionPair;
 
-public class HybridAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {	
+public class HybridAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
+	private static final int MAX_FORMULA_SIZE = 100 * 1000 * 1000;
+	private static final int MILLIS_FOR_FORMULA = 5000;
+	private static final int SEC_FOR_SOLVER = 5; // >= 2
+	
+	private static void addProhibitionConstraints(FormulaList constraints, List<Assignment> list) {
+		constraints.add(BinaryOperation.and(list.stream()
+				.filter(va -> va.var.name.startsWith("y"))
+				.map(v -> v.value ? v.var : v.var.not())
+				.collect(Collectors.toList())
+		).not());
+	}
+	
 	public static Optional<Automaton> build(Logger logger, ScenariosTree tree,
 			List<LtlNode> formulae, int colorSize, String ltlFilePath,
-			int timeoutSeconds, Solvers solver, String solverParams, boolean extractSubterms,
-			boolean complete, boolean bfsConstraints, boolean inlineZVars,
-			List<EventExpressionPair> efPairs, List<String> actions) throws IOException {
+			int timeoutSeconds, QbfSolver qbfSolver, String solverParams, boolean extractSubterms,
+			boolean complete, boolean bfsConstraints,
+			List<EventExpressionPair> efPairs, List<String> actions, SatSolver satSolver) throws IOException {
 		
 		final Verifier verifier = new Verifier(colorSize, logger, ltlFilePath,
 				EventExpressionPair.getEvents(efPairs), actions);
 		final long finishTime = System.currentTimeMillis() + timeoutSeconds * 1000;
 		
-		int k = 0;
+		int k = -1;
 		boolean maxKFound = false;
 		int iteration = 1;
 		String curFormula = null;
-		FormulaList additionalConstraints = new FormulaList(BinaryOperations.AND);
+		String formulaBackup = null;
+		final FormulaList additionalConstraints = new FormulaList(BinaryOperations.AND);
 		final Set<String> forbiddenYs = QbfAutomatonBuilder.getForbiddenYs(colorSize, efPairs.size());
 		logger.info("FORBIDDEN YS: " + forbiddenYs);
 		while (true) {
@@ -53,22 +65,23 @@ public class HybridAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 				return Optional.empty();
 			}
 			deleteTrash();
-			logger.info("TRYING k = " + k + (maxKFound ? (", iteration " + ++iteration) : ""));
 			String formula = null;
 			if (maxKFound) {
-				formula = curFormula + "&" + additionalConstraints.assemble().toLimbooleString();
+				assert curFormula != null;
+				formula = additionalConstraints.isEmpty()
+						? curFormula
+						: (curFormula + "&" + additionalConstraints.assemble().toLimbooleString());
 			} else {
 				// try next k
 				k++;
-				long time = 0;
+				QuantifiedBooleanFormula qbf = new QbfFormulaBuilder(logger, tree,
+						formulae, colorSize, k, extractSubterms, complete, bfsConstraints,
+						efPairs, actions).getFormula(true);
+				long time = System.currentTimeMillis();
 				try {
-					QuantifiedBooleanFormula qbf = new QbfFormulaBuilder(logger, tree,
-							formulae, colorSize, k, extractSubterms, complete, bfsConstraints,
-							inlineZVars, efPairs, actions).getFormula(true);
-					time = System.currentTimeMillis();
-					formula = qbf.flatten(tree, colorSize, k, logger, efPairs, actions, bfsConstraints, forbiddenYs, finishTime, true);
-					curFormula = formula;
-					additionalConstraints = new FormulaList(BinaryOperations.AND);
+					formula = qbf.flatten(tree, colorSize, k, logger, efPairs, actions,
+							bfsConstraints, forbiddenYs, Math.min(finishTime, System.currentTimeMillis() + MILLIS_FOR_FORMULA),
+							MAX_FORMULA_SIZE);
 				} catch (FormulaSizeException | TimeLimitExceeded e) {
 					logger.info("FORMULA FOR k = " + k + " IS TOO LARGE OR REQUIRES TOO MUCH TIME TO CONSTRUCT, STARTING ITERATIONS");
 					logger.info("TRIED CREATING FORMULA FOR " + (System.currentTimeMillis() - time) + "ms");
@@ -76,24 +89,35 @@ public class HybridAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 					maxKFound = true;
 					continue;
 				}
+				formulaBackup = curFormula;
+				curFormula = formula;
 			}
+			logger.info("TRYING k = " + k + (maxKFound ? (", iteration " + ++iteration) : ""));
 			
-			final int timeLeft = (int) (finishTime - System.currentTimeMillis()) / 1000 + 1;
-			Pair<List<Assignment>, Long> solution = BooleanFormula.solveAsSat(formula,
-					logger, solverParams, timeLeft);
-			List<Assignment> list = solution.getLeft();
-			long time = solution.getRight();
-			if (list.isEmpty()) {
-				SolverResult sr = new SolverResult(time >= timeLeft * 1000
-						? SolverResults.UNKNOWN : SolverResults.UNSAT);
-				logger.info(sr.toString());
+			int timeLeftForSolver = (int) (finishTime - System.currentTimeMillis()) / 1000 + 1;
+			if (!maxKFound && k > 0) {
+				timeLeftForSolver = Math.min(timeLeftForSolver, SEC_FOR_SOLVER);
+			}
+			final Pair<List<Assignment>, Long> solution = BooleanFormula.solveAsSat(formula,
+					logger, solverParams, timeLeftForSolver, satSolver);
+			final List<Assignment> list = solution.getLeft();
+			final long time = solution.getRight();
+			final boolean unknown = time >= timeLeftForSolver * 1000;
+			if (!maxKFound && list.isEmpty() && unknown && k > 0) {
+				// too much time
+				logger.info("FORMULA FOR k = " + k + " IS TOO HARD FOR THE SOLVER, STARTING ITERATIONS");
+				k--;
+				maxKFound = true;
+				curFormula = formulaBackup;
+				continue;
+			} else if (list.isEmpty()) {
+				logger.info(unknown ? "UNKNOWN" : "UNSAT");
 				return Optional.empty();
 			} else {
 				final Automaton a = constructAutomatonFromAssignment(logger,
 						list, tree, colorSize, true).getLeft();
 				if (verifier.verify(a)) {
-					SolverResult sr = new SolverResult(list);
-					logger.info(sr.toString().split("\n")[0]);
+					logger.info("SAT");
 					return Optional.of(a);
 				}
 				
@@ -103,8 +127,7 @@ public class HybridAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 				try {
 					new AutomatonCompleter(verifier, b, efPairs, actions, finishTime).ensureCompleteness();
 				} catch (AutomatonFound e) {
-					SolverResult sr = new SolverResult(list);
-					logger.info(sr.toString().split("\n")[0]);
+					logger.info("SAT");
 					logger.info("A MORE THOROUGH SEARCH SUCCEEDED");
 					return Optional.of(b);
 				} catch (TimeLimitExceeded e) {
@@ -114,10 +137,7 @@ public class HybridAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 				// no complete extensions, continue search
 
 				// add only ys
-				final List<BooleanFormula> constraints = list
-						.stream().filter(va -> va.var.name.startsWith("y"))
-						.map(v -> v.value ? v.var : v.var.not()).collect(Collectors.toList());
-				additionalConstraints.add(BinaryOperation.and(constraints).not());
+				addProhibitionConstraints(additionalConstraints, list);
 			}
 		}
 	}

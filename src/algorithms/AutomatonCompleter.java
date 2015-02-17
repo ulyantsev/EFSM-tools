@@ -63,11 +63,14 @@ public class AutomatonCompleter {
 	
 	private void ensureCompleteness(List<Pair<Integer, EventExpressionPair>> missingTransitions)
 			throws AutomatonFound, TimeLimitExceeded {
-		if (missingTransitions.isEmpty()) {
-			throw new AutomatonFound(automaton);
-		}
 		if (System.currentTimeMillis() > finishTime) {
 			throw new TimeLimitExceeded();
+		}
+		if (!verifier.verify(automaton)) {
+			return;
+		}
+		if (missingTransitions.isEmpty()) {
+			throw new AutomatonFound(automaton);
 		}
 		
 		final Pair<Integer, EventExpressionPair> missing = missingTransitions.get(missingTransitions.size() - 1);
@@ -81,9 +84,7 @@ public class AutomatonCompleter {
 				Transition autoT = new Transition(stateFrom,
 						automaton.getState(dst), p.event, p.expression, actions);
 				automaton.addTransition(stateFrom, autoT);
-				if (verifier.verify(automaton)) {
-					ensureCompleteness(missingTransitions);
-				}
+				ensureCompleteness(missingTransitions);
 				stateFrom.removeTransition(autoT);
 			}
 		}

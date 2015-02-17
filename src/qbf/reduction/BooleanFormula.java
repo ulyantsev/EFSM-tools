@@ -30,7 +30,8 @@ public abstract class BooleanFormula {
 		return limbooleIndex.map(index -> new Assignment(BooleanVariable.getVarByNumber(index), isTrue));
 	}
 	
-	public static Pair<List<Assignment>, Long> solveAsSat(String formula, Logger logger, String solverParams, int timeoutSeconds) throws IOException {
+	public static Pair<List<Assignment>, Long> solveAsSat(String formula, Logger logger, String solverParams,
+			int timeoutSeconds, SatSolver solver) throws IOException {
 		logger.info("Final SAT formula length: " + formula.length());
 		DimacsConversionInfo info = BooleanFormula.toDimacs(formula, logger);
 		final String dimaxFilename = "_tmp.dimacs";
@@ -42,7 +43,7 @@ public abstract class BooleanFormula {
 		long time = System.currentTimeMillis();
 		Map<String, Assignment> list = new LinkedHashMap<>();
 		final int maxtime = Math.max(2, timeoutSeconds); // cryptominisat does not accept time=1
-		String solverStr = "cryptominisat --maxtime=" + maxtime + " " + dimaxFilename + " " + solverParams;
+		String solverStr = solver.command + maxtime + " " + dimaxFilename + " " + solverParams;
 		logger.info(solverStr);
 		Process p = Runtime.getRuntime().exec(solverStr);
 		

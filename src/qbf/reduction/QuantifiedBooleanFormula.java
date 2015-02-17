@@ -202,7 +202,7 @@ public class QuantifiedBooleanFormula {
 		}
 	}
 	
-	public SolverResult solve(Logger logger, Solvers solver, String solverParams,
+	public SolverResult solve(Logger logger, QbfSolver solver, String solverParams,
 			int timeoutSeconds) throws IOException {
 		QdimacsConversionInfo qdimacs = toQdimacs(logger);
 		logger.info("DIMACS CNF: " + qdimacs.info.title());
@@ -231,15 +231,10 @@ public class QuantifiedBooleanFormula {
 	 */
 	public String flatten(ScenariosTree tree, int statesNum, int k, Logger logger,
 			List<EventExpressionPair> efPairs, List<String> actions, boolean bfsConstraints,
-			Set<String> forbiddenYs, long timeToFinish, boolean forHybridMode) throws FormulaSizeException, TimeLimitExceeded {
-		FormulaBuffer buffer = new FormulaBuffer(
-				forHybridMode ? Math.min(timeToFinish, System.currentTimeMillis() + 5000) : timeToFinish,
-				forHybridMode ? 5 * 1000 * 1000 : 100 * 1000 * 1000
-		);
+			Set<String> forbiddenYs, long finishTime, int sizeLimit) throws FormulaSizeException, TimeLimitExceeded {
+		FormulaBuffer buffer = new FormulaBuffer(finishTime, sizeLimit);
 		logger.info("Number of 'forall' variables: " + forallVars.size());
-		
 		long time = System.currentTimeMillis();
-		
 		buffer.append(formulaExist.simplify());
 		findAllAssignmentsSigmaEps(efPairs, statesNum, actions, k, 0, formulaTheRest,
 				buffer, bfsConstraints, -1, -1, new HashMap<>(), forbiddenYs);

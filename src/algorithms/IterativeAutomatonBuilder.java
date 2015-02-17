@@ -15,6 +15,7 @@ import qbf.reduction.BinaryOperation;
 import qbf.reduction.BinaryOperations;
 import qbf.reduction.BooleanFormula;
 import qbf.reduction.FormulaList;
+import qbf.reduction.SatSolver;
 import qbf.reduction.SolverResult;
 import qbf.reduction.SolverResult.SolverResults;
 import qbf.reduction.Verifier;
@@ -23,8 +24,9 @@ import structures.ScenariosTree;
 import algorithms.FormulaBuilder.EventExpressionPair;
 
 public class IterativeAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
-	private static Optional<Automaton> automatonFromFormula(BooleanFormula bf, Logger logger, String solverParams,
-			int timeoutSeconds, ScenariosTree tree, int colorSize, FormulaList additionalConstraints) throws IOException {
+	private static Optional<Automaton> automatonFromFormula(BooleanFormula bf, Logger logger,
+			String solverParams, int timeoutSeconds, ScenariosTree tree, int colorSize,
+			FormulaList additionalConstraints, SatSolver satSolver) throws IOException {
 		deleteTrash();
 		try (PrintWriter pw = new PrintWriter("_tmp.pretty")) {
 			pw.print(bf.toString());
@@ -32,7 +34,8 @@ public class IterativeAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 		
 		// SAT-solve
 		final String strBf = bf.simplify().toLimbooleString();
-		final Pair<List<Assignment>, Long> solution = BooleanFormula.solveAsSat(strBf, logger, solverParams, timeoutSeconds);
+		final Pair<List<Assignment>, Long> solution = BooleanFormula.solveAsSat(strBf, logger,
+				solverParams, timeoutSeconds, satSolver);
 		final List<Assignment> list = solution.getLeft();
 		final long time = solution.getRight();
 		
@@ -66,7 +69,7 @@ public class IterativeAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 	
 	public static Optional<Automaton> build(Logger logger, ScenariosTree tree, int colorSize, String solverParams, boolean complete,
 			int timeoutSeconds, String resultFilePath, String ltlFilePath, List<LtlNode> formulae, boolean bfsConstraints,
-			List<EventExpressionPair> efPairs, List<String> actions) throws IOException {
+			List<EventExpressionPair> efPairs, List<String> actions, SatSolver satSolver) throws IOException {
 		final BooleanFormula initialBf = new SatFormulaBuilder(tree, colorSize, false, bfsConstraints, efPairs, actions).getFormula();
 		final FormulaList additionalConstraints = new FormulaList(BinaryOperations.AND);
 		
@@ -77,7 +80,7 @@ public class IterativeAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 			BooleanFormula actualFormula = initialBf.and(additionalConstraints.assemble());
 			final int secondsLeft = (int) ((finishTime - System.currentTimeMillis()) / 1000 + 1);
 			Optional<Automaton> automaton = automatonFromFormula(actualFormula, logger, solverParams,
-					secondsLeft, tree, colorSize, additionalConstraints);
+					secondsLeft, tree, colorSize, additionalConstraints, satSolver);
 			if (automaton.isPresent()) {
 				if (verifier.verify(automaton.get())) {
 					if (complete) {

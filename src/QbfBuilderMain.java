@@ -23,7 +23,8 @@ import org.kohsuke.args4j.spi.BooleanOptionHandler;
 import qbf.egorov.ltl.LtlParseException;
 import qbf.egorov.ltl.LtlParser;
 import qbf.egorov.ltl.grammar.LtlNode;
-import qbf.reduction.Solvers;
+import qbf.reduction.QbfSolver;
+import qbf.reduction.SatSolver;
 import qbf.reduction.SolvingStrategy;
 import qbf.reduction.Verifier;
 import scenario.StringScenario;
@@ -73,9 +74,13 @@ public class QbfBuilderMain {
 			metaVar = "<extractSubterms>")
 	private boolean extractSubterms;
 	
-	@Option(name = "--qbfSolver", aliases = { "-qs" }, usage = "QBF solver: SKIZZO or DEPQBF (only for QSAT strategy)",
+	@Option(name = "--qbfSolver", aliases = { "-qs" }, usage = "QBF solver: SKIZZO or DEPQBF (only for the QSAT strategy)",
 			metaVar = "<qbfSolver>")
-	private String qbfSolver = Solvers.SKIZZO.toString();
+	private String qbfSolver = QbfSolver.SKIZZO.toString();
+	
+	@Option(name = "--satSolver", aliases = { "-qss" }, usage = "SAT solver: CRYPTOMINISAT or LINGELING (for ITERATIVE_SAT, EXP_SAT and HYBRID strategies)",
+			metaVar = "<satSolver>")
+	private String satSolver = SatSolver.LINGELING.toString();
 	
 	@Option(name = "--solverParams", aliases = { "-sp" }, usage = "additional solver parameters", metaVar = "<solverParams>")
 	private String solverParams = "";
@@ -90,10 +95,6 @@ public class QbfBuilderMain {
 	@Option(name = "--bfsConstraints", aliases = { "-bfs" }, handler = BooleanOptionHandler.class,
 			usage = "include symmetry breaking BFS constraints (not for BACKTRACKING)")
 	private boolean bfsConstraints;
-	
-	@Option(name = "--inlineZetaVars", aliases = { "-iz" }, handler = BooleanOptionHandler.class,
-			usage = "inline zeta variables (only for QSAT and EXP_SAT")
-	private boolean inlineZetaVars;
 	
 	private void launcher(String[] args) throws IOException {
 		Locale.setDefault(Locale.US);
@@ -112,7 +113,7 @@ public class QbfBuilderMain {
 		}
 		
 		try {
-			Runtime.getRuntime().exec(Solvers.valueOf(qbfSolver).command);
+			Runtime.getRuntime().exec(QbfSolver.valueOf(qbfSolver).command);
 		} catch (IOException e) {
 			System.err.println("ERROR: Problems with solver execution (" + qbfSolver + ")");
 			e.printStackTrace();
@@ -171,11 +172,19 @@ public class QbfBuilderMain {
 				return;
 			}
 			
-			Solvers solver;
+			QbfSolver qbfsolver;
 			try {
-				solver = Solvers.valueOf(qbfSolver);
+				qbfsolver = QbfSolver.valueOf(qbfSolver);
 			} catch (IllegalArgumentException e) {
 				logger.warning(qbfSolver + " is not a valid QBF solver.");
+				return;
+			}
+			
+			SatSolver satsolver;
+			try {
+				satsolver = SatSolver.valueOf(satSolver);
+			} catch (IllegalArgumentException e) {
+				logger.warning(satSolver + " is not a valid SAT solver.");
 				return;
 			}
 			
@@ -192,17 +201,17 @@ public class QbfBuilderMain {
 			switch (ss) {
 			case QSAT: case EXP_SAT:
 				resultAutomaton = QbfAutomatonBuilder.build(logger, tree, formulae, size, ltlFilePath, timeout,
-						solver, solverParams, extractSubterms, isComplete, ss == SolvingStrategy.EXP_SAT,
-						bfsConstraints, inlineZetaVars, efPairs, actions);
+						qbfsolver, solverParams, extractSubterms, isComplete, ss == SolvingStrategy.EXP_SAT,
+						bfsConstraints, efPairs, actions, satsolver);
 				break;
 			case HYBRID:
 				resultAutomaton = HybridAutomatonBuilder.build(logger, tree, formulae, size, ltlFilePath, timeout,
-						solver, solverParams, extractSubterms, isComplete,
-						bfsConstraints, inlineZetaVars, efPairs, actions);
+						qbfsolver, solverParams, extractSubterms, isComplete,
+						bfsConstraints, efPairs, actions, satsolver);
 				break;
 			case ITERATIVE_SAT:
 				resultAutomaton = IterativeAutomatonBuilder.build(logger, tree, size, solverParams, isComplete,
-						timeout, resultFilePath, ltlFilePath, formulae, bfsConstraints, efPairs, actions);
+						timeout, resultFilePath, ltlFilePath, formulae, bfsConstraints, efPairs, actions, satsolver);
 				break;
 			case BACKTRACKING:
 				resultAutomaton = BacktrackingAutomatonBuilder.build(logger, tree, size, isComplete, timeout,

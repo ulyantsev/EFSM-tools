@@ -14,6 +14,7 @@ import qbf.reduction.BinaryOperations;
 import qbf.reduction.BooleanFormula;
 import qbf.reduction.BooleanVariable;
 import qbf.reduction.FormulaList;
+import qbf.reduction.SatSolver;
 import algorithms.QbfAutomatonBuilder;
 import algorithms.FormulaBuilder.EventExpressionPair;
 import bool.MyBooleanExpression;
@@ -109,7 +110,8 @@ public class BFSVariableProhibitionDeterminer {
 		for (BooleanVariable v : existVars) {
 			if (v.name.startsWith("y")) {
 				constraints.add(v);
-				List<Assignment> list = BooleanFormula.solveAsSat(constraints.assemble().toLimbooleString(), logger, "", 60).getLeft();
+				List<Assignment> list = BooleanFormula.solveAsSat(constraints.assemble().toLimbooleString(),
+						logger, "", 60, SatSolver.CRYPTOMINISAT).getLeft();
 				results.put(v.name, !list.isEmpty());
 				constraints.removeLast();
 			}

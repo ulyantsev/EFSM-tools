@@ -21,9 +21,10 @@ import qbf.reduction.Assignment;
 import qbf.reduction.BooleanFormula;
 import qbf.reduction.QuantifiedBooleanFormula;
 import qbf.reduction.QuantifiedBooleanFormula.FormulaSizeException;
+import qbf.reduction.SatSolver;
 import qbf.reduction.SolverResult;
 import qbf.reduction.SolverResult.SolverResults;
-import qbf.reduction.Solvers;
+import qbf.reduction.QbfSolver;
 import qbf.reduction.Verifier;
 import structures.Automaton;
 import structures.ScenariosTree;
@@ -31,6 +32,7 @@ import algorithms.FormulaBuilder.EventExpressionPair;
 
 public class QbfAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {	
 	public final static String PRECOMPUTED_DIR_NAME = "qbf/bfs-prohibited-ys";
+	private static final int MAX_FORMULA_SIZE = 100 * 1000 * 1000;
 	
 	public static Set<String> getForbiddenYs(int states, int events) throws FileNotFoundException {
 		Set<String> ys = new TreeSet<>();
@@ -44,9 +46,10 @@ public class QbfAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 	
 	public static Optional<Automaton> build(Logger logger, ScenariosTree tree,
 			List<LtlNode> formulae, int colorSize, String ltlFilePath,
-			int timeoutSeconds, Solvers solver, String solverParams, boolean extractSubterms,
-			boolean complete, boolean useSat, boolean bfsConstraints, boolean inlineZVars,
-			List<EventExpressionPair> efPairs, List<String> actions) throws IOException {
+			int timeoutSeconds, QbfSolver qbfSolver, String solverParams, boolean extractSubterms,
+			boolean complete, boolean useSat, boolean bfsConstraints,
+			List<EventExpressionPair> efPairs, List<String> actions,
+			SatSolver satSolver) throws IOException {
 		
 		final Verifier verifier = new Verifier(colorSize, logger, ltlFilePath,
 				EventExpressionPair.getEvents(efPairs), actions);
@@ -64,20 +67,20 @@ public class QbfAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 				deleteTrash();
 				QuantifiedBooleanFormula qbf = new QbfFormulaBuilder(logger, tree,
 						formulae, colorSize, k, extractSubterms, complete, bfsConstraints,
-						inlineZVars, efPairs, actions).getFormula(false);
+						efPairs, actions).getFormula(false);
 				final int timeLeft = (int) (finishTime - System.currentTimeMillis()) / 1000 + 1;
 				
 				String formula;
 				try {
 					formula = qbf.flatten(tree, colorSize, k, logger, efPairs, actions,
-							bfsConstraints, forbiddenYs, finishTime, false);
+							bfsConstraints, forbiddenYs, finishTime, MAX_FORMULA_SIZE);
 				} catch (FormulaSizeException | TimeLimitExceeded e) {
 					logger.info("FORMULA FOR k = " + k + " IS TOO LARGE OR REQUIRES TOO MUCH TIME TO CONSTRUCT");
 					logger.info(new SolverResult(SolverResults.UNKNOWN).toString());
 					return Optional.empty();
 				}
 				Pair<List<Assignment>, Long> solution = BooleanFormula.solveAsSat(formula,
-						logger, solverParams, timeLeft);
+						logger, solverParams, timeLeft, satSolver);
 				List<Assignment> list = solution.getLeft();
 				long time = solution.getRight();
 				if (list.isEmpty()) {
@@ -105,9 +108,9 @@ public class QbfAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 				deleteTrash();
 				QuantifiedBooleanFormula qbf = new QbfFormulaBuilder(logger, tree,
 						formulae, colorSize, k, extractSubterms, complete, bfsConstraints,
-						inlineZVars, efPairs, actions).getFormula(false);
+						efPairs, actions).getFormula(false);
 				final int timeLeft = (int) (finishTime - System.currentTimeMillis()) / 1000 + 1;
-				SolverResult ass = qbf.solve(logger, solver, solverParams, timeLeft);
+				SolverResult ass = qbf.solve(logger, qbfSolver, solverParams, timeLeft);
 				logger.info(ass.toString().split("\n")[0]);
 
 				if (ass.type() == SolverResults.SAT) {
