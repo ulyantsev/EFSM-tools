@@ -32,6 +32,7 @@ import structures.ScenariosTree;
 import structures.Transition;
 import algorithms.BacktrackingAutomatonBuilder;
 import algorithms.FormulaBuilder.EventExpressionPair;
+import algorithms.HybridAutomatonBuilder;
 import algorithms.IterativeAutomatonBuilder;
 import algorithms.QbfAutomatonBuilder;
 import bool.MyBooleanExpression;
@@ -82,7 +83,7 @@ public class QbfBuilderMain {
 	@Option(name = "--timeout", aliases = { "-to" }, usage = "solver timeout (sec)", metaVar = "<timeout>")
 	private int timeout = 60 * 60 * 24;
 	
-	@Option(name = "--strategy", aliases = { "-str" }, usage = "solving mode: QSAT, EXP_SAT, ITERATIVE_SAT, BACKTRACKING",
+	@Option(name = "--strategy", aliases = { "-str" }, usage = "solving mode: QSAT, EXP_SAT, ITERATIVE_SAT, BACKTRACKING, HYBRID",
 			metaVar = "<strategy>")
 	private String strategy = SolvingStrategy.QSAT.toString();
 	
@@ -187,17 +188,27 @@ public class QbfBuilderMain {
 				actions.add("z" + i);
 			}
 			
-			Optional<Automaton> resultAutomaton = ss == SolvingStrategy.QSAT || ss == SolvingStrategy.EXP_SAT
-					? QbfAutomatonBuilder.build(logger, tree, formulae, size, ltlFilePath, timeout,
-							solver, solverParams, extractSubterms, isComplete, ss == SolvingStrategy.EXP_SAT,
-							bfsConstraints, inlineZetaVars, efPairs, actions)
-					: ss == SolvingStrategy.ITERATIVE_SAT
-					? IterativeAutomatonBuilder.build(logger, tree, size, solverParams, isComplete,
-							timeout, resultFilePath, ltlFilePath, formulae, bfsConstraints, efPairs, actions)
-					: ss == SolvingStrategy.BACKTRACKING
-					? BacktrackingAutomatonBuilder.build(logger, tree, size, isComplete, timeout,
-							resultFilePath, ltlFilePath, formulae, efPairs, actions)
-					: null;
+			Optional<Automaton> resultAutomaton = null;
+			switch (ss) {
+			case QSAT: case EXP_SAT:
+				resultAutomaton = QbfAutomatonBuilder.build(logger, tree, formulae, size, ltlFilePath, timeout,
+						solver, solverParams, extractSubterms, isComplete, ss == SolvingStrategy.EXP_SAT,
+						bfsConstraints, inlineZetaVars, efPairs, actions);
+				break;
+			case HYBRID:
+				resultAutomaton = HybridAutomatonBuilder.build(logger, tree, formulae, size, ltlFilePath, timeout,
+						solver, solverParams, extractSubterms, isComplete,
+						bfsConstraints, inlineZetaVars, efPairs, actions);
+				break;
+			case ITERATIVE_SAT:
+				resultAutomaton = IterativeAutomatonBuilder.build(logger, tree, size, solverParams, isComplete,
+						timeout, resultFilePath, ltlFilePath, formulae, bfsConstraints, efPairs, actions);
+				break;
+			case BACKTRACKING:
+				resultAutomaton = BacktrackingAutomatonBuilder.build(logger, tree, size, isComplete, timeout,
+						resultFilePath, ltlFilePath, formulae, efPairs, actions);
+				break;
+			}
 			double executionTime = (System.currentTimeMillis() - startTime) / 1000.;
 			
 			if (!resultAutomaton.isPresent()) {
@@ -235,7 +246,7 @@ public class QbfBuilderMain {
 					if (checkBfs(resultAutomaton.get(), efPairs, logger)) {
 						logger.info("BFS");
 					} else {
-						if (ss == SolvingStrategy.ITERATIVE_SAT) {
+						if (ss == SolvingStrategy.ITERATIVE_SAT || ss == SolvingStrategy.HYBRID) {
 							logger.info("NOT BFS (possibly due to transition redirections)");
 						} else {
 							logger.severe("NOT BFS");

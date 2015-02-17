@@ -150,7 +150,7 @@ public class BacktrackingAutomatonBuilder {
 			logger.info("TOTAL TIME LIMIT EXCEEDED, ANSWER IS UNKNOWN.");
 			return Optional.empty();
 		}
-		logger.info(new SolverResult(SolverResults.UNSAT, timeoutSeconds * 1000).toString());
+		logger.info(new SolverResult(SolverResults.UNSAT).toString());
 		return Optional.empty();
 	}
 }

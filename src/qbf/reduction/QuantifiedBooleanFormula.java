@@ -118,12 +118,12 @@ public class QuantifiedBooleanFormula {
 		time = System.currentTimeMillis() - time;
 		
 		if (list.isEmpty()) {
-			return new SolverResult(time >= timeoutSeconds * 1000 ? SolverResults.UNKNOWN : SolverResults.UNSAT, (int) time);
+			return new SolverResult(time >= timeoutSeconds * 1000 ? SolverResults.UNKNOWN : SolverResults.UNSAT);
 		} else if (assignmentIsOk(list)) {
-			return new SolverResult(list, (int) time);
+			return new SolverResult(list);
 		} else {
 			logger.severe("DEPQBF PRODUCED A BAD ASSIGNMENT, GIVING UP");
-			return new SolverResult(SolverResults.UNKNOWN, (int) time);
+			return new SolverResult(SolverResults.UNKNOWN);
 		}
 	}
 	
@@ -172,7 +172,7 @@ public class QuantifiedBooleanFormula {
 			}
 			if (!certificate.exists()) {
 				logger.severe("NO CERTIFICATE PRODUCED BY OZZIKS, GIVING UP");
-				return new SolverResult(SolverResults.UNKNOWN, (int) time);
+				return new SolverResult(SolverResults.UNKNOWN);
 			}
 			
 			try (BufferedReader input = new BufferedReader(new FileReader(certificate))) {
@@ -185,20 +185,20 @@ public class QuantifiedBooleanFormula {
 
 			if (!assignmentIsOk(list)) {
 				logger.warning("NOT ALL VARS ARE PRESENT IN THE CERTIFICATE, GIVING UP");
-				return new SolverResult(SolverResults.UNKNOWN, (int) time);
+				return new SolverResult(SolverResults.UNKNOWN);
 			}
 			
-			return new SolverResult(list, (int) time);
+			return new SolverResult(list);
 		case 20:
-			return new SolverResult(SolverResults.UNSAT, (int) time);
+			return new SolverResult(SolverResults.UNSAT);
 		case 30:
-			return new SolverResult(SolverResults.UNKNOWN, (int) time);
+			return new SolverResult(SolverResults.UNKNOWN);
 		case 250:
 			logger.warning("MEMOUT");
-			return new SolverResult(SolverResults.UNKNOWN, (int) time);
+			return new SolverResult(SolverResults.UNKNOWN);
 		default:
 			logger.severe("Something went wrong during sKizzo execution, exit code = " + code);
-			return new SolverResult(SolverResults.UNKNOWN, (int) time);
+			return new SolverResult(SolverResults.UNKNOWN);
 		}
 	}
 	
@@ -231,8 +231,11 @@ public class QuantifiedBooleanFormula {
 	 */
 	public String flatten(ScenariosTree tree, int statesNum, int k, Logger logger,
 			List<EventExpressionPair> efPairs, List<String> actions, boolean bfsConstraints,
-			Set<String> forbiddenYs, long timeToFinish) throws FormulaSizeException, TimeLimitExceeded {
-		FormulaBuffer buffer = new FormulaBuffer(timeToFinish);
+			Set<String> forbiddenYs, long timeToFinish, boolean forHybridMode) throws FormulaSizeException, TimeLimitExceeded {
+		FormulaBuffer buffer = new FormulaBuffer(
+				forHybridMode ? Math.min(timeToFinish, System.currentTimeMillis() + 5000) : timeToFinish,
+				forHybridMode ? 5 * 1000 * 1000 : 100 * 1000 * 1000
+		);
 		logger.info("Number of 'forall' variables: " + forallVars.size());
 		
 		long time = System.currentTimeMillis();
@@ -321,11 +324,12 @@ public class QuantifiedBooleanFormula {
 
 	static class FormulaBuffer {
 		private final StringBuilder formula = new StringBuilder();
-		private final static int MAX_SIZE = 5 * 1000 * 1000;
+		private final int sizeLimit;
 		private final long timeToFinish;
 		
-		public FormulaBuffer(long timeToFinish) {
-			this.timeToFinish = Math.min(timeToFinish, System.currentTimeMillis() + 5000);
+		public FormulaBuffer(long timeToFinish, int sizeLimit) {
+			this.timeToFinish = timeToFinish;
+			this.sizeLimit = sizeLimit;
 		}
 		
 		public void append(BooleanFormula f) throws FormulaSizeException, TimeLimitExceeded {
@@ -336,7 +340,7 @@ public class QuantifiedBooleanFormula {
 				formula.append("&");
 			}
 			formula.append(f.toLimbooleString());
-			if (formula.length() > MAX_SIZE) {
+			if (formula.length() > sizeLimit) {
 				throw new FormulaSizeException();
 			}
 		}

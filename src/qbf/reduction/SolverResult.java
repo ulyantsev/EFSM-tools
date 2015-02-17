@@ -11,26 +11,19 @@ import java.util.stream.Collectors;
 public class SolverResult {
 	private final SolverResults result;
 	private final List<Assignment> assignments;
-	private final int timeMillis;
 	
 	public enum SolverResults {
 		SAT, UNSAT, UNKNOWN
 	}
 	
-	public SolverResult(List<Assignment> assignments, int timeMillis) {
+	public SolverResult(List<Assignment> assignments) {
 		result = SolverResults.SAT;
 		this.assignments = assignments.stream().sorted().collect(Collectors.toList());
-		this.timeMillis = timeMillis;
 	}
 	
-	public SolverResult(SolverResults result, int timeMillis) {
+	public SolverResult(SolverResults result) {
 		this.result = result;
 		assignments = Collections.emptyList();
-		this.timeMillis = timeMillis;
-	}
-	
-	public int timeMillis() {
-		return timeMillis;
 	}
 	
 	public SolverResults type() {
@@ -43,7 +36,7 @@ public class SolverResult {
 	
 	@Override
 	public String toString() {
-		return result + " [finished in " + timeMillis + "ms]" + (result == SolverResults.SAT ?
+		return result + (result == SolverResults.SAT ?
 			assignments.toString().replaceAll(", ", "\n").replace("[", "\n").replace("]", "") : "");
 	}
 }

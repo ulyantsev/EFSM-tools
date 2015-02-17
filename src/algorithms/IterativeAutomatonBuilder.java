@@ -37,8 +37,8 @@ public class IterativeAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 		final long time = solution.getRight();
 		
 		final SolverResult ass = list.isEmpty()
-			? new SolverResult(time >= timeoutSeconds * 1000 ? SolverResults.UNKNOWN : SolverResults.UNSAT, (int) time)
-			: new SolverResult(list, (int) time);
+			? new SolverResult(time >= timeoutSeconds * 1000 ? SolverResults.UNKNOWN : SolverResults.UNSAT)
+			: new SolverResult(list);
 		logger.info(ass.toString().split("\n")[0]);
 
 		if (ass.type() == SolverResults.SAT) {
