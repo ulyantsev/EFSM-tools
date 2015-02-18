@@ -33,14 +33,6 @@ public class HybridAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 	private static final int MILLIS_FOR_FORMULA = 5000;
 	private static final int SEC_FOR_SOLVER = 5; // >= 2
 	
-	private static void addProhibitionConstraints(FormulaList constraints, List<Assignment> list) {
-		constraints.add(BinaryOperation.and(list.stream()
-				.filter(va -> va.var.name.startsWith("y"))
-				.map(v -> v.value ? v.var : v.var.not())
-				.collect(Collectors.toList())
-		).not());
-	}
-	
 	public static Optional<Automaton> build(Logger logger, ScenariosTree tree,
 			List<LtlNode> formulae, int colorSize, String ltlFilePath,
 			int timeoutSeconds, QbfSolver qbfSolver, String solverParams, boolean extractSubterms,
@@ -103,6 +95,7 @@ public class HybridAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 			final List<Assignment> list = solution.getLeft();
 			final long time = solution.getRight();
 			final boolean unknown = time >= timeLeftForSolver * 1000;
+			
 			if (!maxKFound && list.isEmpty() && unknown && k > 0) {
 				// too much time
 				logger.info("FORMULA FOR k = " + k + " IS TOO HARD FOR THE SOLVER, STARTING ITERATIONS");
@@ -110,35 +103,41 @@ public class HybridAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 				maxKFound = true;
 				curFormula = formulaBackup;
 				continue;
-			} else if (list.isEmpty()) {
+			}
+			
+			if (list.isEmpty()) {
 				logger.info(unknown ? "UNKNOWN" : "UNSAT");
 				return Optional.empty();
-			} else {
-				final Automaton a = constructAutomatonFromAssignment(logger,
-						list, tree, colorSize, true).getLeft();
-				if (verifier.verify(a)) {
-					logger.info("SAT");
-					return Optional.of(a);
-				}
-				
-				// more search
-				final Automaton b = constructAutomatonFromAssignment(logger,
-						list, tree, colorSize, false).getLeft();
-				try {
-					new AutomatonCompleter(verifier, b, efPairs, actions, finishTime).ensureCompleteness();
-				} catch (AutomatonFound e) {
-					logger.info("SAT");
-					logger.info("A MORE THOROUGH SEARCH SUCCEEDED");
-					return Optional.of(b);
-				} catch (TimeLimitExceeded e) {
-					logger.info("TIME LIMIT EXCEEDED");
-					return Optional.empty();
-				}
-				// no complete extensions, continue search
-
-				// add only ys
-				addProhibitionConstraints(additionalConstraints, list);
 			}
+			
+			final Automaton a = constructAutomatonFromAssignment(logger,
+					list, tree, colorSize, true).getLeft();
+			if (verifier.verify(a)) {
+				logger.info("SAT");
+				return Optional.of(a);
+			}
+			
+			// more search
+			final Pair<Automaton, List<Assignment>> p = constructAutomatonFromAssignment(logger,
+					list, tree, colorSize, false);
+			final Automaton b = p.getLeft();
+			try {
+				new AutomatonCompleter(verifier, b, efPairs, actions, finishTime).ensureCompleteness();
+			} catch (AutomatonFound e) {
+				logger.info("SAT");
+				logger.info("A MORE THOROUGH SEARCH SUCCEEDED");
+				return Optional.of(b);
+			} catch (TimeLimitExceeded e) {
+				logger.info("TIME LIMIT EXCEEDED");
+				return Optional.empty();
+			}
+			// no complete extensions, continue search
+
+			// add only ys
+			additionalConstraints.add(BinaryOperation.and(p.getRight().stream()
+					.map(v -> v.value ? v.var : v.var.not())
+					.collect(Collectors.toList())
+			).not());
 		}
 	}
 }
