@@ -62,10 +62,6 @@ public class QbfBuilderMain {
 			metaVar = "<GV file>")
 	private String treeFilePath;
 
-	@Option(name = "--complete", aliases = { "-c" }, handler = BooleanOptionHandler.class,
-			usage = "generate automaton which has a transition for all (event, expression) pairs")
-	private boolean isComplete;
-
 	@Option(name = "--ltl", aliases = { "-lt" }, usage = "file with LTL properties", metaVar = "<file>")
 	private String ltlFilePath;
 	
@@ -91,10 +87,6 @@ public class QbfBuilderMain {
 	@Option(name = "--strategy", aliases = { "-str" }, usage = "solving mode: QSAT, EXP_SAT, ITERATIVE_SAT, BACKTRACKING, HYBRID",
 			metaVar = "<strategy>")
 	private String strategy = SolvingStrategy.QSAT.toString();
-	
-	@Option(name = "--bfsConstraints", aliases = { "-bfs" }, handler = BooleanOptionHandler.class,
-			usage = "include symmetry breaking BFS constraints (not for BACKTRACKING)")
-	private boolean bfsConstraints;
 	
 	private void launcher(String[] args) throws IOException {
 		Locale.setDefault(Locale.US);
@@ -201,20 +193,20 @@ public class QbfBuilderMain {
 			switch (ss) {
 			case QSAT: case EXP_SAT:
 				resultAutomaton = QbfAutomatonBuilder.build(logger, tree, formulae, size, ltlFilePath, timeout,
-						qbfsolver, solverParams, extractSubterms, isComplete, ss == SolvingStrategy.EXP_SAT,
-						bfsConstraints, efPairs, actions, satsolver);
+						qbfsolver, solverParams, extractSubterms, ss == SolvingStrategy.EXP_SAT,
+						efPairs, actions, satsolver);
 				break;
 			case HYBRID:
 				resultAutomaton = HybridAutomatonBuilder.build(logger, tree, formulae, size, ltlFilePath, timeout,
-						qbfsolver, solverParams, extractSubterms, isComplete,
-						bfsConstraints, efPairs, actions, satsolver);
+						qbfsolver, solverParams, extractSubterms,
+						efPairs, actions, satsolver);
 				break;
 			case ITERATIVE_SAT:
-				resultAutomaton = IterativeAutomatonBuilder.build(logger, tree, size, solverParams, isComplete,
-						timeout, resultFilePath, ltlFilePath, formulae, bfsConstraints, efPairs, actions, satsolver);
+				resultAutomaton = IterativeAutomatonBuilder.build(logger, tree, size, solverParams,
+						timeout, resultFilePath, ltlFilePath, formulae, efPairs, actions, satsolver);
 				break;
 			case BACKTRACKING:
-				resultAutomaton = BacktrackingAutomatonBuilder.build(logger, tree, size, isComplete, timeout,
+				resultAutomaton = BacktrackingAutomatonBuilder.build(logger, tree, size, timeout,
 						resultFilePath, ltlFilePath, formulae, efPairs, actions);
 				break;
 			}
@@ -251,7 +243,7 @@ public class QbfBuilderMain {
 					logger.severe("NOT VERIFIED");
 				}
 				// bfs check
-				if (bfsConstraints && ss != SolvingStrategy.BACKTRACKING) {
+				if (ss != SolvingStrategy.BACKTRACKING) {
 					if (checkBfs(resultAutomaton.get(), efPairs, logger)) {
 						logger.info("BFS");
 					} else {

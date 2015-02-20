@@ -30,7 +30,6 @@ public abstract class FormulaBuilder {
 	protected final List<EventExpressionPair> efPairs;
 	protected final ScenariosTree tree;
 	protected final boolean eventCompleteness;
-	protected final boolean bfsConstraints;
 	protected final List<BooleanVariable> existVars = new ArrayList<>();
 	
 	public static class EventExpressionPair {
@@ -62,7 +61,7 @@ public abstract class FormulaBuilder {
 		return efPairs;
 	}*/
 	
-	public FormulaBuilder(int colorSize, ScenariosTree tree, boolean eventCompleteness, boolean bfsConstraints,
+	public FormulaBuilder(int colorSize, ScenariosTree tree, boolean eventCompleteness,
 			List<EventExpressionPair> efPairs, List<String> actions) {
 		this.colorSize = colorSize;
 		this.events = EventExpressionPair.getEvents(efPairs);
@@ -70,7 +69,6 @@ public abstract class FormulaBuilder {
 		this.efPairs = efPairs;
 		this.tree = tree;
 		this.eventCompleteness = eventCompleteness;
-		this.bfsConstraints = bfsConstraints;
 	}
 	
 	protected BooleanVariable xVar(int state, int color) {
@@ -153,25 +151,6 @@ public abstract class FormulaBuilder {
 			}
 		}
 		return constraints.assemble("scenario constraints: each tree node has at most one color");
-	}
-	
-	// if there exists z, then it exists for some transition (unnecessary if completeness is enabled)
-	private BooleanFormula actionTransitionExistenceConstraints() {
-		FormulaList constraints = new FormulaList(BinaryOperations.AND);
-		
-		for (int i1 = 0; i1 < colorSize; i1++) {
-			for (String action : actions) {
-				for (EventExpressionPair p : efPairs) {
-					FormulaList options = new FormulaList(BinaryOperations.OR);
-					for (int i2 = 0; i2 < colorSize; i2++) {
-						options.add(yVar(i1, i2, p.event, p.expression));
-					}
-					constraints.add(zVar(i1, action, p.event, p.expression).implies(options.assemble()));
-				}
-			}
-		}
-		
-		return constraints.assemble("additional scenario constraints: if there exists z, then it exists for some transition");
 	}
 	
 	// z's are consistent with scenarios
@@ -293,21 +272,17 @@ public abstract class FormulaBuilder {
 		}
 		
 		if (includeActionConstrains) {
+			assert eventCompleteness;
 			constraints.add(actionScenarioConsistencyConstraints());
-			if (!eventCompleteness) {
-				constraints.add(actionTransitionExistenceConstraints());
-			}
 		} else {
 			constraints.add(eachNodeHasColorConstraints());
 		}
 		
-		if (bfsConstraints) {
-			addBFSVars();
-			constraints.add(parentConstraints());
-			constraints.add(pDefinitions());
-			constraints.add(tDefinitions());
-			constraints.add(childrenOrderConstraints());
-		}
+		addBFSVars();
+		constraints.add(parentConstraints());
+		constraints.add(pDefinitions());
+		constraints.add(tDefinitions());
+		constraints.add(childrenOrderConstraints());
 		
 		return constraints;
 	}

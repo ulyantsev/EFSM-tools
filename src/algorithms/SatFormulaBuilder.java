@@ -10,9 +10,9 @@ import qbf.reduction.BooleanFormula;
 import structures.ScenariosTree;
 
 public class SatFormulaBuilder extends FormulaBuilder {
-	public SatFormulaBuilder(ScenariosTree tree, int colorSize, boolean eventCompleteness,
-			boolean bfsConstraints, List<EventExpressionPair> efPairs, List<String> actions) {
-		super(colorSize, tree, eventCompleteness, bfsConstraints, efPairs, actions);
+	public SatFormulaBuilder(ScenariosTree tree, int colorSize,
+			List<EventExpressionPair> efPairs, List<String> actions) {
+		super(colorSize, tree, false, efPairs, actions);
 	}
 
 	public BooleanFormula getFormula() {

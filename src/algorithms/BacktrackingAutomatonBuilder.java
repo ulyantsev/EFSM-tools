@@ -22,7 +22,6 @@ import bool.MyBooleanExpression;
 public class BacktrackingAutomatonBuilder {
 	private static class TraverseState {
 		private final int colorSize;
-		private final boolean searchComplete;
 		private final List<EventExpressionPair> efPairs;
 		private final List<String> actions;
 		private final long finishTime;
@@ -38,7 +37,7 @@ public class BacktrackingAutomatonBuilder {
 		
 		private final Verifier verifier;
 		
-		public TraverseState(ScenariosTree tree, Verifier verifier, int colorSize, long finishTime, boolean searchComplete,
+		public TraverseState(ScenariosTree tree, Verifier verifier, int colorSize, long finishTime,
 				List<EventExpressionPair> efPairs, List<String> actions) {
 			this.colorSize = colorSize;
 			this.automaton = new Automaton(colorSize);
@@ -49,7 +48,6 @@ public class BacktrackingAutomatonBuilder {
 			this.verifier = verifier;
 			this.finishTime = finishTime;
 			incomingTransitionNumbers = new int[colorSize];
-			this.searchComplete = searchComplete;
 			this.efPairs = efPairs;
 			this.actions = actions;
 		}
@@ -118,11 +116,8 @@ public class BacktrackingAutomatonBuilder {
 					
 					if (findNewFrontier() != -1 && verify()) {
 						if (frontier.isEmpty()) {
-							if (searchComplete) {
-								new AutomatonCompleter(verifier, automaton, efPairs, actions, finishTime).ensureCompleteness();
-							} else {
-								throw new AutomatonFound(automaton);
-							}
+							new AutomatonCompleter(verifier, automaton, efPairs,
+									actions, finishTime).ensureCompleteness();
 						} else {
 							backtracking();
 						}
@@ -137,13 +132,14 @@ public class BacktrackingAutomatonBuilder {
 		}
 	}
 	
-	public static Optional<Automaton> build(Logger logger, ScenariosTree tree, int colorSize, boolean complete,
+	public static Optional<Automaton> build(Logger logger, ScenariosTree tree, int colorSize,
 			int timeoutSeconds, String resultFilePath, String ltlFilePath, List<LtlNode> formulae,
 			List<EventExpressionPair> efPairs, List<String> actions) throws IOException {
 		long finishTime = System.currentTimeMillis() + timeoutSeconds * 1000;
 		try {
-			new TraverseState(tree, new Verifier(colorSize, logger, ltlFilePath, EventExpressionPair.getEvents(efPairs), actions),
-					colorSize, finishTime, complete, efPairs, actions).backtracking();
+			new TraverseState(tree, new Verifier(colorSize, logger, ltlFilePath,
+					EventExpressionPair.getEvents(efPairs), actions),
+					colorSize, finishTime, efPairs, actions).backtracking();
 		} catch (AutomatonFound e) {
 			return Optional.of(e.automaton);
 		} catch (TimeLimitExceeded e) {

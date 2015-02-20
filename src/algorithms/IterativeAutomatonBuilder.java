@@ -67,10 +67,10 @@ public class IterativeAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 		return a;
 	}
 	
-	public static Optional<Automaton> build(Logger logger, ScenariosTree tree, int colorSize, String solverParams, boolean complete,
-			int timeoutSeconds, String resultFilePath, String ltlFilePath, List<LtlNode> formulae, boolean bfsConstraints,
+	public static Optional<Automaton> build(Logger logger, ScenariosTree tree, int colorSize, String solverParams,
+			int timeoutSeconds, String resultFilePath, String ltlFilePath, List<LtlNode> formulae,
 			List<EventExpressionPair> efPairs, List<String> actions, SatSolver satSolver) throws IOException {
-		final BooleanFormula initialBf = new SatFormulaBuilder(tree, colorSize, false, bfsConstraints, efPairs, actions).getFormula();
+		final BooleanFormula initialBf = new SatFormulaBuilder(tree, colorSize, efPairs, actions).getFormula();
 		final FormulaList additionalConstraints = new FormulaList(BinaryOperations.AND);
 		
 		final long finishTime = System.currentTimeMillis() + timeoutSeconds * 1000;
@@ -83,22 +83,17 @@ public class IterativeAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 					secondsLeft, tree, colorSize, additionalConstraints, satSolver);
 			if (automaton.isPresent()) {
 				if (verifier.verify(automaton.get())) {
-					if (complete) {
-						try {
-							// extra transition search with verification
-							new AutomatonCompleter(verifier, automaton.get(), efPairs, actions, finishTime).ensureCompleteness();
-						} catch (AutomatonFound e) {
-							// verified, complete
-							return reportResult(logger, iterations, Optional.of(e.automaton));
-						} catch (TimeLimitExceeded e) {
-							// terminate the loop
-							break;
-						}
-						// no complete extensions, continue search
-					} else {
-						// verified, completeness is not required
-						return reportResult(logger, iterations, automaton);
+					try {
+						// extra transition search with verification
+						new AutomatonCompleter(verifier, automaton.get(), efPairs, actions, finishTime).ensureCompleteness();
+					} catch (AutomatonFound e) {
+						// verified, complete
+						return reportResult(logger, iterations, Optional.of(e.automaton));
+					} catch (TimeLimitExceeded e) {
+						// terminate the loop
+						break;
 					}
+					// no complete extensions, continue search
 				}
 			} else {
 				// no solution due to UNSAT or UNKNOWN, stop search

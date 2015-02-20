@@ -22,7 +22,7 @@ print_found_by_prefix() {
 }
 
 for instance_type in tr fa; do
-    for prefix in HYBR*_$instance_type EXP*_$instance_type QSAT*_$instance_type ITER*_$instance_type BACK*_$instance_type; do
+    for prefix in HYBR*_$instance_type EXP*_$instance_type ITER*_$instance_type QSAT*_$instance_type BACK*_$instance_type; do
         ls evaluation/$prefix* 1>/dev/null 2>/dev/null
         if [[ $? != 0 ]]; then
             continue

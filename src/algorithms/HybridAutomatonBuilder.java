@@ -36,7 +36,6 @@ public class HybridAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 	public static Optional<Automaton> build(Logger logger, ScenariosTree tree,
 			List<LtlNode> formulae, int colorSize, String ltlFilePath,
 			int timeoutSeconds, QbfSolver qbfSolver, String solverParams, boolean extractSubterms,
-			boolean complete, boolean bfsConstraints,
 			List<EventExpressionPair> efPairs, List<String> actions, SatSolver satSolver) throws IOException {
 		
 		final Verifier verifier = new Verifier(colorSize, logger, ltlFilePath,
@@ -67,12 +66,12 @@ public class HybridAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 				// try next k
 				k++;
 				QuantifiedBooleanFormula qbf = new QbfFormulaBuilder(logger, tree,
-						formulae, colorSize, k, extractSubterms, complete, bfsConstraints,
+						formulae, colorSize, k, extractSubterms, true,
 						efPairs, actions).getFormula(true);
 				long time = System.currentTimeMillis();
 				try {
 					formula = qbf.flatten(tree, colorSize, k, logger, efPairs, actions,
-							bfsConstraints, forbiddenYs, Math.min(finishTime, System.currentTimeMillis() + MILLIS_FOR_FORMULA),
+							forbiddenYs, Math.min(finishTime, System.currentTimeMillis() + MILLIS_FOR_FORMULA),
 							MAX_FORMULA_SIZE);
 				} catch (FormulaSizeException | TimeLimitExceeded e) {
 					logger.info("FORMULA FOR k = " + k + " IS TOO LARGE OR REQUIRES TOO MUCH TIME TO CONSTRUCT, STARTING ITERATIONS");

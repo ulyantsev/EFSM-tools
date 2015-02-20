@@ -41,9 +41,9 @@ public class QbfFormulaBuilder extends FormulaBuilder {
 	private final boolean extractSubterms;
 
 	public QbfFormulaBuilder(Logger logger, ScenariosTree tree, List<LtlNode> formulae, int colorSize, int depth,
-			boolean extractSubterms, boolean eventCompleteness, boolean bfsConstraints,
+			boolean extractSubterms, boolean eventCompleteness,
 			List<EventExpressionPair> efPairs, List<String> actions) {
-		super(colorSize, tree, eventCompleteness, bfsConstraints, efPairs, actions);
+		super(colorSize, tree, eventCompleteness, efPairs, actions);
 		BooleanVariable.eraseVariables();
 		this.logger = logger;
 		this.formulae = formulae;

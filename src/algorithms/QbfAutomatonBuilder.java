@@ -47,8 +47,7 @@ public class QbfAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 	public static Optional<Automaton> build(Logger logger, ScenariosTree tree,
 			List<LtlNode> formulae, int colorSize, String ltlFilePath,
 			int timeoutSeconds, QbfSolver qbfSolver, String solverParams, boolean extractSubterms,
-			boolean complete, boolean useSat, boolean bfsConstraints,
-			List<EventExpressionPair> efPairs, List<String> actions,
+			boolean useSat, List<EventExpressionPair> efPairs, List<String> actions,
 			SatSolver satSolver) throws IOException {
 		
 		final Verifier verifier = new Verifier(colorSize, logger, ltlFilePath,
@@ -66,14 +65,14 @@ public class QbfAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 				logger.info("TRYING k = " + k);
 				deleteTrash();
 				QuantifiedBooleanFormula qbf = new QbfFormulaBuilder(logger, tree,
-						formulae, colorSize, k, extractSubterms, complete, bfsConstraints,
+						formulae, colorSize, k, extractSubterms, true,
 						efPairs, actions).getFormula(false);
 				final int timeLeft = (int) (finishTime - System.currentTimeMillis()) / 1000 + 1;
 				
 				String formula;
 				try {
 					formula = qbf.flatten(tree, colorSize, k, logger, efPairs, actions,
-							bfsConstraints, forbiddenYs, finishTime, MAX_FORMULA_SIZE);
+							forbiddenYs, finishTime, MAX_FORMULA_SIZE);
 				} catch (FormulaSizeException | TimeLimitExceeded e) {
 					logger.info("FORMULA FOR k = " + k + " IS TOO LARGE OR REQUIRES TOO MUCH TIME TO CONSTRUCT");
 					logger.info(new SolverResult(SolverResults.UNKNOWN).toString());
@@ -107,7 +106,7 @@ public class QbfAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 				logger.info("TRYING k = " + k);
 				deleteTrash();
 				QuantifiedBooleanFormula qbf = new QbfFormulaBuilder(logger, tree,
-						formulae, colorSize, k, extractSubterms, complete, bfsConstraints,
+						formulae, colorSize, k, extractSubterms, true,
 						efPairs, actions).getFormula(false);
 				final int timeLeft = (int) (finishTime - System.currentTimeMillis()) / 1000 + 1;
 				SolverResult ass = qbf.solve(logger, qbfSolver, solverParams, timeLeft);
