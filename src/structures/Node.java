@@ -48,4 +48,9 @@ public class Node {
     public int transitionsCount() {
         return transitions.size();
     }
+    
+    @Override
+    public String toString() {
+    	return String.valueOf(number);
+    }
 }

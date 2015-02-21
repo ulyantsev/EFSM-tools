@@ -29,7 +29,7 @@ public class VerifierTester {
 		try (PrintWriter resultPrintWriter = new PrintWriter(new File("formula.ltl"))) {
 			resultPrintWriter.println(formula);
 		}
-		Verifier v = new Verifier(2, logger, "formula.ltl", Arrays.asList("A"), Arrays.asList("z0", "z1"));
+		Verifier v = new Verifier(2, logger, "formula.ltl", Arrays.asList("A"), Arrays.asList("z0", "z1"), 0);
 		v.verify(automaton);
 	}
 	

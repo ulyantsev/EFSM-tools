@@ -4,42 +4,75 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Scanner;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-import bool.MyBooleanExpression;
 import actions.StringActions;
-
+import bool.MyBooleanExpression;
 
 public class StringScenario {
-    
-    public static List<StringScenario> loadScenarios(String filepath) throws ParseException, FileNotFoundException {
+	private static String removeVariables(String input, int varNumber) throws ParseException {
+		final Pattern p = Pattern.compile("(\\w+)\\[([^\\[\\]]+)\\]");
+		final StringBuilder sb = new StringBuilder();
+		final Matcher m = p.matcher(input);
+		int lastPos = 0;
+		while (m.find()) {
+			final String event = m.group(1);
+			sb.append(input.substring(lastPos, m.start()));
+			final List<String> expansion = new ArrayList<>();
+			final MyBooleanExpression expr = MyBooleanExpression.get(m.group(2));
+			final List<String> varAssignments = expr.getSatVarCombinations(varNumber);
+			for (String varAssignment : varAssignments) {
+				expansion.add(event + varAssignment);
+			}
+			lastPos = m.end();
+			String strToAppend = String.join("|", expansion) + "[1]";
+			sb.append(strToAppend);
+		}
+		sb.append(input.substring(lastPos, input.length()));
+		return sb.toString();
+	}
+	
+	public static List<StringScenario> loadScenarios(String filepath) throws ParseException, FileNotFoundException {
+		return loadScenarios(filepath, -1);
+	}
+	
+	/*
+	 * varNumber = -1 for no variable removal
+	 */
+    public static List<StringScenario> loadScenarios(String filepath, int varNumber) throws ParseException, FileNotFoundException {
         List<StringScenario> ans = new ArrayList<>();
         
-        Scanner in = new Scanner(new File(filepath));
-
-        String inp = "";
-        while (in.hasNextLine()) {
-            String s = in.nextLine().trim();
-            if (inp.equals("") && s.equals("")) {
-                continue;
-            }
-
-            if (inp.equals("")) {
-                inp = s;
-            } else {
-                ans.add(new StringScenario(inp, s));
-                inp = "";
-            }
+        try (Scanner in = new Scanner(new File(filepath))) {
+	        String inp = "";
+	        while (in.hasNextLine()) {
+	            String s = in.nextLine().trim();
+	            if (varNumber != -1) {
+	            	s = removeVariables(s, varNumber);
+	            }
+	            if (inp.isEmpty() && s.isEmpty()) {
+	                continue;
+	            }
+	
+	            if (inp.isEmpty()) {
+	                inp = s;
+	            } else {
+	                ans.add(new StringScenario(inp, s));
+	                inp = "";
+	            }
+	        }
         }
 
-        in.close();
         return ans;
     }
     
     boolean isPositive;
     
-    private ArrayList<String> events = new ArrayList<>();
+    private ArrayList<List<String>> events = new ArrayList<>();
     
     private ArrayList<MyBooleanExpression> expressions = new ArrayList<>();
     
@@ -56,9 +89,13 @@ public class StringScenario {
     									events.size() + " " + expressions.size() + " " + actions.size());
     	}
 
-    	this.events = new ArrayList<>(events);
+    	this.events = new ArrayList<>(Collections.singletonList(events));
     	this.expressions = new ArrayList<>(expressions);
     	this.actions = new ArrayList<>(actions);
+    }
+    
+    private List<String> splitEvent(String event) {
+    	return Arrays.asList(event.split("\\|"));
     }
     
     public StringScenario(String input, String output) throws ParseException {
@@ -75,10 +112,10 @@ public class StringScenario {
             
             if (events[i].contains("[")) {
                 String[] p = events[i].split("\\[");
-                this.events.add(p[0].trim());
+                this.events.add(splitEvent(p[0].trim()));
                 expr = MyBooleanExpression.get(p[1].replace(']', ' '));
             } else {
-                this.events.add(events[i].trim());
+                this.events.add(splitEvent(events[i].trim()));
                 expr = MyBooleanExpression.get("1");            
             }
             
@@ -94,7 +131,7 @@ public class StringScenario {
         return events.size();
     }
     
-    public String getEvent(int pos) {
+    public List<String> getEvents(int pos) {
         return events.get(pos);
     }
     

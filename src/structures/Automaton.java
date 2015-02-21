@@ -1,11 +1,11 @@
 package structures;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 import actions.StringActions;
 import bool.MyBooleanExpression;
-
 import scenario.StringScenario;
 
 public class Automaton {
@@ -78,10 +78,19 @@ public class Automaton {
     public boolean isCompliesWithScenario(StringScenario scenario) {
         Node node = startState;
         for (int pos = 0; pos < scenario.size(); pos++) {
-            node = getNext(node, scenario.getEvent(pos), scenario.getExpr(pos), scenario.getActions(pos));
-            if (node == null) {
-                return false;
-            }
+        	List<Node> newNodes = new ArrayList<>();
+        	// multi-edge support
+        	for (String e : scenario.getEvents(pos)) {
+	            Node newNode = getNext(node, e, scenario.getExpr(pos), scenario.getActions(pos));
+	            if (newNode == null) {
+	                return false;
+	            }
+	            newNodes.add(newNode);
+        	}
+        	node = newNodes.get(0);
+        	if (new HashSet<>(newNodes).size() > 1) {
+        		return false;
+        	}
         }
         return true;
     }
@@ -90,8 +99,8 @@ public class Automaton {
         Node node = startState;
         int missed = 0;
         for (int pos = 0; pos < scenario.size(); pos++) {
-            StringActions nextActions = getNextActions(node, scenario.getEvent(pos), scenario.getExpr(pos));
-            node = getNextNode(node, scenario.getEvent(pos), scenario.getExpr(pos));
+            StringActions nextActions = getNextActions(node, scenario.getEvents(pos).get(0), scenario.getExpr(pos));
+            node = getNextNode(node, scenario.getEvents(pos).get(0), scenario.getExpr(pos));
             if (node == null) {
                 return missed + scenario.size() - pos;
             }

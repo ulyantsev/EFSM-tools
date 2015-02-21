@@ -1,15 +1,20 @@
 package bool;
 
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.regex.Pattern;
 
 public class MyBooleanExpression {
-    private static Map<String, MyBooleanExpression> expressions = new TreeMap<String, MyBooleanExpression>();
+    private static Map<String, MyBooleanExpression> expressions = new TreeMap<>();
 
     public static MyBooleanExpression get(String repr) throws ParseException {
         if (expressions.containsKey(repr)) {
@@ -41,7 +46,7 @@ public class MyBooleanExpression {
         Pattern pattern = Pattern.compile("[()~&|=>+]");
         String[] vars = pattern.split(expression);
 
-        HashSet<String> varsSet = new HashSet<String>(Arrays.asList(vars));
+        HashSet<String> varsSet = new HashSet<>(Arrays.asList(vars));
         varsSet.removeAll(Arrays.asList(new String[] { "", "1", "0" }));
         this.variables = varsSet.toArray(new String[0]);
 
@@ -60,7 +65,7 @@ public class MyBooleanExpression {
         BooleanExpression booleanExpression = new BooleanExpression(shortExpr);
         Map<Map<String, Boolean>, Map<BooleanExpression, Boolean>> truthTable = new TruthTable(booleanExpression)
                 .getResults();
-        this.truthTable = new HashMap<Map<String, Boolean>, Boolean>();
+        this.truthTable = new HashMap<>();
 
         for (Map<String, Boolean> map : truthTable.keySet()) {
             Map<BooleanExpression, Boolean> booleanMap = truthTable.get(map);
@@ -70,6 +75,53 @@ public class MyBooleanExpression {
         }
     }
 
+    private List<Map<String, Boolean>> extendForVars(Map<String, Boolean> varAssignment, Set<Integer> varIndices) {
+    	if (varIndices.isEmpty()) {
+    		return Collections.singletonList(varAssignment);
+    	}
+    	int index = varIndices.iterator().next();
+    	varIndices.remove(index);
+    	List<Map<String, Boolean>> prevAns = extendForVars(varAssignment, varIndices);
+    	varIndices.add(index);
+    	List<Map<String, Boolean>> ans = new ArrayList<>();
+    	for (Map<String, Boolean> m : prevAns) {
+    		Map<String, Boolean> m0 = new HashMap<>(m);
+    		Map<String, Boolean> m1 = new HashMap<>(m);
+    		m0.put(String.valueOf((char) ('a' + index)), false);
+    		m1.put(String.valueOf((char) ('a' + index)), true);
+    		ans.add(m0);
+    		ans.add(m1);
+    	}
+    	return ans;
+    }
+    
+    private List<Map<String, Boolean>> extendForAllVars(Map<String, Boolean> varAssignment, int varNum) {
+    	Set<Integer> remainingNumbers = new TreeSet<>();
+    	for (int i = 0; i < varNum; i++) {
+    		if (!varAssignment.containsKey(String.valueOf((char) ('a' + i)))) {
+    			remainingNumbers.add(i);
+    		}
+    	}
+    	return extendForVars(varAssignment, remainingNumbers);
+    }
+    
+    public List<String> getSatVarCombinations(int varNum) {
+    	List<String> combinations = new ArrayList<>();
+    	for (Map.Entry<Map<String, Boolean>, Boolean> entry : truthTable.entrySet()) {
+    		if (entry.getValue()) {
+    			List<Map<String, Boolean>> varAssignments = extendForAllVars(entry.getKey(), varNum);
+    			for (Map<String, Boolean> varAssignment : varAssignments) {
+	    			char[] assignment = new char[varNum];
+	        		for (int i = 0; i < varNum; i++) {
+	        			assignment[i] = varAssignment.get(String.valueOf((char) ('a' + i))) ? '1' : '0';
+	        		}
+	    			combinations.add(String.valueOf(assignment));
+    			}
+    		}
+    	}
+    	return combinations;
+    }
+    
     public String[] getVariables() {
         return variables;
     }
@@ -116,7 +168,7 @@ public class MyBooleanExpression {
 
     public boolean hasSolutionWith(MyBooleanExpression other) {
         if (hasSolutionWithRes == null) {
-            hasSolutionWithRes = new HashMap<MyBooleanExpression, Boolean>();
+            hasSolutionWithRes = new HashMap<>();
         }
 
         if (hasSolutionWithRes.containsKey(other)) {

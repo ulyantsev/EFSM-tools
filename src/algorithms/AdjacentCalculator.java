@@ -12,14 +12,14 @@ import structures.Transition;
 public class AdjacentCalculator {
     
     public static Map<Node, Set<Node>> getAdjacent(ScenariosTree tree) {
-        Map<Node, Set<Node>> ans = new HashMap<Node, Set<Node>>();
+        Map<Node, Set<Node>> ans = new HashMap<>();
         calcNode(tree, tree.getRoot(), ans);
         return ans;
     }
     
     private static void calcNode(ScenariosTree tree, Node node, Map<Node, Set<Node>> ans) {
         if (!ans.containsKey(node)) {
-            HashSet<Node> adjacentSet = new HashSet<Node>();
+            HashSet<Node> adjacentSet = new HashSet<>();
             ans.put(node, adjacentSet);
             if (node.transitionsCount() == 0) {
                 return;

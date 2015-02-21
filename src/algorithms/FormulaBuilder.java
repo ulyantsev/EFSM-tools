@@ -51,16 +51,6 @@ public abstract class FormulaBuilder {
 		}
 	}
 	
-	/*public static List<EventExpressionPair> getEventExpressionPairs(ScenariosTree tree) {
-		final List<EventExpressionPair> efPairs = new ArrayList<>();
-		for (String event : tree.getEvents()) {
-			for (MyBooleanExpression f : tree.getPairsEventExpression().get(event)) {
-				efPairs.add(new EventExpressionPair(event, f));
-			}
-		}
-		return efPairs;
-	}*/
-	
 	public FormulaBuilder(int colorSize, ScenariosTree tree, boolean eventCompleteness,
 			List<EventExpressionPair> efPairs, List<String> actions) {
 		this.colorSize = colorSize;

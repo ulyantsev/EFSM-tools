@@ -51,6 +51,9 @@ public class QbfBuilderMain {
 	@Option(name = "--actionNumber", aliases = { "-an" }, usage = "number of actions (z0, z1, ...)", metaVar = "<actionNumber>", required = true)
 	private int actionNumber;
 	
+	@Option(name = "--varNumber", aliases = { "-vn" }, usage = "number of variables (x0, x1, ...)", metaVar = "<varNumber>")
+	private int varNumber = 0;
+	
 	@Option(name = "--log", aliases = { "-l" }, usage = "write log to this file", metaVar = "<file>")
 	private String logFilePath;
 
@@ -131,11 +134,12 @@ public class QbfBuilderMain {
 		ScenariosTree tree = new ScenariosTree();
 		for (String filePath : arguments) {
 			try {
-				tree.load(filePath);
+				tree.load(filePath, varNumber);
 				logger.info("Loaded scenarios from " + filePath);
 				logger.info("  Total scenarios tree size: " + tree.nodesCount());
-			} catch (Exception e) {
+			} catch (IOException | ParseException e) {
 				logger.warning("Can't load scenarios from file " + filePath);
+				e.printStackTrace();
 				return;
 			}
 		}
@@ -182,35 +186,45 @@ public class QbfBuilderMain {
 			
 			List<EventExpressionPair> efPairs = new ArrayList<>();
 			for (int i = 0; i < eventNumber; i++) {
-				efPairs.add(new EventExpressionPair(String.valueOf((char) ('A' +  i)), MyBooleanExpression.get("1")));
+				final String event = String.valueOf((char) ('A' +  i));
+				for (int j = 0; j < 1 << varNumber; j++) {
+					StringBuilder sb = new StringBuilder(event);
+					for (int pos = 0; pos < varNumber; pos++) {
+						sb.append(((j >> pos) & 1) == 1 ? 1 : 0);
+					}
+					efPairs.add(new EventExpressionPair(sb.toString(), MyBooleanExpression.get("1")));
+				}
 			}
+			
 			List<String> actions = new ArrayList<>();
 			for (int i = 0; i < actionNumber; i++) {
 				actions.add("z" + i);
 			}
 			
 			Optional<Automaton> resultAutomaton = null;
+			final Verifier verifier = new Verifier(size, logger, ltlFilePath, EventExpressionPair.getEvents(efPairs), actions, varNumber);
+			final long finishTime = System.currentTimeMillis() + timeout * 1000;
 			switch (ss) {
 			case QSAT: case EXP_SAT:
-				resultAutomaton = QbfAutomatonBuilder.build(logger, tree, formulae, size, ltlFilePath, timeout,
+				resultAutomaton = QbfAutomatonBuilder.build(logger, tree, formulae, size, ltlFilePath,
 						qbfsolver, solverParams, extractSubterms, ss == SolvingStrategy.EXP_SAT,
-						efPairs, actions, satsolver);
+						efPairs, actions, satsolver, verifier, finishTime);
 				break;
 			case HYBRID:
-				resultAutomaton = HybridAutomatonBuilder.build(logger, tree, formulae, size, ltlFilePath, timeout,
+				resultAutomaton = HybridAutomatonBuilder.build(logger, tree, formulae, size, ltlFilePath,
 						qbfsolver, solverParams, extractSubterms,
-						efPairs, actions, satsolver);
+						efPairs, actions, satsolver, verifier, finishTime);
 				break;
 			case ITERATIVE_SAT:
 				resultAutomaton = IterativeAutomatonBuilder.build(logger, tree, size, solverParams,
-						timeout, resultFilePath, ltlFilePath, formulae, efPairs, actions, satsolver);
+						resultFilePath, ltlFilePath, formulae, efPairs, actions, satsolver, verifier, finishTime);
 				break;
 			case BACKTRACKING:
-				resultAutomaton = BacktrackingAutomatonBuilder.build(logger, tree, size, timeout,
-						resultFilePath, ltlFilePath, formulae, efPairs, actions);
+				resultAutomaton = BacktrackingAutomatonBuilder.build(logger, tree, size,
+						resultFilePath, ltlFilePath, formulae, efPairs, actions, verifier, finishTime);
 				break;
 			}
-			double executionTime = (System.currentTimeMillis() - startTime) / 1000.;
+			final double executionTime = (System.currentTimeMillis() - startTime) / 1000.;
 			
 			if (!resultAutomaton.isPresent()) {
 				logger.info("Automaton with " + size + " states NOT FOUND!");
@@ -218,9 +232,9 @@ public class QbfBuilderMain {
 				logger.info("Automaton with " + size + " states WAS FOUND!");
 				
 				// test compliance
-				List<StringScenario> scenarios = new ArrayList<>();
+				final List<StringScenario> scenarios = new ArrayList<>();
 				for (String scenarioPath : arguments) {
-					scenarios.addAll(StringScenario.loadScenarios(scenarioPath));
+					scenarios.addAll(StringScenario.loadScenarios(scenarioPath, varNumber));
 				}
 				
 				if (scenarios.stream().allMatch(resultAutomaton.get()::isCompliesWithScenario)) {
@@ -236,7 +250,7 @@ public class QbfBuilderMain {
 					logger.warning("File " + resultFilePath + " not found: " + e.getMessage());
 				}
 				// verification
-				boolean verified = new Verifier(size, logger, ltlFilePath, EventExpressionPair.getEvents(efPairs), actions).verify(resultAutomaton.get());
+				boolean verified = verifier.verify(resultAutomaton.get());
 				if (verified) {
 					logger.info("VERIFIED");
 				} else {

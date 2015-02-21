@@ -103,7 +103,6 @@ public class ScenariosGenerator {
             int sumLength, Random random) {
     	int[] length = getRandomLength(scenariosCount, minLength, maxLength, sumLength, random);
 
-    	
     	List<Collection<Transition>> visitedTransitions = new ArrayList<>(); 
     	for (Node node : automaton.getStates()) {
     		visitedTransitions.add(new ArrayList<>());

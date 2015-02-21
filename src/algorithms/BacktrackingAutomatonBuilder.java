@@ -133,13 +133,11 @@ public class BacktrackingAutomatonBuilder {
 	}
 	
 	public static Optional<Automaton> build(Logger logger, ScenariosTree tree, int colorSize,
-			int timeoutSeconds, String resultFilePath, String ltlFilePath, List<LtlNode> formulae,
-			List<EventExpressionPair> efPairs, List<String> actions) throws IOException {
-		long finishTime = System.currentTimeMillis() + timeoutSeconds * 1000;
+			String resultFilePath, String ltlFilePath, List<LtlNode> formulae,
+			List<EventExpressionPair> efPairs, List<String> actions, Verifier verifier,
+			long finishTime) throws IOException {
 		try {
-			new TraverseState(tree, new Verifier(colorSize, logger, ltlFilePath,
-					EventExpressionPair.getEvents(efPairs), actions),
-					colorSize, finishTime, efPairs, actions).backtracking();
+			new TraverseState(tree, verifier, colorSize, finishTime, efPairs, actions).backtracking();
 		} catch (AutomatonFound e) {
 			return Optional.of(e.automaton);
 		} catch (TimeLimitExceeded e) {

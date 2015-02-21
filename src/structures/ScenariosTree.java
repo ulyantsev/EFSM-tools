@@ -23,7 +23,14 @@ public class ScenariosTree {
     }
 
     public void load(String filepath) throws FileNotFoundException, ParseException {
-        for (StringScenario scenario : StringScenario.loadScenarios(filepath)) {
+    	load(filepath, -1);
+    }
+    
+    /*
+     * varNumber = -1 for no variable removal
+     */
+    public void load(String filepath, int varNumber) throws FileNotFoundException, ParseException {
+        for (StringScenario scenario : StringScenario.loadScenarios(filepath, varNumber)) {
             addScenario(scenario);
         }
     }
@@ -31,25 +38,34 @@ public class ScenariosTree {
     private void addScenario(StringScenario scenario) throws ParseException {
         Node node = root;
         for (int i = 0; i < scenario.size(); i++) {
-            addTransition(node, scenario.getEvent(i), scenario.getExpr(i), scenario.getActions(i));
-            node = node.getDst(scenario.getEvent(i), scenario.getExpr(i));
+            addTransitions(node, scenario.getEvents(i), scenario.getExpr(i), scenario.getActions(i));
+            node = node.getDst(scenario.getEvents(i).get(0), scenario.getExpr(i));
         }
     }
 
-    private void addTransition(Node src, String event, MyBooleanExpression expr,
+    /*
+     * If events.size() > 1, will add multiple edges towards the same destination.
+     */
+    private void addTransitions(Node src, List<String> events, MyBooleanExpression expr,
     		StringActions actions) throws ParseException {
-        if (src.hasTransition(event, expr)) {
-            Transition t = src.getTransition(event, expr);
-            if (!t.getActions().equals(actions)) {
-                throw new ParseException("bad transition add in node "
-                		+ src.getNumber() + ": " + t.getActions()
-                        + " != " + actions, 0);
-            }
-        } else {
-            Node dst = new Node(nodes.size());
-            nodes.add(dst);
-            src.addTransition(event, expr, actions, dst);
-        }
+    	assert !events.isEmpty();
+    	Node dst = null;
+    	for (String e : events) {
+	        if (src.hasTransition(e, expr)) {
+	            Transition t = src.getTransition(e, expr);
+	            if (!t.getActions().equals(actions)) {
+	                throw new ParseException("bad transition add in node "
+	                		+ src.getNumber() + ": " + t.getActions()
+	                        + " != " + actions, 0);
+	            }
+	        } else {
+	        	if (dst == null) {
+	        		dst = new Node(nodes.size());
+	        		nodes.add(dst);
+	        	}
+	            src.addTransition(e, expr, actions, dst);
+	        }
+    	}
     }
 
     public List<Node> getNodes() {

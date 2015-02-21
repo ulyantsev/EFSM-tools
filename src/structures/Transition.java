@@ -51,6 +51,7 @@ public class Transition {
 		return expr;
 	}
 	
+	@Override
 	public String toString() {
 		return src.getNumber() + " -> " + dst.getNumber()
 				+ "  " + event + " [" + expr.toString() + "] " + actions.toString();

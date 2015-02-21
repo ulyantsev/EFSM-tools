@@ -1,12 +1,16 @@
+
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
+
+import org.apache.commons.lang3.tuple.Pair;
 
 import qbf.reduction.Assignment;
 import qbf.reduction.BinaryOperation;
@@ -16,24 +20,23 @@ import qbf.reduction.BooleanVariable;
 import qbf.reduction.FormulaList;
 import qbf.reduction.SatSolver;
 import algorithms.QbfAutomatonBuilder;
-import algorithms.FormulaBuilder.EventExpressionPair;
-import bool.MyBooleanExpression;
 
 public class BFSVariableProhibitionDeterminer {
-
 	public static void main(String[] args) throws ParseException, IOException {
 		new File(QbfAutomatonBuilder.PRECOMPUTED_DIR_NAME).mkdir();
+		Map<Pair<Integer, Integer>, Map<String, Boolean>> allRes = new HashMap<>();
 		for (int statesNum = 2; statesNum <= 10; statesNum++) {
-			for (int eventNum = 2; eventNum <= 5; eventNum++) {
+			for (int eventNum = 2; eventNum <= 40; eventNum++) {
 				System.out.println(statesNum + " " + eventNum);
-				List<EventExpressionPair> l = new ArrayList<>();
-				for (int i = 0; i < eventNum; i++) {
-					l.add(new EventExpressionPair((char)('A' + i) + "", MyBooleanExpression.get("1")));
+				int effectiveEventNum = Math.max(2, Math.min(eventNum, statesNum - 2));
+				Map<String, Boolean> res = allRes.get(Pair.of(statesNum, effectiveEventNum));
+				if (res == null) {
+					BFSVariableProhibitionDeterminer d = new BFSVariableProhibitionDeterminer(statesNum, effectiveEventNum);
+					Logger logger = Logger.getLogger("Logger");
+					logger.setUseParentHandlers(false);
+					res = d.check(logger);
+					allRes.put(Pair.of(statesNum, eventNum), res);
 				}
-				BFSVariableProhibitionDeterminer d = new BFSVariableProhibitionDeterminer(statesNum, l);
-				Logger logger = Logger.getLogger("Logger");
-				logger.setUseParentHandlers(false);
-				Map<String, Boolean> res = d.check(logger);
 				try (PrintWriter pw = new PrintWriter(new File(QbfAutomatonBuilder.PRECOMPUTED_DIR_NAME + "/" + statesNum + "_" + eventNum))) {
 					for (Map.Entry<String, Boolean> e : res.entrySet()) {
 						if (!e.getValue()) {
@@ -47,11 +50,11 @@ public class BFSVariableProhibitionDeterminer {
 	
 	private final List<BooleanVariable> existVars = new ArrayList<>();
 	private final FormulaList constraints = new FormulaList(BinaryOperations.AND);
-	private final List<EventExpressionPair> efPairs;
+	private final int eventNum;
 	private final int colorSize;
 	
-	private BooleanVariable yVar(int from, int to, String event, MyBooleanExpression f) {
-		return BooleanVariable.byName("y", from, to, event, f).get();
+	private BooleanVariable yVar(int from, int to, int event) {
+		return BooleanVariable.byName("y", from, to, event).get();
 	}
 	
 	private BooleanVariable pVar(int j, int i) {
@@ -62,16 +65,16 @@ public class BFSVariableProhibitionDeterminer {
 		return BooleanVariable.byName("t", i, j).get();
 	}
 	
-	private BooleanVariable mVar(String event, MyBooleanExpression f, int i, int j) {
-		return BooleanVariable.byName("m", event, f, i, j).get();
+	private BooleanVariable mVar(int event, int i, int j) {
+		return BooleanVariable.byName("m", event, i, j).get();
 	}
 	
 	private void addVariables() {
 		// y
 		for (int nodeColor = 0; nodeColor < colorSize; nodeColor++) {
-			for (EventExpressionPair p : efPairs) {
+			for (int e = 0; e < eventNum; e++) {
 				for (int childColor = 0; childColor < colorSize; childColor++) {
-					existVars.add(new BooleanVariable("y", nodeColor, childColor, p.event, p.expression));
+					existVars.add(new BooleanVariable("y", nodeColor, childColor, e));
 				}
 			}
 		}	
@@ -82,20 +85,20 @@ public class BFSVariableProhibitionDeterminer {
 				existVars.add(new BooleanVariable("t", i, j));
 			}
 		}
-		if (efPairs.size() > 2) {
+		if (eventNum > 2) {
 			// m_efij
-			for (EventExpressionPair p : efPairs) {
+			for (int e = 0; e < eventNum; e++) {
 				for (int i = 0; i < colorSize; i++) {
 					for (int j = i + 1; j < colorSize; j++) {
-						existVars.add(new BooleanVariable("m", p.event, p.expression, i, j));
+						existVars.add(new BooleanVariable("m", e, i, j));
 					}
 				}
 			}
 		}
 	}
 	
-	public BFSVariableProhibitionDeterminer(int colorSize, List<EventExpressionPair> efPairs) {
-		this.efPairs = efPairs;
+	public BFSVariableProhibitionDeterminer(int colorSize, int eventNum) {
+		this.eventNum = eventNum;
 		this.colorSize = colorSize;
 		addVariables();
 		parentConstraints();
@@ -111,7 +114,7 @@ public class BFSVariableProhibitionDeterminer {
 			if (v.name.startsWith("y")) {
 				constraints.add(v);
 				List<Assignment> list = BooleanFormula.solveAsSat(constraints.assemble().toLimbooleString(),
-						logger, "", 60, SatSolver.CRYPTOMINISAT).getLeft();
+						logger, "", 100000, SatSolver.CRYPTOMINISAT).getLeft();
 				results.put(v.name, !list.isEmpty());
 				constraints.removeLast();
 			}
@@ -120,12 +123,12 @@ public class BFSVariableProhibitionDeterminer {
 	}
 	
 	private void notMoreThanOneEdgeConstraints() {
-		for (EventExpressionPair p : efPairs) {
+		for (int e = 0; e < eventNum; e++) {
 			for (int parentColor = 0; parentColor < colorSize; parentColor++) {
 				for (int color1 = 0; color1 < colorSize; color1++) {
-					BooleanVariable v1 = yVar(parentColor, color1, p.event, p.expression);
+					BooleanVariable v1 = yVar(parentColor, color1, e);
 					for (int color2 = 0; color2 < color1; color2++) {
-						BooleanVariable v2 = yVar(parentColor, color2, p.event, p.expression);
+						BooleanVariable v2 = yVar(parentColor, color2, e);
 						constraints.add(v1.not().or(v2.not()));
 					}
 				}
@@ -168,8 +171,8 @@ public class BFSVariableProhibitionDeterminer {
 		for (int i = 0; i < colorSize; i++) {
 			for (int j = i + 1; j < colorSize; j++) {
 				FormulaList definition = new FormulaList(BinaryOperations.OR);
-				for (EventExpressionPair p : efPairs) {
-					definition.add(yVar(i, j, p.event, p.expression));
+				for (int e = 0; e < eventNum; e++) {
+					definition.add(yVar(i, j, e));
 				}
 				constraints.add(tVar(i, j).equivalent(definition.assemble()));
 			}
@@ -177,34 +180,29 @@ public class BFSVariableProhibitionDeterminer {
 	}
 	
 	private void childrenOrderConstraints() {
-		if (efPairs.size() > 2) {
+		if (eventNum > 2) {
 			// m definitions
 			for (int i = 0; i < colorSize; i++) {
 				for (int j = i + 1; j < colorSize; j++) {
-					for (int pairIndex1 = 0; pairIndex1 < efPairs.size(); pairIndex1++) {
-						EventExpressionPair p1 = efPairs.get(pairIndex1);
+					for (int e1 = 0; e1 < eventNum; e1++) {
 						FormulaList definition = new FormulaList(BinaryOperations.AND);
-						definition.add(yVar(i, j, p1.event, p1.expression));
-						for (int pairIndex2 = pairIndex1 - 1; pairIndex2 >= 0; pairIndex2--) {
-							EventExpressionPair p2 = efPairs.get(pairIndex2);
-							definition.add(yVar(i, j, p2.event, p2.expression).not());
+						definition.add(yVar(i, j, e1));
+						for (int e2 = e1 - 1; e2 >= 0; e2--) {
+							definition.add(yVar(i, j, e2).not());
 						}
-						constraints.add(mVar(p1.event, p1.expression, i, j).equivalent(definition.assemble()));
+						constraints.add(mVar(e1, i, j).equivalent(definition.assemble()));
 					}
 				}
 			}
 			// children constraints
 			for (int i = 0; i < colorSize; i++) {
 				for (int j = i + 1; j < colorSize - 1; j++) {
-					for (int k = 0; k < efPairs.size(); k++) {
-						for (int n = k + 1; n < efPairs.size(); n++) {
+					for (int k = 0; k < eventNum; k++) {
+						for (int n = k + 1; n < eventNum; n++) {
 							constraints.add(
 									BinaryOperation.and(
-											pVar(j, i), pVar(j + 1, i),
-											mVar(efPairs.get(n).event, efPairs.get(n).expression, i, j)
-									).implies(
-											mVar(efPairs.get(k).event, efPairs.get(k).expression, i, j + 1).not()
-									)
+											pVar(j, i), pVar(j + 1, i), mVar(n, i, j)
+									).implies(mVar(k, i, j + 1).not())
 							);
 						}
 					}
@@ -214,8 +212,7 @@ public class BFSVariableProhibitionDeterminer {
 			for (int i = 0; i < colorSize; i++) {
 				for (int j = i + 1; j < colorSize - 1; j++) {
 					constraints.add(
-							pVar(j, i).and(pVar(j + 1, i))
-							.implies(yVar(i, j, efPairs.get(0).event, efPairs.get(0).expression))
+							pVar(j, i).and(pVar(j + 1, i)).implies(yVar(i, j, 0))
 					);
 				}
 			}

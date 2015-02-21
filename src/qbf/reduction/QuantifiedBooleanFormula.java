@@ -270,7 +270,7 @@ public class QuantifiedBooleanFormula {
 					final int i1 = lastStateIndex;
 					final EventExpressionPair ef = efPairs.get(lastPairIndex);
 					final int i2 = i;
-					if (forbiddenYs.contains("y_" + i1 + "_" + i2 + "_" + ef.event + "_" + ef.expression)) {
+					if (forbiddenYs.contains("y_" + i1 + "_" + i2 + "_" + lastPairIndex)) {
 						// this y is forbidden due to BFS constraints
 						continue;
 					}

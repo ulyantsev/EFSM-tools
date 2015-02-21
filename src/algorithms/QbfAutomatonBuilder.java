@@ -46,14 +46,9 @@ public class QbfAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 	
 	public static Optional<Automaton> build(Logger logger, ScenariosTree tree,
 			List<LtlNode> formulae, int colorSize, String ltlFilePath,
-			int timeoutSeconds, QbfSolver qbfSolver, String solverParams, boolean extractSubterms,
+			QbfSolver qbfSolver, String solverParams, boolean extractSubterms,
 			boolean useSat, List<EventExpressionPair> efPairs, List<String> actions,
-			SatSolver satSolver) throws IOException {
-		
-		final Verifier verifier = new Verifier(colorSize, logger, ltlFilePath,
-				EventExpressionPair.getEvents(efPairs), actions);
-		final long finishTime = System.currentTimeMillis() + timeoutSeconds * 1000;
-		
+			SatSolver satSolver, Verifier verifier, long finishTime) throws IOException {		
 		if (useSat) {
 			final Set<String> forbiddenYs = getForbiddenYs(colorSize, efPairs.size());
 			logger.info("FORBIDDEN YS: " + forbiddenYs);
