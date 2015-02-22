@@ -37,7 +37,7 @@ public class HybridAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 			List<LtlNode> formulae, int colorSize, String ltlFilePath,
 			QbfSolver qbfSolver, String solverParams, boolean extractSubterms,
 			List<EventExpressionPair> efPairs, List<String> actions, SatSolver satSolver,
-			Verifier verifier, long finishTime) throws IOException {		
+			Verifier verifier, long finishTime, boolean complete) throws IOException {		
 		int k = -1;
 		boolean maxKFound = false;
 		int iteration = 1;
@@ -62,7 +62,7 @@ public class HybridAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 				// try next k
 				k++;
 				QuantifiedBooleanFormula qbf = new QbfFormulaBuilder(logger, tree,
-						formulae, colorSize, k, extractSubterms, true,
+						formulae, colorSize, k, extractSubterms, complete,
 						efPairs, actions).getFormula(true);
 				long time = System.currentTimeMillis();
 				try {
@@ -105,26 +105,28 @@ public class HybridAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 				return Optional.empty();
 			}
 			
-			final Automaton a = constructAutomatonFromAssignment(logger,
-					list, tree, colorSize, true).getLeft();
+			final Pair<Automaton, List<Assignment>> p = constructAutomatonFromAssignment(logger,
+					list, tree, colorSize, complete);
+			final Automaton a = p.getLeft();
 			if (verifier.verify(a)) {
 				logger.info("SAT");
 				return Optional.of(a);
 			}
 			
-			// more search
-			final Pair<Automaton, List<Assignment>> p = constructAutomatonFromAssignment(logger,
-					list, tree, colorSize, false);
-			final Automaton b = p.getLeft();
-			try {
-				new AutomatonCompleter(verifier, b, efPairs, actions, finishTime).ensureCompleteness();
-			} catch (AutomatonFound e) {
-				logger.info("SAT");
-				logger.info("A MORE THOROUGH SEARCH SUCCEEDED");
-				return Optional.of(b);
-			} catch (TimeLimitExceeded e) {
-				logger.info("TIME LIMIT EXCEEDED");
-				return Optional.empty();
+			if (!complete) {
+				// more search
+				final Automaton b = constructAutomatonFromAssignment(logger,
+						list, tree, colorSize, false).getLeft();
+				try {
+					new AutomatonCompleter(verifier, b, efPairs, actions, finishTime).ensureCompleteness();
+				} catch (AutomatonFound e) {
+					logger.info("SAT");
+					logger.info("A MORE THOROUGH SEARCH SUCCEEDED");
+					return Optional.of(b);
+				} catch (TimeLimitExceeded e) {
+					logger.info("TIME LIMIT EXCEEDED");
+					return Optional.empty();
+				}
 			}
 			// no complete extensions, continue search
 

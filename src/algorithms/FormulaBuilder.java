@@ -29,7 +29,7 @@ public abstract class FormulaBuilder {
 	protected final List<String> actions;
 	protected final List<EventExpressionPair> efPairs;
 	protected final ScenariosTree tree;
-	protected final boolean eventCompleteness;
+	protected final boolean complete;
 	protected final List<BooleanVariable> existVars = new ArrayList<>();
 	
 	public static class EventExpressionPair {
@@ -51,14 +51,14 @@ public abstract class FormulaBuilder {
 		}
 	}
 	
-	public FormulaBuilder(int colorSize, ScenariosTree tree, boolean eventCompleteness,
+	public FormulaBuilder(int colorSize, ScenariosTree tree, boolean complete,
 			List<EventExpressionPair> efPairs, List<String> actions) {
 		this.colorSize = colorSize;
 		this.events = EventExpressionPair.getEvents(efPairs);
 		this.actions = actions;
 		this.efPairs = efPairs;
 		this.tree = tree;
-		this.eventCompleteness = eventCompleteness;
+		this.complete = complete;
 	}
 	
 	protected BooleanVariable xVar(int state, int color) {
@@ -230,7 +230,7 @@ public abstract class FormulaBuilder {
 				}
 			}
 		}
-		return constraints.assemble("scenario constraints: transition constraints (...)");
+		return constraints.assemble("scenario constraints: connection between y's and z's");
 	}
 	
 	// induce complete FSMs
@@ -248,6 +248,28 @@ public abstract class FormulaBuilder {
 		return constraints.assemble("induce a complete FSM");
 	}
 	
+	// if there exists z, then it exists for some transition (unnecessary if
+	// completeness is enabled)
+	private BooleanFormula actionTransitionExistenceConstraints() {
+		FormulaList constraints = new FormulaList(BinaryOperations.AND);
+
+		for (int i1 = 0; i1 < colorSize; i1++) {
+			for (String action : actions) {
+				for (EventExpressionPair p : efPairs) {
+					FormulaList options = new FormulaList(BinaryOperations.OR);
+					for (int i2 = 0; i2 < colorSize; i2++) {
+						options.add(yVar(i1, i2, p.event, p.expression));
+					}
+					constraints.add(zVar(i1, action, p.event, p.expression)
+							.implies(options.assemble()));
+				}
+			}
+		}
+
+		return constraints
+				.assemble("additional scenario constraints: if there exists z, then it exists for some transition");
+	}
+	
 	protected FormulaList scenarioConstraints(boolean includeActionConstrains) {
 		FormulaList constraints = new FormulaList(BinaryOperations.AND);
 		// first node has color 0
@@ -257,13 +279,15 @@ public abstract class FormulaBuilder {
 		constraints.add(notMoreThanOneEdgeConstraints());
 		constraints.add(transitionConstraints());
 		
-		if (eventCompleteness) {
+		if (complete) {
 			constraints.add(eventCompletenessConstraints());
 		}
 		
 		if (includeActionConstrains) {
-			assert eventCompleteness;
-			constraints.add(actionScenarioConsistencyConstraints());
+			 constraints.add(actionScenarioConsistencyConstraints());
+             if (!complete) {
+            	 constraints.add(actionTransitionExistenceConstraints());
+             }
 		} else {
 			constraints.add(eachNodeHasColorConstraints());
 		}

@@ -25,6 +25,7 @@ public class BacktrackingAutomatonBuilder {
 		private final List<EventExpressionPair> efPairs;
 		private final List<String> actions;
 		private final long finishTime;
+		private final boolean complete;
 		
 		private final Automaton automaton;
 		private int[] coloring;
@@ -38,7 +39,7 @@ public class BacktrackingAutomatonBuilder {
 		private final Verifier verifier;
 		
 		public TraverseState(ScenariosTree tree, Verifier verifier, int colorSize, long finishTime,
-				List<EventExpressionPair> efPairs, List<String> actions) {
+				List<EventExpressionPair> efPairs, List<String> actions, boolean complete) {
 			this.colorSize = colorSize;
 			this.automaton = new Automaton(colorSize);
 			this.coloring = new int[tree.nodesCount()];
@@ -50,6 +51,7 @@ public class BacktrackingAutomatonBuilder {
 			incomingTransitionNumbers = new int[colorSize];
 			this.efPairs = efPairs;
 			this.actions = actions;
+			this.complete = complete;
 		}
 		
 		private boolean verify() {
@@ -116,8 +118,12 @@ public class BacktrackingAutomatonBuilder {
 					
 					if (findNewFrontier() != -1 && verify()) {
 						if (frontier.isEmpty()) {
-							new AutomatonCompleter(verifier, automaton, efPairs,
-									actions, finishTime).ensureCompleteness();
+							if (complete) {
+								new AutomatonCompleter(verifier, automaton, efPairs,
+										actions, finishTime).ensureCompleteness();
+							} else {
+								throw new AutomatonFound(automaton);
+							}
 						} else {
 							backtracking();
 						}
@@ -135,9 +141,9 @@ public class BacktrackingAutomatonBuilder {
 	public static Optional<Automaton> build(Logger logger, ScenariosTree tree, int colorSize,
 			String resultFilePath, String ltlFilePath, List<LtlNode> formulae,
 			List<EventExpressionPair> efPairs, List<String> actions, Verifier verifier,
-			long finishTime) throws IOException {
+			long finishTime, boolean complete) throws IOException {
 		try {
-			new TraverseState(tree, verifier, colorSize, finishTime, efPairs, actions).backtracking();
+			new TraverseState(tree, verifier, colorSize, finishTime, efPairs, actions, complete).backtracking();
 		} catch (AutomatonFound e) {
 			return Optional.of(e.automaton);
 		} catch (TimeLimitExceeded e) {

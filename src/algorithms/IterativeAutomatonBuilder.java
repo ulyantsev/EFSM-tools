@@ -70,7 +70,7 @@ public class IterativeAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 	public static Optional<Automaton> build(Logger logger, ScenariosTree tree, int colorSize, String solverParams,
 			String resultFilePath, String ltlFilePath, List<LtlNode> formulae,
 			List<EventExpressionPair> efPairs, List<String> actions, SatSolver satSolver,
-			Verifier verifier, long finishTime) throws IOException {
+			Verifier verifier, long finishTime, boolean complete) throws IOException {
 		final BooleanFormula initialBf = new SatFormulaBuilder(tree, colorSize, efPairs, actions).getFormula();
 		final FormulaList additionalConstraints = new FormulaList(BinaryOperations.AND);
 		
@@ -82,6 +82,9 @@ public class IterativeAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 					secondsLeft, tree, colorSize, additionalConstraints, satSolver);
 			if (automaton.isPresent()) {
 				if (verifier.verify(automaton.get())) {
+					if (!complete) {
+						return reportResult(logger, iterations, automaton);
+					}
 					try {
 						// extra transition search with verification
 						new AutomatonCompleter(verifier, automaton.get(), efPairs, actions, finishTime).ensureCompleteness();

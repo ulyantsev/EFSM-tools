@@ -91,6 +91,10 @@ public class QbfBuilderMain {
 			metaVar = "<strategy>")
 	private String strategy = SolvingStrategy.QSAT.toString();
 	
+	@Option(name = "--complete", aliases = { "-c" }, handler = BooleanOptionHandler.class,
+            usage = "generate automaton which has a transition for all (event, expression) pairs")
+	private boolean complete;
+	
 	private void launcher(String[] args) throws IOException {
 		Locale.setDefault(Locale.US);
 
@@ -154,7 +158,7 @@ public class QbfBuilderMain {
 		}
 		
 		try {
-			List<LtlNode> formulae = LtlParser.loadProperties(ltlFilePath);
+			List<LtlNode> formulae = LtlParser.loadProperties(ltlFilePath, varNumber);
 			logger.info("LTL formula from " + ltlFilePath);
 			
 			long startTime = System.currentTimeMillis();
@@ -208,20 +212,20 @@ public class QbfBuilderMain {
 			case QSAT: case EXP_SAT:
 				resultAutomaton = QbfAutomatonBuilder.build(logger, tree, formulae, size, ltlFilePath,
 						qbfsolver, solverParams, extractSubterms, ss == SolvingStrategy.EXP_SAT,
-						efPairs, actions, satsolver, verifier, finishTime);
+						efPairs, actions, satsolver, verifier, finishTime, complete);
 				break;
 			case HYBRID:
 				resultAutomaton = HybridAutomatonBuilder.build(logger, tree, formulae, size, ltlFilePath,
 						qbfsolver, solverParams, extractSubterms,
-						efPairs, actions, satsolver, verifier, finishTime);
+						efPairs, actions, satsolver, verifier, finishTime, complete);
 				break;
 			case ITERATIVE_SAT:
 				resultAutomaton = IterativeAutomatonBuilder.build(logger, tree, size, solverParams,
-						resultFilePath, ltlFilePath, formulae, efPairs, actions, satsolver, verifier, finishTime);
+						resultFilePath, ltlFilePath, formulae, efPairs, actions, satsolver, verifier, finishTime, complete);
 				break;
 			case BACKTRACKING:
 				resultAutomaton = BacktrackingAutomatonBuilder.build(logger, tree, size,
-						resultFilePath, ltlFilePath, formulae, efPairs, actions, verifier, finishTime);
+						resultFilePath, ltlFilePath, formulae, efPairs, actions, verifier, finishTime, complete);
 				break;
 			}
 			final double executionTime = (System.currentTimeMillis() - startTime) / 1000.;

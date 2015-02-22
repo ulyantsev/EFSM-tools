@@ -13,6 +13,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import qbf.egorov.ltl.LtlParseException;
+import qbf.egorov.ltl.LtlParser;
 import qbf.egorov.ltl.buchi.translator.TranslationException;
 import qbf.egorov.transducer.FST;
 import qbf.egorov.transducer.verifier.VerifierFactory;
@@ -35,6 +36,7 @@ public class Verifier {
 		this.logger = logger;
 		this.size = size;
 		ltlFormulae = loadFormulae(ltlPath, varNumber);
+		logger.info(ltlFormulae.toString());
 		String joinedFormula = ltlFormulae.isEmpty()
 				? "true"
 				: "(" + String.join(") and (", ltlFormulae) + ")";
@@ -65,7 +67,7 @@ public class Verifier {
 		List<String> formulae = new ArrayList<>();
 		try (Scanner in = new Scanner(new File(path))) {
 			while (in.hasNext()) {
-				formulae.add(duplicateEvents(in.nextLine(), varNumber));
+				formulae.add(LtlParser.duplicateEvents(in.nextLine(), varNumber));
 			}
 		} catch (FileNotFoundException e) {
 			logger.warning("File " + path + " not found: " + e.getMessage());
@@ -124,32 +126,5 @@ public class Verifier {
 		verifier.configureStateMachine(fst);
 		final int result = verifier.verify()[0];
 		return result == numberOfUsedTransitions;
-	}
-	
-	private String duplicateEvents(String formula, int varNumber) {
-		final Pattern p = Pattern.compile("wasEvent\\(ep\\.(\\w+)\\)");
-		final Matcher m = p.matcher(formula);
-		final StringBuilder sb = new StringBuilder();
-		int lastPos = 0;
-		while (m.find()) {
-			final String event = m.group(1);
-			sb.append(formula.substring(lastPos, m.start()));
-			final List<String> expansion = new ArrayList<>();
-			for (int j = 0; j < 1 << varNumber; j++) {
-				char[] arr = new char[varNumber];
-				for (int pos = 0; pos < varNumber; pos++) {
-					arr[pos] = ((j >> pos) & 1) == 1 ? '1' : '0';
-				}
-				expansion.add("wasEvent(ep." + event + String.valueOf(arr) + ")");
-			}
-			lastPos = m.end();
-			String strToAppend = String.join(" || ", expansion);
-			if (expansion.size() > 1) {
-				strToAppend = "(" + strToAppend + ")";
-			}
-			sb.append(strToAppend);
-		}
-		sb.append(formula.substring(lastPos, formula.length()));
-		return sb.toString();
 	}
 }

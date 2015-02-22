@@ -48,7 +48,7 @@ public class QbfAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 			List<LtlNode> formulae, int colorSize, String ltlFilePath,
 			QbfSolver qbfSolver, String solverParams, boolean extractSubterms,
 			boolean useSat, List<EventExpressionPair> efPairs, List<String> actions,
-			SatSolver satSolver, Verifier verifier, long finishTime) throws IOException {		
+			SatSolver satSolver, Verifier verifier, long finishTime, boolean complete) throws IOException {		
 		if (useSat) {
 			final Set<String> forbiddenYs = getForbiddenYs(colorSize, efPairs.size());
 			logger.info("FORBIDDEN YS: " + forbiddenYs);
@@ -60,7 +60,7 @@ public class QbfAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 				logger.info("TRYING k = " + k);
 				deleteTrash();
 				QuantifiedBooleanFormula qbf = new QbfFormulaBuilder(logger, tree,
-						formulae, colorSize, k, extractSubterms, true,
+						formulae, colorSize, k, extractSubterms, complete,
 						efPairs, actions).getFormula(false);
 				final int timeLeft = (int) (finishTime - System.currentTimeMillis()) / 1000 + 1;
 				
@@ -101,7 +101,7 @@ public class QbfAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 				logger.info("TRYING k = " + k);
 				deleteTrash();
 				QuantifiedBooleanFormula qbf = new QbfFormulaBuilder(logger, tree,
-						formulae, colorSize, k, extractSubterms, true,
+						formulae, colorSize, k, extractSubterms, complete,
 						efPairs, actions).getFormula(false);
 				final int timeLeft = (int) (finishTime - System.currentTimeMillis()) / 1000 + 1;
 				SolverResult ass = qbf.solve(logger, qbfSolver, solverParams, timeLeft);

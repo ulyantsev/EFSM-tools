@@ -41,9 +41,9 @@ public class QbfFormulaBuilder extends FormulaBuilder {
 	private final boolean extractSubterms;
 
 	public QbfFormulaBuilder(Logger logger, ScenariosTree tree, List<LtlNode> formulae, int colorSize, int depth,
-			boolean extractSubterms, boolean eventCompleteness,
+			boolean extractSubterms, boolean complete,
 			List<EventExpressionPair> efPairs, List<String> actions) {
-		super(colorSize, tree, eventCompleteness, efPairs, actions);
+		super(colorSize, tree, complete, efPairs, actions);
 		BooleanVariable.eraseVariables();
 		this.logger = logger;
 		this.formulae = formulae;
@@ -191,13 +191,14 @@ public class QbfFormulaBuilder extends FormulaBuilder {
 			for (int i1 = 0; i1 < colorSize; i1++) {
 				for (int i2 = 0; i2 < colorSize; i2++) {
 					for (EventExpressionPair p : efPairs) {
-						constraints.add(BinaryOperation.and(sigmaVar(i1, j), epsVar(p.event, p.expression, j),
+						constraints.add(BinaryOperation.and(sigmaVar(i1, j),
+								epsVar(p.event, p.expression, j),
 								sigmaVar(i2, j + 1)).implies(yVar(i1, i2, p.event, p.expression)));
 					}
 				}
 			}
 		}
-		if (!eventCompleteness) {
+		if (!complete) {
 			// additional term for j = k
 			for (int i1 = 0; i1 < colorSize; i1++) {
 				for (EventExpressionPair p : efPairs) {
@@ -206,7 +207,10 @@ public class QbfFormulaBuilder extends FormulaBuilder {
 					for (int i2 = 0; i2 < colorSize; i2++) {
 						options.add(yVar(i1, i2, p.event, p.expression));
 					}
-					constraints.add(sigmaVar(i1, k).and(epsVar(p.event, p.expression, k)).implies(options.assemble()));
+					constraints.add(
+							sigmaVar(i1, k).and(epsVar(p.event, p.expression, k))
+							.implies(options.assemble())
+					);
 				}
 			}
 		}
@@ -221,8 +225,10 @@ public class QbfFormulaBuilder extends FormulaBuilder {
 			for (int i1 = 0; i1 < colorSize; i1++) {
 				for (String action : actions) {
 					for (EventExpressionPair p : efPairs) {
-						constraints.add(sigmaVar(i1, j).and(epsVar(p.event, p.expression, j))
-							.implies(zVar(i1, action, p.event, p.expression).equivalent(zetaVar(action, j))));
+						constraints.add(
+							sigmaVar(i1, j).and(epsVar(p.event, p.expression, j))
+							.implies(zVar(i1, action, p.event, p.expression).equivalent(zetaVar(action, j)))
+						);
 					}
 				}
 			}

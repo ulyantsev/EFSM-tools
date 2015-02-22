@@ -9,6 +9,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Scanner;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import qbf.egorov.ltl.grammar.BinaryOperator;
 import qbf.egorov.ltl.grammar.BinaryOperatorType;
@@ -36,24 +38,46 @@ public class LtlParser {
         converter = new EgorovGrammarConverter(context, predicatesObj);
     }
     
+    public static String duplicateEvents(String formula, int varNumber) {
+		final Pattern p = Pattern.compile("wasEvent\\(ep\\.(\\w+)\\)");
+		final Matcher m = p.matcher(formula);
+		final StringBuilder sb = new StringBuilder();
+		int lastPos = 0;
+		while (m.find()) {
+			final String event = m.group(1);
+			sb.append(formula.substring(lastPos, m.start()));
+			final List<String> expansion = new ArrayList<>();
+			for (int j = 0; j < 1 << varNumber; j++) {
+				char[] arr = new char[varNumber];
+				for (int pos = 0; pos < varNumber; pos++) {
+					arr[pos] = ((j >> pos) & 1) == 1 ? '1' : '0';
+				}
+				expansion.add("wasEvent(ep." + event + String.valueOf(arr) + ")");
+			}
+			lastPos = m.end();
+			String strToAppend = String.join(" || ", expansion);
+			if (expansion.size() > 1) {
+				strToAppend = "(" + strToAppend + ")";
+			}
+			sb.append(strToAppend);
+		}
+		sb.append(formula.substring(lastPos, formula.length()));
+		return sb.toString();
+	}
+    
     /*
      * For simplified usage.
      */
-    public static List<LtlNode> loadProperties(String filepath)
+    public static List<LtlNode> loadProperties(String filepath, int varNumber)
 			throws FileNotFoundException, LtlParseException {
     	List<LtlNode> ans = new ArrayList<>();
 
 		try (Scanner in = new Scanner(new File(filepath))) {
 			while (in.hasNextLine()) {
-				String input = in.nextLine().trim();
-				if (input.startsWith("#")) {
-					// comment
-					continue;
+				String input = duplicateEvents(in.nextLine().trim(), varNumber);
+				if (!input.isEmpty()) {
+					ans.add(GrammarConverter.simpleParse(input));
 				}
-				if (input.isEmpty()) {
-					continue;
-				}
-				ans.add(GrammarConverter.simpleParse(input));
 			}
 		}
 		return ans;
