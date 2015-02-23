@@ -21,7 +21,6 @@ import qbf.reduction.SolverResult.SolverResults;
 import qbf.reduction.Verifier;
 import structures.Automaton;
 import structures.ScenariosTree;
-import algorithms.FormulaBuilder.EventExpressionPair;
 
 public class IterativeAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 	private static Optional<Automaton> automatonFromFormula(BooleanFormula bf, Logger logger,
@@ -69,9 +68,9 @@ public class IterativeAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 	
 	public static Optional<Automaton> build(Logger logger, ScenariosTree tree, int colorSize, String solverParams,
 			String resultFilePath, String ltlFilePath, List<LtlNode> formulae,
-			List<EventExpressionPair> efPairs, List<String> actions, SatSolver satSolver,
+			List<String> events, List<String> actions, SatSolver satSolver,
 			Verifier verifier, long finishTime, boolean complete) throws IOException {
-		final BooleanFormula initialBf = new SatFormulaBuilder(tree, colorSize, efPairs, actions).getFormula();
+		final BooleanFormula initialBf = new SatFormulaBuilder(tree, colorSize, events, actions).getFormula();
 		final FormulaList additionalConstraints = new FormulaList(BinaryOperations.AND);
 		
 		for (int iterations = 0; System.currentTimeMillis() < finishTime; iterations++) {
@@ -87,7 +86,7 @@ public class IterativeAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 					}
 					try {
 						// extra transition search with verification
-						new AutomatonCompleter(verifier, automaton.get(), efPairs, actions, finishTime).ensureCompleteness();
+						new AutomatonCompleter(verifier, automaton.get(), events, actions, finishTime).ensureCompleteness();
 					} catch (AutomatonFound e) {
 						// verified, complete
 						return reportResult(logger, iterations, Optional.of(e.automaton));

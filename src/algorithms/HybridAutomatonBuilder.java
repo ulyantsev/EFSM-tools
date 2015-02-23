@@ -26,25 +26,23 @@ import qbf.reduction.SatSolver;
 import qbf.reduction.Verifier;
 import structures.Automaton;
 import structures.ScenariosTree;
-import algorithms.FormulaBuilder.EventExpressionPair;
 
 public class HybridAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 	private static final int MAX_FORMULA_SIZE = 100 * 1000 * 1000;
-	private static final int MILLIS_FOR_FORMULA = 5000;
-	private static final int SEC_FOR_SOLVER = 5; // >= 2
 	
 	public static Optional<Automaton> build(Logger logger, ScenariosTree tree,
 			List<LtlNode> formulae, int colorSize, String ltlFilePath,
 			QbfSolver qbfSolver, String solverParams, boolean extractSubterms,
-			List<EventExpressionPair> efPairs, List<String> actions, SatSolver satSolver,
-			Verifier verifier, long finishTime, boolean complete) throws IOException {		
+			List<String> events, List<String> actions, SatSolver satSolver,
+			Verifier verifier, long finishTime, boolean complete,
+			int secToGenerateFormula, int secToSolve) throws IOException {		
 		int k = -1;
 		boolean maxKFound = false;
 		int iteration = 1;
 		String curFormula = null;
 		String formulaBackup = null;
 		final FormulaList additionalConstraints = new FormulaList(BinaryOperations.AND);
-		final Set<String> forbiddenYs = QbfAutomatonBuilder.getForbiddenYs(colorSize, efPairs.size());
+		final Set<String> forbiddenYs = QbfAutomatonBuilder.getForbiddenYs(colorSize, events.size());
 		logger.info("FORBIDDEN YS: " + forbiddenYs);
 		while (true) {
 			if (System.currentTimeMillis() > finishTime) {
@@ -63,11 +61,11 @@ public class HybridAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 				k++;
 				QuantifiedBooleanFormula qbf = new QbfFormulaBuilder(logger, tree,
 						formulae, colorSize, k, extractSubterms, complete,
-						efPairs, actions).getFormula(true);
+						events, actions).getFormula(true);
 				long time = System.currentTimeMillis();
 				try {
-					formula = qbf.flatten(tree, colorSize, k, logger, efPairs, actions,
-							forbiddenYs, Math.min(finishTime, System.currentTimeMillis() + MILLIS_FOR_FORMULA),
+					formula = qbf.flatten(tree, colorSize, k, logger, events, actions,
+							forbiddenYs, Math.min(finishTime, System.currentTimeMillis() + secToGenerateFormula * 1000),
 							MAX_FORMULA_SIZE);
 				} catch (FormulaSizeException | TimeLimitExceeded e) {
 					logger.info("FORMULA FOR k = " + k + " IS TOO LARGE OR REQUIRES TOO MUCH TIME TO CONSTRUCT, STARTING ITERATIONS");
@@ -83,7 +81,7 @@ public class HybridAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 			
 			int timeLeftForSolver = (int) (finishTime - System.currentTimeMillis()) / 1000 + 1;
 			if (!maxKFound && k > 0) {
-				timeLeftForSolver = Math.min(timeLeftForSolver, SEC_FOR_SOLVER);
+				timeLeftForSolver = Math.min(timeLeftForSolver, secToSolve);
 			}
 			final Pair<List<Assignment>, Long> solution = BooleanFormula.solveAsSat(formula,
 					logger, solverParams, timeLeftForSolver, satSolver);
@@ -118,7 +116,7 @@ public class HybridAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 				final Automaton b = constructAutomatonFromAssignment(logger,
 						list, tree, colorSize, false).getLeft();
 				try {
-					new AutomatonCompleter(verifier, b, efPairs, actions, finishTime).ensureCompleteness();
+					new AutomatonCompleter(verifier, b, events, actions, finishTime).ensureCompleteness();
 				} catch (AutomatonFound e) {
 					logger.info("SAT");
 					logger.info("A MORE THOROUGH SEARCH SUCCEEDED");

@@ -10,24 +10,25 @@ import structures.Automaton;
 import structures.Node;
 import structures.Transition;
 import actions.StringActions;
-import algorithms.FormulaBuilder.EventExpressionPair;
+import bool.MyBooleanExpression;
 
 public class AutomatonCompleter {
 	private final Verifier verifier;
 	private final Automaton automaton;
 	private final int colorSize;
-	private final List<EventExpressionPair> efPairs;
+	private final List<String> events;
 	private final List<StringActions> preparedActions = new ArrayList<>();
 	private final long finishTime;
 	
 	/*
 	 * The automaton should be verified!
 	 */
-	public AutomatonCompleter(Verifier verifier, Automaton automaton, List<EventExpressionPair> efPairs, List<String> actions, long finishTime) {
+	public AutomatonCompleter(Verifier verifier, Automaton automaton, List<String> events,
+			List<String> actions, long finishTime) {
 		this.verifier = verifier;
 		this.automaton = automaton;
 		colorSize = automaton.statesCount();
-		this.efPairs = efPairs;
+		this.events = events;
 		this.finishTime = finishTime;
 		
 		// prepare all action combinations (will be used while trying to enforce FSM completeness)
@@ -45,12 +46,12 @@ public class AutomatonCompleter {
 		}
 	}
 	
-	private List<Pair<Integer, EventExpressionPair>> missingTransitions() {
-		final List<Pair<Integer, EventExpressionPair>> missing = new ArrayList<>();
+	private List<Pair<Integer, String>> missingTransitions() {
+		final List<Pair<Integer, String>> missing = new ArrayList<>();
 		for (Node s : automaton.getStates()) {
-			for (EventExpressionPair p : efPairs) {
-				if (s.getTransition(p.event, p.expression) == null) {
-					missing.add(Pair.of(s.getNumber(), p));
+			for (String e : events) {
+				if (s.getTransition(e, MyBooleanExpression.getTautology()) == null) {
+					missing.add(Pair.of(s.getNumber(), e));
 				}
 			}
 		}
@@ -61,7 +62,7 @@ public class AutomatonCompleter {
 		ensureCompleteness(missingTransitions());
 	}
 	
-	private void ensureCompleteness(List<Pair<Integer, EventExpressionPair>> missingTransitions)
+	private void ensureCompleteness(List<Pair<Integer, String>> missingTransitions)
 			throws AutomatonFound, TimeLimitExceeded {
 		if (System.currentTimeMillis() > finishTime) {
 			throw new TimeLimitExceeded();
@@ -73,16 +74,16 @@ public class AutomatonCompleter {
 			throw new AutomatonFound(automaton);
 		}
 		
-		final Pair<Integer, EventExpressionPair> missing = missingTransitions.get(missingTransitions.size() - 1);
+		final Pair<Integer, String> missing = missingTransitions.get(missingTransitions.size() - 1);
 		missingTransitions.remove(missingTransitions.size() - 1);
 		
 		final Node stateFrom = automaton.getState(missing.getLeft());
-		final EventExpressionPair p = missing.getRight();
+		final String e = missing.getRight();
 		
 		for (StringActions actions : preparedActions) {
 			for (int dst = 0; dst < colorSize; dst++) {
 				Transition autoT = new Transition(stateFrom,
-						automaton.getState(dst), p.event, p.expression, actions);
+						automaton.getState(dst), e, MyBooleanExpression.getTautology(), actions);
 				automaton.addTransition(stateFrom, autoT);
 				ensureCompleteness(missingTransitions);
 				stateFrom.removeTransition(autoT);

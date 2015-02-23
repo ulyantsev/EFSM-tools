@@ -6,7 +6,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import qbf.reduction.BinaryOperation;
@@ -17,7 +16,6 @@ import qbf.reduction.FormulaList;
 import structures.Node;
 import structures.ScenariosTree;
 import structures.Transition;
-import bool.MyBooleanExpression;
 
 /**
  * (c) Igor Buzhinsky
@@ -27,36 +25,15 @@ public abstract class FormulaBuilder {
 	protected final int colorSize;
 	protected final List<String> events;
 	protected final List<String> actions;
-	protected final List<EventExpressionPair> efPairs;
 	protected final ScenariosTree tree;
 	protected final boolean complete;
 	protected final List<BooleanVariable> existVars = new ArrayList<>();
 	
-	public static class EventExpressionPair {
-		public final String event;
-		public final MyBooleanExpression expression;
-		
-		public EventExpressionPair(String event, MyBooleanExpression expression) {
-			this.event = event;
-			this.expression = expression;
-		}
-		
-		@Override
-		public String toString() {
-			return event + " [" + expression + "]";
-		}
-		
-		public static List<String> getEvents(List<EventExpressionPair> efPairs) {
-			return new ArrayList<>(new TreeSet<>(efPairs.stream().map(p -> p.event).collect(Collectors.toList())));
-		}
-	}
-	
 	public FormulaBuilder(int colorSize, ScenariosTree tree, boolean complete,
-			List<EventExpressionPair> efPairs, List<String> actions) {
+			List<String> events, List<String> actions) {
 		this.colorSize = colorSize;
-		this.events = EventExpressionPair.getEvents(efPairs);
+		this.events = events;
 		this.actions = actions;
-		this.efPairs = efPairs;
 		this.tree = tree;
 		this.complete = complete;
 	}
@@ -65,12 +42,12 @@ public abstract class FormulaBuilder {
 		return BooleanVariable.byName("x", state, color).get();
 	}
 	
-	protected BooleanVariable yVar(int from, int to, String event, MyBooleanExpression f) {
-		return BooleanVariable.byName("y", from, to, event, f).get();
+	protected BooleanVariable yVar(int from, int to, String event) {
+		return BooleanVariable.byName("y", from, to, event).get();
 	}
 	
-	protected BooleanVariable zVar(int from, String action, String event, MyBooleanExpression f) {
-		return BooleanVariable.byName("z", from, action, event, f).get();
+	protected BooleanVariable zVar(int from, String action, String event) {
+		return BooleanVariable.byName("z", from, action, event).get();
 	}
 	
 	private BooleanVariable pVar(int j, int i) {
@@ -81,8 +58,8 @@ public abstract class FormulaBuilder {
 		return BooleanVariable.byName("t", i, j).get();
 	}
 	
-	private BooleanVariable mVar(String event, MyBooleanExpression f, int i, int j) {
-		return BooleanVariable.byName("m", event, f, i, j).get();
+	private BooleanVariable mVar(String event, int i, int j) {
+		return BooleanVariable.byName("m", event, i, j).get();
 	}
 	
 	protected void addColorVars() {
@@ -96,15 +73,15 @@ public abstract class FormulaBuilder {
 	
 	protected void addTransitionVars(boolean addActionVars) {
 		for (int nodeColor = 0; nodeColor < colorSize; nodeColor++) {
-			for (EventExpressionPair p : efPairs) {
+			for (String e : events) {
 				// transition variables y_color_childColor_event_formula
 				for (int childColor = 0; childColor < colorSize; childColor++) {
-					existVars.add(new BooleanVariable("y", nodeColor, childColor, p.event, p.expression));
+					existVars.add(new BooleanVariable("y", nodeColor, childColor, e));
 				}
 				if (addActionVars) {
 					// action variables z_color_action_event_formula
 					for (String action : actions) {
-						existVars.add(new BooleanVariable("z", nodeColor, action, p.event, p.expression));
+						existVars.add(new BooleanVariable("z", nodeColor, action, e));
 					}
 				}
 			}
@@ -155,7 +132,7 @@ public abstract class FormulaBuilder {
 				for (Transition t : node.getTransitions()) {
 					List<String> actionSequence = Arrays.asList(t.getActions().getActions());
 					for (String action : actions) {
-						BooleanFormula f = zVar(i, action, t.getEvent(), t.getExpr());
+						BooleanFormula f = zVar(i, action, t.getEvent());
 						if (!actionSequence.contains(action)) {
 							f = f.not();
 						}
@@ -202,9 +179,9 @@ public abstract class FormulaBuilder {
 					was.add(key);
 					for (int parentColor = 0; parentColor < colorSize; parentColor++) {
 						for (int color1 = 0; color1 < colorSize; color1++) {
-							BooleanVariable v1 = yVar(parentColor, color1, t.getEvent(), t.getExpr());
+							BooleanVariable v1 = yVar(parentColor, color1, t.getEvent());
 							for (int color2 = 0; color2 < color1; color2++) {
-								BooleanVariable v2 = yVar(parentColor, color2, t.getEvent(), t.getExpr());
+								BooleanVariable v2 = yVar(parentColor, color2, t.getEvent());
 								constraints.add(v1.not().or(v2.not()));
 							}
 						}
@@ -223,7 +200,7 @@ public abstract class FormulaBuilder {
 					for (int childColor = 0; childColor < colorSize; childColor++) {
 						BooleanVariable nodeVar = xVar(node.getNumber(), nodeColor);
 						BooleanVariable childVar = xVar(t.getDst().getNumber(), childColor);
-						BooleanVariable relationVar = yVar(nodeColor, childColor, t.getEvent(), t.getExpr());
+						BooleanVariable relationVar = yVar(nodeColor, childColor, t.getEvent());
 						constraints.add(BinaryOperation.or(relationVar, nodeVar.not(), childVar.not()));
 						constraints.add(BinaryOperation.or(relationVar.not(), nodeVar.not(), childVar));
 					}
@@ -237,10 +214,10 @@ public abstract class FormulaBuilder {
 	private BooleanFormula eventCompletenessConstraints() {
 		FormulaList constraints = new FormulaList(BinaryOperations.AND);
 		for (int i1 = 0; i1 < colorSize; i1++) {
-			for (EventExpressionPair p : efPairs) {
+			for (String e : events) {
 				FormulaList options = new FormulaList(BinaryOperations.OR);
 				for (int i2 = 0; i2 < colorSize; i2++) {
-					options.add(yVar(i1, i2, p.event, p.expression));
+					options.add(yVar(i1, i2, e));
 				}
 				constraints.add(options.assemble());
 			}
@@ -255,13 +232,12 @@ public abstract class FormulaBuilder {
 
 		for (int i1 = 0; i1 < colorSize; i1++) {
 			for (String action : actions) {
-				for (EventExpressionPair p : efPairs) {
+				for (String e : events) {
 					FormulaList options = new FormulaList(BinaryOperations.OR);
 					for (int i2 = 0; i2 < colorSize; i2++) {
-						options.add(yVar(i1, i2, p.event, p.expression));
+						options.add(yVar(i1, i2, e));
 					}
-					constraints.add(zVar(i1, action, p.event, p.expression)
-							.implies(options.assemble()));
+					constraints.add(zVar(i1, action, e).implies(options.assemble()));
 				}
 			}
 		}
@@ -309,12 +285,12 @@ public abstract class FormulaBuilder {
 				existVars.add(new BooleanVariable("t", i, j));
 			}
 		}
-		if (efPairs.size() > 2) {
+		if (events.size() > 2) {
 			// m_efij
-			for (EventExpressionPair p : efPairs) {
+			for (String e : events) {
 				for (int i = 0; i < colorSize; i++) {
 					for (int j = i + 1; j < colorSize; j++) {
-						existVars.add(new BooleanVariable("m", p.event, p.expression, i, j));
+						existVars.add(new BooleanVariable("m", e, i, j));
 					}
 				}
 			}
@@ -362,8 +338,8 @@ public abstract class FormulaBuilder {
 		for (int i = 0; i < colorSize; i++) {
 			for (int j = i + 1; j < colorSize; j++) {
 				FormulaList definition = new FormulaList(BinaryOperations.OR);
-				for (EventExpressionPair p : efPairs) {
-					definition.add(yVar(i, j, p.event, p.expression));
+				for (String e : events) {
+					definition.add(yVar(i, j, e));
 				}
 				constraints.add(tVar(i, j).equivalent(definition.assemble()));
 			}
@@ -373,33 +349,33 @@ public abstract class FormulaBuilder {
 	
 	private BooleanFormula childrenOrderConstraints() {
 		FormulaList constraints = new FormulaList(BinaryOperations.AND);
-		if (efPairs.size() > 2) {
+		if (events.size() > 2) {
 			// m definitions
 			for (int i = 0; i < colorSize; i++) {
 				for (int j = i + 1; j < colorSize; j++) {
-					for (int pairIndex1 = 0; pairIndex1 < efPairs.size(); pairIndex1++) {
-						EventExpressionPair p1 = efPairs.get(pairIndex1);
+					for (int eventIndex1 = 0; eventIndex1 < events.size(); eventIndex1++) {
+						String e1 = events.get(eventIndex1);
 						FormulaList definition = new FormulaList(BinaryOperations.AND);
-						definition.add(yVar(i, j, p1.event, p1.expression));
-						for (int pairIndex2 = pairIndex1 - 1; pairIndex2 >= 0; pairIndex2--) {
-							EventExpressionPair p2 = efPairs.get(pairIndex2);
-							definition.add(yVar(i, j, p2.event, p2.expression).not());
+						definition.add(yVar(i, j, e1));
+						for (int eventIndex2 = eventIndex1 - 1; eventIndex2 >= 0; eventIndex2--) {
+							String e2 = events.get(eventIndex2);
+							definition.add(yVar(i, j, e2).not());
 						}
-						constraints.add(mVar(p1.event, p1.expression, i, j).equivalent(definition.assemble()));
+						constraints.add(mVar(e1, i, j).equivalent(definition.assemble()));
 					}
 				}
 			}
 			// children constraints
 			for (int i = 0; i < colorSize; i++) {
 				for (int j = i + 1; j < colorSize - 1; j++) {
-					for (int k = 0; k < efPairs.size(); k++) {
-						for (int n = k + 1; n < efPairs.size(); n++) {
+					for (int k = 0; k < events.size(); k++) {
+						for (int n = k + 1; n < events.size(); n++) {
 							constraints.add(
 									BinaryOperation.and(
 											pVar(j, i), pVar(j + 1, i),
-											mVar(efPairs.get(n).event, efPairs.get(n).expression, i, j)
+											mVar(events.get(n), i, j)
 									).implies(
-											mVar(efPairs.get(k).event, efPairs.get(k).expression, i, j + 1).not()
+											mVar(events.get(k), i, j + 1).not()
 									)
 							);
 						}
@@ -411,7 +387,7 @@ public abstract class FormulaBuilder {
 				for (int j = i + 1; j < colorSize - 1; j++) {
 					constraints.add(
 							pVar(j, i).and(pVar(j + 1, i))
-							.implies(yVar(i, j, efPairs.get(0).event, efPairs.get(0).expression))
+							.implies(yVar(i, j, events.get(0)))
 					);
 				}
 			}

@@ -30,7 +30,6 @@ import qbf.reduction.LtlNormalizer;
 import qbf.reduction.QuantifiedBooleanFormula;
 import qbf.reduction.TrueFormula;
 import structures.ScenariosTree;
-import bool.MyBooleanExpression;
 
 public class QbfFormulaBuilder extends FormulaBuilder {
 	private final Logger logger;
@@ -42,8 +41,8 @@ public class QbfFormulaBuilder extends FormulaBuilder {
 
 	public QbfFormulaBuilder(Logger logger, ScenariosTree tree, List<LtlNode> formulae, int colorSize, int depth,
 			boolean extractSubterms, boolean complete,
-			List<EventExpressionPair> efPairs, List<String> actions) {
-		super(colorSize, tree, complete, efPairs, actions);
+			List<String> events, List<String> actions) {
+		super(colorSize, tree, complete, events, actions);
 		BooleanVariable.eraseVariables();
 		this.logger = logger;
 		this.formulae = formulae;
@@ -55,8 +54,8 @@ public class QbfFormulaBuilder extends FormulaBuilder {
 		return BooleanVariable.byName("sigma", state, pathIndex).get();
 	}
 
-	private BooleanVariable epsVar(String event, MyBooleanExpression f, int pathIndex) {
-		return BooleanVariable.byName("eps", event, f, pathIndex).get();
+	private BooleanVariable epsVar(String event, int pathIndex) {
+		return BooleanVariable.byName("eps", event, pathIndex).get();
 	}
 	
 	private BooleanVariable zetaVar(String action, int pathIndex) {
@@ -72,9 +71,9 @@ public class QbfFormulaBuilder extends FormulaBuilder {
 	}
 	
 	private void addEpsVars() {
-		for (EventExpressionPair p : efPairs) {
+		for (String e : events) {
 			for (int j = 0; j <= k; j++) {
-				forallVars.add(new BooleanVariable("eps", p.event, p.expression, j));
+				forallVars.add(new BooleanVariable("eps", e, j));
 			}
 		}
 	}
@@ -152,13 +151,11 @@ public class QbfFormulaBuilder extends FormulaBuilder {
 					constraints.add(sigmaVar(i1, j).and(sigmaVar(i2, j)).not());
 				}
 			}
-			for (int i1 = 0; i1 < efPairs.size(); i1++) {
-				String e1 = efPairs.get(i1).event;
-				MyBooleanExpression f1 = efPairs.get(i1).expression;
-				for (int i2 = i1 + 1; i2 < efPairs.size(); i2++) {
-					String e2 = efPairs.get(i2).event;
-					MyBooleanExpression f2 = efPairs.get(i2).expression;
-					constraints.add(epsVar(e1, f1, j).and(epsVar(e2, f2, j)).not());
+			for (int i1 = 0; i1 < events.size(); i1++) {
+				String e1 = events.get(i1);
+				for (int i2 = i1 + 1; i2 < events.size(); i2++) {
+					String e2 = events.get(i2);
+					constraints.add(epsVar(e1, j).and(epsVar(e2, j)).not());
 				}
 			}
 		}
@@ -176,8 +173,8 @@ public class QbfFormulaBuilder extends FormulaBuilder {
 			constraints.add(optionsS.assemble());
 			
 			FormulaList optionsE = new FormulaList(BinaryOperations.OR);
-			for (EventExpressionPair p : efPairs) {
-				optionsE.add(epsVar(p.event, p.expression, j));
+			for (String e : events) {
+				optionsE.add(epsVar(e, j));
 			}
 			constraints.add(optionsE.assemble());
 		}
@@ -190,10 +187,10 @@ public class QbfFormulaBuilder extends FormulaBuilder {
 		for (int j = 0; j < k; j++) {
 			for (int i1 = 0; i1 < colorSize; i1++) {
 				for (int i2 = 0; i2 < colorSize; i2++) {
-					for (EventExpressionPair p : efPairs) {
+					for (String e : events) {
 						constraints.add(BinaryOperation.and(sigmaVar(i1, j),
-								epsVar(p.event, p.expression, j),
-								sigmaVar(i2, j + 1)).implies(yVar(i1, i2, p.event, p.expression)));
+								epsVar(e, j),
+								sigmaVar(i2, j + 1)).implies(yVar(i1, i2, e)));
 					}
 				}
 			}
@@ -201,14 +198,14 @@ public class QbfFormulaBuilder extends FormulaBuilder {
 		if (!complete) {
 			// additional term for j = k
 			for (int i1 = 0; i1 < colorSize; i1++) {
-				for (EventExpressionPair p : efPairs) {
+				for (String e : events) {
 					FormulaList options = new FormulaList(BinaryOperations.OR);
 					// some state exists to transit to
 					for (int i2 = 0; i2 < colorSize; i2++) {
-						options.add(yVar(i1, i2, p.event, p.expression));
+						options.add(yVar(i1, i2, e));
 					}
 					constraints.add(
-							sigmaVar(i1, k).and(epsVar(p.event, p.expression, k))
+							sigmaVar(i1, k).and(epsVar(e, k))
 							.implies(options.assemble())
 					);
 				}
@@ -224,10 +221,10 @@ public class QbfFormulaBuilder extends FormulaBuilder {
 		for (int j = 0; j <= k; j++) {
 			for (int i1 = 0; i1 < colorSize; i1++) {
 				for (String action : actions) {
-					for (EventExpressionPair p : efPairs) {
+					for (String e : events) {
 						constraints.add(
-							sigmaVar(i1, j).and(epsVar(p.event, p.expression, j))
-							.implies(zVar(i1, action, p.event, p.expression).equivalent(zetaVar(action, j)))
+							sigmaVar(i1, j).and(epsVar(e, j))
+							.implies(zVar(i1, action, e).equivalent(zetaVar(action, j)))
 						);
 					}
 				}
@@ -247,9 +244,9 @@ public class QbfFormulaBuilder extends FormulaBuilder {
 			FormulaList options = new FormulaList(BinaryOperations.OR);
 			for (int i1 = 0; i1 < colorSize; i1++) {
 				for (int i2 = 0; i2 < colorSize; i2++) {
-					for (EventExpressionPair p : efPairs) {
+					for (String e : events) {
 						options.add(BinaryOperation.and(sigmaVar(i1, k),
-							epsVar(p.event, p.expression, k), sigmaVar(i2, l), yVar(i1, i2, p.event, p.expression)));
+							epsVar(e, k), sigmaVar(i2, l), yVar(i1, i2, e)));
 					}
 				}
 			}
@@ -271,17 +268,10 @@ public class QbfFormulaBuilder extends FormulaBuilder {
 	}
 
 	private BooleanFormula translatePredicate(Predicate p, int index) {
-		String arg = p.args().get(0).toString();
+		String arg = p.args().get(0);
 		switch (p.getName()) {
-		case "wasEvent": {
-			FormulaList options = new FormulaList(BinaryOperations.OR);
-			for (EventExpressionPair pair : efPairs) {
-				if (pair.event.equals(arg)) {
-					options.add(epsVar(arg, pair.expression, index));
-				}
-			}
-			return options.assemble();
-		}
+		case "wasEvent":
+			return epsVar(arg, index);
 		case "wasAction": 
 			return zetaVar(arg, index);
 		default:

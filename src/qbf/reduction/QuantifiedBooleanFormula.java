@@ -25,7 +25,6 @@ import java.util.stream.Collectors;
 import qbf.reduction.BooleanFormula.DimacsConversionInfo;
 import qbf.reduction.SolverResult.SolverResults;
 import structures.ScenariosTree;
-import algorithms.FormulaBuilder.EventExpressionPair;
 import algorithms.TimeLimitExceeded;
 
 public class QuantifiedBooleanFormula {
@@ -230,13 +229,13 @@ public class QuantifiedBooleanFormula {
 	 * The size of the formula is exponential of forallVars.size().
 	 */
 	public String flatten(ScenariosTree tree, int statesNum, int k, Logger logger,
-			List<EventExpressionPair> efPairs, List<String> actions,
+			List<String> events, List<String> actions,
 			Set<String> forbiddenYs, long finishTime, int sizeLimit) throws FormulaSizeException, TimeLimitExceeded {
 		FormulaBuffer buffer = new FormulaBuffer(finishTime, sizeLimit);
 		logger.info("Number of 'forall' variables: " + forallVars.size());
 		long time = System.currentTimeMillis();
 		buffer.append(formulaExist.simplify());
-		findAllAssignmentsSigmaEps(efPairs, statesNum, actions, k, 0, formulaTheRest,
+		findAllAssignmentsSigmaEps(events, statesNum, actions, k, 0, formulaTheRest,
 				buffer, -1, -1, new HashMap<>(), forbiddenYs);
 		
 		time = System.currentTimeMillis() - time;
@@ -249,7 +248,7 @@ public class QuantifiedBooleanFormula {
 	/*
 	 * Equivalent to constraints sigma_0_0 = 0 and A_1 and A_2 and B.
 	 */
-	private void findAllAssignmentsSigmaEps(List<EventExpressionPair> efPairs, int statesNum, List<String> actions,
+	private void findAllAssignmentsSigmaEps(List<String> events, int statesNum, List<String> actions,
 			int k, int j, BooleanFormula formulaToAppend, FormulaBuffer buffer,
 			int lastStateIndex, int lastPairIndex, Map<String, Integer> yAssignment, Set<String> forbiddenYs) throws FormulaSizeException, TimeLimitExceeded {
 		formulaToAppend = formulaToAppend.simplify();
@@ -268,13 +267,13 @@ public class QuantifiedBooleanFormula {
 				boolean wasNull = false;
 				if (j > 0) {
 					final int i1 = lastStateIndex;
-					final EventExpressionPair ef = efPairs.get(lastPairIndex);
+					final String e = events.get(lastPairIndex);
 					final int i2 = i;
 					if (forbiddenYs.contains("y_" + i1 + "_" + i2 + "_" + lastPairIndex)) {
 						// this y is forbidden due to BFS constraints
 						continue;
 					}
-					yKey = i1 + "_" + ef.event + "_" + ef.expression;
+					yKey = i1 + "_" + e;
 					final Integer curYValue = yAssignment.get(yKey);
 					wasNull = curYValue == null;
 					if (wasNull) {
@@ -289,23 +288,23 @@ public class QuantifiedBooleanFormula {
 							FalseFormula.INSTANCE);
 				}
 				replacement.put(BooleanVariable.byName("sigma", i, j).get(), TrueFormula.INSTANCE);
-				for (int pIndex = 0; pIndex < efPairs.size(); pIndex++) {
-					EventExpressionPair p = efPairs.get(pIndex);
-					for (EventExpressionPair pOther : efPairs) {
-						replacement.put(BooleanVariable.byName("eps", pOther.event, pOther.expression, j).get(),
+				for (int pIndex = 0; pIndex < events.size(); pIndex++) {
+					String e = events.get(pIndex);
+					for (String eOther : events) {
+						replacement.put(BooleanVariable.byName("eps", eOther, j).get(),
 									FalseFormula.INSTANCE);
 					}
-					replacement.put(BooleanVariable.byName("eps", p.event, p.expression, j).get(),
+					replacement.put(BooleanVariable.byName("eps", e, j).get(),
 							TrueFormula.INSTANCE);
 					
 					// deal with zetas
 					for (String action : actions) {
 						replacement.put(BooleanVariable.byName("zeta", action, j).get(),
-								BooleanVariable.byName("z", i, action, p.event, p.expression).get());
+								BooleanVariable.byName("z", i, action, e).get());
 					}
 					
 					// recursive call
-					findAllAssignmentsSigmaEps(efPairs, statesNum, actions, k, j + 1,
+					findAllAssignmentsSigmaEps(events, statesNum, actions, k, j + 1,
 							formulaToAppend.multipleSubstitute(replacement), buffer,
 							i, pIndex, yAssignment, forbiddenYs);
 				}		

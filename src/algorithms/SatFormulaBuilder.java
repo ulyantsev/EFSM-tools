@@ -11,8 +11,8 @@ import structures.ScenariosTree;
 
 public class SatFormulaBuilder extends FormulaBuilder {
 	public SatFormulaBuilder(ScenariosTree tree, int colorSize,
-			List<EventExpressionPair> efPairs, List<String> actions) {
-		super(colorSize, tree, false, efPairs, actions);
+			List<String> events, List<String> actions) {
+		super(colorSize, tree, false, events, actions);
 	}
 
 	public BooleanFormula getFormula() {

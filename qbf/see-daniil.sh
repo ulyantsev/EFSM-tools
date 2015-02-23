@@ -21,7 +21,7 @@ for name in $dir/*.log; do
     str=${name/$dir\//HARD s=}
     str=${str/-/ n=}
     str=${str/.log/}
-    if [[ $(grep "^$str$" qbf/cool-daniil.log) ==  "" ]]; then
+    if [[ $(grep "^$str$" cool-daniil.log) ==  "" ]]; then
         mv $name ${name/.log/.done} $dir/easy
     fi
 done
@@ -39,7 +39,6 @@ for ((s = 5; s <= 10; s++)); do
         continue
     fi
     str=$(echo $(grep -nr "execution time" $dir/$s-* | sed -e "s/^.*time: //g" | sort -n))
-    #echo $str
     IFS=' ' read -a arr <<< "$str"
     printf "quartiles 0..4 for s=%2d: %8s %8s %8s %8s %8s\n" $s ${arr[0]} ${arr[index=$((${#arr[@]} / 4))]} ${arr[index=$((${#arr[@]} / 2))]} ${arr[index=$((${#arr[@]} * 3 / 4))]} ${arr[-1]}
 done

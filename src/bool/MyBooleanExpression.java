@@ -16,6 +16,14 @@ import java.util.regex.Pattern;
 public class MyBooleanExpression {
     private static Map<String, MyBooleanExpression> expressions = new TreeMap<>();
 
+    public static MyBooleanExpression getTautology() {
+    	try {
+			return get("1");
+		} catch (ParseException e) {
+			throw new AssertionError(e);
+		}
+    }
+    
     public static MyBooleanExpression get(String repr) throws ParseException {
         if (expressions.containsKey(repr)) {
             return expressions.get(repr);

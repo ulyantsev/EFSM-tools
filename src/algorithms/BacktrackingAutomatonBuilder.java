@@ -16,13 +16,12 @@ import structures.Node;
 import structures.ScenariosTree;
 import structures.Transition;
 import actions.StringActions;
-import algorithms.FormulaBuilder.EventExpressionPair;
 import bool.MyBooleanExpression;
 
 public class BacktrackingAutomatonBuilder {
 	private static class TraverseState {
 		private final int colorSize;
-		private final List<EventExpressionPair> efPairs;
+		private final List<String> events;
 		private final List<String> actions;
 		private final long finishTime;
 		private final boolean complete;
@@ -39,7 +38,7 @@ public class BacktrackingAutomatonBuilder {
 		private final Verifier verifier;
 		
 		public TraverseState(ScenariosTree tree, Verifier verifier, int colorSize, long finishTime,
-				List<EventExpressionPair> efPairs, List<String> actions, boolean complete) {
+				List<String> events, List<String> actions, boolean complete) {
 			this.colorSize = colorSize;
 			this.automaton = new Automaton(colorSize);
 			this.coloring = new int[tree.nodesCount()];
@@ -49,7 +48,7 @@ public class BacktrackingAutomatonBuilder {
 			this.verifier = verifier;
 			this.finishTime = finishTime;
 			incomingTransitionNumbers = new int[colorSize];
-			this.efPairs = efPairs;
+			this.events = events;
 			this.actions = actions;
 			this.complete = complete;
 		}
@@ -119,7 +118,7 @@ public class BacktrackingAutomatonBuilder {
 					if (findNewFrontier() != -1 && verify()) {
 						if (frontier.isEmpty()) {
 							if (complete) {
-								new AutomatonCompleter(verifier, automaton, efPairs,
+								new AutomatonCompleter(verifier, automaton, events,
 										actions, finishTime).ensureCompleteness();
 							} else {
 								throw new AutomatonFound(automaton);
@@ -140,10 +139,10 @@ public class BacktrackingAutomatonBuilder {
 	
 	public static Optional<Automaton> build(Logger logger, ScenariosTree tree, int colorSize,
 			String resultFilePath, String ltlFilePath, List<LtlNode> formulae,
-			List<EventExpressionPair> efPairs, List<String> actions, Verifier verifier,
+			List<String> events, List<String> actions, Verifier verifier,
 			long finishTime, boolean complete) throws IOException {
 		try {
-			new TraverseState(tree, verifier, colorSize, finishTime, efPairs, actions, complete).backtracking();
+			new TraverseState(tree, verifier, colorSize, finishTime, events, actions, complete).backtracking();
 		} catch (AutomatonFound e) {
 			return Optional.of(e.automaton);
 		} catch (TimeLimitExceeded e) {

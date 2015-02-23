@@ -3,7 +3,7 @@
 res=cfsm.gv
 
 for ((size = 5; size <= 10; size++)); do
-    for ((instance = 0; instance <= 49; instance++)); do
+    for ((instance = 0; instance < 50; instance++)); do
         java -jar ../jars/sat-builder.jar "testing-daniil/nstates=$size/$instance/plain-scenarios" --result $res --size $size 2>/dev/null
         report_str="s=$size n=$instance"
         ltl="testing-daniil/nstates=$size/$instance/formulae"

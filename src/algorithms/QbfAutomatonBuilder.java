@@ -28,7 +28,6 @@ import qbf.reduction.QbfSolver;
 import qbf.reduction.Verifier;
 import structures.Automaton;
 import structures.ScenariosTree;
-import algorithms.FormulaBuilder.EventExpressionPair;
 
 public class QbfAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {	
 	public final static String PRECOMPUTED_DIR_NAME = "qbf/bfs-prohibited-ys";
@@ -47,10 +46,10 @@ public class QbfAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 	public static Optional<Automaton> build(Logger logger, ScenariosTree tree,
 			List<LtlNode> formulae, int colorSize, String ltlFilePath,
 			QbfSolver qbfSolver, String solverParams, boolean extractSubterms,
-			boolean useSat, List<EventExpressionPair> efPairs, List<String> actions,
+			boolean useSat, List<String> events, List<String> actions,
 			SatSolver satSolver, Verifier verifier, long finishTime, boolean complete) throws IOException {		
 		if (useSat) {
-			final Set<String> forbiddenYs = getForbiddenYs(colorSize, efPairs.size());
+			final Set<String> forbiddenYs = getForbiddenYs(colorSize, events.size());
 			logger.info("FORBIDDEN YS: " + forbiddenYs);
 			for (int k = 0; ; k++) {
 				if (System.currentTimeMillis() > finishTime) {
@@ -61,12 +60,12 @@ public class QbfAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 				deleteTrash();
 				QuantifiedBooleanFormula qbf = new QbfFormulaBuilder(logger, tree,
 						formulae, colorSize, k, extractSubterms, complete,
-						efPairs, actions).getFormula(false);
+						events, actions).getFormula(false);
 				final int timeLeft = (int) (finishTime - System.currentTimeMillis()) / 1000 + 1;
 				
 				String formula;
 				try {
-					formula = qbf.flatten(tree, colorSize, k, logger, efPairs, actions,
+					formula = qbf.flatten(tree, colorSize, k, logger, events, actions,
 							forbiddenYs, finishTime, MAX_FORMULA_SIZE);
 				} catch (FormulaSizeException | TimeLimitExceeded e) {
 					logger.info("FORMULA FOR k = " + k + " IS TOO LARGE OR REQUIRES TOO MUCH TIME TO CONSTRUCT");
@@ -102,7 +101,7 @@ public class QbfAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 				deleteTrash();
 				QuantifiedBooleanFormula qbf = new QbfFormulaBuilder(logger, tree,
 						formulae, colorSize, k, extractSubterms, complete,
-						efPairs, actions).getFormula(false);
+						events, actions).getFormula(false);
 				final int timeLeft = (int) (finishTime - System.currentTimeMillis()) / 1000 + 1;
 				SolverResult ass = qbf.solve(logger, qbfSolver, solverParams, timeLeft);
 				logger.info(ass.toString().split("\n")[0]);

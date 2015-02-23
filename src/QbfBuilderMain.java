@@ -32,7 +32,6 @@ import structures.Automaton;
 import structures.ScenariosTree;
 import structures.Transition;
 import algorithms.BacktrackingAutomatonBuilder;
-import algorithms.FormulaBuilder.EventExpressionPair;
 import algorithms.HybridAutomatonBuilder;
 import algorithms.IterativeAutomatonBuilder;
 import algorithms.QbfAutomatonBuilder;
@@ -94,6 +93,12 @@ public class QbfBuilderMain {
 	@Option(name = "--complete", aliases = { "-c" }, handler = BooleanOptionHandler.class,
             usage = "generate automaton which has a transition for all (event, expression) pairs")
 	private boolean complete;
+	
+	@Option(name = "--hybridSecToGenerateFormula", aliases = { "-hgf" }, usage = "time limit in seconds for formula generation in the HYBRID mode", metaVar = "<sec>")
+	private int hybridSecToGenerateFormula = 5;
+	
+	@Option(name = "--hybridSecToSolve", aliases = { "-hs" }, usage = "time limit in seconds for the solver in the HYBRID mode", metaVar = "<sec>")
+	private int hybridSecToSolve = 5;
 	
 	private void launcher(String[] args) throws IOException {
 		Locale.setDefault(Locale.US);
@@ -188,7 +193,7 @@ public class QbfBuilderMain {
 				return;
 			}
 			
-			List<EventExpressionPair> efPairs = new ArrayList<>();
+			List<String> events = new ArrayList<>();
 			for (int i = 0; i < eventNumber; i++) {
 				final String event = String.valueOf((char) ('A' +  i));
 				for (int j = 0; j < 1 << varNumber; j++) {
@@ -196,7 +201,7 @@ public class QbfBuilderMain {
 					for (int pos = 0; pos < varNumber; pos++) {
 						sb.append(((j >> pos) & 1) == 1 ? 1 : 0);
 					}
-					efPairs.add(new EventExpressionPair(sb.toString(), MyBooleanExpression.get("1")));
+					events.add(sb.toString());
 				}
 			}
 			
@@ -206,26 +211,27 @@ public class QbfBuilderMain {
 			}
 			
 			Optional<Automaton> resultAutomaton = null;
-			final Verifier verifier = new Verifier(size, logger, ltlFilePath, EventExpressionPair.getEvents(efPairs), actions, varNumber);
+			final Verifier verifier = new Verifier(size, logger, ltlFilePath, events, actions, varNumber);
 			final long finishTime = System.currentTimeMillis() + timeout * 1000;
 			switch (ss) {
 			case QSAT: case EXP_SAT:
 				resultAutomaton = QbfAutomatonBuilder.build(logger, tree, formulae, size, ltlFilePath,
 						qbfsolver, solverParams, extractSubterms, ss == SolvingStrategy.EXP_SAT,
-						efPairs, actions, satsolver, verifier, finishTime, complete);
+						events, actions, satsolver, verifier, finishTime, complete);
 				break;
 			case HYBRID:
 				resultAutomaton = HybridAutomatonBuilder.build(logger, tree, formulae, size, ltlFilePath,
 						qbfsolver, solverParams, extractSubterms,
-						efPairs, actions, satsolver, verifier, finishTime, complete);
+						events, actions, satsolver, verifier, finishTime, complete,
+						hybridSecToGenerateFormula, hybridSecToSolve);
 				break;
 			case ITERATIVE_SAT:
 				resultAutomaton = IterativeAutomatonBuilder.build(logger, tree, size, solverParams,
-						resultFilePath, ltlFilePath, formulae, efPairs, actions, satsolver, verifier, finishTime, complete);
+						resultFilePath, ltlFilePath, formulae, events, actions, satsolver, verifier, finishTime, complete);
 				break;
 			case BACKTRACKING:
 				resultAutomaton = BacktrackingAutomatonBuilder.build(logger, tree, size,
-						resultFilePath, ltlFilePath, formulae, efPairs, actions, verifier, finishTime, complete);
+						resultFilePath, ltlFilePath, formulae, events, actions, verifier, finishTime, complete);
 				break;
 			}
 			final double executionTime = (System.currentTimeMillis() - startTime) / 1000.;
@@ -262,7 +268,7 @@ public class QbfBuilderMain {
 				}
 				// bfs check
 				if (ss != SolvingStrategy.BACKTRACKING) {
-					if (checkBfs(resultAutomaton.get(), efPairs, logger)) {
+					if (checkBfs(resultAutomaton.get(), events, logger)) {
 						logger.info("BFS");
 					} else {
 						if (ss == SolvingStrategy.ITERATIVE_SAT || ss == SolvingStrategy.HYBRID) {
@@ -280,7 +286,7 @@ public class QbfBuilderMain {
 		}
 	}
 
-	private boolean checkBfs(Automaton a, List<EventExpressionPair> efPairs, Logger logger) {
+	private boolean checkBfs(Automaton a, List<String> events, Logger logger) {
 		final Deque<Integer> queue = new ArrayDeque<>();
 		final boolean[] visited = new boolean[a.statesCount()];
 		visited[a.getStartState().getNumber()] = true;
@@ -289,8 +295,8 @@ public class QbfBuilderMain {
 		while (!queue.isEmpty()) {
 			final int stateNum = queue.pollFirst();
 			dequedStates.add(stateNum);
-			for (EventExpressionPair p : efPairs) {
-				Transition t = a.getState(stateNum).getTransition(p.event, p.expression);
+			for (String e : events) {
+				Transition t = a.getState(stateNum).getTransition(e, MyBooleanExpression.getTautology());
 				if (t != null) {
 					final int dst = t.getDst().getNumber();
 					if (!visited[dst]) {
