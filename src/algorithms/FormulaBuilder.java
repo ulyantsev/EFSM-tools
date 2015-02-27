@@ -207,7 +207,7 @@ public abstract class FormulaBuilder {
 				}
 			}
 		}
-		return constraints.assemble("scenario constraints: connection between y's and z's");
+		return constraints.assemble("scenario constraints: connection between x's and y's");
 	}
 	
 	// induce complete FSMs

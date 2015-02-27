@@ -10,6 +10,7 @@ MIN_ACTIONS=
 NACTIONS=
 ACTIONS_SEQ_LEN=
 NVARIABLES=
+TRANSITION_PERCENT=
 
 #the number of initially generated LTL formulae is NSTATES * MULT
 MULT=200
@@ -34,7 +35,7 @@ then
 fi
 
 
-while getopts ':m:n:f:h:e:i:a:s:v:x:' opt ; do
+while getopts ':m:n:f:h:e:i:a:s:v:x:p:' opt ; do
     case "$opt" in
         m) FSM="$OPTARG" ;;
         n) NSTATES="$OPTARG" ;;
@@ -45,14 +46,15 @@ while getopts ':m:n:f:h:e:i:a:s:v:x:' opt ; do
         a) NACTIONS="$OPTARG" ;;
         s) ACTIONS_SEQ_LEN="$OPTARG" ;;
         v) NVARIABLES="$OPTARG" ;; 
-        x) MULT="$OPTARG" ;; 
-        [?]) echo >&2 "Usage: $0 -m (EFSM file in graphviz format) -n (desired number of EFSM states) -f (number of desired LTL formulae) -h (threshold, default = 50) -e (number of events) -i (min number of actions) -a (max number of actions) -s (max action sequence length) -v (number of internal variables)" && exit 1 ;;
+        x) MULT="$OPTARG" ;;
+        p) TRANSITION_PERCENT="$OPTARG" ;;
+        [?]) echo >&2 "Usage: $0 -m (EFSM file in graphviz format) -n (desired number of EFSM states) -f (number of desired LTL formulae) -h (threshold, default = 50) -e (number of events) -i (min number of actions) -a (max number of actions) -s (max action sequence length) -v (number of internal variables) -t (percentage of generated transitions)" && exit 1 ;;
     esac
 done
 
-if [[ -z $FSM || -z $NSTATES || -z $NLTL || -z $TREE_SIZE || -z $THRESHOLD || -z $NEVENTS || -z $MIN_ACTIONS || -z $NACTIONS || -z $ACTIONS_SEQ_LEN || -z $NVARIABLES ]]
+if [[ -z $FSM || -z $NSTATES || -z $NLTL || -z $TREE_SIZE || -z $THRESHOLD || -z $NEVENTS || -z $MIN_ACTIONS || -z $NACTIONS || -z $ACTIONS_SEQ_LEN || -z $NVARIABLES || -z $TRANSITION_PERCENT ]]
 then 
-    echo >&2 "Usage: $0 -m (EFSM file) -n (number of EFSM states) -f (desired number of LTL formulae) -h (threshold) -e (number of events) -i (min number of actions) -a (max number of actions) -s (max action sequence length) -v (number of internal variables)"
+    echo >&2 "Usage: $0 -m (EFSM file) -n (number of EFSM states) -f (desired number of LTL formulae) -h (threshold) -e (number of events) -i (min number of actions) -a (max number of actions) -s (max action sequence length) -v (number of internal variables) -t (percentage of generated transitions)"
     exit 1 
 fi
 
@@ -77,7 +79,7 @@ for ltl_file in $(ls x*) ; do
         checkwd=$workdir/$j
         #$(mktemp -d)
         mkdir -p $checkwd
-        java -jar $SCRIPT_DIR/../jars/automaton-generator.jar -s $NSTATES -ec $NEVENTS -mina $MIN_ACTIONS -ac $NACTIONS -maxa $ACTIONS_SEQ_LEN -vc $NVARIABLES -o $checkwd/efsm.gv
+        java -jar $SCRIPT_DIR/../jars/automaton-generator.jar -s $NSTATES -ec $NEVENTS -mina $MIN_ACTIONS -ac $NACTIONS -maxa $ACTIONS_SEQ_LEN -vc $NVARIABLES -p $TRANSITION_PERCENT -o $checkwd/efsm.gv
         $SCRIPT_DIR/select-formulas -a $checkwd/efsm.gv -n $NSTATES -f "$root/$ltl_file" > $checkwd/true_formulas
         cnt=$(expr $cnt + $(wc -l $checkwd/true_formulas | awk '{print $1}'))
     done

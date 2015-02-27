@@ -1,5 +1,6 @@
 #!/bin/bash
 states=10
-events=3
-actions=2
-ant ../qbf-automaton-generator-jar && java -jar ../jars/qbf-automaton-generator.jar testing/fsm_${states}s${events}e${actions}a_5_80.sc --ltl testing/fsm_${states}s${events}e${actions}a-3-true.ltl --size $states --eventNumber $events --actionNumber $actions --timeout 600 --result generated-fsm.gv --strategy ITERATIVE_SAT
+events=5
+actions=5
+inst=0
+cd .. && ant qbf-automaton-generator-jar && cd qbf && java -jar ../jars/qbf-automaton-generator.jar testing/fsm-$states-$inst.sc --ltl testing/fsm-$states-$inst-true.ltl --size $states --eventNumber $events --actionNumber $actions --timeout 300 --result generated-fsm.gv --strategy ITERATIVE_SAT --complete

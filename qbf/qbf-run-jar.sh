@@ -1,5 +1,6 @@
 #!/bin/bash
-states=2
-events=2
-actions=2
-ant ../qbf-automaton-generator-jar && java -ea -jar ../jars/qbf-automaton-generator.jar testing/fsm_${states}s${events}e${actions}a_10_20.sc --ltl testing/fsm_${states}s${events}e${actions}a-2-true.ltl --size $states --eventNumber $events --actionNumber $actions --timeout 300 -qs SKIZZO  --solverParams "" --result generated-fsm.gv
+states=3
+events=5
+actions=5
+inst=2
+cd .. && ant qbf-automaton-generator-jar && cd qbf && java -ea -jar ../jars/qbf-automaton-generator.jar testing/fsm-$states-$inst.sc --ltl testing/fsm-$states-$inst-true.ltl --size $states --eventNumber $events --actionNumber $actions --timeout 300 -qs SKIZZO  --solverParams "" --result generated-fsm.gv --complete

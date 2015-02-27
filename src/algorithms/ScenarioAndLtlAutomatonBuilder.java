@@ -1,7 +1,6 @@
 package algorithms;
 
 import java.io.File;
-import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -70,20 +69,14 @@ public abstract class ScenarioAndLtlAutomatonBuilder {
 				.filter(a -> a.value && a.var.name.startsWith("y"))
 				.collect(Collectors.toList())) {
 			String[] tokens = a.var.name.split("_");
-			assert tokens.length == 5;
+			assert tokens.length == 4;
 			int from = Integer.parseInt(tokens[1]);
 			int to = Integer.parseInt(tokens[2]);
 			String event = tokens[3];
-			MyBooleanExpression expr;
-			try {
-				expr = MyBooleanExpression.get(tokens[4]);
-			} catch (ParseException e) {
-				throw new AssertionError();
-			}
 
 			Node state = ans.getState(from);
 
-			if (state.hasTransition(event, expr)) {
+			if (state.hasTransition(event, MyBooleanExpression.getTautology())) {
 				filteredYVars.add(a);
 			}
 			
@@ -91,21 +84,21 @@ public abstract class ScenarioAndLtlAutomatonBuilder {
 				List<String> properUniqueActions = new ArrayList<>();
 				for (Assignment az : ass) {
 					if (az.value && az.var.name.startsWith("z_" + from + "_")
-							&& az.var.name.endsWith("_" + event + "_" + expr)) {
+							&& az.var.name.endsWith("_" + event)) {
 						properUniqueActions.add(az.var.name.split("_")[2]);
 					}
 				}
 				Collections.sort(properUniqueActions);
 	
-				if (!state.hasTransition(event, expr)) {
+				if (!state.hasTransition(event, MyBooleanExpression.getTautology())) {
 					// add
-					state.addTransition(event, expr,
+					state.addTransition(event, MyBooleanExpression.getTautology(),
 						new StringActions(String.join(",",
 						properUniqueActions)), ans.getState(to));
 					logger.info("ADDING TRANSITION NOT FROM SCENARIOS");
 				} else {
 					// check
-					Transition t = state.getTransition(event, expr);
+					Transition t = state.getTransition(event, MyBooleanExpression.getTautology());
 					if (t.getDst() != ans.getState(to)) {
 						logger.severe("INVALID TRANSITION DESTINATION");
 					}
