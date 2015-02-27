@@ -50,7 +50,7 @@ public class ConsistencyCheckerMain {
         int actionsMistakes = 0;
         int scenariosSumLength = 0;
         for (StringScenario scenario : scenarios) {
-            faultCount += automaton.isCompliesWithScenario(scenario) ? 0 : 1;
+            faultCount += automaton.isCompliantWithScenario(scenario) ? 0 : 1;
             actionsMistakes += automaton.calcMissedActions(scenario);
             scenariosSumLength += scenario.size();
         }

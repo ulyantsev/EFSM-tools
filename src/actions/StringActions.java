@@ -3,17 +3,17 @@ package actions;
 import java.util.Arrays;
 
 public class StringActions {
-	private String[] actions;
+	private final String[] actions;
 
 	public StringActions(String str) {
 		str = str.trim();
 		if (str.equals("")) {
-			this.actions = new String[0];
+			actions = new String[0];
 		} else {
-			this.actions = str.split(",");
+			actions = str.split(",");
 		}
 		for (int i = 0; i < actions.length; i++) {
-			this.actions[i] = this.actions[i].trim();
+			actions[i] = actions[i].trim();
 		}
 	}
 
@@ -30,13 +30,6 @@ public class StringActions {
 	}
 
 	public String toString() {
-		String res = "";
-		for (int i = 0; i < actions.length; i++) {
-			if (i > 0) {
-				res += ", ";
-			}
-			res += actions[i];
-		}
-		return res;
+		return String.join(", ", actions);
 	}
 }

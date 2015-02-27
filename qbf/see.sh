@@ -14,7 +14,7 @@ print_found_by_prefix() {
     local text=$(cat $dir/$prefix*)
     local sat=$(echo "$text" | grep "WAS FOUND" | wc -l)
     local unsat=$(echo "$text" | grep "UNSAT" | wc -l)
-    local unknown=$(echo "$text" | grep "\\(TIME LIMIT EXCEEDED\\|UNKNOWN\\)" | wc -l)
+    local unknown=$(echo "$text" | grep "\\(TIME LIMIT EXCEEDED\\|UNKNOWN\\|OutOfMemoryError\\)" | wc -l)
     if [[ "$prefix" == "${prefix/-fa/}" ]]; then
         print_sat $prefix $sat $unknown $unsat
     else
@@ -26,13 +26,16 @@ for compdir in "complete" "incomplete"; do
     echo ">>> $compdir"
     for instance_type in tr fa; do
         for prefix in HYBR*-$instance_type EXP*-$instance_type ITER*-$instance_type QSAT*-$instance_type BACK*-$instance_type; do
+            echo_str=
             for ((s = 3; s <= 10; s++)); do
                 ls evaluation/$compdir/$prefix*-$s-*.done 1>/dev/null 2>/dev/null
                 if [[ $? != 0 ]]; then
                     continue
                 fi
-                print_found_by_prefix evaluation/$compdir "$prefix*-$s"
+                print_found_by_prefix evaluation/$compdir "$prefix*-$s-"
+                echo_str='\n'
             done
+            echo -en "$echo_str"
         done
     done
 done

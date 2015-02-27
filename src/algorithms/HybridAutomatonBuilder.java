@@ -28,7 +28,7 @@ import structures.Automaton;
 import structures.ScenariosTree;
 
 public class HybridAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
-	private static final int MAX_FORMULA_SIZE = 100 * 1000 * 1000;
+	private static final int MAX_FORMULA_SIZE = 500 * 1000 * 1000;
 	
 	public static Optional<Automaton> build(Logger logger, ScenariosTree tree,
 			List<LtlNode> formulae, int colorSize, String ltlFilePath,
@@ -111,7 +111,7 @@ public class HybridAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 				return Optional.of(a);
 			}
 			
-			if (!complete) {
+			if (complete) {
 				// more search
 				final Automaton b = constructAutomatonFromAssignment(logger,
 						list, tree, colorSize, false).getLeft();

@@ -2,11 +2,9 @@ package algorithms;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import qbf.reduction.BinaryOperation;
 import qbf.reduction.BinaryOperations;
@@ -151,39 +149,29 @@ public abstract class FormulaBuilder {
 		FormulaList constraints = new FormulaList(BinaryOperations.AND);
 		Map<Node, Set<Node>> adjacent = AdjacentCalculator.getAdjacent(tree);
 		for (Node node : tree.getNodes()) {
-			// removing non-determinism of hash maps
-			List<Node> otherNodes = adjacent.get(node).stream()
+			// removing the non-determinism of hash maps
+			adjacent.get(node).stream()
 				.sorted((n1, n2) -> n1.getNumber() - n2.getNumber())
-				.collect(Collectors.toList());
-			
-			for (Node other : otherNodes) {
-				if (other.getNumber() < node.getNumber()) {
+				.filter(other -> other.getNumber() < node.getNumber())
+				.forEach(other -> {
 					for (int color = 0; color < colorSize; color++) {
 						BooleanVariable v1 = xVar(node.getNumber(), color);
 						BooleanVariable v2 = xVar(other.getNumber(), color);
-						constraints.add(v1.not().or(v2.not()));
+						constraints.add(v1.and(v2).not());
 					}
-				}
-			}
+				});
 		}
 		return constraints.assemble("scenario constraints: adjacency graph constraints");
 	}
 	
 	private BooleanFormula notMoreThanOneEdgeConstraints() {
 		FormulaList constraints = new FormulaList(BinaryOperations.AND);
-		Set<String> was = new HashSet<>();
-		for (Node node : tree.getNodes()) {
-			for (Transition t : node.getTransitions()) {
-				String key = t.getEvent() + "_" + t.getExpr();
-				if (!was.contains(key)) {
-					was.add(key);
-					for (int parentColor = 0; parentColor < colorSize; parentColor++) {
-						for (int color1 = 0; color1 < colorSize; color1++) {
-							BooleanVariable v1 = yVar(parentColor, color1, t.getEvent());
-							for (int color2 = 0; color2 < color1; color2++) {
-								BooleanVariable v2 = yVar(parentColor, color2, t.getEvent());
-								constraints.add(v1.not().or(v2.not()));
-							}
+		for (int i1 = 0; i1 < colorSize; i1++) {
+			for (String e : events) {
+				for (int i2 = 0; i2 < colorSize; i2++) {
+					for (int i3 = 0; i3 < colorSize; i3++) {
+						if (i3 != i2) {
+							constraints.add(yVar(i1, i2, e).and(yVar(i1, i3, e)).not());
 						}
 					}
 				}

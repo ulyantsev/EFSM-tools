@@ -95,12 +95,12 @@ public abstract class ScenarioAndLtlAutomatonBuilder {
 					state.addTransition(event, MyBooleanExpression.getTautology(),
 						new StringActions(String.join(",",
 						properUniqueActions)), ans.getState(to));
-					logger.info("ADDING TRANSITION NOT FROM SCENARIOS");
+					logger.info("ADDING TRANSITION NOT FROM SCENARIOS " + a.var);
 				} else {
 					// check
 					Transition t = state.getTransition(event, MyBooleanExpression.getTautology());
 					if (t.getDst() != ans.getState(to)) {
-						logger.severe("INVALID TRANSITION DESTINATION");
+						logger.severe("INVALID TRANSITION DESTINATION " + a.var);
 					}
 					List<String> actualActions = new ArrayList<>(new TreeSet<>(
 							Arrays.asList(t.getActions().getActions())));

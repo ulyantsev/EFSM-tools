@@ -31,6 +31,7 @@ import scenario.StringScenario;
 import structures.Automaton;
 import structures.ScenariosTree;
 import structures.Transition;
+import tools.AutomatonCompletenessChecker;
 import algorithms.BacktrackingAutomatonBuilder;
 import algorithms.HybridAutomatonBuilder;
 import algorithms.IterativeAutomatonBuilder;
@@ -95,10 +96,10 @@ public class QbfBuilderMain {
 	private boolean complete;
 	
 	@Option(name = "--hybridSecToGenerateFormula", aliases = { "-hgf" }, usage = "time limit in seconds for formula generation in the HYBRID mode", metaVar = "<sec>")
-	private int hybridSecToGenerateFormula = 5;
+	private int hybridSecToGenerateFormula = 10;
 	
 	@Option(name = "--hybridSecToSolve", aliases = { "-hs" }, usage = "time limit in seconds for the solver in the HYBRID mode", metaVar = "<sec>")
-	private int hybridSecToSolve = 5;
+	private int hybridSecToSolve = 15;
 	
 	private void launcher(String[] args) throws IOException {
 		Locale.setDefault(Locale.US);
@@ -238,8 +239,10 @@ public class QbfBuilderMain {
 			
 			if (!resultAutomaton.isPresent()) {
 				logger.info("Automaton with " + size + " states NOT FOUND!");
+				logger.info("Automaton builder execution time: " + executionTime);
 			} else {
 				logger.info("Automaton with " + size + " states WAS FOUND!");
+				logger.info("Automaton builder execution time: " + executionTime);
 				
 				// test compliance
 				final List<StringScenario> scenarios = new ArrayList<>();
@@ -247,7 +250,7 @@ public class QbfBuilderMain {
 					scenarios.addAll(StringScenario.loadScenarios(scenarioPath, varNumber));
 				}
 				
-				if (scenarios.stream().allMatch(resultAutomaton.get()::isCompliesWithScenario)) {
+				if (scenarios.stream().allMatch(resultAutomaton.get()::isCompliantWithScenario)) {
 					logger.info("COMPLIES WITH SCENARIOS");
 				} else {
 					logger.severe("NOT COMPLIES WITH SCENARIOS");
@@ -259,6 +262,7 @@ public class QbfBuilderMain {
 				} catch (FileNotFoundException e) {
 					logger.warning("File " + resultFilePath + " not found: " + e.getMessage());
 				}
+				
 				// verification
 				boolean verified = verifier.verify(resultAutomaton.get());
 				if (verified) {
@@ -266,6 +270,7 @@ public class QbfBuilderMain {
 				} else {
 					logger.severe("NOT VERIFIED");
 				}
+				
 				// bfs check
 				if (ss != SolvingStrategy.BACKTRACKING) {
 					if (checkBfs(resultAutomaton.get(), events, logger)) {
@@ -278,8 +283,17 @@ public class QbfBuilderMain {
 						}
 					}
 				}
+				
+				// completeness check
+				if (complete) {
+					String s = AutomatonCompletenessChecker.checkCompleteness(resultAutomaton.get());
+					if (s.equals("COMPLETE")) {
+						logger.info(s);
+					} else {
+						logger.severe(s);
+					}
+				}
 			}
-			logger.info("Automaton builder execution time: " + executionTime);
 		} catch (ParseException | LtlParseException e) {
 			logger.warning("Can't get LTL formula from " + treeFilePath);
 			throw new RuntimeException(e);
