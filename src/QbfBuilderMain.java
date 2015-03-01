@@ -99,7 +99,7 @@ public class QbfBuilderMain {
 	private int hybridSecToGenerateFormula = 10;
 	
 	@Option(name = "--hybridSecToSolve", aliases = { "-hs" }, usage = "time limit in seconds for the solver in the HYBRID mode", metaVar = "<sec>")
-	private int hybridSecToSolve = 15;
+	private int hybridSecToSolve = 20;
 	
 	private void launcher(String[] args) throws IOException {
 		Locale.setDefault(Locale.US);

@@ -20,8 +20,8 @@ cd .. && ant qbf-automaton-generator-jar && cd qbf
 echo "Evaluating..."
 
 fsm="generated-fsm.gv"
-events=5
-actions=5
+events=4
+actions=4
 
 mkdir -p evaluation/$compdir
 

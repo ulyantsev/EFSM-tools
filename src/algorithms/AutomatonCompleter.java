@@ -33,7 +33,6 @@ public class AutomatonCompleter {
 		
 		// prepare all action combinations (will be used while trying to enforce FSM completeness)
 		final int actionsNum = actions.size();
-		assert actionsNum <= 20;
 		final int maxI = 1 << actionsNum;
 		for (int i = 0; i < maxI; i++) {
 			final List<String> sequence = new ArrayList<>();
@@ -43,6 +42,12 @@ public class AutomatonCompleter {
 				}
 			}
 			preparedActions.add(new StringActions(String.join(",", sequence)));
+		}
+		preparedActions.sort((a1, a2) ->
+			Integer.compare(a1.getActions().length, a2.getActions().length)
+		);
+		for (StringActions a : preparedActions) {
+			System.out.println(a);
 		}
 	}
 	
