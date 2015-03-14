@@ -5,12 +5,15 @@ package qbf.reduction;
  */
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,20 +33,19 @@ public abstract class BooleanFormula {
 		return limbooleIndex.map(index -> new Assignment(BooleanVariable.getVarByNumber(index), isTrue));
 	}
 	
+	public static final String DIMACS_FILENAME = "_tmp.dimacs";
+	
 	public static Pair<List<Assignment>, Long> solveAsSat(String formula, Logger logger, String solverParams,
 			int timeoutSeconds, SatSolver solver) throws IOException {
 		logger.info("Final SAT formula length: " + formula.length());
-		DimacsConversionInfo info = BooleanFormula.toDimacs(formula, logger);
-		final String dimaxFilename = "_tmp.dimacs";
-		try (PrintWriter pw = new PrintWriter(dimaxFilename)) {
-			pw.print(info.title() + "\n" + info.output());
-		}
+		DimacsConversionInfo info = BooleanFormula.toDimacs(formula, logger, DIMACS_FILENAME);
+		info.close();
 		logger.info("CREATED DIMACS FILE");
 		
 		long time = System.currentTimeMillis();
 		Map<String, Assignment> list = new LinkedHashMap<>();
 		final int maxtime = Math.max(2, timeoutSeconds); // cryptominisat does not accept time=1
-		String solverStr = solver.command + maxtime + " " + dimaxFilename + " " + solverParams;
+		String solverStr = solver.command + maxtime + " " + DIMACS_FILENAME + " " + solverParams;
 		logger.info(solverStr);
 		Process p = Runtime.getRuntime().exec(solverStr);
 		
@@ -62,13 +64,17 @@ public abstract class BooleanFormula {
 		return Pair.of(new ArrayList<>(list.values()), time);
 	}
 	
-	public static class DimacsConversionInfo {
-		private final StringBuilder dimacsBuilder = new StringBuilder();
-		private final Map<Integer, Integer> limbooleNumberToDimacs = new LinkedHashMap<>();
-		private final Map<Integer, Integer> dimacsNumberToLimboole = new LinkedHashMap<>();
+	public static class DimacsConversionInfo implements AutoCloseable {
+		private final Map<Integer, Integer> limbooleNumberToDimacs = new HashMap<>();
+		private final Map<Integer, Integer> dimacsNumberToLimboole = new HashMap<>();
 		private String title;
 		private Integer varCount;
-
+		private PrintWriter pw;
+		
+		public DimacsConversionInfo(String filename) throws FileNotFoundException {
+			 pw = new PrintWriter(new File(filename));
+		}
+		
 		void acceptLine(String line) {
 			if (line.startsWith("c")) {
 				String[] tokens = line.split(" ");
@@ -80,20 +86,17 @@ public abstract class BooleanFormula {
 				limbooleNumberToDimacs.put(second, first);
 				dimacsNumberToLimboole.put(first, second);
 			} else if (line.startsWith("p")) {
+				pw.println(line);
 				title = line;
 				varCount = Integer.parseInt(line.split(" ")[2]);
 			} else {
-				dimacsBuilder.append(line + "\n");
+				pw.println(line);
 			}
 		}
 		
 		public String title() {
 			assert title != null;
 			return title;
-		}
-		
-		public String output() {
-			return dimacsBuilder.toString();
 		}
 		
 		public Optional<Integer> toDimacsNumber(int num) {
@@ -107,13 +110,17 @@ public abstract class BooleanFormula {
 		public Optional<Integer> toLimbooleNumber(int num) {
 			return Optional.ofNullable(dimacsNumberToLimboole.get(num));
 		}
+
+		@Override
+		public void close() {
+			pw.close();
+		}
 	}
 	
 	public abstract String toLimbooleString();
 	
-	public static DimacsConversionInfo toDimacs(String limbooleFormula, Logger logger) throws IOException {
+	public static DimacsConversionInfo toDimacs(String limbooleFormula, Logger logger, String dimacsFilename) throws IOException {
 		final String beforeLimbooleFilename = "_tmp.limboole";
-		final DimacsConversionInfo info = new DimacsConversionInfo();
 		final String afterLimbooleFilename = "_tmp.after.limboole.dimacs";
 		
 		try (PrintWriter pw = new PrintWriter(beforeLimbooleFilename)) {
@@ -129,15 +136,17 @@ public abstract class BooleanFormula {
 			throw new AssertionError();
 		}
 		
+		final DimacsConversionInfo info = new DimacsConversionInfo(dimacsFilename);
 		try (BufferedReader input = new BufferedReader(new InputStreamReader(new FileInputStream(afterLimbooleFilename)))) {
 			input.lines().forEach(info::acceptLine);
 		}
+		info.close();
 
 		return info;
 	}
 	
-	public DimacsConversionInfo toDimacs(Logger logger) throws IOException {
-		return toDimacs(simplify().toLimbooleString(), logger);
+	public DimacsConversionInfo toDimacs(Logger logger, String dimacsFilename) throws IOException {
+		return toDimacs(simplify().toLimbooleString(), logger, dimacsFilename);
 	}
 	
 	public BooleanFormula not() {

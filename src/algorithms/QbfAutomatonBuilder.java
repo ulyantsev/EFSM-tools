@@ -31,7 +31,7 @@ import structures.ScenariosTree;
 
 public class QbfAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {	
 	public final static String PRECOMPUTED_DIR_NAME = "qbf/bfs-prohibited-ys";
-	private static final int MAX_FORMULA_SIZE = 1000 * 1000 * 1000;
+	private static final int MAX_FORMULA_SIZE = 500 * 1000 * 1000;
 	
 	public static Set<String> getForbiddenYs(int states, int events) throws FileNotFoundException {
 		Set<String> ys = new TreeSet<>();

@@ -75,8 +75,7 @@ for ((size = 10; size >= 3; size--)); do
                     fi
                 fi
             done
-            lines=$(cat "$ltl" | wc -l)
-            pattern="${lines}"'s/^\(.*\)$/!(\1)/g'
+            pattern='1s/^\(.*\)$/!(\1)/g'
             cat $name-true.ltl | sed -e "$pattern" > $name-false.ltl
             echo $name : done
         done

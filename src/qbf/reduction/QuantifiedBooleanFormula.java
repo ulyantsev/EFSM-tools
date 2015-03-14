@@ -74,13 +74,16 @@ public class QuantifiedBooleanFormula {
 	
 	public QdimacsConversionInfo toQdimacs(Logger logger) throws IOException {
 		StringBuilder sb = new StringBuilder();
-		DimacsConversionInfo info = formula().toDimacs(logger);
+		DimacsConversionInfo info = formula().toDimacs(logger, BooleanFormula.DIMACS_FILENAME);
 		
 		sb.append(info.title() + "\n");
 		sb.append("e " + varsToNumbers(existVars, info) + " 0\n");
 		sb.append("a " + varsToNumbers(forallVars, info) + " 0\n");
 		sb.append("e " + otherVars(info) + " 0\n");
-		sb.append(info.output());
+		try (BufferedReader input = new BufferedReader(new FileReader(BooleanFormula.DIMACS_FILENAME))) {
+			// skip title
+			input.lines().skip(1).forEach(line -> sb.append(line + "\n"));
+		}
 		
 		return new QdimacsConversionInfo(sb.toString(), info);
 	}

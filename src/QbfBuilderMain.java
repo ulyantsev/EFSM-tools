@@ -96,10 +96,10 @@ public class QbfBuilderMain {
 	private boolean complete;
 	
 	@Option(name = "--hybridSecToGenerateFormula", aliases = { "-hgf" }, usage = "time limit in seconds for formula generation in the HYBRID mode", metaVar = "<sec>")
-	private int hybridSecToGenerateFormula = 10;
+	private int hybridSecToGenerateFormula = 15;
 	
 	@Option(name = "--hybridSecToSolve", aliases = { "-hs" }, usage = "time limit in seconds for the solver in the HYBRID mode", metaVar = "<sec>")
-	private int hybridSecToSolve = 20;
+	private int hybridSecToSolve = 30;
 	
 	private void launcher(String[] args) throws IOException {
 		Locale.setDefault(Locale.US);

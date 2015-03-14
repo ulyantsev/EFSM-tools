@@ -1,6 +1,5 @@
 #!/bin/bash
 
-timeout=900
 min_size=5
 max_size=10
 
@@ -10,8 +9,9 @@ echo "Evaluating..."
 fsm="generated-fsm.gv"
 
 for l in 50 100 200; do
+    timeout=$(($l * 6))
     for ((size = $min_size; size <= $max_size; size++)); do
-        for ((instance = 0; instance <= 49; instance++)); do
+        for ((instance = 0; instance < 50; instance++)); do
             ev_name=evaluation-daniil/$size-$instance-$l
             if [[ $(cat daniil-hard/$l-hard-runs | grep "^$size/$instance$") == "" ]]; then
                 continue
@@ -24,9 +24,10 @@ for l in 50 100 200; do
             ltl_name=$name/formulae
             echo ">>> s=$size num=$instance l=$l"
             rm -f "$fsm"
-            java -Xms2G -jar ../jars/qbf-automaton-generator.jar "$sc_name" \
+            java -Xms2G -Xmx4G -jar ../jars/qbf-automaton-generator.jar "$sc_name" \
                 --ltl "$ltl_name" --size $size --eventNumber 2 --actionNumber 2 --varNumber 2 \
                 --timeout $timeout -qs SKIZZO --result "$fsm" --strategy HYBRID \
+                --hybridSecToGenerateFormula 15 --hybridSecToSolve 30 \
                 2>&1 | grep "\\(INFO\\|WARNING\\|SEVERE\\|Exception\\|OutOfMemoryError\\)" > $ev_name.log && touch $ev_name.done
         done
     done

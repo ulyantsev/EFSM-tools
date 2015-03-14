@@ -40,4 +40,4 @@ for compdir in "complete" "incomplete"; do
     done
 done
 
-echo not verified $(cat $(ls evaluation/*/*) | grep "NOT VERIFIED" | wc -l), not complies to scenarios $(cat $(ls evaluation/*/*) | grep "NOT COMPLIES" | wc -l), severe $(cat $(ls evaluation/*/*) | grep "SEVERE" | wc -l)
+echo not verified $(cat $(ls evaluation/*/*) | grep "NOT VERIFIED" | wc -l), not complies to scenarios $(cat $(ls evaluation/*/*) | grep "NOT COMPLIES" | wc -l), severe $(cat $(ls evaluation/*/*) | grep "SEVERE" | wc -l), out of memory $(cat $(ls evaluation/*/*) | grep "OutOfMemoryError" | wc -l)

@@ -72,16 +72,16 @@ public class StringScenario {
     
     boolean isPositive;
     
-    private ArrayList<List<String>> events = new ArrayList<>();
+    private List<List<String>> events = new ArrayList<>();
     
-    private ArrayList<MyBooleanExpression> expressions = new ArrayList<>();
+    private List<MyBooleanExpression> expressions = new ArrayList<>();
     
-    private ArrayList<StringActions> actions = new ArrayList<>();
+    private List<StringActions> actions = new ArrayList<>();
     
     public StringScenario(boolean isPositive,
-                          ArrayList<String> events,
-                          ArrayList<MyBooleanExpression> expressions,
-                          ArrayList<StringActions> actions) {
+                          List<String> events,
+                          List<MyBooleanExpression> expressions,
+                          List<StringActions> actions) {
     	this.isPositive = isPositive;
     	
     	if (events.size() != expressions.size() || events.size() != actions.size()) {

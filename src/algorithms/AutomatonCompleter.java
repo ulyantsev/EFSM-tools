@@ -46,9 +46,6 @@ public class AutomatonCompleter {
 		preparedActions.sort((a1, a2) ->
 			Integer.compare(a1.getActions().length, a2.getActions().length)
 		);
-		for (StringActions a : preparedActions) {
-			System.out.println(a);
-		}
 	}
 	
 	private List<Pair<Integer, String>> missingTransitions() {
