@@ -5,7 +5,6 @@ package algorithms;
  */
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -16,9 +15,8 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import qbf.egorov.ltl.grammar.LtlNode;
 import qbf.reduction.Assignment;
-import qbf.reduction.BooleanFormula;
-import qbf.reduction.BooleanFormula.DimacsConversionInfo;
 import qbf.reduction.BooleanFormula.SolveAsSatResult;
+import qbf.reduction.ExpandableStringFormula;
 import qbf.reduction.QbfSolver;
 import qbf.reduction.QuantifiedBooleanFormula;
 import qbf.reduction.QuantifiedBooleanFormula.FormulaSizeException;
@@ -29,46 +27,6 @@ import structures.ScenariosTree;
 
 public class HybridAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 	private static final int MAX_FORMULA_SIZE = 500 * 1000 * 1000;
-	
-	private static class ExpandableStringFormula {
-		public final String initialFormula;
-		private final Logger logger;
-		private DimacsConversionInfo info;
-		private final SatSolver satSolver;
-		private final String solverParams;
-
-		public ExpandableStringFormula(String initialFormula, Logger logger, SatSolver satSolver,
-				String solverParams) {
-			this.initialFormula = initialFormula;
-			this.logger = logger;
-			this.satSolver = satSolver;
-			this.solverParams = solverParams;
-		}
-		
-		/*
-		 * Should be called after 'solve' was called at least once.
-		 */
-		public void includeProhibitionConstraints(List<Assignment> constraints)
-				throws IOException {
-			assert info != null;
-			BooleanFormula.appendProhibitionConstraintsToDimacs(logger,
-					Collections.singletonList(constraints), info);
-		}
-		
-		/*
-		 * Should be called once.
-		 */
-		public SolveAsSatResult solve(int timeLeftForSolver) throws IOException {
-			if (info == null) {
-				final SolveAsSatResult solution = BooleanFormula.solveAsSat(initialFormula,
-						logger, solverParams, timeLeftForSolver, satSolver);
-				info = solution.info;
-				return solution;
-			}
-			return BooleanFormula.solveDimacs(logger, timeLeftForSolver, satSolver,
-					solverParams, info);
-		}
-	}
 	
 	public static Optional<Automaton> build(Logger logger, ScenariosTree tree,
 			List<LtlNode> formulae, int size, String ltlFilePath,
@@ -102,7 +60,7 @@ public class HybridAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 						return Optional.empty();
 					}
 				}
-				formula.includeProhibitionConstraints(autoSolution.getRight().stream()
+				formula.addProhibitionConstraint(autoSolution.getRight().stream()
 						.map(v -> v.negate()).collect(Collectors.toList()));
 			} else {
 				// try next k

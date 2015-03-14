@@ -44,12 +44,12 @@ public class QbfAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 	}
 	
 	public static Optional<Automaton> build(Logger logger, ScenariosTree tree,
-			List<LtlNode> formulae, int colorSize, String ltlFilePath,
+			List<LtlNode> formulae, int size, String ltlFilePath,
 			QbfSolver qbfSolver, String solverParams, boolean extractSubterms,
 			boolean useSat, List<String> events, List<String> actions,
 			SatSolver satSolver, Verifier verifier, long finishTime, boolean complete) throws IOException {		
 		if (useSat) {
-			final Set<String> forbiddenYs = getForbiddenYs(logger, colorSize, events.size());
+			final Set<String> forbiddenYs = getForbiddenYs(logger, size, events.size());
 			for (int k = 0; ; k++) {
 				if (System.currentTimeMillis() > finishTime) {
 					logger.info("TIME LIMIT EXCEEDED");
@@ -58,13 +58,13 @@ public class QbfAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 				logger.info("TRYING k = " + k);
 				deleteTrash();
 				QuantifiedBooleanFormula qbf = new QbfFormulaBuilder(logger, tree,
-						formulae, colorSize, k, extractSubterms, complete,
+						formulae, size, k, extractSubterms, complete,
 						events, actions).getFormula(false);
 				final int timeLeft = (int) (finishTime - System.currentTimeMillis()) / 1000 + 1;
 				
 				String formula;
 				try {
-					formula = qbf.flatten(tree, colorSize, k, logger, events, actions,
+					formula = qbf.flatten(tree, size, k, logger, events, actions,
 							forbiddenYs, finishTime, MAX_FORMULA_SIZE);
 				} catch (FormulaSizeException | TimeLimitExceeded e) {
 					logger.info("FORMULA FOR k = " + k + " IS TOO LARGE OR REQUIRES TOO MUCH TIME TO CONSTRUCT");
@@ -81,7 +81,7 @@ public class QbfAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 					return Optional.empty();
 				} else {
 					final Automaton a = constructAutomatonFromAssignment(logger,
-							list, tree, colorSize, true).getLeft();
+							list, tree, size, true).getLeft();
 					if (verifier.verify(a)) {
 						logger.info(new SolverResult(list).toString().split("\n")[0]);
 						return Optional.of(a);
@@ -99,7 +99,7 @@ public class QbfAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 				logger.info("TRYING k = " + k);
 				deleteTrash();
 				QuantifiedBooleanFormula qbf = new QbfFormulaBuilder(logger, tree,
-						formulae, colorSize, k, extractSubterms, complete,
+						formulae, size, k, extractSubterms, complete,
 						events, actions).getFormula(false);
 				final int timeLeft = (int) (finishTime - System.currentTimeMillis()) / 1000 + 1;
 				SolverResult ass = qbf.solve(logger, qbfSolver, solverParams, timeLeft);
@@ -107,7 +107,7 @@ public class QbfAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 
 				if (ass.type() == SolverResults.SAT) {
 					final Automaton a = constructAutomatonFromAssignment(logger, ass.list(),
-							tree, colorSize, true).getLeft();
+							tree, size, true).getLeft();
 					if (verifier.verify(a)) {
 						return Optional.of(a);
 					} else {
