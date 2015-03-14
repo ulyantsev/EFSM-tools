@@ -14,32 +14,32 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.logging.Logger;
 
-import org.apache.commons.lang3.tuple.Pair;
-
 import qbf.egorov.ltl.grammar.LtlNode;
 import qbf.reduction.Assignment;
 import qbf.reduction.BooleanFormula;
+import qbf.reduction.BooleanFormula.SolveAsSatResult;
+import qbf.reduction.QbfSolver;
 import qbf.reduction.QuantifiedBooleanFormula;
 import qbf.reduction.QuantifiedBooleanFormula.FormulaSizeException;
 import qbf.reduction.SatSolver;
 import qbf.reduction.SolverResult;
 import qbf.reduction.SolverResult.SolverResults;
-import qbf.reduction.QbfSolver;
 import qbf.reduction.Verifier;
 import structures.Automaton;
 import structures.ScenariosTree;
 
 public class QbfAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {	
 	public final static String PRECOMPUTED_DIR_NAME = "qbf/bfs-prohibited-ys";
-	private static final int MAX_FORMULA_SIZE = 500 * 1000 * 1000;
+	private static final int MAX_FORMULA_SIZE = 1000 * 1000 * 1000;
 	
-	public static Set<String> getForbiddenYs(int states, int events) throws FileNotFoundException {
+	public static Set<String> getForbiddenYs(Logger logger, int states, int events) throws FileNotFoundException {
 		Set<String> ys = new TreeSet<>();
 		try (Scanner sc = new Scanner(new File(PRECOMPUTED_DIR_NAME + "/" + states + "_" + events))) {
 			while (sc.hasNext()) {
 				ys.add(sc.next());
 			}
 		}
+		logger.info("FORBIDDEN YS: " + ys);
 		return ys;
 	}
 	
@@ -49,8 +49,7 @@ public class QbfAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 			boolean useSat, List<String> events, List<String> actions,
 			SatSolver satSolver, Verifier verifier, long finishTime, boolean complete) throws IOException {		
 		if (useSat) {
-			final Set<String> forbiddenYs = getForbiddenYs(colorSize, events.size());
-			logger.info("FORBIDDEN YS: " + forbiddenYs);
+			final Set<String> forbiddenYs = getForbiddenYs(logger, colorSize, events.size());
 			for (int k = 0; ; k++) {
 				if (System.currentTimeMillis() > finishTime) {
 					logger.info("TIME LIMIT EXCEEDED");
@@ -72,10 +71,10 @@ public class QbfAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 					logger.info(new SolverResult(SolverResults.UNKNOWN).toString());
 					return Optional.empty();
 				}
-				Pair<List<Assignment>, Long> solution = BooleanFormula.solveAsSat(formula,
+				SolveAsSatResult solution = BooleanFormula.solveAsSat(formula,
 						logger, solverParams, timeLeft, satSolver);
-				List<Assignment> list = solution.getLeft();
-				long time = solution.getRight();
+				List<Assignment> list = solution.list();
+				long time = solution.time;
 				if (list.isEmpty()) {
 					logger.info(new SolverResult(time >= timeLeft * 1000
 							? SolverResults.UNKNOWN : SolverResults.UNSAT).toString());

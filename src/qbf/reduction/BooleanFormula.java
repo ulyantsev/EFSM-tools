@@ -8,19 +8,20 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Logger;
-
-import org.apache.commons.lang3.tuple.Pair;
+import java.util.stream.Collectors;
 
 public abstract class BooleanFormula {
 	public static Optional<Assignment> fromDimacsToken(String token, DimacsConversionInfo dimacs) {
@@ -34,20 +35,66 @@ public abstract class BooleanFormula {
 	}
 	
 	public static final String DIMACS_FILENAME = "_tmp.dimacs";
+	private static final String COPY_DIMACS_FILENAME = "_tmp.dimacs.copy";
 	
-	public static Pair<List<Assignment>, Long> solveAsSat(String formula, Logger logger, String solverParams,
-			int timeoutSeconds, SatSolver solver) throws IOException {
-		logger.info("Final SAT formula length: " + formula.length());
-		DimacsConversionInfo info = BooleanFormula.toDimacs(formula, logger, DIMACS_FILENAME);
-		info.close();
-		logger.info("CREATED DIMACS FILE");
+	public static class SolveAsSatResult {
+		private final List<Assignment> list;
+		public final long time;
+		public final DimacsConversionInfo info;
 		
+		public List<Assignment> list() {
+			return Collections.unmodifiableList(list);
+		}
+		
+		public SolveAsSatResult(List<Assignment> list, long time, DimacsConversionInfo info) {
+			this.list = list;
+			this.time = time;
+			this.info = info;
+		}
+	}
+	
+	public static void appendProhibitionConstraintsToDimacs(Logger logger,
+			List<List<Assignment>> prohibitedFSMs, DimacsConversionInfo info) throws IOException {
+		final List<String> newClauses = prohibitedFSMs.stream()
+			.map(fsm -> Assignment.toDimacsString(fsm, info))
+			.collect(Collectors.toList());
+		try (final BufferedReader input = new BufferedReader(new FileReader(new File(DIMACS_FILENAME)))) {
+			final String[] tokens = input.readLine().split(" ");
+			assert tokens.length == 4;
+			final int oldConstraintsNum = Integer.parseInt(tokens[3]);
+			final int newConstraintNum = oldConstraintsNum + prohibitedFSMs.size();
+			String line = null;
+			try (final PrintWriter pw = new PrintWriter(COPY_DIMACS_FILENAME)) {
+				pw.println(tokens[0] + " " + tokens[1] + " " + tokens[2] + " " + newConstraintNum);
+				for (String clause : newClauses) {
+					pw.println(clause);
+				}
+				while ((line = input.readLine()) != null) {
+					pw.println(line);
+				}
+			}
+		}
+		final boolean moved = new File(COPY_DIMACS_FILENAME).renameTo(new File(DIMACS_FILENAME)); // mv
+		assert moved;
+		logger.info("ALTERED DIMACS FILE");
+	}
+	
+	private static int LINGELING_SEED = 0;
+	
+	public static SolveAsSatResult solveDimacs(Logger logger, int timeoutSeconds, SatSolver solver,
+			String solverParams, DimacsConversionInfo info) throws IOException {
 		long time = System.currentTimeMillis();
-		Map<String, Assignment> list = new LinkedHashMap<>();
-		final int maxtime = Math.max(2, timeoutSeconds); // cryptominisat does not accept time=1
-		String solverStr = solver.command + maxtime + " " + DIMACS_FILENAME + " " + solverParams;
+		final Map<String, Assignment> list = new LinkedHashMap<>();
+		if (solver == SatSolver.LINGELING) {
+			solverParams += " --seed=" + LINGELING_SEED++;
+			timeoutSeconds = Math.max(1, timeoutSeconds);
+		} else if (solver == SatSolver.CRYPTOMINISAT) {
+			timeoutSeconds = Math.max(2, timeoutSeconds); // cryptominisat does not accept time=1
+		}
+		final String solverStr = solver.command + timeoutSeconds + " " + solverParams
+				+ " " + DIMACS_FILENAME;
 		logger.info(solverStr);
-		Process p = Runtime.getRuntime().exec(solverStr);
+		final Process p = Runtime.getRuntime().exec(solverStr);
 		
 		try (BufferedReader input = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
 			input.lines().filter(s -> s.startsWith("v")).forEach(certificateLine ->
@@ -61,7 +108,16 @@ public abstract class BooleanFormula {
 		}
 		
 		time = System.currentTimeMillis() - time;
-		return Pair.of(new ArrayList<>(list.values()), time);
+		return new SolveAsSatResult(new ArrayList<>(list.values()), time, info);
+	}
+	
+	public static SolveAsSatResult solveAsSat(String formula, Logger logger, String solverParams,
+			int timeoutSeconds, SatSolver solver) throws IOException {
+		logger.info("Final SAT formula length: " + formula.length());
+		DimacsConversionInfo info = BooleanFormula.toDimacs(formula, logger, DIMACS_FILENAME);
+		info.close();
+		logger.info("CREATED DIMACS FILE");
+		return solveDimacs(logger, timeoutSeconds, solver, solverParams, info);
 	}
 	
 	public static class DimacsConversionInfo implements AutoCloseable {

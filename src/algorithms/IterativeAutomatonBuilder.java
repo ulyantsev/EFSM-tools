@@ -17,6 +17,7 @@ import qbf.reduction.BooleanFormula;
 import qbf.reduction.FormulaList;
 import qbf.reduction.SatSolver;
 import qbf.reduction.SolverResult;
+import qbf.reduction.BooleanFormula.SolveAsSatResult;
 import qbf.reduction.SolverResult.SolverResults;
 import qbf.reduction.Verifier;
 import structures.Automaton;
@@ -33,10 +34,10 @@ public class IterativeAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 		
 		// SAT-solve
 		final String strBf = bf.simplify().toLimbooleString();
-		final Pair<List<Assignment>, Long> solution = BooleanFormula.solveAsSat(strBf, logger,
+		SolveAsSatResult solution = BooleanFormula.solveAsSat(strBf, logger,
 				solverParams, timeoutSeconds, satSolver);
-		final List<Assignment> list = solution.getLeft();
-		final long time = solution.getRight();
+		final List<Assignment> list = solution.list();
+		final long time = solution.time;
 		
 		final SolverResult ass = list.isEmpty()
 			? new SolverResult(time >= timeoutSeconds * 1000 ? SolverResults.UNKNOWN : SolverResults.UNSAT)

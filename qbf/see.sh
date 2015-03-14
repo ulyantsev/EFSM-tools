@@ -1,11 +1,11 @@
 #!/bin/bash
 
 print_sat() {
-    printf "%13s sat %4d, unknown %4d, unsat %2d, total %4d, solved fraction %5s%%\n" $1 $2 $3 $4 $(($2 + $3 + $4)) $(python -c "print(round(float($2) / ($2 + $3 + $4) * 100, 2))")
+    printf "%13s sat   %4d, unknown %4d, unsat %2d, total %4d, solved fraction %5s%%\n" $1 $2 $3 $4 $(($2 + $3 + $4)) $(python -c "print(round(float($2) / ($2 + $3 + $4) * 100, 2))")
 }
 
 print_unsat() {
-    printf "%13s unsat %4d, unknown %4d, sat %2d, total %4d, solved fraction %5s%%\n" $1 $2 $3 $4 $(($2 + $3 + $4)) $(python -c "print(round(float($2 + $4) / ($2 + $3 + $4) * 100, 2))")
+    printf "%13s unsat %4d, unknown %4d, sat   %2d, total %4d, solved fraction %5s%%\n" $1 $2 $3 $4 $(($2 + $3 + $4)) $(python -c "print(round(float($2 + $4) / ($2 + $3 + $4) * 100, 2))")
 }
 
 print_found_by_prefix() {
@@ -25,7 +25,8 @@ print_found_by_prefix() {
 for compdir in "complete" "incomplete"; do
     echo ">>> $compdir"
     for instance_type in tr fa; do
-        for prefix in HYBR*-$instance_type EXP*-$instance_type ITER*-$instance_type QSAT*-$instance_type BACK*-$instance_type; do
+        for prefix in HYBR*-$instance_type; do
+        #for prefix in HYBR*-$instance_type EXP*-$instance_type ITER*-$instance_type QSAT*-$instance_type BACK*-$instance_type; do
             echo_str=
             for ((s = 3; s <= 10; s++)); do
                 ls evaluation/$compdir/$prefix*-$s-*.done 1>/dev/null 2>/dev/null
