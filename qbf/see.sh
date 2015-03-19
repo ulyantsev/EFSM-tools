@@ -1,32 +1,56 @@
 #!/bin/bash
 
 print_sat() {
-    printf "%13s sat   %4d, unknown %4d, unsat %2d, total %4d, solved fraction %5s%%\n" $1 $2 $3 $4 $(($2 + $3 + $4)) $(python -c "print(round(float($2) / ($2 + $3 + $4) * 100, 2))")
+    if (($2 > 25)); then
+        local med="%5.1f"
+    else
+        local med="[%3.0f]"
+    fi
+    printf "%13s sat   %2d, unknown %2d, unsat %2d, total %2d, solved fraction %5s%%, median time $med\n" $1 $2 $3 $4 $(($2 + $3 + $4)) $(python -c "print(round(float($2) / ($2 + $3 + $4) * 100, 2))") $5
 }
 
 print_unsat() {
-    printf "%13s unsat %4d, unknown %4d, sat   %2d, total %4d, solved fraction %5s%%\n" $1 $2 $3 $4 $(($2 + $3 + $4)) $(python -c "print(round(float($2 + $4) / ($2 + $3 + $4) * 100, 2))")
+    if (($2 > 25)); then
+        local med="%5.1f"
+    else
+        local med="[%3.0f]"
+    fi
+    printf "%13s unsat %2d, unknown %2d, sat   %2d, total %2d, solved fraction %5s%%, median time $med\n" $1 $2 $3 $4 $(($2 + $3 + $4)) $(python -c "print(round(float($2) / ($2 + $3 + $4) * 100, 2))") $5
 }
 
 print_found_by_prefix() {
     local dir="$1"
     local prefix=$2
-    local text=$(cat $dir/$prefix*)
+    local text=$(cat $dir/$prefix*.log)
     local sat=$(echo "$text" | grep "WAS FOUND" | wc -l)
     local unsat=$(echo "$text" | grep "UNSAT" | wc -l)
     local unknown=$(echo "$text" | grep "\\(TIME LIMIT EXCEEDED\\|UNKNOWN\\|OutOfMemoryError\\)" | wc -l)
-    if [[ "$prefix" == "${prefix/-fa/}" ]]; then
-        print_sat $prefix $sat $unknown $unsat
+    
+    # find median time
+    local str=$(echo $(echo "$text" | grep "execution time" | sed -e "s/^.*time: //g" | sort -n))
+    local arr=()
+    IFS=' ' read -a arr <<< "$str"
+    local len=${#arr[@]}
+    if (( len % 2 == 0 )); then
+        left=${arr[$(($len / 2 - 1))]}
+        right=${arr[$(($len / 2))]}
+        q2=$(python -c "print($left / 2 + $right / 2)")
     else
-        print_unsat $prefix $unsat $unknown $sat
+        q2=${arr[$(($len / 2))]}
+    fi
+    
+    if [[ "$prefix" == "${prefix/-fa/}" ]]; then
+        print_sat $prefix $sat $unknown $unsat $q2
+    else
+        print_unsat $prefix $unsat $unknown $sat $q2
     fi
 }
 
 for compdir in "complete" "incomplete"; do
     echo ">>> $compdir"
     for instance_type in tr fa; do
-        for prefix in HYBR*-$instance_type; do
-        #for prefix in HYBR*-$instance_type EXP*-$instance_type ITER*-$instance_type QSAT*-$instance_type BACK*-$instance_type; do
+        #for prefix in ITER*-$instance_type; do
+        for prefix in HYBR*-$instance_type EXP*-$instance_type ITER*-$instance_type QSAT*-$instance_type BACK*-$instance_type; do
             echo_str=
             for ((s = 3; s <= 10; s++)); do
                 ls evaluation/$compdir/$prefix*-$s-*.done 1>/dev/null 2>/dev/null
