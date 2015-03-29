@@ -196,7 +196,7 @@ public class QbfFormulaBuilder extends FormulaBuilder {
 				}
 			}
 		}
-		if (!complete) {
+		if (!(complete && completenessType == CompletenessType.NORMAL)) {
 			// additional term for j = k
 			for (int i1 = 0; i1 < colorSize; i1++) {
 				for (String e : events) {
