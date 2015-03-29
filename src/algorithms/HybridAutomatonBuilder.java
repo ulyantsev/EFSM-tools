@@ -32,7 +32,7 @@ public class HybridAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 			List<LtlNode> formulae, int size, String ltlFilePath,
 			QbfSolver qbfSolver, String solverParams, boolean extractSubterms,
 			List<String> events, List<String> actions, SatSolver satSolver,
-			Verifier verifier, long finishTime, boolean complete,
+			Verifier verifier, long finishTime, boolean complete, boolean noDeadEnds,
 			int secToGenerateFormula, int secToSolve) throws IOException {		
 		int k = -1;
 		boolean maxKFound = false;
@@ -66,7 +66,7 @@ public class HybridAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 				// try next k
 				k++;
 				final QuantifiedBooleanFormula qbf = new QbfFormulaBuilder(logger, tree,
-						formulae, size, k, extractSubterms, complete,
+						formulae, size, k, extractSubterms, complete, noDeadEnds,
 						events, actions).getFormula(true);
 				final long time = System.currentTimeMillis();
 				try {

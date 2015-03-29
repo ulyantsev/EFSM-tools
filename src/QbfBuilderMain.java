@@ -5,6 +5,7 @@ import java.io.PrintWriter;
 import java.text.ParseException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Deque;
 import java.util.List;
 import java.util.Locale;
@@ -48,8 +49,14 @@ public class QbfBuilderMain {
 	@Option(name = "--eventNumber", aliases = { "-en" }, usage = "number of events (A, B, ...)", metaVar = "<eventNumber>", required = true)
 	private int eventNumber;
 	
+	@Option(name = "--eventNames", aliases = { "-enm" }, usage = "optional comma-separated event names", metaVar = "<eventNames>")
+	private String eventNames;
+	
 	@Option(name = "--actionNumber", aliases = { "-an" }, usage = "number of actions (z0, z1, ...)", metaVar = "<actionNumber>", required = true)
 	private int actionNumber;
+	
+	@Option(name = "--actionNames", aliases = { "-anm" }, usage = "optional comma-separated action names", metaVar = "<actionNames>")
+	private String actionNames;
 	
 	@Option(name = "--varNumber", aliases = { "-vn" }, usage = "number of variables (x0, x1, ...)", metaVar = "<varNumber>")
 	private int varNumber = 0;
@@ -94,6 +101,10 @@ public class QbfBuilderMain {
 	@Option(name = "--complete", aliases = { "-c" }, handler = BooleanOptionHandler.class,
             usage = "generate automaton which has a transition for all (event, expression) pairs")
 	private boolean complete;
+	
+	@Option(name = "--noDeadEnds", aliases = { "-nde" }, handler = BooleanOptionHandler.class,
+            usage = "a special option for incomplete FSM induction: suppresses dead ends (experimental, sometimes should not work!)")
+	private boolean noDeadEnds;
 	
 	@Option(name = "--hybridSecToGenerateFormula", aliases = { "-hgf" }, usage = "time limit in seconds for formula generation in the HYBRID mode", metaVar = "<sec>")
 	private int hybridSecToGenerateFormula = 15;
@@ -194,9 +205,23 @@ public class QbfBuilderMain {
 				return;
 			}
 			
-			List<String> events = new ArrayList<>();
+			List<String> eventnames;
+			if (eventNames != null) {
+				eventnames = Arrays.asList(eventNames.split(","));
+				if (eventnames.size() != eventNumber) {
+					logger.warning("The number of events in <eventNames> does not correspond to <eventNumber>!");
+					return;
+				}
+			} else {
+				eventnames = new ArrayList<>();
+				for (int i = 0; i < eventNumber; i++) {
+					eventnames.add(String.valueOf((char) ('A' +  i)));
+				}
+			}
+			
+			final List<String> events = new ArrayList<>();
 			for (int i = 0; i < eventNumber; i++) {
-				final String event = String.valueOf((char) ('A' +  i));
+				final String event = eventnames.get(i);
 				for (int j = 0; j < 1 << varNumber; j++) {
 					StringBuilder sb = new StringBuilder(event);
 					for (int pos = 0; pos < varNumber; pos++) {
@@ -206,10 +231,21 @@ public class QbfBuilderMain {
 				}
 			}
 			
-			List<String> actions = new ArrayList<>();
-			for (int i = 0; i < actionNumber; i++) {
-				actions.add("z" + i);
+			List<String> actions;
+			if (actionNames != null) {
+				actions = Arrays.asList(actionNames.split(","));
+				if (actions.size() != actionNumber) {
+					logger.warning("The number of actions in <actionNames> does not correspond to <actionNumber>!");
+					return;
+				}
+			} else {
+				actions = new ArrayList<>();
+				for (int i = 0; i < actionNumber; i++) {
+					actions.add("z" + i);
+				}
 			}
+			
+			
 			
 			Optional<Automaton> resultAutomaton = null;
 			final Verifier verifier = new Verifier(size, logger, ltlFilePath, events, actions, varNumber);
@@ -218,17 +254,18 @@ public class QbfBuilderMain {
 			case QSAT: case EXP_SAT:
 				resultAutomaton = QbfAutomatonBuilder.build(logger, tree, formulae, size, ltlFilePath,
 						qbfsolver, solverParams, extractSubterms, ss == SolvingStrategy.EXP_SAT,
-						events, actions, satsolver, verifier, finishTime, complete);
+						events, actions, satsolver, verifier, finishTime, complete, noDeadEnds);
 				break;
 			case HYBRID:
 				resultAutomaton = HybridAutomatonBuilder.build(logger, tree, formulae, size, ltlFilePath,
 						qbfsolver, solverParams, extractSubterms,
-						events, actions, satsolver, verifier, finishTime, complete,
+						events, actions, satsolver, verifier, finishTime, complete, noDeadEnds,
 						hybridSecToGenerateFormula, hybridSecToSolve);
 				break;
 			case ITERATIVE_SAT:
 				resultAutomaton = IterativeAutomatonBuilder.build(logger, tree, size, solverParams,
-						resultFilePath, ltlFilePath, formulae, events, actions, satsolver, verifier, finishTime, complete);
+						resultFilePath, ltlFilePath, formulae, events, actions, satsolver, verifier, finishTime,
+						complete, noDeadEnds);
 				break;
 			case BACKTRACKING:
 				resultAutomaton = BacktrackingAutomatonBuilder.build(logger, tree, size,

@@ -60,10 +60,10 @@ public class IterativeAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 	public static Optional<Automaton> build(Logger logger, ScenariosTree tree, int size, String solverParams,
 			String resultFilePath, String ltlFilePath, List<LtlNode> formulae,
 			List<String> events, List<String> actions, SatSolver satSolver,
-			Verifier verifier, long finishTime, boolean complete) throws IOException {
+			Verifier verifier, long finishTime, boolean complete, boolean noDeadEnds) throws IOException {
 		deleteTrash();
 		final ExpandableStringFormula f = new ExpandableStringFormula(
-				new SatFormulaBuilder(tree, size, events, actions).getFormula().simplify()
+				new SatFormulaBuilder(tree, size, events, actions, noDeadEnds).getFormula().simplify()
 				.toLimbooleString(), logger, satSolver, solverParams);
 		
 		for (int iteration = 0; System.currentTimeMillis() < finishTime; iteration++) {
