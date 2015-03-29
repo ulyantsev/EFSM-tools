@@ -16,6 +16,7 @@ import structures.Node;
 import structures.ScenariosTree;
 import structures.Transition;
 import actions.StringActions;
+import algorithms.AutomatonCompleter.CompletenessType;
 import bool.MyBooleanExpression;
 
 public class BacktrackingAutomatonBuilder {
@@ -25,6 +26,7 @@ public class BacktrackingAutomatonBuilder {
 		private final List<String> actions;
 		private final long finishTime;
 		private final boolean complete;
+		private final CompletenessType completenessType;
 		
 		private final Automaton automaton;
 		private int[] coloring;
@@ -38,7 +40,7 @@ public class BacktrackingAutomatonBuilder {
 		private final Verifier verifier;
 		
 		public TraverseState(ScenariosTree tree, Verifier verifier, int colorSize, long finishTime,
-				List<String> events, List<String> actions, boolean complete) {
+				List<String> events, List<String> actions, boolean complete, CompletenessType completenessType) {
 			this.colorSize = colorSize;
 			this.automaton = new Automaton(colorSize);
 			this.coloring = new int[tree.nodesCount()];
@@ -51,6 +53,7 @@ public class BacktrackingAutomatonBuilder {
 			this.events = events;
 			this.actions = actions;
 			this.complete = complete;
+			this.completenessType = completenessType;
 		}
 		
 		private boolean verify() {
@@ -119,7 +122,7 @@ public class BacktrackingAutomatonBuilder {
 						if (frontier.isEmpty()) {
 							if (complete) {
 								new AutomatonCompleter(verifier, automaton, events,
-										actions, finishTime).ensureCompleteness();
+										actions, finishTime, completenessType).ensureCompleteness();
 							} else {
 								throw new AutomatonFound(automaton);
 							}
@@ -140,9 +143,10 @@ public class BacktrackingAutomatonBuilder {
 	public static Optional<Automaton> build(Logger logger, ScenariosTree tree, int size,
 			String resultFilePath, String ltlFilePath, List<LtlNode> formulae,
 			List<String> events, List<String> actions, Verifier verifier,
-			long finishTime, boolean complete) throws IOException {
+			long finishTime, boolean complete, CompletenessType completenessType) throws IOException {
 		try {
-			new TraverseState(tree, verifier, size, finishTime, events, actions, complete).backtracking();
+			new TraverseState(tree, verifier, size, finishTime, events, actions,
+					complete, completenessType).backtracking();
 		} catch (AutomatonFound e) {
 			return Optional.of(e.automaton);
 		} catch (TimeLimitExceeded e) {

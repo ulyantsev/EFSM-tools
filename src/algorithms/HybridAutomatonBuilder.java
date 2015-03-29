@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.tuple.Pair;
 
+import algorithms.AutomatonCompleter.CompletenessType;
 import qbf.egorov.ltl.grammar.LtlNode;
 import qbf.reduction.Assignment;
 import qbf.reduction.BooleanFormula.SolveAsSatResult;
@@ -32,7 +33,7 @@ public class HybridAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 			List<LtlNode> formulae, int size, String ltlFilePath,
 			QbfSolver qbfSolver, String solverParams, boolean extractSubterms,
 			List<String> events, List<String> actions, SatSolver satSolver,
-			Verifier verifier, long finishTime, boolean complete, boolean noDeadEnds,
+			Verifier verifier, long finishTime, boolean complete, CompletenessType completenessType,
 			int secToGenerateFormula, int secToSolve) throws IOException {		
 		int k = -1;
 		boolean maxKFound = false;
@@ -51,7 +52,7 @@ public class HybridAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 					final Automaton b = constructAutomatonFromAssignment(logger,
 							solution.list(), tree, size, false).getLeft();
 					try {
-						new AutomatonCompleter(verifier, b, events, actions, finishTime).ensureCompleteness();
+						new AutomatonCompleter(verifier, b, events, actions, finishTime, completenessType).ensureCompleteness();
 					} catch (AutomatonFound e) {
 						logger.info("SAT");
 						return Optional.of(b);
@@ -66,7 +67,7 @@ public class HybridAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 				// try next k
 				k++;
 				final QuantifiedBooleanFormula qbf = new QbfFormulaBuilder(logger, tree,
-						formulae, size, k, extractSubterms, complete, noDeadEnds,
+						formulae, size, k, extractSubterms, complete, completenessType,
 						events, actions).getFormula(true);
 				final long time = System.currentTimeMillis();
 				try {

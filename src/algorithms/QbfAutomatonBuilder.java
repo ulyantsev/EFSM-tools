@@ -14,6 +14,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.logging.Logger;
 
+import algorithms.AutomatonCompleter.CompletenessType;
 import qbf.egorov.ltl.grammar.LtlNode;
 import qbf.reduction.Assignment;
 import qbf.reduction.BooleanFormula;
@@ -48,7 +49,7 @@ public class QbfAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 			QbfSolver qbfSolver, String solverParams, boolean extractSubterms,
 			boolean useSat, List<String> events, List<String> actions,
 			SatSolver satSolver, Verifier verifier, long finishTime, boolean complete,
-			boolean noDeadEnds) throws IOException {		
+			CompletenessType completenessType) throws IOException {		
 		if (useSat) {
 			final Set<String> forbiddenYs = getForbiddenYs(logger, size, events.size());
 			for (int k = 0; ; k++) {
@@ -59,7 +60,7 @@ public class QbfAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 				logger.info("TRYING k = " + k);
 				deleteTrash();
 				QuantifiedBooleanFormula qbf = new QbfFormulaBuilder(logger, tree,
-						formulae, size, k, extractSubterms, complete, noDeadEnds,
+						formulae, size, k, extractSubterms, complete, completenessType,
 						events, actions).getFormula(false);
 				final int timeLeft = (int) (finishTime - System.currentTimeMillis()) / 1000 + 1;
 				
@@ -100,7 +101,7 @@ public class QbfAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 				logger.info("TRYING k = " + k);
 				deleteTrash();
 				QuantifiedBooleanFormula qbf = new QbfFormulaBuilder(logger, tree,
-						formulae, size, k, extractSubterms, complete, noDeadEnds,
+						formulae, size, k, extractSubterms, complete, completenessType,
 						events, actions).getFormula(false);
 				final int timeLeft = (int) (finishTime - System.currentTimeMillis()) / 1000 + 1;
 				SolverResult ass = qbf.solve(logger, qbfSolver, solverParams, timeLeft);

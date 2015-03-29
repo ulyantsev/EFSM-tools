@@ -16,16 +16,16 @@ public class AutomatonCompletenessChecker {
 	public static String checkCompleteness(Automaton automaton) {
 		
 		for (Node node : automaton.getStates()) {
-			Map<String, Set<String>> eventVars = new TreeMap<String, Set<String>>();
+			Map<String, Set<String>> eventVars = new TreeMap<>();
 			for (Transition t : node.getTransitions()) {
 				String event = t.getEvent();
 				if (!eventVars.containsKey(event)) {
-					eventVars.put(event, new TreeSet<String>());
+					eventVars.put(event, new TreeSet<>());
 				}
 				eventVars.get(event).addAll(Arrays.asList(t.getExpr().getVariables()));				
 			}
 
-			Map<String, Integer> eventSetsCount = new TreeMap<String, Integer>();
+			Map<String, Integer> eventSetsCount = new TreeMap<>();
 			for (Transition t : node.getTransitions()) {
 				String event = t.getEvent();
 				MyBooleanExpression expr = t.getExpr();

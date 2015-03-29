@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import algorithms.AutomatonCompleter.CompletenessType;
 import qbf.reduction.BinaryOperation;
 import qbf.reduction.BinaryOperations;
 import qbf.reduction.BooleanFormula;
@@ -25,17 +26,17 @@ public abstract class FormulaBuilder {
 	protected final List<String> actions;
 	protected final ScenariosTree tree;
 	protected final boolean complete;
-	protected final boolean noDeadEnds;
+	protected final CompletenessType completenessType;
 	protected final List<BooleanVariable> existVars = new ArrayList<>();
 	
-	public FormulaBuilder(int colorSize, ScenariosTree tree, boolean complete, boolean noDeadEnds,
-			List<String> events, List<String> actions) {
+	public FormulaBuilder(int colorSize, ScenariosTree tree, boolean complete,
+			CompletenessType completenessType, List<String> events, List<String> actions) {
 		this.colorSize = colorSize;
 		this.events = events;
 		this.actions = actions;
 		this.tree = tree;
 		this.complete = complete;
-		this.noDeadEnds = noDeadEnds;
+		this.completenessType = completenessType;
 	}
 	
 	protected BooleanVariable xVar(int state, int color) {
@@ -230,6 +231,26 @@ public abstract class FormulaBuilder {
 		return constraints.assemble("no dead ends (ensures that every finite path in the Kripke structure has an infinite continuation");
 	}
 	
+	// no-dead-ends constraint for incomplete FSM induction
+	private BooleanFormula noDeadEndsWalkinshawConstraints() {
+		FormulaList constraints = new FormulaList(BinaryOperations.AND);
+		for (int i1 = 0; i1 < colorSize; i1++) {
+			FormulaList options = new FormulaList(BinaryOperations.OR);
+			for (String e : events) {
+				for (int i2 = 0; i2 < colorSize; i2++) {
+					FormulaList transitionConstraints = new FormulaList(BinaryOperations.AND);
+					transitionConstraints.add(yVar(i1, i2, e));
+					for (String action : actions) {
+						transitionConstraints.add(zVar(i1, action, e).not());
+					}
+					options.add(transitionConstraints.assemble());
+				}
+			}
+			constraints.add(options.assemble());
+		}
+		return constraints.assemble("no dead ends, invalid transitions are not counted.");
+	}
+	
 	// if there exists z, then it exists for some transition (unnecessary if
 	// completeness is enabled)
 	private BooleanFormula actionTransitionExistenceConstraints() {
@@ -261,14 +282,22 @@ public abstract class FormulaBuilder {
 		constraints.add(transitionConstraints());
 		
 		if (complete) {
-			constraints.add(eventCompletenessConstraints());
-		} else if (noDeadEnds) {
-			constraints.add(noDeadEndsConstraints());
+			switch (completenessType) {
+			case NORMAL:
+				constraints.add(eventCompletenessConstraints());
+				break;
+			case NO_DEAD_ENDS:
+				constraints.add(noDeadEndsConstraints());
+				break;
+			case NO_DEAD_ENDS_WALKINSHAW:
+				constraints.add(noDeadEndsWalkinshawConstraints());
+				break;
+			}
 		}
 		
 		if (includeActionConstrains) {
 			 constraints.add(actionScenarioConsistencyConstraints());
-             if (!complete) {
+             if (!(complete && completenessType == CompletenessType.NORMAL)) {
             	 constraints.add(actionTransitionExistenceConstraints());
              }
 		} else {

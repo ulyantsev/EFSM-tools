@@ -15,6 +15,7 @@ import java.util.logging.Logger;
 
 import org.apache.commons.lang3.tuple.Pair;
 
+import algorithms.AutomatonCompleter.CompletenessType;
 import qbf.egorov.ltl.grammar.BinaryOperator;
 import qbf.egorov.ltl.grammar.BooleanNode;
 import qbf.egorov.ltl.grammar.LtlNode;
@@ -40,9 +41,9 @@ public class QbfFormulaBuilder extends FormulaBuilder {
 	private final boolean extractSubterms;
 
 	public QbfFormulaBuilder(Logger logger, ScenariosTree tree, List<LtlNode> formulae, int colorSize, int depth,
-			boolean extractSubterms, boolean complete, boolean noDeadEnds,
+			boolean extractSubterms, boolean complete, CompletenessType completenessType,
 			List<String> events, List<String> actions) {
-		super(colorSize, tree, complete, noDeadEnds, events, actions);
+		super(colorSize, tree, complete, completenessType, events, actions);
 		BooleanVariable.eraseVariables();
 		this.logger = logger;
 		this.formulae = formulae;

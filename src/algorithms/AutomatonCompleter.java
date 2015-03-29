@@ -19,20 +19,29 @@ public class AutomatonCompleter {
 	private final List<String> events;
 	private final List<StringActions> preparedActions = new ArrayList<>();
 	private final long finishTime;
+	private final CompletenessType type;
+	
+	public enum CompletenessType {
+		NORMAL, // usual completeness
+		NO_DEAD_ENDS, // no dead ends - resolves LTL semantics problems
+		NO_DEAD_ENDS_WALKINSHAW // at least one 'valid' transition for FS model induction
+		// valid <-> empty action sequence
+	}
 	
 	/*
 	 * The automaton should be verified!
 	 */
 	public AutomatonCompleter(Verifier verifier, Automaton automaton, List<String> events,
-			List<String> actions, long finishTime) {
+			List<String> actions, long finishTime, CompletenessType type) {
 		this.verifier = verifier;
 		this.automaton = automaton;
 		colorSize = automaton.statesCount();
 		this.events = events;
 		this.finishTime = finishTime;
+		this.type = type;
 		
 		// prepare all action combinations (will be used while trying to enforce FSM completeness)
-		final int actionsNum = actions.size();
+		final int actionsNum = type == CompletenessType.NO_DEAD_ENDS_WALKINSHAW ? 0 : actions.size();
 		final int maxI = 1 << actionsNum;
 		for (int i = 0; i < maxI; i++) {
 			final List<String> sequence = new ArrayList<>();
@@ -48,9 +57,29 @@ public class AutomatonCompleter {
 		);
 	}
 	
+	/*
+	 * NORMAL mode: usual missing transitions
+	 * NO_DEAD_ENDS: missing transitions such that there is some transition from the
+	 *    source state are not considered as missing
+	 * NO_DEAD_ENDS_WALKINSHAW: transitions with actions are not considered as
+	 * 	  transitions at all
+	 */
 	private List<Pair<Integer, String>> missingTransitions() {
 		final List<Pair<Integer, String>> missing = new ArrayList<>();
-		for (Node s : automaton.getStates()) {
+		l: for (Node s : automaton.getStates()) {
+			if (type != CompletenessType.NORMAL) {
+				for (String e : events) {
+					boolean condition = s.getTransition(e,
+							MyBooleanExpression.getTautology()) != null;
+					if (condition && type == CompletenessType.NO_DEAD_ENDS_WALKINSHAW) {
+						condition = s.getTransition(e, MyBooleanExpression.getTautology())
+								.getActions().getActions().length == 0;
+					}
+					if (condition) {
+						continue l;
+					}
+				}
+			}
 			for (String e : events) {
 				if (s.getTransition(e, MyBooleanExpression.getTautology()) == null) {
 					missing.add(Pair.of(s.getNumber(), e));
@@ -81,7 +110,7 @@ public class AutomatonCompleter {
 		
 		final Node stateFrom = automaton.getState(missing.getLeft());
 		final String e = missing.getRight();
-		
+				
 		for (StringActions actions : preparedActions) {
 			for (int dst = 0; dst < colorSize; dst++) {
 				Transition autoT = new Transition(stateFrom,

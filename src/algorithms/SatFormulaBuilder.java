@@ -6,13 +6,14 @@ package algorithms;
 
 import java.util.List;
 
+import algorithms.AutomatonCompleter.CompletenessType;
 import qbf.reduction.BooleanFormula;
 import structures.ScenariosTree;
 
 public class SatFormulaBuilder extends FormulaBuilder {
 	public SatFormulaBuilder(ScenariosTree tree, int colorSize,
-			List<String> events, List<String> actions, boolean noDeadEnds) {
-		super(colorSize, tree, false, noDeadEnds, events, actions);
+			List<String> events, List<String> actions) {
+		super(colorSize, tree, false, CompletenessType.NORMAL, events, actions);
 	}
 
 	public BooleanFormula getFormula() {

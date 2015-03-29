@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.tuple.Pair;
 
+import algorithms.AutomatonCompleter.CompletenessType;
 import qbf.egorov.ltl.grammar.LtlNode;
 import qbf.reduction.Assignment;
 import qbf.reduction.BooleanFormula.SolveAsSatResult;
@@ -60,10 +61,10 @@ public class IterativeAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 	public static Optional<Automaton> build(Logger logger, ScenariosTree tree, int size, String solverParams,
 			String resultFilePath, String ltlFilePath, List<LtlNode> formulae,
 			List<String> events, List<String> actions, SatSolver satSolver,
-			Verifier verifier, long finishTime, boolean complete, boolean noDeadEnds) throws IOException {
+			Verifier verifier, long finishTime, boolean complete, CompletenessType completenessType) throws IOException {
 		deleteTrash();
 		final ExpandableStringFormula f = new ExpandableStringFormula(
-				new SatFormulaBuilder(tree, size, events, actions, noDeadEnds).getFormula().simplify()
+				new SatFormulaBuilder(tree, size, events, actions).getFormula().simplify()
 				.toLimbooleString(), logger, satSolver, solverParams);
 		
 		for (int iteration = 0; System.currentTimeMillis() < finishTime; iteration++) {
@@ -77,7 +78,8 @@ public class IterativeAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 					}
 					try {
 						// extra transition search with verification
-						new AutomatonCompleter(verifier, automaton.get(), events, actions, finishTime).ensureCompleteness();
+						new AutomatonCompleter(verifier, automaton.get(), events, actions,
+								finishTime, completenessType).ensureCompleteness();
 					} catch (AutomatonFound e) {
 						// verified, complete
 						return reportResult(logger, iteration, Optional.of(e.automaton));

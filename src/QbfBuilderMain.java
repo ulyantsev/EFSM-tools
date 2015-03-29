@@ -33,6 +33,7 @@ import structures.Automaton;
 import structures.ScenariosTree;
 import structures.Transition;
 import tools.AutomatonCompletenessChecker;
+import algorithms.AutomatonCompleter.CompletenessType;
 import algorithms.BacktrackingAutomatonBuilder;
 import algorithms.HybridAutomatonBuilder;
 import algorithms.IterativeAutomatonBuilder;
@@ -82,11 +83,11 @@ public class QbfBuilderMain {
 	
 	@Option(name = "--qbfSolver", aliases = { "-qs" }, usage = "QBF solver: SKIZZO or DEPQBF (only for the QSAT strategy)",
 			metaVar = "<qbfSolver>")
-	private String qbfSolver = QbfSolver.SKIZZO.toString();
+	private String qbfSolver = QbfSolver.SKIZZO.name();
 	
 	@Option(name = "--satSolver", aliases = { "-qss" }, usage = "SAT solver: CRYPTOMINISAT or LINGELING (for ITERATIVE_SAT, EXP_SAT and HYBRID strategies)",
 			metaVar = "<satSolver>")
-	private String satSolver = SatSolver.LINGELING.toString();
+	private String satSolver = SatSolver.LINGELING.name();
 	
 	@Option(name = "--solverParams", aliases = { "-sp" }, usage = "additional solver parameters", metaVar = "<solverParams>")
 	private String solverParams = "";
@@ -96,15 +97,16 @@ public class QbfBuilderMain {
 	
 	@Option(name = "--strategy", aliases = { "-str" }, usage = "solving mode: QSAT, EXP_SAT, ITERATIVE_SAT, BACKTRACKING, HYBRID",
 			metaVar = "<strategy>")
-	private String strategy = SolvingStrategy.QSAT.toString();
+	private String strategy = SolvingStrategy.QSAT.name();
 	
 	@Option(name = "--complete", aliases = { "-c" }, handler = BooleanOptionHandler.class,
             usage = "generate automaton which has a transition for all (event, expression) pairs")
 	private boolean complete;
 	
-	@Option(name = "--noDeadEnds", aliases = { "-nde" }, handler = BooleanOptionHandler.class,
-            usage = "a special option for incomplete FSM induction: suppresses dead ends (experimental, sometimes should not work!)")
-	private boolean noDeadEnds;
+	@Option(name = "--completenessType", aliases = { "-ct" },
+            usage = "a special option for incomplete FSM induction: suppresses dead ends (NORMAL, NO_DEAD_ENDS, NO_DEAD_ENDS_WALKINSHAW)",
+            metaVar = "<completenessType>")
+	private String completenessType = CompletenessType.NORMAL.name();
 	
 	@Option(name = "--hybridSecToGenerateFormula", aliases = { "-hgf" }, usage = "time limit in seconds for formula generation in the HYBRID mode", metaVar = "<sec>")
 	private int hybridSecToGenerateFormula = 15;
@@ -205,6 +207,14 @@ public class QbfBuilderMain {
 				return;
 			}
 			
+			CompletenessType completenesstype;
+			try {
+				completenesstype = CompletenessType.valueOf(completenessType);
+			} catch (IllegalArgumentException e) {
+				logger.warning(completenessType + " is not a valid completeness type.");
+				return;
+			}
+			
 			List<String> eventnames;
 			if (eventNames != null) {
 				eventnames = Arrays.asList(eventNames.split(","));
@@ -254,22 +264,23 @@ public class QbfBuilderMain {
 			case QSAT: case EXP_SAT:
 				resultAutomaton = QbfAutomatonBuilder.build(logger, tree, formulae, size, ltlFilePath,
 						qbfsolver, solverParams, extractSubterms, ss == SolvingStrategy.EXP_SAT,
-						events, actions, satsolver, verifier, finishTime, complete, noDeadEnds);
+						events, actions, satsolver, verifier, finishTime, complete, completenesstype);
 				break;
 			case HYBRID:
 				resultAutomaton = HybridAutomatonBuilder.build(logger, tree, formulae, size, ltlFilePath,
 						qbfsolver, solverParams, extractSubterms,
-						events, actions, satsolver, verifier, finishTime, complete, noDeadEnds,
+						events, actions, satsolver, verifier, finishTime, complete, completenesstype,
 						hybridSecToGenerateFormula, hybridSecToSolve);
 				break;
 			case ITERATIVE_SAT:
 				resultAutomaton = IterativeAutomatonBuilder.build(logger, tree, size, solverParams,
 						resultFilePath, ltlFilePath, formulae, events, actions, satsolver, verifier, finishTime,
-						complete, noDeadEnds);
+						complete, completenesstype);
 				break;
 			case BACKTRACKING:
 				resultAutomaton = BacktrackingAutomatonBuilder.build(logger, tree, size,
-						resultFilePath, ltlFilePath, formulae, events, actions, verifier, finishTime, complete);
+						resultFilePath, ltlFilePath, formulae, events, actions, verifier, finishTime,
+						complete, completenesstype);
 				break;
 			}
 			final double executionTime = (System.currentTimeMillis() - startTime) / 1000.;
@@ -322,7 +333,7 @@ public class QbfBuilderMain {
 				}
 				
 				// completeness check
-				if (complete) {
+				if (complete && completenesstype == CompletenessType.NORMAL) {
 					String s = AutomatonCompletenessChecker.checkCompleteness(resultAutomaton.get());
 					if (s.equals("COMPLETE")) {
 						logger.info(s);
