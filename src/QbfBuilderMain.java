@@ -85,7 +85,7 @@ public class QbfBuilderMain {
 			metaVar = "<qbfSolver>")
 	private String qbfSolver = QbfSolver.SKIZZO.name();
 	
-	@Option(name = "--satSolver", aliases = { "-qss" }, usage = "SAT solver: CRYPTOMINISAT or LINGELING (for ITERATIVE_SAT, EXP_SAT and HYBRID strategies)",
+	@Option(name = "--satSolver", aliases = { "-qss" }, usage = "SAT solver: CRYPTOMINISAT, LINGELING, or ITERATIVE_CRYPTOMINISAT (for ITERATIVE_SAT, EXP_SAT and HYBRID strategies)",
 			metaVar = "<satSolver>")
 	private String satSolver = SatSolver.LINGELING.name();
 	

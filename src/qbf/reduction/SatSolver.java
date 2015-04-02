@@ -5,7 +5,9 @@ package qbf.reduction;
  */
 
 public enum SatSolver {
-	CRYPTOMINISAT("cryptominisat --maxtime="), LINGELING("lingeling -t ");
+	CRYPTOMINISAT("cryptominisat --maxtime="),
+	LINGELING("lingeling -t "),
+	ITERATIVE_CRYPTOMINISAT("iterative-cryptominisat");
 	
 	public final String command;
 

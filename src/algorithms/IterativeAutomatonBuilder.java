@@ -63,38 +63,38 @@ public class IterativeAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 			List<String> events, List<String> actions, SatSolver satSolver,
 			Verifier verifier, long finishTime, boolean complete, CompletenessType completenessType) throws IOException {
 		deleteTrash();
-		final ExpandableStringFormula f = new ExpandableStringFormula(
+		try (final ExpandableStringFormula f = new ExpandableStringFormula(
 				new SatFormulaBuilder(tree, size, events, actions).getFormula().simplify()
-				.toLimbooleString(), logger, satSolver, solverParams);
-		
-		for (int iteration = 0; System.currentTimeMillis() < finishTime; iteration++) {
-			final int secondsLeft = (int) ((finishTime - System.currentTimeMillis()) / 1000 + 1);
-			final Optional<Automaton> automaton = automatonFromFormula(f, logger,
-					secondsLeft, tree, size);
-			if (automaton.isPresent()) {
-				if (verifier.verify(automaton.get())) {
-					if (!complete) {
-						return reportResult(logger, iteration, automaton);
+				.toLimbooleString(), logger, satSolver, solverParams)) {
+			for (int iteration = 0; System.currentTimeMillis() < finishTime; iteration++) {
+				final int secondsLeft = (int) ((finishTime - System.currentTimeMillis()) / 1000 + 1);
+				final Optional<Automaton> automaton = automatonFromFormula(f, logger,
+						secondsLeft, tree, size);
+				if (automaton.isPresent()) {
+					if (verifier.verify(automaton.get())) {
+						if (!complete) {
+							return reportResult(logger, iteration, automaton);
+						}
+						try {
+							// extra transition search with verification
+							new AutomatonCompleter(verifier, automaton.get(), events, actions,
+									finishTime, completenessType).ensureCompleteness();
+						} catch (AutomatonFound e) {
+							// verified, complete
+							return reportResult(logger, iteration, Optional.of(e.automaton));
+						} catch (TimeLimitExceeded e) {
+							// terminate the loop
+							break;
+						}
+						// no complete extensions, continue search
 					}
-					try {
-						// extra transition search with verification
-						new AutomatonCompleter(verifier, automaton.get(), events, actions,
-								finishTime, completenessType).ensureCompleteness();
-					} catch (AutomatonFound e) {
-						// verified, complete
-						return reportResult(logger, iteration, Optional.of(e.automaton));
-					} catch (TimeLimitExceeded e) {
-						// terminate the loop
-						break;
-					}
-					// no complete extensions, continue search
+				} else {
+					// no solution due to UNSAT or UNKNOWN, stop search
+					return reportResult(logger, iteration, Optional.empty());
 				}
-			} else {
-				// no solution due to UNSAT or UNKNOWN, stop search
-				return reportResult(logger, iteration, Optional.empty());
 			}
+			logger.info("TOTAL TIME LIMIT EXCEEDED, ANSWER IS UNKNOWN");
+			return Optional.empty();
 		}
-		logger.info("TOTAL TIME LIMIT EXCEEDED, ANSWER IS UNKNOWN");
-		return Optional.empty();
 	}
 }

@@ -8,12 +8,12 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.BiConsumer;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.tuple.Pair;
 
-import algorithms.AutomatonCompleter.CompletenessType;
 import qbf.egorov.ltl.grammar.LtlNode;
 import qbf.reduction.Assignment;
 import qbf.reduction.BooleanFormula.SolveAsSatResult;
@@ -25,6 +25,7 @@ import qbf.reduction.SatSolver;
 import qbf.reduction.Verifier;
 import structures.Automaton;
 import structures.ScenariosTree;
+import algorithms.AutomatonCompleter.CompletenessType;
 
 public class HybridAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 	private static final int MAX_FORMULA_SIZE = 500 * 1000 * 1000;
@@ -40,6 +41,14 @@ public class HybridAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 		int iteration = 1;
 		ExpandableStringFormula formula = null;
 		ExpandableStringFormula formulaBackup = null;
+		BiConsumer<ExpandableStringFormula, ExpandableStringFormula> closer = (f, g) -> {
+			if (f != null) {
+				f.close();
+			}
+			if (g != null) {
+				g.close();
+			}
+		};
 		final Set<String> forbiddenYs = QbfAutomatonBuilder.getForbiddenYs(logger, size, events.size());
 		deleteTrash();
 		SolveAsSatResult solution = null;
@@ -71,6 +80,7 @@ public class HybridAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 						events, actions).getFormula(true);
 				final long time = System.currentTimeMillis();
 				try {
+					closer.accept(formula, formulaBackup);
 					formulaBackup = formula = new ExpandableStringFormula(qbf.flatten(tree, size, k,
 							logger, events, actions, forbiddenYs, Math.min(finishTime,
 							System.currentTimeMillis() + secToGenerateFormula * 1000), MAX_FORMULA_SIZE),
@@ -98,6 +108,7 @@ public class HybridAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 				logger.info("FORMULA FOR k = " + k + " IS TOO HARD FOR THE SOLVER, STARTING ITERATIONS");
 				k--;
 				maxKFound = true;
+				formula.close();
 				formula = formulaBackup;
 				continue;
 			} else if (solution.list().isEmpty()) {
