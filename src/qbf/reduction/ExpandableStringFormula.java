@@ -46,7 +46,6 @@ public class ExpandableStringFormula implements AutoCloseable {
 	public void addProhibitionConstraint(List<Assignment> constraints)
 			throws IOException {
 		if (satSolver == SatSolver.ITERATIVE_CRYPTOMINISAT) {
-			String newConstraint = Assignment.toDimacsString(constraints, info);
 			solverPrintWriter.println(Assignment.toDimacsString(constraints, info));
 		} else {
 			assert info != null;
@@ -77,6 +76,7 @@ public class ExpandableStringFormula implements AutoCloseable {
 	}
 	
 	public SolveAsSatResult solve(int timeLeftForSolver) throws IOException {
+		assert !closed;
 		if (satSolver == SatSolver.ITERATIVE_CRYPTOMINISAT) {
 			if (info == null) {
 				info = BooleanFormula.toDimacs(initialFormula, logger, BooleanFormula.DIMACS_FILENAME);
