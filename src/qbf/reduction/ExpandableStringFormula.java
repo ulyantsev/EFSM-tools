@@ -57,9 +57,10 @@ public class ExpandableStringFormula implements AutoCloseable {
 		}
 	}
 	
-	private SolveAsSatResult iterativeSolve() {
+	private SolveAsSatResult iterativeSolve(int timeLeftForSolver) {
 		long time = System.currentTimeMillis();
-		solverPrintWriter.println("solve");
+		solverPrintWriter.println("solve " +
+				(satSolver == SatSolver.INCREMENTAL_LINGELING ? (" " + timeLeftForSolver) : ""));
 		solverPrintWriter.flush();
 		String result = solverScanner.nextLine();
 		time = System.currentTimeMillis() - time;
@@ -87,7 +88,8 @@ public class ExpandableStringFormula implements AutoCloseable {
 				info.close();
 				logger.info("CREATED DIMACS FILE");
 				int vars = info.varCount();
-				solverProcess = Runtime.getRuntime().exec(satSolver.command + " " + vars + " " + timeLeftForSolver);
+				solverProcess = Runtime.getRuntime().exec(satSolver.command + " " + vars
+						+ (satSolver == SatSolver.INCREMENTAL_CRYPTOMINISAT ? (" " + timeLeftForSolver) : ""));
 				solverOutput = solverProcess.getOutputStream();
 				solverInput = solverProcess.getInputStream();
 				solverPrintWriter = new PrintWriter(solverOutput);
@@ -115,7 +117,7 @@ public class ExpandableStringFormula implements AutoCloseable {
 					}
 				}
 			}
-			return iterativeSolve();
+			return iterativeSolve(timeLeftForSolver);
 		} else {
 			if (info == null) {
 				final SolveAsSatResult solution = BooleanFormula.solveAsSat(initialFormula,
