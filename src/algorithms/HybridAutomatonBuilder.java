@@ -83,9 +83,7 @@ public class HybridAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 							logger, events, actions, forbiddenYs, Math.min(finishTime,
 							System.currentTimeMillis() + secToGenerateFormula * 1000), MAX_FORMULA_SIZE),
 							logger, satSolver, solverParams);
-					if (formula != null) {
-						formula.close();
-					}
+					closer.accept(formula);
 					formula = newFormula;
 				} catch (FormulaSizeException | TimeLimitExceeded e) {
 					logger.info("FORMULA FOR k = " + k +

@@ -10,8 +10,10 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Scanner;
+import java.util.Set;
 import java.util.logging.Logger;
 
 import qbf.reduction.BooleanFormula.DimacsConversionInfo;
@@ -26,6 +28,7 @@ public class ExpandableStringFormula implements AutoCloseable {
 	
 	private DimacsConversionInfo info;
 	
+	// For incremental SAT solvers:
 	private Process solverProcess;
 	private OutputStream solverOutput;
 	private InputStream solverInput;
@@ -45,7 +48,7 @@ public class ExpandableStringFormula implements AutoCloseable {
 	 */
 	public void addProhibitionConstraint(List<Assignment> constraints)
 			throws IOException {
-		if (satSolver == SatSolver.ITERATIVE_CRYPTOMINISAT) {
+		if (satSolver.isIncremental()) {
 			solverPrintWriter.println(Assignment.toDimacsString(constraints, info));
 		} else {
 			assert info != null;
@@ -68,6 +71,7 @@ public class ExpandableStringFormula implements AutoCloseable {
 					list.add(ass);
 				})
 			);
+
 			return new SolveAsSatResult(list, time, info);
 		} else {
 			assert result.equals("UNSAT") || result.equals("UNKNOWN");
@@ -77,7 +81,7 @@ public class ExpandableStringFormula implements AutoCloseable {
 	
 	public SolveAsSatResult solve(int timeLeftForSolver) throws IOException {
 		assert !closed;
-		if (satSolver == SatSolver.ITERATIVE_CRYPTOMINISAT) {
+		if (satSolver.isIncremental()) {
 			if (info == null) {
 				info = BooleanFormula.toDimacs(initialFormula, logger, BooleanFormula.DIMACS_FILENAME);
 				info.close();
@@ -95,6 +99,20 @@ public class ExpandableStringFormula implements AutoCloseable {
 					input.lines()
 						.filter(l -> !l.startsWith("p") && !l.startsWith("c") && l.endsWith("0"))
 						.forEach(solverPrintWriter::println);
+				}
+				
+				if (satSolver == SatSolver.INCREMENTAL_LINGELING) {
+					Set<Integer> unfixedVars = new HashSet<>();
+					for (BooleanVariable v : BooleanVariable.allVars()) {
+						if (v.name.startsWith("y_")) {
+							unfixedVars.add(v.number);
+						}
+					}
+					for (int i = 1; i <= info.varCount(); i++) {
+						if (!unfixedVars.contains(i)) {
+							solverPrintWriter.println("fix " + i);
+						}
+					}
 				}
 			}
 			return iterativeSolve();
@@ -115,7 +133,7 @@ public class ExpandableStringFormula implements AutoCloseable {
 		if (closed) {
 			return;
 		}
-		if (satSolver == SatSolver.ITERATIVE_CRYPTOMINISAT) {
+		if (satSolver.isIncremental()) {
 			solverPrintWriter.println("halt");
 			solverPrintWriter.close();
 			solverScanner.close();

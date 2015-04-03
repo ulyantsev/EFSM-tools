@@ -6,6 +6,7 @@ package qbf.reduction;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,6 +26,10 @@ public class BooleanVariable extends BooleanFormula implements Comparable<Boolea
 	private static int auxiliaryCounter = 1;
 	private static final List<BooleanVariable> ALL_VARS = new ArrayList<>();
 	private static final Map<String, BooleanVariable> VARS_BY_NAME = new HashMap<>();
+	
+	public static List<BooleanVariable> allVars() {
+		return Collections.unmodifiableList(ALL_VARS);
+	}
 	
 	private static String createName(String prefix, Object... indices) {
 		assert indices.length == 0 || !prefix.contains("_");

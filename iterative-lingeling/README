@@ -1,0 +1,2 @@
+1) Copy the files into the lingleling source directory (this will overwrite the makefile).
+2) make iterative

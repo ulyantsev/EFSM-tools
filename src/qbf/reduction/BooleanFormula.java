@@ -79,16 +79,17 @@ public abstract class BooleanFormula {
 		logger.info("ALTERED DIMACS FILE");
 	}
 	
-	private static int LINGELING_SEED = 0;
+	private static int SOLVER_SEED = 0;
 	
 	public static SolveAsSatResult solveDimacs(Logger logger, int timeoutSeconds, SatSolver solver,
 			String solverParams, DimacsConversionInfo info) throws IOException {
 		long time = System.currentTimeMillis();
 		final Map<String, Assignment> list = new LinkedHashMap<>();
 		if (solver == SatSolver.LINGELING) {
-			solverParams += " --seed=" + LINGELING_SEED++;
+			solverParams += " --seed=" + SOLVER_SEED++;
 			timeoutSeconds = Math.max(1, timeoutSeconds);
 		} else if (solver == SatSolver.CRYPTOMINISAT) {
+			solverParams += " --random=" + SOLVER_SEED++;
 			timeoutSeconds = Math.max(2, timeoutSeconds); // cryptominisat does not accept time=1
 		}
 		final String solverStr = solver.command + timeoutSeconds + " " + solverParams

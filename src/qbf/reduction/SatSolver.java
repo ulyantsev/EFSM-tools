@@ -7,11 +7,16 @@ package qbf.reduction;
 public enum SatSolver {
 	CRYPTOMINISAT("cryptominisat --maxtime="),
 	LINGELING("lingeling -t "),
-	ITERATIVE_CRYPTOMINISAT("iterative-cryptominisat");
+	INCREMENTAL_CRYPTOMINISAT("iterative-cryptominisat"),
+	INCREMENTAL_LINGELING("iterative-lingeling");
 	
 	public final String command;
 
 	private SatSolver(String command) {
 		this.command = command;
+	}
+	
+	public boolean isIncremental() {
+		return this == INCREMENTAL_CRYPTOMINISAT || this == INCREMENTAL_LINGELING;
 	}
 }
