@@ -82,7 +82,7 @@ public class VerifierFactory {
         IControlledObject co = context.getControlledObject(null);
 		IEventProvider ep = context.getEventProvider(null);
 
-        StateMachine<IState> machine = new StateMachine<IState>("A1");
+        StateMachine<IState> machine = new StateMachine<>("A1");
 
 		SimpleState[] statesArr = new SimpleState[states.length];
 		for (int i = 0; i < states.length; i++) {
@@ -154,7 +154,6 @@ public class VerifierFactory {
             }
             res[i] = marked;
         }
-
         return res;
     }
 

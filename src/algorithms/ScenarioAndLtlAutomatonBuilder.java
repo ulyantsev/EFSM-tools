@@ -9,6 +9,7 @@ import java.util.TreeSet;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
 import qbf.reduction.Assignment;
@@ -30,6 +31,8 @@ public abstract class ScenarioAndLtlAutomatonBuilder {
 			.filter(f -> f.getName().startsWith("_tmp."))
 			.forEach(File::delete);
 	}
+	
+	public static final String WALKINSHAW_INVALID_ACTION = "invalid";
 	
 	/*
 	 * Returns (automaton, transition variables supported by scenarios).
@@ -95,7 +98,7 @@ public abstract class ScenarioAndLtlAutomatonBuilder {
 					state.addTransition(event, MyBooleanExpression.getTautology(),
 						new StringActions(String.join(",",
 						properUniqueActions)), ans.getState(to));
-					logger.info("ADDING TRANSITION NOT FROM SCENARIOS " + a.var);
+					logger.info("ADDING TRANSITION NOT FROM SCENARIOS " + a.var + " " + properUniqueActions);
 				} else {
 					// check
 					Transition t = state.getTransition(event, MyBooleanExpression.getTautology());
@@ -107,6 +110,16 @@ public abstract class ScenarioAndLtlAutomatonBuilder {
 					if (!actualActions.equals(properUniqueActions)) {
 						logger.severe("ACTIONS DO NOT MATCH");
 					}
+				}
+			}
+		}
+		
+		// for Walkinshaw model induction: remove invalid transitions
+		for (int i = 0; i < colorSize; i++) {
+			List<Transition> transitions = new ArrayList<>(ans.getState(i).getTransitions());
+			for (Transition t : transitions) {
+				if (ArrayUtils.contains(t.getActions().getActions(), WALKINSHAW_INVALID_ACTION)) {
+					ans.getState(i).removeTransition(t);
 				}
 			}
 		}

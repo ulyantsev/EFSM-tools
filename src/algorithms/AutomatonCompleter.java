@@ -110,7 +110,7 @@ public class AutomatonCompleter {
 		
 		final Node stateFrom = automaton.getState(missing.getLeft());
 		final String e = missing.getRight();
-				
+		
 		for (StringActions actions : preparedActions) {
 			for (int dst = 0; dst < colorSize; dst++) {
 				Transition autoT = new Transition(stateFrom,

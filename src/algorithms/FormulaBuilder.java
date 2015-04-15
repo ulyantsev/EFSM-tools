@@ -233,17 +233,14 @@ public abstract class FormulaBuilder {
 	
 	// no-dead-ends constraint for incomplete FSM induction
 	private BooleanFormula noDeadEndsWalkinshawConstraints() {
+		assert actions.size() == 1;
+		final String invalid = actions.get(0);
 		FormulaList constraints = new FormulaList(BinaryOperations.AND);
 		for (int i1 = 0; i1 < colorSize; i1++) {
 			FormulaList options = new FormulaList(BinaryOperations.OR);
 			for (String e : events) {
 				for (int i2 = 0; i2 < colorSize; i2++) {
-					FormulaList transitionConstraints = new FormulaList(BinaryOperations.AND);
-					transitionConstraints.add(yVar(i1, i2, e));
-					for (String action : actions) {
-						transitionConstraints.add(zVar(i1, action, e).not());
-					}
-					options.add(transitionConstraints.assemble());
+					options.add(yVar(i1, i2, e).and(zVar(i1, invalid, e).not()));
 				}
 			}
 			constraints.add(options.assemble());

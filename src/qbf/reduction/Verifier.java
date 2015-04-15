@@ -55,6 +55,7 @@ public class Verifier {
 					verifier.prepareFormulas(f);
 					break;
 				} catch (TranslationException e) {
+					logger.warning("Caught TranslationException: " + e.getMessage());
 				}
 			}
 		} catch (LtlParseException e) {
