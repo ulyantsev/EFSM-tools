@@ -1,7 +1,7 @@
 /**
  * TreeNode.java, 27.04.2008
  */
-package qbf.egorov.verifier.automata.tree;
+package qbf.egorov.verifier.automata;
 
 import qbf.egorov.statemachine.IState;
 import qbf.egorov.statemachine.IStateMachine;
@@ -13,13 +13,13 @@ import java.util.*;
  *
  * @author Kirill Egorov
  */
-public class TreeNode<S extends IState> implements ITreeNode<S> {
+public class TreeNode<S extends IState> {
     private S state;
     private IStateMachine<S> stateMachine;
     private boolean active;
 
-    private Map<IStateMachine<S>, ITreeNode<S>> children
-            = new LinkedHashMap<IStateMachine<S>, ITreeNode<S>>();
+    private Map<IStateMachine<S>, TreeNode<S>> children
+            = new LinkedHashMap<IStateMachine<S>, TreeNode<S>>();
 
     public TreeNode(S state, IStateMachine<S> stateMachine, boolean active) {
         this.state = state;
@@ -39,7 +39,7 @@ public class TreeNode<S extends IState> implements ITreeNode<S> {
         return active;
     }
 
-    public void addChildren(ITreeNode<S> node) {
+    public void addChildren(TreeNode<S> node) {
         children.put(node.getStateMachine(), node);
     }
 
@@ -47,11 +47,11 @@ public class TreeNode<S extends IState> implements ITreeNode<S> {
      * Get modifiable set of children
      * @return set of children nodes
      */
-    public Collection<ITreeNode<S>> getChildren() {
+    public Collection<TreeNode<S>> getChildren() {
         return children.values();
     }
 
-    public ITreeNode<S> getChild(IStateMachine<S> stateMachine) {
+    public TreeNode<S> getChild(IStateMachine<S> stateMachine) {
         return children.get(stateMachine);
     }
 

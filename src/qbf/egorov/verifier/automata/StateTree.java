@@ -1,7 +1,7 @@
 /**
  * StateTree.java, 27.04.2008
  */
-package qbf.egorov.verifier.automata.tree;
+package qbf.egorov.verifier.automata;
 
 import qbf.egorov.statemachine.IState;
 import qbf.egorov.statemachine.IStateMachine;
@@ -14,28 +14,28 @@ import java.util.Iterator;
  *
  * @author Kirill Egorov
  */
-public class StateTree<S extends IState> implements ITree<S> {
-    private ITreeNode<S> root;
+public class StateTree<S extends IState> {
+    private TreeNode<S> root;
     private int hash = -1;
 
-    public StateTree(ITreeNode<S> root) {
+    public StateTree(TreeNode<S> root) {
         this.root = root;
     }
 
-    public StateTree(ITree<S> tree, ITreeNode<S> node, IStateTransition trans) {
+    public StateTree(StateTree<S> tree, TreeNode<S> node, IStateTransition trans) {
         root = copy(tree.getRoot(), node, trans);
         assert root.isActive();
     }
 
-    public ITreeNode<S> getRoot() {
+    public TreeNode<S> getRoot() {
         return root;
     }
 
-    public ITreeNode<S> getNodeForStateMachine(IStateMachine<S> stateMachine) {
+    public TreeNode<S> getNodeForStateMachine(IStateMachine<S> stateMachine) {
         IStateMachine<S> parentSM = stateMachine.getParentStateMachine();
         
         if (parentSM != null) {
-            ITreeNode<S> parentNode = getNodeForStateMachine(parentSM);
+            TreeNode<S> parentNode = getNodeForStateMachine(parentSM);
 
             assert parentNode.getStateMachine().equals(parentSM);
             return parentNode.getChild(stateMachine);
@@ -44,7 +44,7 @@ public class StateTree<S extends IState> implements ITree<S> {
         return root;
     }
 
-    protected ITreeNode<S> copy(ITreeNode<S> node, ITreeNode<S> fromNode, IStateTransition trans) {
+    protected TreeNode<S> copy(TreeNode<S> node, TreeNode<S> fromNode, IStateTransition trans) {
         boolean isTransNode = (node == fromNode);
         @SuppressWarnings("unchecked")
 		S state = isTransNode ? (S) trans.getTarget() : node.getState();
@@ -53,22 +53,22 @@ public class StateTree<S extends IState> implements ITree<S> {
         if (isTransNode) {
             assert node.isActive();
             
-            for (ITreeNode<S> child: node.getChildren()) {
+            for (TreeNode<S> child: node.getChildren()) {
                 newNode.addChildren(copyTransSubnode(newNode, child));
             }
         } else {
-            for (ITreeNode<S> child: node.getChildren()) {
+            for (TreeNode<S> child: node.getChildren()) {
                 newNode.addChildren(copy(child, fromNode, trans));
             }
         }
         return newNode;
     }
 
-    protected ITreeNode<S> copyTransSubnode(ITreeNode<S> parent, ITreeNode<S> node) {
+    protected TreeNode<S> copyTransSubnode(TreeNode<S> parent, TreeNode<S> node) {
         boolean active = node.getStateMachine().getParentStates().containsKey(parent.getState());
         TreeNode<S> newNode = new TreeNode<S>(node.getState(), node.getStateMachine(), active);
 
-        for (ITreeNode<S> child: node.getChildren()) {
+        for (TreeNode<S> child: node.getChildren()) {
             newNode.addChildren(copyTransSubnode(node, child));
         }
         return newNode;
@@ -94,24 +94,24 @@ public class StateTree<S extends IState> implements ITree<S> {
         return hash;
     }
 
-    protected int hashCode(ITreeNode<S> node) {
+    protected int hashCode(TreeNode<S> node) {
         int hash = node.getState().hashCode();
-        for (ITreeNode<S> child: node.getChildren()) {
+        for (TreeNode<S> child: node.getChildren()) {
             hash += hashCode(child);
         }
         return hash;
     }
 
-    protected boolean equals(ITreeNode<S> node1, ITreeNode<S> node2) {
+    protected boolean equals(TreeNode<S> node1, TreeNode<S> node2) {
         if (!node1.getState().equals(node2.getState())) {
             return false;
         }
         assert node1.getChildren().size() == node2.getChildren().size();
-        Iterator<ITreeNode<S>> iter = node2.getChildren().iterator();
+        Iterator<TreeNode<S>> iter = node2.getChildren().iterator();
 
-        for (ITreeNode<S> child1: node1.getChildren()) {
+        for (TreeNode<S> child1: node1.getChildren()) {
             if (iter.hasNext()) {
-                ITreeNode<S> child2 = iter.next();
+                TreeNode<S> child2 = iter.next();
                 if (!equals(child1, child2)) {
                     return false;
                 }
