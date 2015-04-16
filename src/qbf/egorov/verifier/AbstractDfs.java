@@ -71,6 +71,11 @@ public abstract class AbstractDfs<R> extends NotifiableDfs<R> {
             IntersectionNode<?> n = stack.getFirst();
             IIntersectionTransition<?> trans = n.next(threadId);
             IntersectionNode<?> child = (trans != null) ? trans.getTarget() : null;
+            
+            if (trans != null && trans.getTransition().getEvent() == null) {
+            	continue;
+            }
+            
             if (child != null) {
                 if (visitNode(child)) {
                     break;

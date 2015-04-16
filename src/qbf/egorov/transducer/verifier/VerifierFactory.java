@@ -3,13 +3,16 @@
  */
 package qbf.egorov.transducer.verifier;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 
 import qbf.egorov.ltl.LtlParseException;
 import qbf.egorov.ltl.LtlParser;
@@ -63,16 +66,15 @@ public class VerifierFactory {
     public void prepareFormulas(List<String> formulas) throws LtlParseException {
     	 ITranslator translator = new JLtl2baTranslator();
 
-         preparedFormulas = new IBuchiAutomata[1][];
+         preparedFormulas = new IBuchiAutomata[formulas.size()][];
 
-         IBuchiAutomata[] group = new IBuchiAutomata[formulas.size()];
          int j = 0;
+         preparedFormulas = new IBuchiAutomata[formulas.size()][1];
          for (String f : formulas) {
              LtlNode node = parser.parse(f);
              node = LtlUtils.getInstance().neg(node);
-             group[j++] = translator.translate(node);
+             preparedFormulas[j++][0] = translator.translate(node);
          }
-         preparedFormulas[0] = group;
     }
 
     public void configureStateMachine(FST fst) {
@@ -117,8 +119,10 @@ public class VerifierFactory {
         context.setStateMachine(machine);
     }
 
-    public int[] verify() {
+    // returns (numbers of verified transitions, counterexamples)
+    public Pair<int[], List<List<String>>> verify() {
         int[] res = new int[preparedFormulas.length];
+        List<List<String>> counterexamples = new ArrayList<>();
         IVerifier<IState> verifier = new SimpleVerifier<>(context.getStateMachine(null).getInitialState());
         int usedTransitions = fst.getUsedTransitionsCount();
 
@@ -127,8 +131,15 @@ public class VerifierFactory {
 
             for (IBuchiAutomata buchi : preparedFormulas[i]) {
                 counter.resetCounter();
-                
                 List<IIntersectionTransition<?>> list = verifier.verify(buchi, predicates, marker, counter);
+                if (list.isEmpty()) {
+                	counterexamples.add(Collections.emptyList());
+                } else {
+                	List<String> eventList = list.stream().skip(1)
+                        	.map(t -> String.valueOf(t.getTransition().getEvent())).collect(Collectors.toList());
+                    counterexamples.add(eventList.subList(0, eventList.size() - 1 + 1));
+                }
+                
                 if (list != null && !list.isEmpty()) {
 
                     ListIterator<IIntersectionTransition<?>> iter = list.listIterator(list.size());
@@ -139,7 +150,7 @@ public class VerifierFactory {
                         IIntersectionTransition<?> t = iter.previous();
                         if ((t.getTransition() != null)
                                 && (t.getTransition().getClass() == AutomataTransition.class)) {
-                            AutomataTransition trans = (AutomataTransition) t.getTransition();
+                        	AutomataTransition trans = (AutomataTransition) t.getTransition();
                             if (trans.getAlgTransition() != null) {
                                 trans.getAlgTransition().setUsedByVerifier(true);
                                 j++;
@@ -154,7 +165,7 @@ public class VerifierFactory {
             }
             res[i] = marked;
         }
-        return res;
+        return Pair.of(res, counterexamples);
     }
 
     /**

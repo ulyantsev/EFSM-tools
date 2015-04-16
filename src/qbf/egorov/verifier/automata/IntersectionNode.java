@@ -101,11 +101,11 @@ public class IntersectionNode<S extends IState>
     public IIntersectionTransition<S> next(int threadId) {
         if (threadId < 0) {
             synchronized (iterator) {
-                return (iterator.hasNext()) ? iterator.next() : null;
+            	return iterator.hasNext() ? iterator.next() : null;
             }
         } else {
-            Iterator<IIntersectionTransition<S>> iter = threadIterators.get(threadId);
-            return(iter.hasNext()) ? iter.next() : null;
+            Iterator<IIntersectionTransition<S>> iter = threadIterators.get(threadId);            
+            return iter.hasNext() ? iter.next() : null;
         }
     }
 

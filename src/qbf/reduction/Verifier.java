@@ -37,10 +37,7 @@ public class Verifier {
 		this.size = size;
 		ltlFormulae = loadFormulae(ltlPath, varNumber);
 		logger.info(ltlFormulae.toString());
-		String joinedFormula = ltlFormulae.isEmpty()
-				? "true"
-				: "(" + String.join(") and (", ltlFormulae) + ")";
-		
+
 		allEvents = new TreeSet<>(events);
 		allActions = new TreeSet<>(actions);
 		ensureContextSufficiency();
@@ -48,18 +45,17 @@ public class Verifier {
 		FST fst = new FST(new Automaton(size), allEvents, allActions, size);
 		verifier.configureStateMachine(fst);
 
-		List<String> f = Arrays.asList(joinedFormula);
 		try {
 			while (true) {
 				try {
-					verifier.prepareFormulas(f);
+					verifier.prepareFormulas(ltlFormulae);
 					break;
 				} catch (TranslationException e) {
 					logger.warning("Caught TranslationException: " + e.getMessage());
 				}
 			}
 		} catch (LtlParseException e) {
-			logger.warning("Failed to parse formula: " + joinedFormula + " ");
+			logger.warning("Failed to parse formulae: " + ltlFormulae + " ");
 			e.printStackTrace();
 		}
 	}
@@ -125,7 +121,13 @@ public class Verifier {
 		final FST fst = new FST(removeDeadEnds(a), allEvents, allActions, size);
 		final int numberOfUsedTransitions = fst.getUsedTransitionsCount();
 		verifier.configureStateMachine(fst);
-		final int result = verifier.verify()[0];
-		return result == numberOfUsedTransitions;
+		int[] verified = verifier.verify().getLeft();
+		return Arrays.stream(verified).allMatch(x -> x == numberOfUsedTransitions);
+	}
+	
+	public List<List<String>> verifyWithCounterExamples(Automaton a) {
+		final FST fst = new FST(removeDeadEnds(a), allEvents, allActions, size);
+		verifier.configureStateMachine(fst);
+		return verifier.verify().getRight();
 	}
 }

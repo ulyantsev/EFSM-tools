@@ -35,7 +35,6 @@ public class JLtl2baTranslator implements ITranslator {
         try {
             IFormula formula = getFormula(root);
             Collection<ITransition> transitions = LTL2BA4J.formulaToBA(formula);
-
             return buchiConverter.convert(transitions);
         } catch (Exception e) {
             throw new TranslationException(e);

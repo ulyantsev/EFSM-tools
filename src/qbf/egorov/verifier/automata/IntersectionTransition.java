@@ -50,4 +50,11 @@ public class IntersectionTransition<S extends IState> implements IIntersectionTr
         result = 31 * result + (transition != null ? transition.hashCode() : 0);
         return result;
     }
+    
+    @Override
+    public String toString() {
+    	return "["
+    			+ (transition == null ? "NULL" : transition.getEvent()
+    			+ "" + transition.getActions()) + "]";
+    }
 }

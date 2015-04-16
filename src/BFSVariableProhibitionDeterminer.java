@@ -25,7 +25,7 @@ public class BFSVariableProhibitionDeterminer {
 	public static void main(String[] args) throws ParseException, IOException {
 		new File(QbfAutomatonBuilder.PRECOMPUTED_DIR_NAME).mkdir();
 		Map<Pair<Integer, Integer>, Map<String, Boolean>> allRes = new HashMap<>();
-		for (int statesNum = 2; statesNum <= 10; statesNum++) {
+		for (int statesNum = 2; statesNum <= 12; statesNum++) {
 			for (int eventNum = 2; eventNum <= 40; eventNum++) {
 				System.out.println(statesNum + " " + eventNum);
 				int effectiveEventNum = Math.max(2, Math.min(eventNum, statesNum - 2));
