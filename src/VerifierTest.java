@@ -7,6 +7,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Logger;
 
+import org.apache.commons.lang3.tuple.Pair;
+
 import actions.StringActions;
 import bool.MyBooleanExpression;
 import qbf.reduction.Verifier;
@@ -40,7 +42,8 @@ public class VerifierTest {
 				pw.println(ltl);
 			}
 			Verifier v = new Verifier(size, logger, filename, events, actions, varNumber);
-			System.out.println(v.verifyWithCounterExamples(a));
+			Pair<int[], List<List<String>>> p = v.verifyPure(a);
+			System.out.println(Arrays.toString(p.getLeft()) + " " + p.getRight());
 			new File(filename).delete();
 		}
 	}
@@ -77,6 +80,7 @@ public class VerifierTest {
 	}
 	
 	public static void main(String[] args) throws IOException, ParseException {
+		test1();
 		test2();
 	}
 }

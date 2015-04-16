@@ -4,10 +4,8 @@
 package qbf.egorov.verifier.impl;
 
 import java.util.Deque;
-import java.util.HashSet;
 
 import qbf.egorov.verifier.AbstractDfs;
-import qbf.egorov.verifier.ISharedData;
 import qbf.egorov.verifier.automata.IntersectionNode;
 
 /**
@@ -18,14 +16,13 @@ import qbf.egorov.verifier.automata.IntersectionNode;
 public class SecondDfs extends AbstractDfs<Boolean> {
     private Deque<IntersectionNode<?>> mainDfsStack;
 
-    public SecondDfs(ISharedData sharedData, Deque<IntersectionNode<?>> mainDfsStack,  int threadId) {
-        super(sharedData, new HashSet<>(), threadId);
+    public SecondDfs(Deque<IntersectionNode<?>> mainDfsStack) {
         this.mainDfsStack = mainDfsStack;
         setResult(false);
     }
 
     protected void enterNode(IntersectionNode<?> node) {
-        node.resetIterator(threadId);
+        node.resetIterator();
     }
 
     protected boolean visitNode(IntersectionNode<?> node) {

@@ -4,6 +4,7 @@
 package qbf.egorov.verifier;
 
 import java.util.Deque;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.Set;
 
@@ -24,13 +25,8 @@ public abstract class AbstractDfs<R> extends NotifiableDfs<R> {
     private final Set<IntersectionNode<?>> visited;
     private R result;
 
-    protected final ISharedData sharedData;
-    protected final int threadId;
-
-    public AbstractDfs(ISharedData sharedData, Set<IntersectionNode<?>> visited, int threadId) {
-        this.sharedData = sharedData;
-        this.visited = visited;
-        this.threadId = threadId;
+    public AbstractDfs() {
+        this.visited = new LinkedHashSet<>();
     }
 
     protected void enterNode(IntersectionNode<?> node) {
@@ -67,9 +63,9 @@ public abstract class AbstractDfs<R> extends NotifiableDfs<R> {
         stack.push(node);
         transStack.push(new IntersectionTransition<>(null, node));
 
-        while (!stack.isEmpty() && sharedData.getContraryInstance() == null) {
+        while (!stack.isEmpty()) {
             IntersectionNode<?> n = stack.getFirst();
-            IIntersectionTransition<?> trans = n.next(threadId);
+            IIntersectionTransition<?> trans = n.next();
             IntersectionNode<?> child = (trans != null) ? trans.getTarget() : null;
             
             if (trans != null && trans.getTransition().getEvent() == null) {

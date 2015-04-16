@@ -12,16 +12,7 @@ import qbf.egorov.statemachine.IState;
  * @author Kirill Egorov
  */
 public interface IInterNode {
-
     IState getState();
-
     IBuchiNode getNode();
-
     int getAcceptSet();
-
-    void addOwner(int threadId);
-
-    void removeOwner(int threadId);
-
-    boolean isOwner(int threadId);
 }

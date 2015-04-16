@@ -3,17 +3,19 @@
  */
 package qbf.egorov.verifier.automata;
 
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.function.Consumer;
+
+import qbf.egorov.automata.INode;
 import qbf.egorov.ltl.buchi.IBuchiAutomata;
 import qbf.egorov.ltl.buchi.IBuchiNode;
 import qbf.egorov.ltl.buchi.ITransitionCondition;
 import qbf.egorov.statemachine.IState;
 import qbf.egorov.statemachine.IStateTransition;
 import qbf.egorov.verifier.IInterNode;
-import qbf.egorov.verifier.concurrent.DfsThread;
-import qbf.egorov.automata.INode;
-
-import java.util.*;
-import java.util.function.Consumer;
 
 /**
  * Node received during state machine and buchi automata intersection
@@ -30,21 +32,11 @@ public class IntersectionNode<S extends IState>
     private final boolean terminal;
 
     private final TransitionIterator iterator;
-    private ArrayList<TransitionIterator> threadIterators;
-
-    private boolean[] owners;
-
-    public IntersectionNode(IIntersectionAutomata<S> automata, S state, IBuchiNode node, int acceptSet) {
-        this(automata, state, node, acceptSet, Collections.<DfsThread>emptyList());
-    }
 
     public IntersectionNode(IIntersectionAutomata<S> automata, S state, IBuchiNode node,
-                            int acceptSet, Collection<? extends DfsThread> threads) {
+                            int acceptSet) {
         if (state == null || node == null) {
             throw new IllegalArgumentException();
-        }
-        if (threads == null) {
-            throw new NullPointerException("Collection of threads hasn't been initialized yet");
         }
 
         this.automata = automata;
@@ -58,12 +50,6 @@ public class IntersectionNode<S extends IState>
                                    : acceptSet;
 
         iterator = new TransitionIterator();
-
-        threadIterators = new ArrayList<TransitionIterator>(threads.size());
-        for (int i = 0; i < threads.size(); i++) {
-            threadIterators.add(new TransitionIterator());
-        }
-        owners = new boolean[threads.size()];
     }
 
     public IState getState() {
@@ -86,37 +72,12 @@ public class IntersectionNode<S extends IState>
         throw new UnsupportedOperationException("use next() method instead");
     }
 
-    public void addOwner(int threadId) {
-        owners[threadId] = true;
+    public IIntersectionTransition<S> next() {
+    	return iterator.hasNext() ? iterator.next() : null;
     }
 
-    public void removeOwner(int threadId) {
-        owners[threadId] = false;
-    }
-
-    public boolean isOwner(int threadId) {
-        return owners[threadId];
-    }
-
-    public IIntersectionTransition<S> next(int threadId) {
-        if (threadId < 0) {
-            synchronized (iterator) {
-            	return iterator.hasNext() ? iterator.next() : null;
-            }
-        } else {
-            Iterator<IIntersectionTransition<S>> iter = threadIterators.get(threadId);            
-            return iter.hasNext() ? iter.next() : null;
-        }
-    }
-
-    public void resetIterator(int threadId) {
-        if (threadId < 0) {
-            synchronized (iterator) {
-                iterator.reset();
-            }
-        } else {
-            threadIterators.get(threadId).reset();
-        }
+    public void resetIterator() {
+    	iterator.reset();
     }
 
     public boolean equals(Object o) {

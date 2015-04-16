@@ -12,6 +12,8 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang3.tuple.Pair;
+
 import qbf.egorov.ltl.LtlParseException;
 import qbf.egorov.ltl.LtlParser;
 import qbf.egorov.ltl.buchi.translator.TranslationException;
@@ -126,8 +128,12 @@ public class Verifier {
 	}
 	
 	public List<List<String>> verifyWithCounterExamples(Automaton a) {
+		return verifyPure(a).getRight();
+	}
+	
+	public Pair<int[], List<List<String>>> verifyPure(Automaton a) {
 		final FST fst = new FST(removeDeadEnds(a), allEvents, allActions, size);
 		verifier.configureStateMachine(fst);
-		return verifier.verify().getRight();
+		return verifier.verify();
 	}
 }
