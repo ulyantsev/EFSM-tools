@@ -35,8 +35,7 @@ import qbf.egorov.statemachine.impl.StateMachine;
 import qbf.egorov.transducer.FST;
 import qbf.egorov.transducer.Transition;
 import qbf.egorov.verifier.IDfsListener;
-import qbf.egorov.verifier.IVerifier;
-import qbf.egorov.verifier.automata.IIntersectionTransition;
+import qbf.egorov.verifier.automata.IntersectionTransition;
 import qbf.egorov.verifier.impl.SimpleVerifier;
 
 /**
@@ -123,7 +122,7 @@ public class VerifierFactory {
     public Pair<int[], List<List<String>>> verify() {
         int[] res = new int[preparedFormulas.length];
         List<List<String>> counterexamples = new ArrayList<>();
-        IVerifier<IState> verifier = new SimpleVerifier<>(context.getStateMachine(null).getInitialState());
+        SimpleVerifier<IState> verifier = new SimpleVerifier<>(context.getStateMachine(null).getInitialState());
         int usedTransitions = fst.getUsedTransitionsCount();
 
         for (int i = 0; i < preparedFormulas.length; i++) {
@@ -131,7 +130,7 @@ public class VerifierFactory {
 
             for (IBuchiAutomata buchi : preparedFormulas[i]) {
                 counter.resetCounter();
-                List<IIntersectionTransition<?>> list = verifier.verify(buchi, predicates, marker, counter);
+                List<IntersectionTransition<?>> list = verifier.verify(buchi, predicates, marker, counter);
                 if (list.isEmpty()) {
                 	counterexamples.add(Collections.emptyList());
                 } else {
@@ -142,12 +141,12 @@ public class VerifierFactory {
                 
                 if (list != null && !list.isEmpty()) {
 
-                    ListIterator<IIntersectionTransition<?>> iter = list.listIterator(list.size());
+                    ListIterator<IntersectionTransition<?>> iter = list.listIterator(list.size());
 
                     int failTransitions = buchi.size() - 1;
 
                     for (int j = 0; iter.hasPrevious() && (j < failTransitions);) {
-                        IIntersectionTransition<?> t = iter.previous();
+                        IntersectionTransition<?> t = iter.previous();
                         if ((t.getTransition() != null)
                                 && (t.getTransition().getClass() == AutomataTransition.class)) {
                         	AutomataTransition trans = (AutomataTransition) t.getTransition();

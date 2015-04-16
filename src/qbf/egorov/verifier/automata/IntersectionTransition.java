@@ -11,7 +11,7 @@ import qbf.egorov.statemachine.IStateTransition;
  *
  * @author Kirill Egorov
  */
-public class IntersectionTransition<S extends IState> implements IIntersectionTransition<S> {
+public class IntersectionTransition<S extends IState> {
     private IntersectionNode<S> target;
     private IStateTransition transition;
 

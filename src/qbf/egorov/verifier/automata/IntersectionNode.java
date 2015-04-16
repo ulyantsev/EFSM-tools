@@ -9,22 +9,19 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.function.Consumer;
 
-import qbf.egorov.automata.INode;
 import qbf.egorov.ltl.buchi.IBuchiAutomata;
 import qbf.egorov.ltl.buchi.IBuchiNode;
 import qbf.egorov.ltl.buchi.ITransitionCondition;
 import qbf.egorov.statemachine.IState;
 import qbf.egorov.statemachine.IStateTransition;
-import qbf.egorov.verifier.IInterNode;
 
 /**
  * Node received during state machine and buchi automata intersection
  *
  * @author Kirill Egorov
  */
-public class IntersectionNode<S extends IState>
-        implements INode<IIntersectionTransition<S>>, IInterNode {
-    private final IIntersectionAutomata<S> automata;
+public class IntersectionNode<S extends IState> {
+    private final IntersectionAutomata<S> automata;
     private final S state;
     private final IBuchiNode node;
     private final int acceptSet;
@@ -33,7 +30,7 @@ public class IntersectionNode<S extends IState>
 
     private final TransitionIterator iterator;
 
-    public IntersectionNode(IIntersectionAutomata<S> automata, S state, IBuchiNode node,
+    public IntersectionNode(IntersectionAutomata<S> automata, S state, IBuchiNode node,
                             int acceptSet) {
         if (state == null || node == null) {
             throw new IllegalArgumentException();
@@ -68,11 +65,11 @@ public class IntersectionNode<S extends IState>
         return terminal;
     }
 
-    public Collection<IIntersectionTransition<S>> getOutcomingTransitions() {
+    public Collection<IntersectionTransition<S>> getOutcomingTransitions() {
         throw new UnsupportedOperationException("use next() method instead");
     }
 
-    public IIntersectionTransition<S> next() {
+    public IntersectionTransition<S> next() {
     	return iterator.hasNext() ? iterator.next() : null;
     }
 
@@ -106,13 +103,12 @@ public class IntersectionNode<S extends IState>
         return String.format("[\"%s\", %d, %d]", state.getName(), node.getID(), acceptSet);
     }
 
-    private class TransitionIterator implements Iterator<IIntersectionTransition<S>> {
-
+    private class TransitionIterator implements Iterator<IntersectionTransition<S>> {
         private Iterator<IStateTransition> stateIter;
         private Iterator<Map.Entry<ITransitionCondition, IBuchiNode>> nodeIter;
 
         private IStateTransition nextStateTransition;
-        private IIntersectionTransition<S> next;
+        private IntersectionTransition<S> next;
 
         private TransitionIterator() {
             reset();
@@ -154,11 +150,11 @@ public class IntersectionNode<S extends IState>
             }
         }
 
-        public IIntersectionTransition<S> next() {
+        public IntersectionTransition<S> next() {
             if (!hasNext()) {
                 throw new NoSuchElementException();
             }
-            IIntersectionTransition<S> res = next;
+            IntersectionTransition<S> res = next;
             next = null;
             return res;
         }
@@ -169,7 +165,7 @@ public class IntersectionNode<S extends IState>
 
 		@Override
 		public void forEachRemaining(
-				Consumer<? super IIntersectionTransition<S>> action) {
+				Consumer<? super IntersectionTransition<S>> action) {
 			// TODO Auto-generated method stub
 			throw new AssertionError();
 		}

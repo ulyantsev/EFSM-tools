@@ -7,17 +7,17 @@ import java.util.Deque;
 
 import qbf.egorov.util.CollectionUtils;
 import qbf.egorov.verifier.AbstractDfs;
-import qbf.egorov.verifier.automata.IIntersectionTransition;
 import qbf.egorov.verifier.automata.IntersectionNode;
+import qbf.egorov.verifier.automata.IntersectionTransition;
 
 /**
  * TODO: add comment
  *
  * @author Kirill Egorov
  */
-public class MainDfs extends AbstractDfs<Deque<IIntersectionTransition<?>>> {
+public class MainDfs extends AbstractDfs<Deque<IntersectionTransition<?>>> {
     public MainDfs() {
-        setResult(CollectionUtils.<IIntersectionTransition<?>>emptyDeque());
+        setResult(CollectionUtils.emptyDeque());
     }
 
     protected boolean leaveNode(IntersectionNode<?> node) {

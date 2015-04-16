@@ -9,7 +9,6 @@ import java.util.LinkedList;
 import java.util.Set;
 
 import qbf.egorov.util.DequeSet;
-import qbf.egorov.verifier.automata.IIntersectionTransition;
 import qbf.egorov.verifier.automata.IntersectionNode;
 import qbf.egorov.verifier.automata.IntersectionTransition;
 
@@ -20,7 +19,7 @@ import qbf.egorov.verifier.automata.IntersectionTransition;
  */
 public abstract class AbstractDfs<R> extends NotifiableDfs<R> {
     private final Deque<IntersectionNode<?>> stack = new DequeSet<>();
-    private final Deque<IIntersectionTransition<?>> transStack = new LinkedList<>();
+    private final Deque<IntersectionTransition<?>> transStack = new LinkedList<>();
     
     private final Set<IntersectionNode<?>> visited;
     private R result;
@@ -46,7 +45,7 @@ public abstract class AbstractDfs<R> extends NotifiableDfs<R> {
         return stack;
     }
 
-    protected Deque<IIntersectionTransition<?>> getTransitionStack() {
+    protected Deque<IntersectionTransition<?>> getTransitionStack() {
         return transStack;
     }
 
@@ -65,7 +64,7 @@ public abstract class AbstractDfs<R> extends NotifiableDfs<R> {
 
         while (!stack.isEmpty()) {
             IntersectionNode<?> n = stack.getFirst();
-            IIntersectionTransition<?> trans = n.next();
+            IntersectionTransition<?> trans = n.next();
             IntersectionNode<?> child = (trans != null) ? trans.getTarget() : null;
             
             if (trans != null && trans.getTransition().getEvent() == null) {

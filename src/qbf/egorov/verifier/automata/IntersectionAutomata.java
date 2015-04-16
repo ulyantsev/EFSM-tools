@@ -15,7 +15,7 @@ import java.util.*;
  *
  * @author Kirill Egorov
  */
-public class IntersectionAutomata<S extends IState> implements IIntersectionAutomata<S> {
+public class IntersectionAutomata<S extends IState> {
     private IPredicateFactory<S> predicates;
     private IBuchiAutomata buchiAutomata;
     private Map<String, IntersectionNode<S>> nodeMap = new HashMap<>();

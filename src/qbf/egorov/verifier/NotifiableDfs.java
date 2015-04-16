@@ -12,7 +12,7 @@ import java.util.ArrayList;
  * @author kegorov
  *         Date: Nov 3, 2009
  */
-public abstract class NotifiableDfs<R> implements IDfs<R> {
+public abstract class NotifiableDfs<R> {
 
     private List<IDfsListener> listeners;
 
