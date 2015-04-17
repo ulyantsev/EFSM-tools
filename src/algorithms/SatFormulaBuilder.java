@@ -11,14 +11,18 @@ import qbf.reduction.BooleanFormula;
 import structures.ScenariosTree;
 
 public class SatFormulaBuilder extends FormulaBuilder {
+	private final boolean includeActionVars;
+	
 	public SatFormulaBuilder(ScenariosTree tree, int colorSize,
-			List<String> events, List<String> actions) {
-		super(colorSize, tree, false, CompletenessType.NORMAL, events, actions);
+			List<String> events, List<String> actions, boolean complete,
+			CompletenessType completenessType, boolean includeActionVars) {
+		super(colorSize, tree, complete, completenessType, events, actions);
+		this.includeActionVars = includeActionVars;
 	}
 
 	public BooleanFormula getFormula() {
 		addColorVars();
-		addTransitionVars(false);
-		return scenarioConstraints(false).assemble();
+		addTransitionVars(includeActionVars);
+		return scenarioConstraints(includeActionVars).assemble();
 	}
 }

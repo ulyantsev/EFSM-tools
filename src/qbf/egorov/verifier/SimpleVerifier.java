@@ -24,23 +24,23 @@ import qbf.egorov.verifier.automata.IntersectionTransition;
  *
  * @author Kirill Egorov
  */
-public class SimpleVerifier<S extends IState> {
-    private final S initState;
+public class SimpleVerifier {
+    private final IState initState;
     
-    public SimpleVerifier(S initState) {
+    public SimpleVerifier(IState initState) {
         this.initState = initState;
     }
 
-    public List<IntersectionTransition<?>> verify(BuchiAutomata buchi, IPredicateFactory<S> predicates,
+    public List<IntersectionTransition<?>> verify(BuchiAutomata buchi, IPredicateFactory<IState> predicates,
                                                 TransitionCounter counter) {
-        IntersectionAutomata<S> automata = new IntersectionAutomata<>(predicates, buchi);
-        IntersectionNode<?> initial = automata.getNode(initState, buchi.getStartNode(), 0);
+        IntersectionAutomata<IState> automata = new IntersectionAutomata<>(predicates, buchi);
+        IntersectionNode<IState> initial = automata.getNode(initState, buchi.getStartNode(), 0);
         List<IntersectionTransition<?>> res = mainDfs(initial, counter);
         Collections.reverse(res);
         return res;
     }
     
-    private List<IntersectionTransition<?>> mainDfs(IntersectionNode<?> initialNode, TransitionCounter counter) {
+    private List<IntersectionTransition<?>> mainDfs(IntersectionNode<IState> initialNode, TransitionCounter counter) {
         Deque<IntersectionTransition<?>> transitionStack = new LinkedList<>();
         Deque<IntersectionNode<?>> stack = new LinkedList<>();
         Set<IntersectionNode<?>> visited = new HashSet<>();
@@ -64,7 +64,7 @@ public class SimpleVerifier<S extends IState> {
                 }
             } else {
             	counter.process(node.state);
-                if (node.terminal && secondDfs(node, stack)) {
+                if (node.terminal && secondDfs(node, stack, transitionStack)) {
                     return new ArrayList<>(transitionStack);
                 } else {
                 	stack.pop();
@@ -75,13 +75,16 @@ public class SimpleVerifier<S extends IState> {
         return new ArrayList<>();
     }
     
-    private boolean secondDfs(IntersectionNode<?> initialNode, Deque<IntersectionNode<?>> mainDfsStack) {
+    private boolean secondDfs(IntersectionNode<?> initialNode, Deque<IntersectionNode<?>> mainStack,
+    		Deque<IntersectionTransition<?>> mainTransStack) {
+    	Deque<IntersectionTransition<?>> transitionStack = new LinkedList<>();
     	Deque<IntersectionNode<?>> stack = new LinkedList<>();
         Set<IntersectionNode<?>> visited = new HashSet<>();
     	initialNode.resetIterator();
         visited.add(initialNode);
         stack.push(initialNode);
-
+        transitionStack.push(new IntersectionTransition<>(null, initialNode));
+        
         while (!stack.isEmpty()) {
             IntersectionNode<?> node = stack.getFirst();
             IntersectionTransition<?> trans = node.next();
@@ -91,15 +94,21 @@ public class SimpleVerifier<S extends IState> {
                 	continue;
                 }
             	IntersectionNode<?> child = trans.getTarget();
-            	if (mainDfsStack.contains(child)) {
+            	if (mainStack.contains(child)) {
+            		if (transitionStack.size() != 1) {
+            			throw new AssertionError();
+            		}
+            		mainTransStack.push(trans);
                     return true;
                 } else if (!visited.contains(child)) {
                 	visited.add(child);
                 	stack.push(child);
+                	transitionStack.push(trans);
                     child.resetIterator();
                 }
             } else {
             	stack.pop();
+            	transitionStack.pop();
             }
         }
         return false;

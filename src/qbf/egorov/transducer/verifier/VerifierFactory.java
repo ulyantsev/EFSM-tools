@@ -112,7 +112,7 @@ public class VerifierFactory {
     public Pair<List<Integer>, List<List<String>>> verify() {
         List<Integer> verifiedTransitions = new ArrayList<>();
         List<List<String>> counterexamples = new ArrayList<>();
-        SimpleVerifier<IState> verifier = new SimpleVerifier<>(context.getStateMachine(null).getInitialState());
+        SimpleVerifier verifier = new SimpleVerifier(context.getStateMachine(null).getInitialState());
         int usedTransitions = fst.getUsedTransitionsCount();
 
         for (BuchiAutomata buchi : preparedFormulas) {

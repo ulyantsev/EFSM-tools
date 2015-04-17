@@ -58,7 +58,11 @@ public class VerifierTest {
 				"G(!wasEvent(ep.finalise) || X(wasEvent(ep.figure) || wasEvent(ep.text)))",
 				"!(wasEvent(ep.text) && X(wasEvent(ep.setpos))) || !X(X(wasEvent(ep.setdim)))",
 				"G(!(wasEvent(ep.figure) && X(wasEvent(ep.setpos))) || X(X(wasEvent(ep.setdim))))",
-				"G(!wasEvent(ep.setdim) || X(!wasEvent(ep.setpos)))"
+				"G(!wasEvent(ep.setdim) || X(!wasEvent(ep.setpos)))",
+				"F(wasEvent(ep.setpos))", // false
+				"G(!wasEvent(ep.setpos) || X(F(wasEvent(ep.setpos))))", //false
+				"F(G(wasEvent(ep.figure)))", "F(G(wasEvent(ep.text)))", //false
+				"G(wasEvent(ep.figure) || wasEvent(ep.text) || wasEvent(ep.setpos) || wasEvent(ep.setdim))" // false
 				);
 		for (String ltl : formulae) {
 			try (PrintWriter pw = new PrintWriter(filename)) {
@@ -66,7 +70,7 @@ public class VerifierTest {
 			}
 			Verifier v = new Verifier(a.statesCount(), logger, filename,
 					Arrays.asList("figure", "text", "setpos", "edit", "setdim", "finalise"), Arrays.asList(), 0);
-			System.out.println(v.verify(a));
+			System.out.println(v.verifyPure(a));
 			new File(filename).delete();
 		}
 		

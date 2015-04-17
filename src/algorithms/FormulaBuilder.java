@@ -39,15 +39,15 @@ public abstract class FormulaBuilder {
 		this.completenessType = completenessType;
 	}
 	
-	protected BooleanVariable xVar(int state, int color) {
+	public static BooleanVariable xVar(int state, int color) {
 		return BooleanVariable.byName("x", state, color).get();
 	}
 	
-	protected BooleanVariable yVar(int from, int to, String event) {
+	public static BooleanVariable yVar(int from, int to, String event) {
 		return BooleanVariable.byName("y", from, to, event).get();
 	}
 	
-	protected BooleanVariable zVar(int from, String action, String event) {
+	public static BooleanVariable zVar(int from, String action, String event) {
 		return BooleanVariable.byName("z", from, action, event).get();
 	}
 	

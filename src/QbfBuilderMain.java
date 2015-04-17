@@ -35,7 +35,9 @@ import structures.Transition;
 import tools.AutomatonCompletenessChecker;
 import algorithms.AutomatonCompleter.CompletenessType;
 import algorithms.BacktrackingAutomatonBuilder;
+import algorithms.CounterexampleAutomatonBuilder;
 import algorithms.HybridAutomatonBuilder;
+import algorithms.HybridCounterexampleAutomatonBuilder;
 import algorithms.IterativeAutomatonBuilder;
 import algorithms.QbfAutomatonBuilder;
 import bool.MyBooleanExpression;
@@ -95,7 +97,7 @@ public class QbfBuilderMain {
 	@Option(name = "--timeout", aliases = { "-to" }, usage = "solver timeout (sec)", metaVar = "<timeout>")
 	private int timeout = 60 * 60 * 24;
 	
-	@Option(name = "--strategy", aliases = { "-str" }, usage = "solving mode: QSAT, EXP_SAT, ITERATIVE_SAT, BACKTRACKING, HYBRID",
+	@Option(name = "--strategy", aliases = { "-str" }, usage = "solving mode: QSAT, EXP_SAT, ITERATIVE_SAT, BACKTRACKING, HYBRID, ITERATIVE_COUNTEREXAMPLE_SAT, HYBRID_COUNTEREXAMPLE",
 			metaVar = "<strategy>")
 	private String strategy = SolvingStrategy.QSAT.name();
 	
@@ -272,8 +274,19 @@ public class QbfBuilderMain {
 						events, actions, satsolver, verifier, finishTime, complete, completenesstype,
 						hybridSecToGenerateFormula, hybridSecToSolve);
 				break;
+			case HYBRID_COUNTEREXAMPLE:
+				resultAutomaton = HybridCounterexampleAutomatonBuilder.build(logger, tree, formulae, size, ltlFilePath,
+						qbfsolver, solverParams, extractSubterms,
+						events, actions, satsolver, verifier, finishTime, complete, completenesstype,
+						hybridSecToGenerateFormula, hybridSecToSolve);
+				break;
 			case ITERATIVE_SAT:
 				resultAutomaton = IterativeAutomatonBuilder.build(logger, tree, size, solverParams,
+						resultFilePath, ltlFilePath, formulae, events, actions, satsolver, verifier, finishTime,
+						complete, completenesstype);
+				break;
+			case ITERATIVE_COUNTEREXAMPLE_SAT:
+				resultAutomaton = CounterexampleAutomatonBuilder.build(logger, tree, size, solverParams,
 						resultFilePath, ltlFilePath, formulae, events, actions, satsolver, verifier, finishTime,
 						complete, completenesstype);
 				break;

@@ -64,7 +64,8 @@ public class IterativeAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 			Verifier verifier, long finishTime, boolean complete, CompletenessType completenessType) throws IOException {
 		deleteTrash();
 		try (final ExpandableStringFormula f = new ExpandableStringFormula(
-				new SatFormulaBuilder(tree, size, events, actions).getFormula().simplify()
+				new SatFormulaBuilder(tree, size, events, actions, false,
+						CompletenessType.NORMAL, false).getFormula().simplify()
 				.toLimbooleString(), logger, satSolver, solverParams)) {
 			for (int iteration = 0; System.currentTimeMillis() < finishTime; iteration++) {
 				final int secondsLeft = (int) ((finishTime - System.currentTimeMillis()) / 1000 + 1);

@@ -35,6 +35,10 @@ public class ExpandableStringFormula implements AutoCloseable {
 	private PrintWriter solverPrintWriter;
 	private Scanner solverScanner;
 	
+	public DimacsConversionInfo info() {
+		return info;
+	}
+	
 	public ExpandableStringFormula(String initialFormula, Logger logger, SatSolver satSolver,
 			String solverParams) {
 		this.initialFormula = initialFormula;
@@ -46,15 +50,21 @@ public class ExpandableStringFormula implements AutoCloseable {
 	/*
 	 * Should be called after 'solve' was called at least once.
 	 */
-	public void addProhibitionConstraint(List<Assignment> constraints)
+	public void addProhibitionConstraints(List<List<Assignment>> constraints)
 			throws IOException {
 		if (satSolver.isIncremental()) {
-			solverPrintWriter.println(Assignment.toDimacsString(constraints, info));
+			for (List<Assignment> constraint : constraints) {
+				solverPrintWriter.println(Assignment.toDimacsString(constraint, info));
+			}
 		} else {
 			assert info != null;
-			BooleanFormula.appendProhibitionConstraintsToDimacs(logger,
-					Collections.singletonList(constraints), info);
+			BooleanFormula.appendProhibitionConstraintsToDimacs(logger, constraints, info);
 		}
+	}
+	
+	public void addProhibitionConstraint(List<Assignment> constraint)
+			throws IOException {
+		addProhibitionConstraints(Collections.singletonList(constraint));
 	}
 	
 	private SolveAsSatResult iterativeSolve(int timeLeftForSolver) {

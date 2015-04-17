@@ -35,7 +35,7 @@ public abstract class ScenarioAndLtlAutomatonBuilder {
 	 * Returns (automaton, transition variables supported by scenarios).
 	 */
 	public static Pair<Automaton, List<Assignment>> constructAutomatonFromAssignment(Logger logger, List<Assignment> ass,
-			ScenariosTree tree, int colorSize, boolean includeActionsFromAssignment) {
+			ScenariosTree tree, int colorSize, boolean includeTransitionsNotFromScenarios) {
 		List<Assignment> filteredYVars = new ArrayList<>();
 		int[] nodeColors = new int[tree.nodesCount()];
 
@@ -80,7 +80,7 @@ public abstract class ScenarioAndLtlAutomatonBuilder {
 				filteredYVars.add(a);
 			}
 			
-			if (includeActionsFromAssignment) {
+			if (includeTransitionsNotFromScenarios) {
 				List<String> properUniqueActions = new ArrayList<>();
 				for (Assignment az : ass) {
 					if (az.value && az.var.name.startsWith("z_" + from + "_")
