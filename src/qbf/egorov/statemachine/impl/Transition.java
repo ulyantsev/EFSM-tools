@@ -15,7 +15,7 @@ import java.util.ArrayList;
  */
 public class Transition implements IStateTransition {
     private Event event;
-    private List<IAction> actions = new ArrayList<IAction>();
+    private List<Action> actions = new ArrayList<>();
     private ICondition condition;
     private IState target;
 
@@ -29,7 +29,7 @@ public class Transition implements IStateTransition {
         return event;
     }
 
-    public List<IAction> getActions() {
+    public List<Action> getActions() {
         return actions;
     }
 
@@ -41,11 +41,11 @@ public class Transition implements IStateTransition {
         return target;
     }
 
-    public void addAction(IAction a) {
+    public void addAction(Action a) {
         actions.add(a);
     }
 
-    public void setActions(List<IAction> actions) {
+    public void setActions(List<Action> actions) {
         this.actions = actions;
     }
 }

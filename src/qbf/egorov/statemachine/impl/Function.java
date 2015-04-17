@@ -3,14 +3,13 @@
  */
 package qbf.egorov.statemachine.impl;
 
-import qbf.egorov.statemachine.IFunction;
 
 /**
  * TODO: add comment
  *
  * @author Kirill Egorov
  */
-public class Function implements IFunction {
+public class Function {
     private String name;
     private String description;
     private Class<?> returnType;

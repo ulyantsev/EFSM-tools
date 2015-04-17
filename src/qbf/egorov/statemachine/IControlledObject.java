@@ -3,7 +3,7 @@
  */
 package qbf.egorov.statemachine;
 
-import java.util.Collection;
+import qbf.egorov.statemachine.impl.Action;
 
 /**
  * TODO: add comment
@@ -12,7 +12,5 @@ import java.util.Collection;
  */
 public interface IControlledObject {
     String getName();
-    IAction getAction(String actionName);
-    IFunction getFunction(String funName);
-    Collection<IFunction> getFunctions();
+    Action getAction(String actionName);
 }

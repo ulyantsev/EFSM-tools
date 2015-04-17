@@ -13,8 +13,8 @@ import java.util.*;
  * @author Kirill Egorov
  */
 public class RecordNode {
-    Set<RecordNode> incoming = new HashSet<>();
-    Set<LtlNode> oldForm = new HashSet<>();
-    Queue<LtlNode> newForm = new LinkedList<>();
-    Set<LtlNode> nextForm = new HashSet<>();
+    final Set<RecordNode> incoming = new HashSet<>();
+    final Set<LtlNode> oldForm = new HashSet<>();
+    final Queue<LtlNode> newForm = new LinkedList<>();
+    final Set<LtlNode> nextForm = new HashSet<>();
 }

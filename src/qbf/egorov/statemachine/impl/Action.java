@@ -5,14 +5,12 @@ package qbf.egorov.statemachine.impl;
 
 import org.apache.commons.lang3.StringUtils;
 
-import qbf.egorov.statemachine.IAction;
-
 /**
  * TODO: add comment
  *
  * @author Kirill Egorov
  */
-public class Action implements IAction {
+public class Action {
     private String name;
     
     protected Action(String name) {

@@ -21,14 +21,14 @@ import qbf.egorov.ltl.grammar.exception.UnexpectedOperatorException;
 import qbf.egorov.ltl.grammar.exception.UnexpectedParameterException;
 import qbf.egorov.ltl.grammar.predicate.IPredicateFactory;
 import qbf.egorov.ltl.grammar.predicate.annotation.Predicate;
-import qbf.egorov.statemachine.IAction;
 import qbf.egorov.statemachine.IAutomataContext;
 import qbf.egorov.statemachine.ICondition;
 import qbf.egorov.statemachine.IControlledObject;
 import qbf.egorov.statemachine.IEventProvider;
 import qbf.egorov.statemachine.IState;
-import qbf.egorov.statemachine.IStateMachine;
+import qbf.egorov.statemachine.impl.Action;
 import qbf.egorov.statemachine.impl.Event;
+import qbf.egorov.statemachine.impl.StateMachine;
 
 /**
  * Convert from Ognl tree to LtlNode tree
@@ -36,12 +36,11 @@ import qbf.egorov.statemachine.impl.Event;
  * @author Kirill Egorov
  */
 public class EgorovGrammarConverter {
-
     private IAutomataContext context;
     private Object predicatesObj;
-    private Map<String, Method> predicates = new HashMap<String, Method>();
+    private Map<String, Method> predicates = new HashMap<>();
 
-    public EgorovGrammarConverter(IAutomataContext context, IPredicateFactory predicatesObj) {
+    public EgorovGrammarConverter(IAutomataContext context, IPredicateFactory<?> predicatesObj) {
         if (context == null) {
             throw new IllegalArgumentException("AutomataContext shouldn't be null");
         }
@@ -133,7 +132,7 @@ public class EgorovGrammarConverter {
                 }
                 throw new UnexpectedParameterException(pClass, o.toString());
             } else {
-                if (IStateMachine.class.isAssignableFrom(pClass)) {
+                if (StateMachine.class.isAssignableFrom(pClass)) {
                     String name = getValue((ASTProperty) node._children[i]);
                     addToList(args, context.getStateMachine(name), pClass, name);
                 } else if (IControlledObject.class.isAssignableFrom(pClass)) {
@@ -145,7 +144,7 @@ public class EgorovGrammarConverter {
                 } else if (IState.class.isAssignableFrom(pClass)) {
                     ASTChain chain = (ASTChain) node._children[i];
                     String automata = getValue((ASTProperty) chain._children[0]);
-                    IStateMachine<? extends IState> sm = context.getStateMachine(automata);
+                    StateMachine<? extends IState> sm = context.getStateMachine(automata);
                     String state = getValue((ASTProperty) chain._children[1]);
                     IState s = sm.getState(state);
                     addToList(args, s, pClass, chain.toString());
@@ -156,12 +155,12 @@ public class EgorovGrammarConverter {
                     String eventName = getValue((ASTProperty) chain._children[1]);
                     Event eventInst = ep.getEvent(eventName);
                     addToList(args, eventInst, pClass, chain.toString());
-                } else if (IAction.class.isAssignableFrom(pClass)) {
+                } else if (Action.class.isAssignableFrom(pClass)) {
                     ASTChain chain = (ASTChain) node._children[i];
                     String ctrlName = getValue((ASTProperty) chain._children[0]);
                     IControlledObject ctrlInst = context.getControlledObject(ctrlName);
                     String actionName = getValue((ASTProperty) chain._children[1]);
-                    IAction actionInst = ctrlInst.getAction(actionName);
+                    Action actionInst = ctrlInst.getAction(actionName);
                     addToList(args, actionInst, pClass, chain.toString());
                 } else if (ICondition.class.isAssignableFrom(pClass)) {
                     throw new AssertionError();  //TODO: implement me

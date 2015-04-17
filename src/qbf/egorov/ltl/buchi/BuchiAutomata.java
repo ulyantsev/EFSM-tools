@@ -1,10 +1,7 @@
 /**
  * BuchiAutomata.java, 16.03.2008
  */
-package qbf.egorov.ltl.buchi.impl;
-
-import qbf.egorov.ltl.buchi.IBuchiAutomata;
-import qbf.egorov.ltl.buchi.IBuchiNode;
+package qbf.egorov.ltl.buchi;
 
 import java.util.*;
 
@@ -13,25 +10,25 @@ import java.util.*;
  *
  * @author Kirill Egorov
  */
-public class BuchiAutomata implements IBuchiAutomata {
-    private IBuchiNode startNode;
-    private Set<IBuchiNode> nodes = new HashSet<>();
-    private Map<Integer, Set<? extends IBuchiNode>> accept = new HashMap<>();
+public class BuchiAutomata {
+    private BuchiNode startNode;
+    private Set<BuchiNode> nodes = new HashSet<>();
+    private Map<Integer, Set<? extends BuchiNode>> accept = new HashMap<>();
     private int acceptSetsCount = 0;
 
-    public IBuchiNode getStartNode() {
+    public BuchiNode getStartNode() {
         return startNode;
     }
 
-    public void setStartNode(IBuchiNode startNode) {
+    public void setStartNode(BuchiNode startNode) {
         this.startNode = startNode;
     }
 
-    public Set<IBuchiNode> getNodes() {
+    public Set<BuchiNode> getNodes() {
         return Collections.unmodifiableSet(nodes);
     }
 
-    public Set<? extends IBuchiNode> getAcceptSet(int i) {
+    public Set<? extends BuchiNode> getAcceptSet(int i) {
         if ((i < 0) || (i >= acceptSetsCount)) {
             throw new IndexOutOfBoundsException("Should be 0 <= i < acceptSetsCount");
         }
@@ -42,7 +39,7 @@ public class BuchiAutomata implements IBuchiAutomata {
         return acceptSetsCount;
     }
 
-    public void addAcceptSet(Set<? extends IBuchiNode> acceptSet) {
+    public void addAcceptSet(Set<? extends BuchiNode> acceptSet) {
         if (acceptSet == null || acceptSet.isEmpty()) {
             throw new IllegalArgumentException("acceptSet can't be null or emty");
         }
@@ -53,12 +50,12 @@ public class BuchiAutomata implements IBuchiAutomata {
         return nodes.size();
     }
 
-    public void addNode(IBuchiNode node) {
+    public void addNode(BuchiNode node) {
         nodes.add(node);
     }
 
-    public void addNodes(Collection<? extends IBuchiNode> nodes) {
-        for (IBuchiNode n: nodes) {
+    public void addNodes(Collection<? extends BuchiNode> nodes) {
+        for (BuchiNode n: nodes) {
             addNode(n);
         }
     }
@@ -69,12 +66,12 @@ public class BuchiAutomata implements IBuchiAutomata {
         buf.append("initial ");
         buf.append(startNode.getID());
         buf.append("\n");
-        for (IBuchiNode n: nodes) {
+        for (BuchiNode n: nodes) {
             buf.append(n);
         }
-        for (Map.Entry<Integer, Set<? extends IBuchiNode>> entry: accept.entrySet()) {
+        for (Map.Entry<Integer, Set<? extends BuchiNode>> entry: accept.entrySet()) {
             buf.append(String.format("Accept set %d [", entry.getKey()));
-            for (IBuchiNode node: entry.getValue()) {
+            for (BuchiNode node: entry.getValue()) {
                 buf.append(node.getID()).append(", ");
             }
             buf.replace(buf.length() - 2, buf.length(), "]\n");

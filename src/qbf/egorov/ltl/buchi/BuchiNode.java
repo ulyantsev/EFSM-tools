@@ -1,23 +1,20 @@
 /**
  * Node.java, 16.03.2008
  */
-package qbf.egorov.ltl.buchi.impl;
+package qbf.egorov.ltl.buchi;
 
-import qbf.egorov.ltl.buchi.IBuchiNode;
-import qbf.egorov.ltl.buchi.ITransitionCondition;
-
-import java.util.Map;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * A Buchi automata node implementation
  *
  * @author Kirill Egorov
  */
-public class BuchiNode implements IBuchiNode {
+public class BuchiNode {
     private int id;
-    private Map<ITransitionCondition, IBuchiNode> transitions = new HashMap<>();
+    private Map<TransitionCondition, BuchiNode> transitions = new HashMap<>();
 
     public BuchiNode(int id) {
         this.id = id;
@@ -27,11 +24,11 @@ public class BuchiNode implements IBuchiNode {
         return id;
     }
 
-    public Map<ITransitionCondition, IBuchiNode> getTransitions() {
+    public Map<TransitionCondition, BuchiNode> getTransitions() {
         return Collections.unmodifiableMap(transitions);
     }
 
-    public void addTransition(ITransitionCondition condition, IBuchiNode next) {
+    public void addTransition(TransitionCondition condition, BuchiNode next) {
         transitions.put(condition, next);
     }
 
@@ -53,7 +50,7 @@ public class BuchiNode implements IBuchiNode {
     public String toString() {
         StringBuilder buf = new StringBuilder();
         buf.append(String.format("BuchiNode %d\n", id));
-        for (Map.Entry<ITransitionCondition, IBuchiNode> entry: transitions.entrySet()) {
+        for (Map.Entry<TransitionCondition, BuchiNode> entry: transitions.entrySet()) {
             buf.append(String.format("\t-->[%s] %d\n", entry.getKey(), entry.getValue().getID()));
         }
         return buf.toString();

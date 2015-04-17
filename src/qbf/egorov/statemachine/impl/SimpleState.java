@@ -15,10 +15,10 @@ import java.util.*;
 public class SimpleState implements IState {
     private String name;
     private StateType type;
-    private List<IAction> actions;
+    private List<Action> actions;
     private Collection<IStateTransition> outTransitions = new ArrayList<>();
 
-    public SimpleState(String name, StateType type, List<IAction> actions) {
+    public SimpleState(String name, StateType type, List<Action> actions) {
         this.name = name;
         this.type = type;
         this.actions = actions;
@@ -34,7 +34,7 @@ public class SimpleState implements IState {
         return type;
     }
 
-    public List<IAction> getActions() {
+    public List<Action> getActions() {
         return actions;
     }
 

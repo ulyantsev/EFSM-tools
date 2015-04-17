@@ -3,19 +3,21 @@
  */
 package qbf.egorov.statemachine.impl;
 
-import qbf.egorov.statemachine.IAction;
-import qbf.egorov.statemachine.IControlledObject;
-import qbf.egorov.statemachine.IFunction;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
-import java.util.*;
+import qbf.egorov.statemachine.IControlledObject;
 
 /**
  * @author kegorov
  *         Date: Jun 17, 2009
  */
 public class ControlledObjectStub implements IControlledObject {
-    private String name;
-    private Map<String, IAction> actions = new HashMap<String, IAction>();
+    private final String name;
+    private final Map<String, Action> actions = new HashMap<>();
 
     public ControlledObjectStub(String name, String ... actions) {
         this(name, Arrays.asList(actions));
@@ -32,19 +34,11 @@ public class ControlledObjectStub implements IControlledObject {
         return name;
     }
 
-    public IAction getAction(String actionName) {
+    public Action getAction(String actionName) {
         return actions.get(actionName);
     }
 
-    public Collection<IAction> getActions() {
+    public Collection<Action> getActions() {
         return Collections.unmodifiableCollection(actions.values());
-    }
-
-    public IFunction getFunction(String funName) {
-        return null;
-    }
-
-    public Collection<IFunction> getFunctions() {
-        return Collections.emptyList();
     }
 }

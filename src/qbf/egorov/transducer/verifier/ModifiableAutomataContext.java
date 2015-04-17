@@ -7,7 +7,7 @@ import qbf.egorov.statemachine.IAutomataContext;
 import qbf.egorov.statemachine.IControlledObject;
 import qbf.egorov.statemachine.IEventProvider;
 import qbf.egorov.statemachine.IState;
-import qbf.egorov.statemachine.IStateMachine;
+import qbf.egorov.statemachine.impl.StateMachine;
 
 /**
  * @author kegorov
@@ -16,7 +16,7 @@ import qbf.egorov.statemachine.IStateMachine;
 public class ModifiableAutomataContext implements IAutomataContext {
     private IControlledObject co;
     private IEventProvider ep;
-    private IStateMachine<IState> machine;
+    private StateMachine<IState> machine;
 
     public ModifiableAutomataContext(IControlledObject co, IEventProvider ep) {
         this.co = co;
@@ -31,11 +31,11 @@ public class ModifiableAutomataContext implements IAutomataContext {
         return ep;
     }
 
-    public IStateMachine<? extends IState> getStateMachine(String name) {
+    public StateMachine<? extends IState> getStateMachine(String name) {
         return machine;
     }
 
-    public void setStateMachine(IStateMachine<IState> machine) {
+    public void setStateMachine(StateMachine<IState> machine) {
         this.machine = machine;
     }
 }

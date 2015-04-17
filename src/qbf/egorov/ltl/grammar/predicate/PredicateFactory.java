@@ -5,7 +5,9 @@ package qbf.egorov.ltl.grammar.predicate;
 
 import qbf.egorov.ltl.grammar.predicate.annotation.Predicate;
 import qbf.egorov.statemachine.*;
+import qbf.egorov.statemachine.impl.Action;
 import qbf.egorov.statemachine.impl.Event;
+import qbf.egorov.statemachine.impl.StateMachine;
 
 /**
  * TODO: add comment
@@ -20,12 +22,12 @@ public class PredicateFactory<S extends IState> extends AbstractPredicateFactory
     }
 
     @Predicate
-    public Boolean isInState(IStateMachine<? extends IState> a, IState s) {
+    public Boolean isInState(StateMachine<? extends IState> a, IState s) {
         return (wasTransition()) ? transition.getTarget().equals(s) : null;
     }
 
     @Predicate
-    public Boolean wasInState(IStateMachine<? extends IState> a, IState s) {
+    public Boolean wasInState(StateMachine<? extends IState> a, IState s) {
         return (wasTransition()) ? state.equals(s): null;
     }
 
@@ -35,14 +37,14 @@ public class PredicateFactory<S extends IState> extends AbstractPredicateFactory
     }
 
     @Predicate
-    public Boolean wasAction(IAction z) {
+    public Boolean wasAction(Action z) {
         return (wasTransition())
                 ? transition.getActions().contains(z) || transition.getTarget().getActions().contains(z)
                 : null;
     }
 
     @Predicate
-    public Boolean wasFirstAction(IAction z) {
+    public Boolean wasFirstAction(Action z) {
         if (!wasTransition()) {
             return null;
         }

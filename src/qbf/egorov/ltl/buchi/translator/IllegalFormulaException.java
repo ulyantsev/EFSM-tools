@@ -9,7 +9,6 @@ package qbf.egorov.ltl.buchi.translator;
  * @author Kirill Egorov
  */
 public class IllegalFormulaException extends RuntimeException {
-
     public IllegalFormulaException(String message) {
         super(message);
     }

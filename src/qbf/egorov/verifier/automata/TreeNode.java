@@ -3,10 +3,12 @@
  */
 package qbf.egorov.verifier.automata;
 
-import qbf.egorov.statemachine.IState;
-import qbf.egorov.statemachine.IStateMachine;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
-import java.util.*;
+import qbf.egorov.statemachine.IState;
+import qbf.egorov.statemachine.impl.StateMachine;
 
 /**
  * TODO: add comment
@@ -15,13 +17,13 @@ import java.util.*;
  */
 public class TreeNode<S extends IState> {
     private S state;
-    private IStateMachine<S> stateMachine;
+    private StateMachine<S> stateMachine;
     private boolean active;
 
-    private Map<IStateMachine<S>, TreeNode<S>> children
-            = new LinkedHashMap<IStateMachine<S>, TreeNode<S>>();
+    private Map<StateMachine<S>, TreeNode<S>> children
+            = new LinkedHashMap<>();
 
-    public TreeNode(S state, IStateMachine<S> stateMachine, boolean active) {
+    public TreeNode(S state, StateMachine<S> stateMachine, boolean active) {
         this.state = state;
         this.stateMachine = stateMachine;
         this.active = active;
@@ -31,7 +33,7 @@ public class TreeNode<S extends IState> {
         return state;
     }
 
-    public IStateMachine<S> getStateMachine() {
+    public StateMachine<S> getStateMachine() {
         return stateMachine;
     }
 
@@ -51,7 +53,7 @@ public class TreeNode<S extends IState> {
         return children.values();
     }
 
-    public TreeNode<S> getChild(IStateMachine<S> stateMachine) {
+    public TreeNode<S> getChild(StateMachine<S> stateMachine) {
         return children.get(stateMachine);
     }
 

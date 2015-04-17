@@ -1,12 +1,11 @@
 /**
  * TransitionCondition.java, 16.03.2008
  */
-package qbf.egorov.ltl.buchi.impl;
+package qbf.egorov.ltl.buchi;
 
 import java.util.HashSet;
 import java.util.Set;
 
-import qbf.egorov.ltl.buchi.ITransitionCondition;
 import qbf.egorov.ltl.grammar.IExpression;
 
 /**
@@ -14,9 +13,9 @@ import qbf.egorov.ltl.grammar.IExpression;
  *
  * @author Kirill Egorov
  */
-public class TransitionCondition implements ITransitionCondition {
-    private Set<IExpression<Boolean>> exprs;
-    private Set<IExpression<Boolean>> negExprs;
+public class TransitionCondition {
+    private final Set<IExpression<Boolean>> exprs;
+    private final Set<IExpression<Boolean>> negExprs;
 
     public TransitionCondition() {
         exprs = new HashSet<>();

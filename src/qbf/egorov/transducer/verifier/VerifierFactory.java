@@ -15,18 +15,17 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import qbf.egorov.ltl.LtlParseException;
 import qbf.egorov.ltl.LtlParser;
-import qbf.egorov.ltl.buchi.IBuchiAutomata;
-import qbf.egorov.ltl.buchi.ITranslator;
+import qbf.egorov.ltl.buchi.BuchiAutomata;
 import qbf.egorov.ltl.buchi.translator.JLtl2baTranslator;
 import qbf.egorov.ltl.grammar.LtlNode;
 import qbf.egorov.ltl.grammar.LtlUtils;
 import qbf.egorov.ltl.grammar.predicate.IPredicateFactory;
 import qbf.egorov.ltl.grammar.predicate.PredicateFactory;
-import qbf.egorov.statemachine.IAction;
 import qbf.egorov.statemachine.IControlledObject;
 import qbf.egorov.statemachine.IEventProvider;
 import qbf.egorov.statemachine.IState;
 import qbf.egorov.statemachine.StateType;
+import qbf.egorov.statemachine.impl.Action;
 import qbf.egorov.statemachine.impl.ControlledObjectStub;
 import qbf.egorov.statemachine.impl.EventProviderStub;
 import qbf.egorov.statemachine.impl.SimpleState;
@@ -44,7 +43,7 @@ public class VerifierFactory {
     private ModifiableAutomataContext context;
     private IPredicateFactory<IState> predicates = new PredicateFactory<>();
     private LtlParser parser;
-    private IBuchiAutomata[] preparedFormulas;
+    private BuchiAutomata[] preparedFormulas;
 
     private TransitionCounter counter = new TransitionCounter();
 
@@ -60,10 +59,10 @@ public class VerifierFactory {
     }
     
     public void prepareFormulas(List<String> formulas) throws LtlParseException {
-    	 ITranslator translator = new JLtl2baTranslator();
+    	 JLtl2baTranslator translator = new JLtl2baTranslator();
 
          int j = 0;
-         preparedFormulas = new IBuchiAutomata[formulas.size()];
+         preparedFormulas = new BuchiAutomata[formulas.size()];
          for (String f : formulas) {
              LtlNode node = parser.parse(f);
              node = LtlUtils.getInstance().neg(node);
@@ -84,7 +83,7 @@ public class VerifierFactory {
 		for (int i = 0; i < states.length; i++) {
 			statesArr[i] = new SimpleState("" + i,
                     (fst.getInitialState() == i) ? StateType.INITIAL : StateType.NORMAL, 
-                    Collections.<IAction>emptyList());
+                    Collections.emptyList());
 		}
 		for (int i = 0; i < states.length; i++) {
 			Transition[] currentState = states[i];
@@ -94,7 +93,7 @@ public class VerifierFactory {
                 out.setAlgTransition(t);
 
                 for (String a: t.output()) {
-                    IAction action = co.getAction(a);
+                    Action action = co.getAction(a);
                     if (action != null) {
                         out.addAction(co.getAction(a));
                     }
@@ -116,8 +115,8 @@ public class VerifierFactory {
         SimpleVerifier<IState> verifier = new SimpleVerifier<>(context.getStateMachine(null).getInitialState());
         int usedTransitions = fst.getUsedTransitionsCount();
 
-        for (IBuchiAutomata buchi : preparedFormulas) {
-            counter.resetCounter();
+        for (BuchiAutomata buchi : preparedFormulas) {
+            counter.reset();
             List<IntersectionTransition<?>> list = verifier.verify(buchi, predicates, counter);
             
             if (!list.isEmpty()) {

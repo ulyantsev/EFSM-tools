@@ -6,6 +6,7 @@ package qbf.egorov.statemachine;
 import java.util.List;
 
 import qbf.egorov.automata.INode;
+import qbf.egorov.statemachine.impl.Action;
 
 /**
  * The state machine state
@@ -15,6 +16,6 @@ import qbf.egorov.automata.INode;
 public interface IState extends INode<IStateTransition> {
     String getName();
     StateType getType();
-    List<IAction> getActions();
+    List<Action> getActions();
     String getUniqueName();
 }

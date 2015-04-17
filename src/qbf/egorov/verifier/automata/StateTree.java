@@ -3,11 +3,10 @@
  */
 package qbf.egorov.verifier.automata;
 
-import qbf.egorov.statemachine.IState;
-import qbf.egorov.statemachine.IStateMachine;
-import qbf.egorov.statemachine.IStateTransition;
-
 import java.util.Iterator;
+
+import qbf.egorov.statemachine.IState;
+import qbf.egorov.statemachine.IStateTransition;
 
 /**
  * TODO: add comment
@@ -28,19 +27,6 @@ public class StateTree<S extends IState> {
     }
 
     public TreeNode<S> getRoot() {
-        return root;
-    }
-
-    public TreeNode<S> getNodeForStateMachine(IStateMachine<S> stateMachine) {
-        IStateMachine<S> parentSM = stateMachine.getParentStateMachine();
-        
-        if (parentSM != null) {
-            TreeNode<S> parentNode = getNodeForStateMachine(parentSM);
-
-            assert parentNode.getStateMachine().equals(parentSM);
-            return parentNode.getChild(stateMachine);
-        }
-        assert root.getStateMachine().equals(stateMachine);
         return root;
     }
 
@@ -66,7 +52,7 @@ public class StateTree<S extends IState> {
 
     protected TreeNode<S> copyTransSubnode(TreeNode<S> parent, TreeNode<S> node) {
         boolean active = node.getStateMachine().getParentStates().containsKey(parent.getState());
-        TreeNode<S> newNode = new TreeNode<S>(node.getState(), node.getStateMachine(), active);
+        TreeNode<S> newNode = new TreeNode<>(node.getState(), node.getStateMachine(), active);
 
         for (TreeNode<S> child: node.getChildren()) {
             newNode.addChildren(copyTransSubnode(node, child));

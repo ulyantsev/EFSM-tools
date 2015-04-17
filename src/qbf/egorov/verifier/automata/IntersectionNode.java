@@ -8,9 +8,9 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.function.Consumer;
 
-import qbf.egorov.ltl.buchi.IBuchiAutomata;
-import qbf.egorov.ltl.buchi.IBuchiNode;
-import qbf.egorov.ltl.buchi.ITransitionCondition;
+import qbf.egorov.ltl.buchi.BuchiAutomata;
+import qbf.egorov.ltl.buchi.BuchiNode;
+import qbf.egorov.ltl.buchi.TransitionCondition;
 import qbf.egorov.statemachine.IState;
 import qbf.egorov.statemachine.IStateTransition;
 
@@ -21,45 +21,25 @@ import qbf.egorov.statemachine.IStateTransition;
  */
 public class IntersectionNode<S extends IState> {
     private final IntersectionAutomata<S> automata;
-    private final S state;
-    private final IBuchiNode node;
-    private final int acceptSet;
+    public final S state;
+    public final BuchiNode node;
+    public final int acceptSet;
     private final int nextAcceptSet;
-    private final boolean terminal;
+    public final boolean terminal;
     private final TransitionIterator iterator;
 
-    public IntersectionNode(IntersectionAutomata<S> automata, S state, IBuchiNode node, int acceptSet) {
-        if (state == null || node == null) {
-            throw new IllegalArgumentException();
-        }
-
+    public IntersectionNode(IntersectionAutomata<S> automata, S state, BuchiNode node, int acceptSet) {
         this.automata = automata;
         this.state = state;
         this.node = node;
         this.acceptSet = acceptSet;
 
-        IBuchiAutomata buchi = automata.getBuchiAutomata();
+        BuchiAutomata buchi = automata.getBuchiAutomata();
         terminal = buchi.getAcceptSet(acceptSet).contains(node);
         nextAcceptSet = terminal ? (acceptSet + 1) % buchi.getAcceptSetsCount()
                                  : acceptSet;
 
         iterator = new TransitionIterator();
-    }
-
-    public IState getState() {
-        return state;
-    }
-
-    public IBuchiNode getNode() {
-        return node;
-    }
-
-    public int getAcceptSet() {
-        return acceptSet;
-    }
-
-    public boolean isTerminal() {
-        return terminal;
     }
 
     public IntersectionTransition<S> next() {
@@ -101,7 +81,7 @@ public class IntersectionNode<S extends IState> {
 
     private class TransitionIterator implements Iterator<IntersectionTransition<S>> {
         private Iterator<IStateTransition> stateIter;
-        private Iterator<Map.Entry<ITransitionCondition, IBuchiNode>> nodeIter;
+        private Iterator<Map.Entry<TransitionCondition, BuchiNode>> nodeIter;
 
         private IStateTransition nextStateTransition;
         private IntersectionTransition<S> next;
@@ -123,7 +103,7 @@ public class IntersectionNode<S extends IState> {
             if (next != null) {
                 return true;
             }
-            Map.Entry<ITransitionCondition, IBuchiNode> nextBuchiTransition;
+            Map.Entry<TransitionCondition, BuchiNode> nextBuchiTransition;
 
             automata.getPredicates().setAutomataState(state, nextStateTransition);
             while (true) {
@@ -133,7 +113,7 @@ public class IntersectionNode<S extends IState> {
                         @SuppressWarnings("unchecked")
 						IntersectionNode<S> node = automata.getNode((S) nextStateTransition.getTarget(),
                                 nextBuchiTransition.getValue(), nextAcceptSet);
-                        next = new IntersectionTransition<S>(nextStateTransition, node);
+                        next = new IntersectionTransition<>(nextStateTransition, node);
                         return true;
                     }
                 } else if (stateIter.hasNext()) {
@@ -163,10 +143,8 @@ public class IntersectionNode<S extends IState> {
         }
 
 		@Override
-		public void forEachRemaining(
-				Consumer<? super IntersectionTransition<S>> action) {
-			// TODO Auto-generated method stub
-			throw new AssertionError();
+		public void forEachRemaining(Consumer<? super IntersectionTransition<S>> action) {
+			throw new UnsupportedOperationException();
 		}
     }
 }

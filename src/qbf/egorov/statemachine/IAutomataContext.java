@@ -3,6 +3,8 @@
  */
 package qbf.egorov.statemachine;
 
+import qbf.egorov.statemachine.impl.StateMachine;
+
 /**
  * TODO: add comment
  *
@@ -11,5 +13,5 @@ package qbf.egorov.statemachine;
 public interface IAutomataContext {
     IControlledObject getControlledObject(String name);
     IEventProvider getEventProvider(String name);
-    IStateMachine<? extends IState> getStateMachine(String name);
+    StateMachine<? extends IState> getStateMachine(String name);
 }

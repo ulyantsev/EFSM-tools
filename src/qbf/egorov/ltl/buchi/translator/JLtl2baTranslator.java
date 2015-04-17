@@ -3,18 +3,31 @@
  */
 package qbf.egorov.ltl.buchi.translator;
 
-import qbf.egorov.ltl.buchi.*;
-import qbf.egorov.ltl.buchi.impl.*;
-import qbf.egorov.ltl.grammar.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
+import qbf.egorov.ltl.buchi.BuchiAutomata;
+import qbf.egorov.ltl.buchi.BuchiNode;
+import qbf.egorov.ltl.buchi.BuchiNodeFactory;
+import qbf.egorov.ltl.buchi.ExpressionMap;
+import qbf.egorov.ltl.buchi.TransitionCondition;
+import qbf.egorov.ltl.grammar.BinaryOperator;
+import qbf.egorov.ltl.grammar.BooleanNode;
+import qbf.egorov.ltl.grammar.IExpression;
+import qbf.egorov.ltl.grammar.INodeVisitor;
+import qbf.egorov.ltl.grammar.LtlNode;
+import qbf.egorov.ltl.grammar.Predicate;
+import qbf.egorov.ltl.grammar.UnaryOperator;
+import rwth.i2.ltl2ba4j.LTL2BA4J;
 import rwth.i2.ltl2ba4j.formula.IFormula;
 import rwth.i2.ltl2ba4j.formula.IFormulaFactory;
 import rwth.i2.ltl2ba4j.formula.impl.FormulaFactory;
-import rwth.i2.ltl2ba4j.LTL2BA4J;
-import rwth.i2.ltl2ba4j.model.ITransition;
-import rwth.i2.ltl2ba4j.model.IState;
 import rwth.i2.ltl2ba4j.model.IGraphProposition;
-
-import java.util.*;
+import rwth.i2.ltl2ba4j.model.IState;
+import rwth.i2.ltl2ba4j.model.ITransition;
 
 /**
  * Ltl formula translator to Buchi automata.
@@ -25,13 +38,13 @@ import java.util.*;
  * @author kegorov
  *         Date: Apr 3, 2009
  */
-public class JLtl2baTranslator implements ITranslator {
+public class JLtl2baTranslator {
     private VisitorImpl visitor = new VisitorImpl();
     private IFormulaFactory factory;
     private BuchiConverter  buchiConverter = new BuchiConverter();
     private ExpressionMap expr = new ExpressionMap();
 
-    public IBuchiAutomata translate(LtlNode root) {
+    public BuchiAutomata translate(LtlNode root) {
         try {
             IFormula formula = getFormula(root);
             Collection<ITransition> transitions = LTL2BA4J.formulaToBA(formula);
@@ -49,12 +62,12 @@ public class JLtl2baTranslator implements ITranslator {
 
     private class BuchiConverter {
         BuchiAutomata buchi;
-        IBuchiNodeFactory<BuchiNode> nodeFactory;
+        BuchiNodeFactory nodeFactory;
 
         Map<IState, BuchiNode> bNodes;
         Set<BuchiNode> acceptNodes;
 
-        public IBuchiAutomata convert(Collection<ITransition> transitions) {
+        public BuchiAutomata convert(Collection<ITransition> transitions) {
             buchi = new BuchiAutomata();
             nodeFactory = new BuchiNodeFactory();
 
@@ -97,7 +110,7 @@ public class JLtl2baTranslator implements ITranslator {
             return node;
         }
         
-        private ITransitionCondition getCondition(ITransition t) {
+        private TransitionCondition getCondition(ITransition t) {
             TransitionCondition cond = new TransitionCondition();
             for (IGraphProposition prop: t.getLabels()) {
                 String label = prop.getLabel();
