@@ -5,6 +5,7 @@ package qbf.egorov.ltl.grammar.predicate;
 
 import qbf.egorov.ltl.grammar.predicate.annotation.Predicate;
 import qbf.egorov.statemachine.*;
+import qbf.egorov.statemachine.impl.Event;
 
 /**
  * TODO: add comment
@@ -15,7 +16,7 @@ public interface IPredicateFactory<S extends IState> {
     void setAutomataState(S state, IStateTransition transition);
 
     @Predicate
-    Boolean wasEvent(IEvent e);
+    Boolean wasEvent(Event e);
 
     @Predicate
     Boolean isInState(IStateMachine<? extends IState> a, IState s);

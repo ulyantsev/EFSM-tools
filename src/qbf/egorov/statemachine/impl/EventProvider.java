@@ -3,12 +3,12 @@
  */
 package qbf.egorov.statemachine.impl;
 
-import qbf.egorov.statemachine.IEvent;
-import qbf.egorov.statemachine.IEventProvider;
-
-import java.util.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.util.HashMap;
+import java.util.Map;
+
+import qbf.egorov.statemachine.IEventProvider;
 
 /**
  * TODO: add comment
@@ -16,7 +16,7 @@ import java.lang.reflect.Modifier;
  * @author Kirill Egorov
  */
 public class EventProvider implements IEventProvider {
-    private Map<String, IEvent> events;
+    private Map<String, Event> events;
 
     protected void findEvents(Class<?> clazz) {
         events = new HashMap<>();
@@ -36,7 +36,7 @@ public class EventProvider implements IEventProvider {
         }
     }
 
-    public IEvent getEvent(String eventName) {
+    public Event getEvent(String eventName) {
         return events.get(eventName);
     }
 }

@@ -14,18 +14,18 @@ import java.util.ArrayList;
  * @author Kirill Egorov
  */
 public class Transition implements IStateTransition {
-    private IEvent event;
+    private Event event;
     private List<IAction> actions = new ArrayList<IAction>();
     private ICondition condition;
     private IState target;
 
-    public Transition(IEvent event, ICondition condition, IState target) {
+    public Transition(Event event, ICondition condition, IState target) {
         this.event = event;
         this.condition = condition;
         this.target = target;
     }
 
-    public IEvent getEvent() {
+    public Event getEvent() {
         return event;
     }
 

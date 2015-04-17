@@ -25,10 +25,10 @@ import qbf.egorov.statemachine.IAction;
 import qbf.egorov.statemachine.IAutomataContext;
 import qbf.egorov.statemachine.ICondition;
 import qbf.egorov.statemachine.IControlledObject;
-import qbf.egorov.statemachine.IEvent;
 import qbf.egorov.statemachine.IEventProvider;
 import qbf.egorov.statemachine.IState;
 import qbf.egorov.statemachine.IStateMachine;
+import qbf.egorov.statemachine.impl.Event;
 
 /**
  * Convert from Ognl tree to LtlNode tree
@@ -149,12 +149,12 @@ public class EgorovGrammarConverter {
                     String state = getValue((ASTProperty) chain._children[1]);
                     IState s = sm.getState(state);
                     addToList(args, s, pClass, chain.toString());
-                } else if (IEvent.class.isAssignableFrom(pClass)) {
+                } else if (Event.class.isAssignableFrom(pClass)) {
                     ASTChain chain = (ASTChain) node._children[i];
                     String providerName = getValue((ASTProperty) chain._children[0]);
                     IEventProvider ep = context.getEventProvider(providerName);
                     String eventName = getValue((ASTProperty) chain._children[1]);
-                    IEvent eventInst = ep.getEvent(eventName);
+                    Event eventInst = ep.getEvent(eventName);
                     addToList(args, eventInst, pClass, chain.toString());
                 } else if (IAction.class.isAssignableFrom(pClass)) {
                     ASTChain chain = (ASTChain) node._children[i];

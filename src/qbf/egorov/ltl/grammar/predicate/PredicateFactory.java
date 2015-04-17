@@ -5,6 +5,7 @@ package qbf.egorov.ltl.grammar.predicate;
 
 import qbf.egorov.ltl.grammar.predicate.annotation.Predicate;
 import qbf.egorov.statemachine.*;
+import qbf.egorov.statemachine.impl.Event;
 
 /**
  * TODO: add comment
@@ -14,7 +15,7 @@ import qbf.egorov.statemachine.*;
 public class PredicateFactory<S extends IState> extends AbstractPredicateFactory<S> {
 
     @Predicate
-    public Boolean wasEvent(IEvent e) {
+    public Boolean wasEvent(Event e) {
         return (wasTransition()) ? e.equals(transition.getEvent()) : null;
     }
 

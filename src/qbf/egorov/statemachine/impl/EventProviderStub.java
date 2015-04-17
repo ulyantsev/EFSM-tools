@@ -3,10 +3,13 @@
  */
 package qbf.egorov.statemachine.impl;
 
-import qbf.egorov.statemachine.IEvent;
-import qbf.egorov.statemachine.IEventProvider;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
-import java.util.*;
+import qbf.egorov.statemachine.IEventProvider;
 
 /**
  * @author kegorov
@@ -14,7 +17,7 @@ import java.util.*;
  */
 public class EventProviderStub implements IEventProvider {
     private String name;
-    private Map<String, IEvent> events = new HashMap<>();
+    private Map<String, Event> events = new HashMap<>();
 
     public EventProviderStub(String name, String ... events) {
         this(name, Arrays.asList(events));
@@ -32,11 +35,11 @@ public class EventProviderStub implements IEventProvider {
         return name;
     }
 
-    public IEvent getEvent(String eventName) {
+    public Event getEvent(String eventName) {
         return events.get(eventName);
     }
 
-    public Collection<IEvent> getEvents() {
+    public Collection<Event> getEvents() {
         return Collections.unmodifiableCollection(events.values());
     }
 }

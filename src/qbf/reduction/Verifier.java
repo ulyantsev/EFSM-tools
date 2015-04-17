@@ -3,7 +3,6 @@ package qbf.reduction;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
 import java.util.Set;
@@ -123,15 +122,15 @@ public class Verifier {
 		final FST fst = new FST(removeDeadEnds(a), allEvents, allActions, size);
 		final int numberOfUsedTransitions = fst.getUsedTransitionsCount();
 		verifier.configureStateMachine(fst);
-		int[] verified = verifier.verify().getLeft();
-		return Arrays.stream(verified).allMatch(x -> x == numberOfUsedTransitions);
+		List<Integer> verified = verifier.verify().getLeft();
+		return verified.stream().allMatch(x -> x == numberOfUsedTransitions);
 	}
 	
 	public List<List<String>> verifyWithCounterExamples(Automaton a) {
 		return verifyPure(a).getRight();
 	}
 	
-	public Pair<int[], List<List<String>>> verifyPure(Automaton a) {
+	public Pair<List<Integer>, List<List<String>>> verifyPure(Automaton a) {
 		final FST fst = new FST(removeDeadEnds(a), allEvents, allActions, size);
 		verifier.configureStateMachine(fst);
 		return verifier.verify();

@@ -4,6 +4,7 @@
 package qbf.egorov.statemachine;
 
 import qbf.egorov.automata.ITransition;
+import qbf.egorov.statemachine.impl.Event;
 
 import java.util.List;
 
@@ -13,7 +14,7 @@ import java.util.List;
  * @author Kirill Egorov
  */
 public interface IStateTransition extends ITransition<IState> {
-    IEvent getEvent();
+    Event getEvent();
     List<IAction> getActions();
     ICondition getCondition();
 }

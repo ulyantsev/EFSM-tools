@@ -5,14 +5,12 @@ package qbf.egorov.statemachine.impl;
 
 import org.apache.commons.lang3.StringUtils;
 
-import qbf.egorov.statemachine.IEvent;
-
 /**
  * TODO: add comment
  *
  * @author Kirill Egorov
  */
-public class Event implements IEvent {
+public class Event {
     private String name;
 
     protected Event(String name) {

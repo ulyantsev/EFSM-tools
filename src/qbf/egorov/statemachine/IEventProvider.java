@@ -3,11 +3,13 @@
  */
 package qbf.egorov.statemachine;
 
+import qbf.egorov.statemachine.impl.Event;
+
 /**
  * TODO: add comment
  *
  * @author Kirill Egorov
  */
 public interface IEventProvider {
-    IEvent getEvent(String eventName);
+    Event getEvent(String eventName);
 }

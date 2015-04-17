@@ -5,8 +5,8 @@ package qbf.egorov.util;
 
 import java.util.Collection;
 import java.util.Deque;
-import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Spliterator;
@@ -15,16 +15,8 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 public class DequeSet<E> implements Deque<E> {
-    private Deque<E> deque = new LinkedList<>();
-    private Map<E, Integer> elements = new HashMap<>();
-
-    public DequeSet() {
-        elements = new HashMap<E, Integer>();
-    }
-
-    public DequeSet(int initialCapacity) {
-       elements = new HashMap<E, Integer>(initialCapacity);
-    }
+    private final Deque<E> deque = new LinkedList<>();
+    private final Map<E, Integer> elements = new LinkedHashMap<>();
 
     public void addFirst(E e) {
         deque.addFirst(e);

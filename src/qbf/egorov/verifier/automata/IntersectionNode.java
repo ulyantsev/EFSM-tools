@@ -3,7 +3,6 @@
  */
 package qbf.egorov.verifier.automata;
 
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -27,11 +26,9 @@ public class IntersectionNode<S extends IState> {
     private final int acceptSet;
     private final int nextAcceptSet;
     private final boolean terminal;
-
     private final TransitionIterator iterator;
 
-    public IntersectionNode(IntersectionAutomata<S> automata, S state, IBuchiNode node,
-                            int acceptSet) {
+    public IntersectionNode(IntersectionAutomata<S> automata, S state, IBuchiNode node, int acceptSet) {
         if (state == null || node == null) {
             throw new IllegalArgumentException();
         }
@@ -43,8 +40,8 @@ public class IntersectionNode<S extends IState> {
 
         IBuchiAutomata buchi = automata.getBuchiAutomata();
         terminal = buchi.getAcceptSet(acceptSet).contains(node);
-        nextAcceptSet = (terminal) ? (acceptSet + 1) % buchi.getAcceptSetsCount()
-                                   : acceptSet;
+        nextAcceptSet = terminal ? (acceptSet + 1) % buchi.getAcceptSetsCount()
+                                 : acceptSet;
 
         iterator = new TransitionIterator();
     }
@@ -65,10 +62,6 @@ public class IntersectionNode<S extends IState> {
         return terminal;
     }
 
-    public Collection<IntersectionTransition<S>> getOutcomingTransitions() {
-        throw new UnsupportedOperationException("use next() method instead");
-    }
-
     public IntersectionTransition<S> next() {
     	return iterator.hasNext() ? iterator.next() : null;
     }
@@ -77,6 +70,7 @@ public class IntersectionNode<S extends IState> {
     	iterator.reset();
     }
 
+    @Override
     public boolean equals(Object o) {
         if (this == o) {
             return true;
@@ -92,6 +86,7 @@ public class IntersectionNode<S extends IState> {
                 && (acceptSet == intersectionNode.acceptSet);
     }
 
+    @Override
     public int hashCode() {
         int result;
         result = state.hashCode();
@@ -99,6 +94,7 @@ public class IntersectionNode<S extends IState> {
         return result;
     }
 
+    @Override
     public String toString() {
         return String.format("[\"%s\", %d, %d]", state.getName(), node.getID(), acceptSet);
     }
@@ -122,6 +118,7 @@ public class IntersectionNode<S extends IState> {
             }
         }
 
+        @Override
         public boolean hasNext() {
             if (next != null) {
                 return true;
@@ -150,6 +147,7 @@ public class IntersectionNode<S extends IState> {
             }
         }
 
+        @Override
         public IntersectionTransition<S> next() {
             if (!hasNext()) {
                 throw new NoSuchElementException();
@@ -159,6 +157,7 @@ public class IntersectionNode<S extends IState> {
             return res;
         }
 
+        @Override
         public void remove() {
             throw new UnsupportedOperationException();
         }

@@ -7,14 +7,12 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Logger;
 
-import org.apache.commons.lang3.tuple.Pair;
-
-import actions.StringActions;
-import bool.MyBooleanExpression;
 import qbf.reduction.Verifier;
 import structures.Automaton;
 import structures.Transition;
 import tools.AutomatonGVLoader;
+import actions.StringActions;
+import bool.MyBooleanExpression;
 
 public class VerifierTest {
 	public static void test1() throws FileNotFoundException {
@@ -42,8 +40,7 @@ public class VerifierTest {
 				pw.println(ltl);
 			}
 			Verifier v = new Verifier(size, logger, filename, events, actions, varNumber);
-			Pair<int[], List<List<String>>> p = v.verifyPure(a);
-			System.out.println(Arrays.toString(p.getLeft()) + " " + p.getRight());
+			System.out.println(v.verifyPure(a));
 			new File(filename).delete();
 		}
 	}

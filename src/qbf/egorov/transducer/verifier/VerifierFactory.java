@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -34,9 +33,8 @@ import qbf.egorov.statemachine.impl.SimpleState;
 import qbf.egorov.statemachine.impl.StateMachine;
 import qbf.egorov.transducer.FST;
 import qbf.egorov.transducer.Transition;
-import qbf.egorov.verifier.IDfsListener;
+import qbf.egorov.verifier.SimpleVerifier;
 import qbf.egorov.verifier.automata.IntersectionTransition;
-import qbf.egorov.verifier.impl.SimpleVerifier;
 
 /**
  * @author kegorov
@@ -46,9 +44,8 @@ public class VerifierFactory {
     private ModifiableAutomataContext context;
     private IPredicateFactory<IState> predicates = new PredicateFactory<>();
     private LtlParser parser;
-    private IBuchiAutomata[][] preparedFormulas;
+    private IBuchiAutomata[] preparedFormulas;
 
-    private IDfsListener marker = new TransitionMarker();
     private TransitionCounter counter = new TransitionCounter();
 
     private FST fst;
@@ -65,14 +62,12 @@ public class VerifierFactory {
     public void prepareFormulas(List<String> formulas) throws LtlParseException {
     	 ITranslator translator = new JLtl2baTranslator();
 
-         preparedFormulas = new IBuchiAutomata[formulas.size()][];
-
          int j = 0;
-         preparedFormulas = new IBuchiAutomata[formulas.size()][1];
+         preparedFormulas = new IBuchiAutomata[formulas.size()];
          for (String f : formulas) {
              LtlNode node = parser.parse(f);
              node = LtlUtils.getInstance().neg(node);
-             preparedFormulas[j++][0] = translator.translate(node);
+             preparedFormulas[j++] = translator.translate(node);
          }
     }
 
@@ -94,15 +89,11 @@ public class VerifierFactory {
 		for (int i = 0; i < states.length; i++) {
 			Transition[] currentState = states[i];
 			for (Transition t : currentState) {
-                //mark as not verified yet
-                t.setVerified(false);
-                t.setUsedByVerifier(false);
-
                 AutomataTransition out = new AutomataTransition(
-                        ep.getEvent(extractEvent(t.getInput())), null, statesArr[t.getNewState()]);
+                        ep.getEvent(extractEvent(t.input())), null, statesArr[t.newState()]);
                 out.setAlgTransition(t);
 
-                for (String a: t.getOutput()) {
+                for (String a: t.output()) {
                     IAction action = co.getAction(a);
                     if (action != null) {
                         out.addAction(co.getAction(a));
@@ -119,52 +110,28 @@ public class VerifierFactory {
     }
 
     // returns (numbers of verified transitions, counterexamples)
-    public Pair<int[], List<List<String>>> verify() {
-        int[] res = new int[preparedFormulas.length];
+    public Pair<List<Integer>, List<List<String>>> verify() {
+        List<Integer> verifiedTransitions = new ArrayList<>();
         List<List<String>> counterexamples = new ArrayList<>();
         SimpleVerifier<IState> verifier = new SimpleVerifier<>(context.getStateMachine(null).getInitialState());
         int usedTransitions = fst.getUsedTransitionsCount();
 
-        for (int i = 0; i < preparedFormulas.length; i++) {
-            int marked = 0;
-
-            for (IBuchiAutomata buchi : preparedFormulas[i]) {
-                counter.resetCounter();
-                List<IntersectionTransition<?>> list = verifier.verify(buchi, predicates, marker, counter);
-                if (list.isEmpty()) {
-                	counterexamples.add(Collections.emptyList());
-                } else {
-                	List<String> eventList = list.stream().skip(1)
-                        	.map(t -> String.valueOf(t.getTransition().getEvent())).collect(Collectors.toList());
-                    counterexamples.add(eventList.subList(0, eventList.size() - 1 + 1));
-                }
-                
-                if (list != null && !list.isEmpty()) {
-
-                    ListIterator<IntersectionTransition<?>> iter = list.listIterator(list.size());
-
-                    int failTransitions = buchi.size() - 1;
-
-                    for (int j = 0; iter.hasPrevious() && (j < failTransitions);) {
-                        IntersectionTransition<?> t = iter.previous();
-                        if ((t.getTransition() != null)
-                                && (t.getTransition().getClass() == AutomataTransition.class)) {
-                        	AutomataTransition trans = (AutomataTransition) t.getTransition();
-                            if (trans.getAlgTransition() != null) {
-                                trans.getAlgTransition().setUsedByVerifier(true);
-                                j++;
-                            }
-                        }
-                    }
-
-                    marked += counter.countVerified() / 2;
-                } else {
-                    marked += usedTransitions;
-                }
+        for (IBuchiAutomata buchi : preparedFormulas) {
+            counter.resetCounter();
+            List<IntersectionTransition<?>> list = verifier.verify(buchi, predicates, counter);
+            
+            if (!list.isEmpty()) {
+                verifiedTransitions.add(counter.countVerified() / 2);
+                List<String> eventList = list.stream().skip(1)
+                    	.map(t -> String.valueOf(t.getTransition().getEvent()))
+                    	.collect(Collectors.toList());
+                counterexamples.add(eventList);
+            } else {
+            	verifiedTransitions.add(usedTransitions);
+            	counterexamples.add(Collections.emptyList());
             }
-            res[i] = marked;
         }
-        return Pair.of(res, counterexamples);
+        return Pair.of(verifiedTransitions, counterexamples);
     }
 
     /**

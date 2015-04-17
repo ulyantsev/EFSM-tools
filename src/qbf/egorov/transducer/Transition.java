@@ -1,77 +1,32 @@
 package qbf.egorov.transducer;
 
 public class Transition {
-	final String input;
-	private int outputSize;
+	private final String input;
 	private String[] output;
-	
 	private final int newState;
-
-	boolean used;
-    boolean usedByNegativeTest;
-    boolean usedByVerifier;
-    boolean verified;
-	
-	public Transition(String input, int outputSize, int newState) {
+		
+	public Transition(String input, int newState, String[] output) {
 		this.input = input;
-		this.outputSize = outputSize;
 		this.newState = newState;
-	}
-	
-	public boolean accepts(String s) {
-		return input.equals(s) || input.equals("*");
+		this.output = output;
 	}
 
-    public String getInput() {
+    public String input() {
         return input;
     }
 	
-    public void setOutput(String[] output) {
-    	this.output = output;
-    }
-    
-	public String[] getOutput() {
+	public String[] output() {
 		return output;
 	}
 
-	public int getNewState() {
+	public int newState() {
 		return newState;
-	}
-
-	public Transition copy(String[] setOfInputs, String[] setOfOutputs, int stateNumber) {
-		Transition result = new Transition(input, outputSize, newState);
-		result.setOutput(output);
-		result.used = used;
-		return result;
 	}
 	
 	@Override
 	public String toString() {
-		String s = "";
-		if (output == null) {
-			s += " null"; 
-		} else {
-			for (String s1 : output) {
-				s += " " + s1;
-			}
-		}
-		s = s.trim();
-		return input + " / " + s + ", " + newState; 
+		return input + " / "
+				+ (output == null ? "null" : String.join(" ", output))
+				+ ", " + newState; 
 	}
-	
-	public int getOutputSize() {
-		return outputSize;
-	}
-
-    public void setOutputSize(int outputSize) {
-        this.outputSize = outputSize;
-    }
-
-    public void setUsedByVerifier(boolean usedByVerifier) {
-        this.usedByVerifier = usedByVerifier;
-    }
-
-    public void setVerified(boolean verified) {
-        this.verified = verified;
-    }
 }

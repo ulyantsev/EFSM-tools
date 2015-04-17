@@ -27,8 +27,7 @@ public class FST {
 		
 		for (Node state : ulyantsevAutomaton.getStates()) {
 			for (structures.Transition t : state.getTransitions()) {
-				Transition tr = new Transition(t.getEvent(), t.getActions().size(), t.getDst().getNumber());
-				tr.setOutput(t.getActions().getActions());
+				Transition tr = new Transition(t.getEvent(), t.getDst().getNumber(), t.getActions().getActions());
 				transitions.get(state.getNumber()).add(tr);
 			}
 		}
@@ -86,8 +85,8 @@ public class FST {
         vizited[state] = true;
         int res = states[state].length;
         for (Transition t : states[state]) {
-            if (!vizited[t.getNewState()]) {
-                res += getUsedTransitionsCount(t.getNewState(), vizited);
+            if (!vizited[t.newState()]) {
+                res += getUsedTransitionsCount(t.newState(), vizited);
             }
         }
         return res;
@@ -95,7 +94,7 @@ public class FST {
 
     public Transition getTransition(int state, String input) {
     	for (Transition t : states[state]) {
-    		if (t.getInput().equals(input)) {
+    		if (t.input().equals(input)) {
     			return t;
     		}
     	}
@@ -113,16 +112,16 @@ public class FST {
 			for (int j = 0; j < states[i].length; j++) {
 				StringBuilder output = new StringBuilder();
 				
-				if (states[i][j].getOutput() == null) {
+				if (states[i][j].output() == null) {
 					output = null;
 				} else {
-					if (states[i][j].getOutput().length > 0) {
-						for (String action : states[i][j].getOutput()) {
+					if (states[i][j].output().length > 0) {
+						for (String action : states[i][j].output()) {
 							output.append(action);
 						}
 					}
 				}
-				a += "(" + i + ", " + j + ") - > " + "(" + states[i][j].getNewState() + ", " + output + ")\n";
+				a += "(" + i + ", " + j + ") - > " + "(" + states[i][j].newState() + ", " + output + ")\n";
 			}
 		}
 		return a;
