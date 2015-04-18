@@ -40,7 +40,7 @@ public class VerifierTest {
 				pw.println(ltl);
 			}
 			Verifier v = new Verifier(size, logger, filename, events, actions, varNumber);
-			System.out.println(v.verifyPure(a));
+			System.out.println(v.verifyWithCounterExamples(a));
 			new File(filename).delete();
 		}
 	}
@@ -70,7 +70,7 @@ public class VerifierTest {
 			}
 			Verifier v = new Verifier(a.statesCount(), logger, filename,
 					Arrays.asList("figure", "text", "setpos", "edit", "setdim", "finalise"), Arrays.asList(), 0);
-			System.out.println(v.verifyPure(a));
+			System.out.println(v.verifyWithCounterExamples(a));
 			new File(filename).delete();
 		}
 		
@@ -80,8 +80,41 @@ public class VerifierTest {
 		new File(filename).delete();
 	}
 	
+	public static void test3() throws IOException, ParseException {
+		Logger logger = Logger.getLogger("Logger");
+		Automaton a = AutomatonGVLoader.load("qbf/t.gv");
+		Verifier v = new Verifier(a.statesCount(), logger, "qbf/testing-daniil/200n/nstates=5/5/formulae",
+				Arrays.asList("A00", "A01", "A10", "A11", "B00", "B01", "B10", "B11"), Arrays.asList("z0", "z1"), 2);
+		System.out.println(v.verifyWithCounterExamples(a));
+	}
+	
+	public static void randomTestsIgor() throws IOException, ParseException {
+		Logger logger = Logger.getLogger("Logger");
+		for (int states = 3; states <= 10; states++) {
+			for (String completeness : Arrays.asList("incomplete", "complete")) {
+				for (int i = 0; i < 50; i++) {
+					Automaton a = AutomatonGVLoader.load("qbf/testing/" + completeness + "/fsm-" + states + "-" + i + ".dot");
+					for (boolean verdict : Arrays.asList(true, false)) {
+						System.out.println(completeness + " " + states + " " + i + " " + verdict);
+						Verifier v = new Verifier(a.statesCount(), logger, "qbf/testing/" + completeness + "/fsm-" + states + "-" + i + "-" + verdict + ".ltl",
+							Arrays.asList("A", "B", "C", "D"), Arrays.asList("z0", "z1", "z2", "z3"), 0);
+						List<List<String>> result = v.verifyWithCounterExamples(a);
+						boolean boolResult = result.stream().allMatch(List::isEmpty);
+						if (boolResult != verdict) {
+							throw new AssertionError("Fail");
+						}
+						if (!boolResult) {
+							System.out.println(result.toString().replaceAll("[ ,]", ""));
+						}
+					}
+				}
+			}
+		}
+	}
+	
 	public static void main(String[] args) throws IOException, ParseException {
-		test1();
-		test2();
+		//test1();
+		//test2();
+		randomTestsIgor();
 	}
 }

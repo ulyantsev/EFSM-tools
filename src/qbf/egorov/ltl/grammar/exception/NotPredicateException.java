@@ -9,13 +9,12 @@ package qbf.egorov.ltl.grammar.exception;
  * @author Kirill Egorov
  */
 public class NotPredicateException extends RuntimeException {
-
     public NotPredicateException() {
-	super();
+    	super();
     }
 
     public NotPredicateException(String message) {
-	super(message);
+    	super(message);
     }
 
     public NotPredicateException(String message, Throwable cause) {

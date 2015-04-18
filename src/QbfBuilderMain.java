@@ -337,7 +337,8 @@ public class QbfBuilderMain {
 					if (checkBfs(resultAutomaton.get(), events, logger)) {
 						logger.info("BFS");
 					} else {
-						if (ss == SolvingStrategy.ITERATIVE_SAT || ss == SolvingStrategy.HYBRID) {
+						if (ss == SolvingStrategy.ITERATIVE_SAT || ss == SolvingStrategy.HYBRID
+								|| ss == SolvingStrategy.HYBRID_COUNTEREXAMPLE) {
 							logger.info("NOT BFS (possibly due to transition redirections)");
 						} else {
 							logger.severe("NOT BFS");

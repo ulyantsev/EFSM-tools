@@ -11,7 +11,7 @@ import structures.Node;
 public class FST {
 	private int initialState;
 	private final int stateNumber;
-	private Transition[][] states;
+	private final Transition[][] states;
 	
 	private final String[] setOfInputs;
 	private final String[] setOfOutputs;

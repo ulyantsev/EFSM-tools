@@ -1,7 +1,7 @@
 /**
  * DfsNode.java, 12.04.2008
  */
-package qbf.egorov.verifier.automata;
+package qbf.egorov.verifier;
 
 import java.util.Iterator;
 import java.util.Map;
@@ -11,24 +11,24 @@ import java.util.function.Consumer;
 import qbf.egorov.ltl.buchi.BuchiAutomata;
 import qbf.egorov.ltl.buchi.BuchiNode;
 import qbf.egorov.ltl.buchi.TransitionCondition;
-import qbf.egorov.statemachine.IState;
-import qbf.egorov.statemachine.IStateTransition;
+import qbf.egorov.statemachine.SimpleState;
+import qbf.egorov.statemachine.StateTransition;
 
 /**
  * Node received during state machine and buchi automata intersection
  *
  * @author Kirill Egorov
  */
-public class IntersectionNode<S extends IState> {
-    private final IntersectionAutomata<S> automata;
-    public final S state;
+public class IntersectionNode {
+    private final IntersectionAutomata automata;
+    public final SimpleState state;
     public final BuchiNode node;
     public final int acceptSet;
     private final int nextAcceptSet;
     public final boolean terminal;
     private final TransitionIterator iterator;
 
-    public IntersectionNode(IntersectionAutomata<S> automata, S state, BuchiNode node, int acceptSet) {
+    public IntersectionNode(IntersectionAutomata automata, SimpleState state, BuchiNode node, int acceptSet) {
         this.automata = automata;
         this.state = state;
         this.node = node;
@@ -42,7 +42,7 @@ public class IntersectionNode<S extends IState> {
         iterator = new TransitionIterator();
     }
 
-    public IntersectionTransition<S> next() {
+    public IntersectionTransition next() {
     	return iterator.hasNext() ? iterator.next() : null;
     }
 
@@ -59,8 +59,7 @@ public class IntersectionNode<S extends IState> {
             return false;
         }
 
-        @SuppressWarnings("unchecked")
-		IntersectionNode<S> intersectionNode = (IntersectionNode<S>) o;
+		IntersectionNode intersectionNode = (IntersectionNode) o;
 
         return node.equals(intersectionNode.node) && state.equals(intersectionNode.state)
                 && (acceptSet == intersectionNode.acceptSet);
@@ -76,15 +75,15 @@ public class IntersectionNode<S extends IState> {
 
     @Override
     public String toString() {
-        return String.format("[\"%s\", %d, %d]", state.getName(), node.getID(), acceptSet);
+        return String.format("[\"%s\", %d, %d]", state.name, node.getID(), acceptSet);
     }
 
-    private class TransitionIterator implements Iterator<IntersectionTransition<S>> {
-        private Iterator<IStateTransition> stateIter;
+    private class TransitionIterator implements Iterator<IntersectionTransition> {
+        private Iterator<StateTransition> stateIter;
         private Iterator<Map.Entry<TransitionCondition, BuchiNode>> nodeIter;
 
-        private IStateTransition nextStateTransition;
-        private IntersectionTransition<S> next;
+        private StateTransition nextStateTransition;
+        private IntersectionTransition next;
 
         private TransitionIterator() {
             reset();
@@ -110,10 +109,9 @@ public class IntersectionNode<S extends IState> {
                 if (nodeIter.hasNext()) {
                     nextBuchiTransition = nodeIter.next();
                     if (nextBuchiTransition.getKey().getValue()) {
-                        @SuppressWarnings("unchecked")
-						IntersectionNode<S> node = automata.getNode((S) nextStateTransition.getTarget(),
+						IntersectionNode node = automata.getNode(nextStateTransition.getTarget(),
                                 nextBuchiTransition.getValue(), nextAcceptSet);
-                        next = new IntersectionTransition<>(nextStateTransition, node);
+                        next = new IntersectionTransition(nextStateTransition, node);
                         return true;
                     }
                 } else if (stateIter.hasNext()) {
@@ -128,11 +126,11 @@ public class IntersectionNode<S extends IState> {
         }
 
         @Override
-        public IntersectionTransition<S> next() {
+        public IntersectionTransition next() {
             if (!hasNext()) {
                 throw new NoSuchElementException();
             }
-            IntersectionTransition<S> res = next;
+            IntersectionTransition res = next;
             next = null;
             return res;
         }
@@ -143,7 +141,7 @@ public class IntersectionNode<S extends IState> {
         }
 
 		@Override
-		public void forEachRemaining(Consumer<? super IntersectionTransition<S>> action) {
+		public void forEachRemaining(Consumer<? super IntersectionTransition> action) {
 			throw new UnsupportedOperationException();
 		}
     }

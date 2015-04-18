@@ -5,29 +5,25 @@ package qbf.egorov.ltl.grammar.predicate;
 
 import qbf.egorov.ltl.grammar.predicate.annotation.Predicate;
 import qbf.egorov.statemachine.*;
-import qbf.egorov.statemachine.impl.Action;
-import qbf.egorov.statemachine.impl.Event;
-import qbf.egorov.statemachine.impl.StateMachine;
 
 /**
  * TODO: add comment
  *
  * @author Kirill Egorov
  */
-public class PredicateFactory<S extends IState> extends AbstractPredicateFactory<S> {
-
+public class PredicateFactory extends AbstractPredicateFactory {
     @Predicate
     public Boolean wasEvent(Event e) {
-        return (wasTransition()) ? e.equals(transition.getEvent()) : null;
+        return (wasTransition()) ? e.equals(transition.event) : null;
     }
 
     @Predicate
-    public Boolean isInState(StateMachine<? extends IState> a, IState s) {
+    public Boolean isInState(StateMachine a, SimpleState s) {
         return (wasTransition()) ? transition.getTarget().equals(s) : null;
     }
 
     @Predicate
-    public Boolean wasInState(StateMachine<? extends IState> a, IState s) {
+    public Boolean wasInState(StateMachine a, SimpleState s) {
         return (wasTransition()) ? state.equals(s): null;
     }
 
@@ -53,15 +49,5 @@ public class PredicateFactory<S extends IState> extends AbstractPredicateFactory
         } else {
             return transition.getActions().get(0).equals(z);
         }
-    }
-
-    @Predicate
-    public boolean wasTrue(ICondition cond) {
-    	throw new AssertionError();
-    }
-
-    @Predicate
-    public boolean wasFalse(ICondition cond) {
-    	throw new AssertionError();
     }
 }

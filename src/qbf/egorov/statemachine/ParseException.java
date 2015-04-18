@@ -1,7 +1,7 @@
 /**
  * ParseException.java, 05.03.2008
  */
-package qbf.egorov.statemachine.impl;
+package qbf.egorov.statemachine;
 
 /**
  * TODO: add comment
@@ -9,7 +9,6 @@ package qbf.egorov.statemachine.impl;
  * @author Kirill Egorov
  */
 public class ParseException extends RuntimeException {
-
     public ParseException(String message) {
         super(message);
     }

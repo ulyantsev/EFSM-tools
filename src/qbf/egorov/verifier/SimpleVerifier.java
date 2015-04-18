@@ -13,11 +13,7 @@ import java.util.Set;
 
 import qbf.egorov.ltl.buchi.BuchiAutomata;
 import qbf.egorov.ltl.grammar.predicate.IPredicateFactory;
-import qbf.egorov.statemachine.IState;
-import qbf.egorov.transducer.verifier.TransitionCounter;
-import qbf.egorov.verifier.automata.IntersectionAutomata;
-import qbf.egorov.verifier.automata.IntersectionNode;
-import qbf.egorov.verifier.automata.IntersectionTransition;
+import qbf.egorov.statemachine.SimpleState;
 
 /**
  * Simple IVerifier implementation. Use one thread and can't be used cuncurrently.
@@ -25,78 +21,75 @@ import qbf.egorov.verifier.automata.IntersectionTransition;
  * @author Kirill Egorov
  */
 public class SimpleVerifier {
-    private final IState initState;
+    private final SimpleState initState;
     
-    public SimpleVerifier(IState initState) {
+    public SimpleVerifier(SimpleState initState) {
         this.initState = initState;
     }
 
-    public List<IntersectionTransition<?>> verify(BuchiAutomata buchi, IPredicateFactory<IState> predicates,
-                                                TransitionCounter counter) {
-        IntersectionAutomata<IState> automata = new IntersectionAutomata<>(predicates, buchi);
-        IntersectionNode<IState> initial = automata.getNode(initState, buchi.getStartNode(), 0);
-        List<IntersectionTransition<?>> res = mainDfs(initial, counter);
+    public List<IntersectionTransition> verify(BuchiAutomata buchi, IPredicateFactory predicates) {
+        IntersectionAutomata automata = new IntersectionAutomata(predicates, buchi);
+        IntersectionNode initial = automata.getNode(initState, buchi.getStartNode(), 0);
+        List<IntersectionTransition> res = mainDfs(initial);
         Collections.reverse(res);
         return res;
     }
     
-    private List<IntersectionTransition<?>> mainDfs(IntersectionNode<IState> initialNode, TransitionCounter counter) {
-        Deque<IntersectionTransition<?>> transitionStack = new LinkedList<>();
-        Deque<IntersectionNode<?>> stack = new LinkedList<>();
-        Set<IntersectionNode<?>> visited = new HashSet<>();
+    private List<IntersectionTransition> mainDfs(IntersectionNode initialNode) {
+        Deque<IntersectionTransition> transitionStack = new LinkedList<>();
+        Deque<IntersectionNode> stack = new LinkedList<>();
+        Set<IntersectionNode> visited = new HashSet<>();
         visited.add(initialNode);
         stack.push(initialNode);
-        transitionStack.push(new IntersectionTransition<>(null, initialNode));
+        transitionStack.push(new IntersectionTransition(null, initialNode));
 
         while (!stack.isEmpty()) {
-            IntersectionNode<?> node = stack.getFirst();
-            IntersectionTransition<?> trans = node.next();
+            IntersectionNode node = stack.getFirst();
+            IntersectionTransition trans = node.next();
             
             if (trans != null) {
-            	if (trans.getTransition().getEvent() == null) {
+            	if (trans.transition.event == null) {
                 	continue;
                 }
-            	IntersectionNode<?> child = trans.getTarget();
+            	IntersectionNode child = trans.target;
                 if (!visited.contains(child)) {
                 	visited.add(child);
                 	stack.push(child);
                     transitionStack.push(trans);
                 }
+            } else if (node.terminal && secondDfs(node, stack, transitionStack)) {
+                return new ArrayList<>(transitionStack);
             } else {
-            	counter.process(node.state);
-                if (node.terminal && secondDfs(node, stack, transitionStack)) {
-                    return new ArrayList<>(transitionStack);
-                } else {
-                	stack.pop();
-                	transitionStack.pop();
-                }
+            	stack.pop();
+            	transitionStack.pop();
             }
         }
         return new ArrayList<>();
     }
     
-    private boolean secondDfs(IntersectionNode<?> initialNode, Deque<IntersectionNode<?>> mainStack,
-    		Deque<IntersectionTransition<?>> mainTransStack) {
-    	Deque<IntersectionTransition<?>> transitionStack = new LinkedList<>();
-    	Deque<IntersectionNode<?>> stack = new LinkedList<>();
-        Set<IntersectionNode<?>> visited = new HashSet<>();
+    private boolean secondDfs(IntersectionNode initialNode, Deque<IntersectionNode> mainStack,
+    		Deque<IntersectionTransition> mainTransStack) {
+    	Deque<IntersectionTransition> transitionStack = new LinkedList<>();
+    	Deque<IntersectionNode> stack = new LinkedList<>();
+        Set<IntersectionNode> visited = new HashSet<>();
     	initialNode.resetIterator();
         visited.add(initialNode);
         stack.push(initialNode);
-        transitionStack.push(new IntersectionTransition<>(null, initialNode));
+        transitionStack.push(new IntersectionTransition(null, initialNode));
         
         while (!stack.isEmpty()) {
-            IntersectionNode<?> node = stack.getFirst();
-            IntersectionTransition<?> trans = node.next();
+            IntersectionNode node = stack.getFirst();
+            IntersectionTransition trans = node.next();
             
             if (trans != null) {
-            	if (trans.getTransition().getEvent() == null) {
+            	if (trans.transition.event == null) {
                 	continue;
                 }
-            	IntersectionNode<?> child = trans.getTarget();
+            	IntersectionNode child = trans.target;
             	if (mainStack.contains(child)) {
-            		if (transitionStack.size() != 1) {
-            			throw new AssertionError();
+            		transitionStack.removeLast();
+            		while (!transitionStack.isEmpty()) {
+            			mainTransStack.push(transitionStack.pollLast());
             		}
             		mainTransStack.push(trans);
                     return true;

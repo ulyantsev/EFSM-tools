@@ -21,14 +21,14 @@ import qbf.egorov.ltl.grammar.exception.UnexpectedOperatorException;
 import qbf.egorov.ltl.grammar.exception.UnexpectedParameterException;
 import qbf.egorov.ltl.grammar.predicate.IPredicateFactory;
 import qbf.egorov.ltl.grammar.predicate.annotation.Predicate;
-import qbf.egorov.statemachine.IAutomataContext;
-import qbf.egorov.statemachine.ICondition;
-import qbf.egorov.statemachine.IControlledObject;
-import qbf.egorov.statemachine.IEventProvider;
-import qbf.egorov.statemachine.IState;
-import qbf.egorov.statemachine.impl.Action;
-import qbf.egorov.statemachine.impl.Event;
-import qbf.egorov.statemachine.impl.StateMachine;
+import qbf.egorov.statemachine.Action;
+import qbf.egorov.statemachine.ControlledObject;
+import qbf.egorov.statemachine.Event;
+import qbf.egorov.statemachine.EventProvider;
+import qbf.egorov.statemachine.SimpleState;
+import qbf.egorov.statemachine.StateMachine;
+import qbf.egorov.verifier.AutomataContext;
+import rwth.i2.ltl2ba4j.model.IState;
 
 /**
  * Convert from Ognl tree to LtlNode tree
@@ -36,11 +36,11 @@ import qbf.egorov.statemachine.impl.StateMachine;
  * @author Kirill Egorov
  */
 public class EgorovGrammarConverter {
-    private IAutomataContext context;
+    private AutomataContext context;
     private Object predicatesObj;
     private Map<String, Method> predicates = new HashMap<>();
 
-    public EgorovGrammarConverter(IAutomataContext context, IPredicateFactory<?> predicatesObj) {
+    public EgorovGrammarConverter(AutomataContext context, IPredicateFactory predicatesObj) {
         if (context == null) {
             throw new IllegalArgumentException("AutomataContext shouldn't be null");
         }
@@ -135,35 +135,31 @@ public class EgorovGrammarConverter {
                 if (StateMachine.class.isAssignableFrom(pClass)) {
                     String name = getValue((ASTProperty) node._children[i]);
                     addToList(args, context.getStateMachine(name), pClass, name);
-                } else if (IControlledObject.class.isAssignableFrom(pClass)) {
+                } else if (ControlledObject.class.isAssignableFrom(pClass)) {
                     String name = getValue((ASTProperty) node._children[i]);
-                    addToList(args, context.getControlledObject(name), pClass, name);
-                } else if (IEventProvider.class.isAssignableFrom(pClass)) {
+                    addToList(args, context.getControlledObject(), pClass, name);
+                } else if (EventProvider.class.isAssignableFrom(pClass)) {
                     String name = getValue((ASTProperty) node._children[i]);
-                    addToList(args, context.getEventProvider(name), pClass, name);
+                    addToList(args, context.getEventProvider(), pClass, name);
                 } else if (IState.class.isAssignableFrom(pClass)) {
                     ASTChain chain = (ASTChain) node._children[i];
                     String automata = getValue((ASTProperty) chain._children[0]);
-                    StateMachine<? extends IState> sm = context.getStateMachine(automata);
+                    StateMachine sm = context.getStateMachine(automata);
                     String state = getValue((ASTProperty) chain._children[1]);
-                    IState s = sm.getState(state);
+                    SimpleState s = sm.getState(state);
                     addToList(args, s, pClass, chain.toString());
                 } else if (Event.class.isAssignableFrom(pClass)) {
                     ASTChain chain = (ASTChain) node._children[i];
-                    String providerName = getValue((ASTProperty) chain._children[0]);
-                    IEventProvider ep = context.getEventProvider(providerName);
+                    EventProvider ep = context.getEventProvider();
                     String eventName = getValue((ASTProperty) chain._children[1]);
                     Event eventInst = ep.getEvent(eventName);
                     addToList(args, eventInst, pClass, chain.toString());
                 } else if (Action.class.isAssignableFrom(pClass)) {
                     ASTChain chain = (ASTChain) node._children[i];
-                    String ctrlName = getValue((ASTProperty) chain._children[0]);
-                    IControlledObject ctrlInst = context.getControlledObject(ctrlName);
+                    ControlledObject ctrlInst = context.getControlledObject();
                     String actionName = getValue((ASTProperty) chain._children[1]);
                     Action actionInst = ctrlInst.getAction(actionName);
                     addToList(args, actionInst, pClass, chain.toString());
-                } else if (ICondition.class.isAssignableFrom(pClass)) {
-                    throw new AssertionError();  //TODO: implement me
                 } else {
                     throw new UnexpectedParameterException(pClass);
                 }

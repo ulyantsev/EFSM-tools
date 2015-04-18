@@ -11,13 +11,11 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.commons.lang3.tuple.Pair;
-
 import qbf.egorov.ltl.LtlParseException;
 import qbf.egorov.ltl.LtlParser;
 import qbf.egorov.ltl.buchi.translator.TranslationException;
 import qbf.egorov.transducer.FST;
-import qbf.egorov.transducer.verifier.VerifierFactory;
+import qbf.egorov.verifier.VerifierFactory;
 import structures.Automaton;
 import structures.Transition;
 
@@ -119,18 +117,10 @@ public class Verifier {
 	}
 	
 	public boolean verify(Automaton a) {
-		final FST fst = new FST(removeDeadEnds(a), allEvents, allActions, size);
-		final int numberOfUsedTransitions = fst.getUsedTransitionsCount();
-		verifier.configureStateMachine(fst);
-		List<Integer> verified = verifier.verify().getLeft();
-		return verified.stream().allMatch(x -> x == numberOfUsedTransitions);
+		return verifyWithCounterExamples(a).stream().allMatch(List::isEmpty);
 	}
 	
 	public List<List<String>> verifyWithCounterExamples(Automaton a) {
-		return verifyPure(a).getRight();
-	}
-	
-	public Pair<List<Integer>, List<List<String>>> verifyPure(Automaton a) {
 		final FST fst = new FST(removeDeadEnds(a), allEvents, allActions, size);
 		verifier.configureStateMachine(fst);
 		return verifier.verify();

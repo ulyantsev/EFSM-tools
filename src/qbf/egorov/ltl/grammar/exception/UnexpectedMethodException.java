@@ -9,7 +9,6 @@ package qbf.egorov.ltl.grammar.exception;
  * @author Kirill Egorov
  */
 public class UnexpectedMethodException extends RuntimeException {
-
     public UnexpectedMethodException(String message) {
 	    super(message);
     }

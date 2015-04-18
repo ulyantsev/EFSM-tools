@@ -4,27 +4,28 @@
 package qbf.egorov.ltl.grammar.predicate;
 
 import qbf.egorov.ltl.grammar.predicate.annotation.Predicate;
-import qbf.egorov.statemachine.*;
-import qbf.egorov.statemachine.impl.Action;
-import qbf.egorov.statemachine.impl.Event;
-import qbf.egorov.statemachine.impl.StateMachine;
+import qbf.egorov.statemachine.Action;
+import qbf.egorov.statemachine.Event;
+import qbf.egorov.statemachine.SimpleState;
+import qbf.egorov.statemachine.StateMachine;
+import qbf.egorov.statemachine.StateTransition;
 
 /**
  * TODO: add comment
  *
  * @author Kirill Egorov
  */
-public interface IPredicateFactory<S extends IState> {
-    void setAutomataState(S state, IStateTransition transition);
+public interface IPredicateFactory {
+    void setAutomataState(SimpleState state, StateTransition transition);
 
     @Predicate
     Boolean wasEvent(Event e);
 
     @Predicate
-    Boolean isInState(StateMachine<? extends IState> a, IState s);
+    Boolean isInState(StateMachine a, SimpleState s);
 
     @Predicate
-    Boolean wasInState(StateMachine<? extends IState> a, IState s);
+    Boolean wasInState(StateMachine a, SimpleState s);
 
     @Predicate
     boolean cameToFinalState();
@@ -34,10 +35,4 @@ public interface IPredicateFactory<S extends IState> {
 
     @Predicate
     Boolean wasFirstAction(Action z);
-
-    @Predicate
-    boolean wasTrue(ICondition cond);
-
-    @Predicate
-    boolean wasFalse(ICondition cond);
 }

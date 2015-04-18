@@ -1,7 +1,7 @@
 /* 
  * Developed by eVelopers Corporation, 2009
  */
-package qbf.egorov.transducer.verifier;
+package qbf.egorov.verifier;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -11,7 +11,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
 
 import qbf.egorov.ltl.LtlParseException;
 import qbf.egorov.ltl.LtlParser;
@@ -21,40 +20,31 @@ import qbf.egorov.ltl.grammar.LtlNode;
 import qbf.egorov.ltl.grammar.LtlUtils;
 import qbf.egorov.ltl.grammar.predicate.IPredicateFactory;
 import qbf.egorov.ltl.grammar.predicate.PredicateFactory;
-import qbf.egorov.statemachine.IControlledObject;
-import qbf.egorov.statemachine.IEventProvider;
-import qbf.egorov.statemachine.IState;
+import qbf.egorov.statemachine.Action;
+import qbf.egorov.statemachine.ControlledObject;
+import qbf.egorov.statemachine.EventProvider;
+import qbf.egorov.statemachine.SimpleState;
+import qbf.egorov.statemachine.StateMachine;
+import qbf.egorov.statemachine.StateTransition;
 import qbf.egorov.statemachine.StateType;
-import qbf.egorov.statemachine.impl.Action;
-import qbf.egorov.statemachine.impl.ControlledObjectStub;
-import qbf.egorov.statemachine.impl.EventProviderStub;
-import qbf.egorov.statemachine.impl.SimpleState;
-import qbf.egorov.statemachine.impl.StateMachine;
 import qbf.egorov.transducer.FST;
 import qbf.egorov.transducer.Transition;
-import qbf.egorov.verifier.SimpleVerifier;
-import qbf.egorov.verifier.automata.IntersectionTransition;
 
 /**
  * @author kegorov
  *         Date: Jun 18, 2009
  */
 public class VerifierFactory {
-    private ModifiableAutomataContext context;
-    private IPredicateFactory<IState> predicates = new PredicateFactory<>();
-    private LtlParser parser;
+    private final AutomataContext context;
+    private final IPredicateFactory predicates = new PredicateFactory();
+    private final LtlParser parser;
     private BuchiAutomata[] preparedFormulas;
 
-    private TransitionCounter counter = new TransitionCounter();
-
-    private FST fst;
-
     public VerifierFactory(String[] setOfInputs, String[] setOfOutputs) {
-        IControlledObject co = new ControlledObjectStub("co", setOfOutputs);
-        String[] filteredInputs = getEvents(setOfInputs);
-		IEventProvider ep = new EventProviderStub("ep", filteredInputs);
-
-        context = new ModifiableAutomataContext(co, ep);
+        context = new AutomataContext(
+        		new ControlledObject(setOfOutputs),
+        		new EventProvider(getEvents(setOfInputs))
+        );
         parser = new LtlParser(context, predicates);
     }
     
@@ -72,12 +62,10 @@ public class VerifierFactory {
 
     public void configureStateMachine(FST fst) {
         Transition[][] states = fst.getStates();
-        this.fst = fst;
 
-        IControlledObject co = context.getControlledObject(null);
-		IEventProvider ep = context.getEventProvider(null);
-
-        StateMachine<IState> machine = new StateMachine<>("A1");
+        ControlledObject co = context.getControlledObject();
+        EventProvider ep = context.getEventProvider();
+        StateMachine machine = new StateMachine("A1");
 
 		SimpleState[] statesArr = new SimpleState[states.length];
 		for (int i = 0; i < states.length; i++) {
@@ -88,9 +76,8 @@ public class VerifierFactory {
 		for (int i = 0; i < states.length; i++) {
 			Transition[] currentState = states[i];
 			for (Transition t : currentState) {
-                AutomataTransition out = new AutomataTransition(
-                        ep.getEvent(extractEvent(t.input())), null, statesArr[t.newState()]);
-                out.setAlgTransition(t);
+				StateTransition out = new StateTransition(
+                        ep.getEvent(extractEvent(t.input())), statesArr[t.newState()]);
 
                 for (String a: t.output()) {
                     Action action = co.getAction(a);
@@ -102,35 +89,27 @@ public class VerifierFactory {
 			}
 			machine.addState(statesArr[i]);
 		}
-        machine.addControlledObject(co.getName(), co);
-		machine.addEventProvider(ep);
-
         context.setStateMachine(machine);
     }
 
-    // returns (numbers of verified transitions, counterexamples)
-    public Pair<List<Integer>, List<List<String>>> verify() {
-        List<Integer> verifiedTransitions = new ArrayList<>();
+    // returns counterexamples
+    public List<List<String>> verify() {
         List<List<String>> counterexamples = new ArrayList<>();
         SimpleVerifier verifier = new SimpleVerifier(context.getStateMachine(null).getInitialState());
-        int usedTransitions = fst.getUsedTransitionsCount();
 
         for (BuchiAutomata buchi : preparedFormulas) {
-            counter.reset();
-            List<IntersectionTransition<?>> list = verifier.verify(buchi, predicates, counter);
+            List<IntersectionTransition> list = verifier.verify(buchi, predicates);
             
             if (!list.isEmpty()) {
-                verifiedTransitions.add(counter.countVerified() / 2);
                 List<String> eventList = list.stream().skip(1)
-                    	.map(t -> String.valueOf(t.getTransition().getEvent()))
+                    	.map(t -> String.valueOf(t.transition.event))
                     	.collect(Collectors.toList());
                 counterexamples.add(eventList);
             } else {
-            	verifiedTransitions.add(usedTransitions);
             	counterexamples.add(Collections.emptyList());
             }
         }
-        return Pair.of(verifiedTransitions, counterexamples);
+        return counterexamples;
     }
 
     /**

@@ -24,7 +24,7 @@ import qbf.egorov.ognl.Node;
 import qbf.egorov.ognl.Ognl;
 import qbf.egorov.ognl.OgnlException;
 import qbf.egorov.ognl.SimpleNode;
-import qbf.egorov.statemachine.IAutomataContext;
+import qbf.egorov.verifier.AutomataContext;
 
 /**
  * The ILtlparser implementation that use Ognl library
@@ -34,7 +34,7 @@ import qbf.egorov.statemachine.IAutomataContext;
 public class LtlParser {
     private EgorovGrammarConverter converter;
 
-    public LtlParser(IAutomataContext context, IPredicateFactory<?> predicatesObj) {
+    public LtlParser(AutomataContext context, IPredicateFactory predicatesObj) {
         converter = new EgorovGrammarConverter(context, predicatesObj);
     }
     

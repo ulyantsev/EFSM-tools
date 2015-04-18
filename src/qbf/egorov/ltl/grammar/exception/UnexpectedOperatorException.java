@@ -9,7 +9,6 @@ package qbf.egorov.ltl.grammar.exception;
  * @author Kirill Egorov
  */
 public class UnexpectedOperatorException extends RuntimeException {
-
     public UnexpectedOperatorException(String message) {
 	    super(message);
     }

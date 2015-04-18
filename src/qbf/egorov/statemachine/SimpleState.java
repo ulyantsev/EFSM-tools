@@ -1,37 +1,30 @@
 /* 
  * Developed by eVelopers Corporation, 2009
  */
-package qbf.egorov.statemachine.impl;
+package qbf.egorov.statemachine;
 
-import qbf.egorov.statemachine.*;
+import java.util.ArrayList;
+import java.util.List;
 
-import java.util.*;
+import qbf.egorov.automata.INode;
 
 /**
  * IState implementation whithout nested state machines
  * @author kegorov
  *         Date: Jun 18, 2009
  */
-public class SimpleState implements IState {
-    private String name;
-    private StateType type;
-    private List<Action> actions;
-    private Collection<IStateTransition> outTransitions = new ArrayList<>();
+public class SimpleState implements INode<StateTransition> {
+    public final String name;
+    public final StateType type;
+    private final List<Action> actions;
+    private final List<StateTransition> outTransitions = new ArrayList<>();
 
     public SimpleState(String name, StateType type, List<Action> actions) {
         this.name = name;
         this.type = type;
         this.actions = actions;
 
-        outTransitions.add(new Transition(null, null, this));
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public StateType getType() {
-        return type;
+        outTransitions.add(new StateTransition(null, this));
     }
 
     public List<Action> getActions() {
@@ -42,7 +35,7 @@ public class SimpleState implements IState {
         return type == StateType.FINAL;
     }
 
-    public Collection<IStateTransition> getOutcomingTransitions() {
+    public List<StateTransition> getOutcomingTransitions() {
         return outTransitions;
     }
 
@@ -50,7 +43,7 @@ public class SimpleState implements IState {
         return name + '@' + Integer.toHexString(super.hashCode());
     }
 
-    public void addOutcomingTransition(IStateTransition t) {
+    public void addOutcomingTransition(StateTransition t) {
         outTransitions.add(t);
     }
 

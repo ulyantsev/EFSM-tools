@@ -1,7 +1,7 @@
 /**
- * Event.java, 02.03.2008
+ * Action.java, 02.03.2008
  */
-package qbf.egorov.statemachine.impl;
+package qbf.egorov.statemachine;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -10,23 +10,27 @@ import org.apache.commons.lang3.StringUtils;
  *
  * @author Kirill Egorov
  */
-public class Event {
-    private String name;
-
-    protected Event(String name) {
+public class Action {
+    private final String name;
+    
+    Action(String name) {
         if (StringUtils.isBlank(name)) {
-            throw new IllegalArgumentException("Event name can't be null or blank");
+            throw new IllegalArgumentException("Action name can't be null or blank");
         }
         this.name = name;
+    }
+
+    public String getName() {
+        return name;
     }
 
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof Action)) return false;
 
-        Event event = (Event) o;
+        Action action = (Action) o;
 
-        return name.equals(event.name);
+        return name.equals(action.name);
     }
 
     public int hashCode() {

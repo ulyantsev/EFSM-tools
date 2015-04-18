@@ -3,8 +3,8 @@
  */
 package qbf.egorov.ltl.grammar.predicate;
 
-import qbf.egorov.statemachine.IState;
-import qbf.egorov.statemachine.IStateTransition;
+import qbf.egorov.statemachine.SimpleState;
+import qbf.egorov.statemachine.StateTransition;
 
 /**
  * Predicate provider.
@@ -12,27 +12,26 @@ import qbf.egorov.statemachine.IStateTransition;
  *
  * @author Kirill Egorov
  */
-public abstract class AbstractPredicateFactory<S extends IState> implements IPredicateFactory<S>, Cloneable {
-    protected S state;
-    protected IStateTransition transition;
+public abstract class AbstractPredicateFactory implements IPredicateFactory, Cloneable {
+    protected SimpleState state;
+    protected StateTransition transition;
 
     /**
      * To check predicate in transition.getTarget() state.
      * @param state previous state
      * @param transition transition from state to transition.getTarget()
      */
-    public void setAutomataState(S state, IStateTransition transition) {
+    public void setAutomataState(SimpleState state, StateTransition transition) {
         this.state = state;
         this.transition = transition;
     }
 
-    @SuppressWarnings("unchecked")
-	public AbstractPredicateFactory<S> clone() throws CloneNotSupportedException {
-        return (AbstractPredicateFactory<S>) super.clone();
+	public AbstractPredicateFactory clone() throws CloneNotSupportedException {
+        return (AbstractPredicateFactory) super.clone();
     }
 
     protected boolean wasTransition() {
-        return !(transition.getEvent() == null && transition.getCondition() == null
-                && transition.getTarget() == state && (state.getOutcomingTransitions().size() > 1));
+        return !(transition.event == null
+                && transition.getTarget() == state && state.getOutcomingTransitions().size() > 1);
     }
 }

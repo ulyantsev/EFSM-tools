@@ -1,12 +1,12 @@
 /**
  * IntersectionAutomata.java, 12.04.2008
  */
-package qbf.egorov.verifier.automata;
+package qbf.egorov.verifier;
 
 import qbf.egorov.ltl.buchi.BuchiAutomata;
 import qbf.egorov.ltl.buchi.BuchiNode;
 import qbf.egorov.ltl.grammar.predicate.IPredicateFactory;
-import qbf.egorov.statemachine.IState;
+import qbf.egorov.statemachine.SimpleState;
 
 import java.util.*;
 
@@ -15,12 +15,12 @@ import java.util.*;
  *
  * @author Kirill Egorov
  */
-public class IntersectionAutomata<S extends IState> {
-    private final IPredicateFactory<S> predicates;
+public class IntersectionAutomata {
+    private final IPredicateFactory predicates;
     private final BuchiAutomata buchiAutomata;
-    private final Map<String, IntersectionNode<S>> nodeMap = new HashMap<>();
+    private final Map<String, IntersectionNode> nodeMap = new HashMap<>();
 
-    public IntersectionAutomata(IPredicateFactory<S> predicates, BuchiAutomata buchi) {
+    public IntersectionAutomata(IPredicateFactory predicates, BuchiAutomata buchi) {
         this.predicates = predicates;
         buchiAutomata = buchi;
     }
@@ -29,22 +29,22 @@ public class IntersectionAutomata<S extends IState> {
         return buchiAutomata;
     }
 
-    public IntersectionNode<S> getNode(S state, BuchiNode node, int acceptSet) {
+    public IntersectionNode getNode(SimpleState state, BuchiNode node, int acceptSet) {
         String key = getUniqueKey(state, node, acceptSet);
 
-        IntersectionNode<S> res = nodeMap.get(key);
+        IntersectionNode res = nodeMap.get(key);
         if (res == null) {
-            res = new IntersectionNode<>(this, state, node, acceptSet);
+            res = new IntersectionNode(this, state, node, acceptSet);
             nodeMap.put(key, res);
         }
         return res;
     }
 
-    public IPredicateFactory<S> getPredicates() {
+    public IPredicateFactory getPredicates() {
         return predicates;
     }
 
-    protected String getUniqueKey(IState state, BuchiNode node, int acceptSet) {
+    protected String getUniqueKey(SimpleState state, BuchiNode node, int acceptSet) {
         return state.getUniqueName() + "_" + node.getID() + "_" + acceptSet;
     }
 }

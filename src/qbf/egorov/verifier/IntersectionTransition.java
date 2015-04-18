@@ -1,34 +1,25 @@
 /**
  * DfsTransition.java, 12.04.2008
  */
-package qbf.egorov.verifier.automata;
+package qbf.egorov.verifier;
 
-import qbf.egorov.statemachine.IState;
-import qbf.egorov.statemachine.IStateTransition;
+import qbf.egorov.statemachine.StateTransition;
 
 /**
  * TODO: add comment
  *
  * @author Kirill Egorov
  */
-public class IntersectionTransition<S extends IState> {
-    private IntersectionNode<S> target;
-    private IStateTransition transition;
+public class IntersectionTransition {
+    public final IntersectionNode target;
+    public final StateTransition transition;
 
-    public IntersectionTransition(IStateTransition trans, IntersectionNode<S> target) {
+    public IntersectionTransition(StateTransition transition, IntersectionNode target) {
         if (target == null) {
             throw new IllegalArgumentException("Target can't be null");
         }
         this.target = target;
-        this.transition = trans;
-    }
-
-    public IntersectionNode<S> getTarget() {
-        return target;
-    }
-
-    public IStateTransition getTransition() {
-        return transition;
+        this.transition = transition;
     }
 
     @Override
@@ -36,7 +27,7 @@ public class IntersectionTransition<S extends IState> {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        IntersectionTransition<?> that = (IntersectionTransition<?>) o;
+        IntersectionTransition that = (IntersectionTransition) o;
 
         if (!target.equals(that.target)) return false;
         if (transition != null ? !transition.equals(that.transition) : that.transition != null) return false;
@@ -53,8 +44,7 @@ public class IntersectionTransition<S extends IState> {
     
     @Override
     public String toString() {
-    	return "["
-    			+ (transition == null ? "NULL" : transition.getEvent()
+    	return "[" + (transition == null ? "NULL" : transition.event
     			+ "" + transition.getActions()) + "]";
     }
 }
