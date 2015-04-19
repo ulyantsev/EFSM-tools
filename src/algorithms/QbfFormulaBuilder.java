@@ -41,9 +41,9 @@ public class QbfFormulaBuilder extends FormulaBuilder {
 	private final boolean extractSubterms;
 
 	public QbfFormulaBuilder(Logger logger, ScenariosTree tree, List<LtlNode> formulae, int colorSize, int depth,
-			boolean extractSubterms, boolean complete, CompletenessType completenessType,
+			boolean extractSubterms, CompletenessType completenessType,
 			List<String> events, List<String> actions) {
-		super(colorSize, tree, complete, completenessType, events, actions);
+		super(colorSize, tree, completenessType, events, actions);
 		BooleanVariable.eraseVariables();
 		this.logger = logger;
 		this.formulae = formulae;
@@ -139,7 +139,8 @@ public class QbfFormulaBuilder extends FormulaBuilder {
 				pathFormula.not()
 		), "main QBF constraint");
 
-		return new QuantifiedBooleanFormula(existVars, forallVars, scenarioConstraints, mainQbfConstraint);
+		return new QuantifiedBooleanFormula(existVars, forallVars, scenarioConstraints,
+				mainQbfConstraint.and(varPresenceConstraints()));
 	}
 
 	// not more than one state/event in the same place of the path
@@ -196,7 +197,7 @@ public class QbfFormulaBuilder extends FormulaBuilder {
 				}
 			}
 		}
-		if (!(complete && completenessType == CompletenessType.NORMAL)) {
+		if (completenessType != CompletenessType.NORMAL) {
 			// additional term for j = k
 			for (int i1 = 0; i1 < colorSize; i1++) {
 				for (String e : events) {

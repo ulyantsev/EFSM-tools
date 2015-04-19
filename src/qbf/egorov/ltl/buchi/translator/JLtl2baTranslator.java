@@ -39,10 +39,10 @@ import rwth.i2.ltl2ba4j.model.ITransition;
  *         Date: Apr 3, 2009
  */
 public class JLtl2baTranslator {
-    private VisitorImpl visitor = new VisitorImpl();
+    private final VisitorImpl visitor = new VisitorImpl();
     private IFormulaFactory factory;
-    private BuchiConverter  buchiConverter = new BuchiConverter();
-    private ExpressionMap expr = new ExpressionMap();
+    private final BuchiConverter buchiConverter = new BuchiConverter();
+    private final ExpressionMap expr = new ExpressionMap();
 
     public BuchiAutomata translate(LtlNode root) {
         try {

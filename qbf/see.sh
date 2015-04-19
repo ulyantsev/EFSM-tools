@@ -49,7 +49,7 @@ print_found_by_prefix() {
 for compdir in "complete" "incomplete"; do
     echo ">>> $compdir"
     for instance_type in tr fa; do
-        #for prefix in ITER*-$instance_type; do
+        #for prefix in ITER*-$instance_type HYBR*-$instance_type; do
         for prefix in HYBR*-$instance_type EXP*-$instance_type ITER*-$instance_type QSAT*-$instance_type BACK*-$instance_type; do
             echo_str=
             for ((s = 3; s <= 10; s++)); do

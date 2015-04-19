@@ -3,9 +3,12 @@
  */
 package qbf.egorov.ltl.buchi.translator;
 
-import qbf.egorov.ltl.grammar.LtlNode;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.Queue;
+import java.util.Set;
 
-import java.util.*;
+import qbf.egorov.ltl.grammar.LtlNode;
 
 /**
  * TODO: add comment
@@ -13,8 +16,8 @@ import java.util.*;
  * @author Kirill Egorov
  */
 public class RecordNode {
-    final Set<RecordNode> incoming = new HashSet<>();
-    final Set<LtlNode> oldForm = new HashSet<>();
+    final Set<RecordNode> incoming = new LinkedHashSet<>();
+    final Set<LtlNode> oldForm = new LinkedHashSet<>();
     final Queue<LtlNode> newForm = new LinkedList<>();
-    final Set<LtlNode> nextForm = new HashSet<>();
+    final Set<LtlNode> nextForm = new LinkedHashSet<>();
 }

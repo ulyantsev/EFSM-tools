@@ -4,7 +4,7 @@
 package qbf.egorov.ltl.buchi;
 
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -13,8 +13,8 @@ import java.util.Map;
  * @author Kirill Egorov
  */
 public class BuchiNode {
-    private int id;
-    private Map<TransitionCondition, BuchiNode> transitions = new HashMap<>();
+    private final int id;
+    private final Map<TransitionCondition, BuchiNode> transitions = new LinkedHashMap<>();
 
     public BuchiNode(int id) {
         this.id = id;

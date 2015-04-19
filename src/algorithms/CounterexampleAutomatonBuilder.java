@@ -28,7 +28,8 @@ import bool.MyBooleanExpression;
 
 public class CounterexampleAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 	private static Optional<Automaton> automatonFromFormula(ExpandableStringFormula f, Logger logger,
-			int timeoutSeconds, ScenariosTree tree, int size) throws IOException {
+			int timeoutSeconds, ScenariosTree tree, int size,
+			CompletenessType completenessType) throws IOException {
 		try (PrintWriter pw = new PrintWriter("_tmp.pretty")) {
 			pw.print(f.toString());
 		}
@@ -44,9 +45,8 @@ public class CounterexampleAutomatonBuilder extends ScenarioAndLtlAutomatonBuild
 		logger.info(ass.type().toString());
 
 		if (ass.type() == SolverResults.SAT) {
-			// include transitions not from scenarios
 			return Optional.of(constructAutomatonFromAssignment
-					(logger, ass.list(), tree, size, true).getLeft());
+					(logger, ass.list(), tree, size, true, completenessType).getLeft());
 		} else {
 			return Optional.empty();
 		}
@@ -57,8 +57,8 @@ public class CounterexampleAutomatonBuilder extends ScenarioAndLtlAutomatonBuild
 		return a;
 	}
 	
-	public static void addCounterexamples(Logger logger, List<List<String>> counterexamples,
-			Automaton a, ExpandableStringFormula f, List<String> actions) throws IOException {
+	private static List<List<Assignment>> counterexamplesToAssignments(Logger logger, List<List<String>> counterexamples,
+			Automaton a, List<String> actions) {
 		final List<List<Assignment>> allConstraints = new ArrayList<>();
 		final Set<String> uniqueCounterexamples = new HashSet<>();
 		for (List<String> counterexample : counterexamples) {
@@ -76,8 +76,7 @@ public class CounterexampleAutomatonBuilder extends ScenarioAndLtlAutomatonBuild
 				final BooleanVariable yVar = FormulaBuilder.yVar(state, newState, event);
 				if (!prohibitedVarNames.contains(yVar.name)) {
 					prohibitedVarNames.add(yVar.name);
-					final Assignment yAss = new Assignment(yVar, false);
-					prohibitedVars.add(yAss);
+					prohibitedVars.add(new Assignment(yVar, false));
 				}
 				final Set<String> transActions = new LinkedHashSet<>(Arrays.asList(t.getActions().getActions()));
 				for (String action : actions) {
@@ -91,36 +90,47 @@ public class CounterexampleAutomatonBuilder extends ScenarioAndLtlAutomatonBuild
 				state = newState;
 			}
 			
-			//logger.info("ADDING COUNTEREXAMPLE: " + prohibitedVars);
 			if (!uniqueCounterexamples.contains(prohibitedVars.toString())) {
 				uniqueCounterexamples.add(prohibitedVars.toString());
 				allConstraints.add(prohibitedVars);
 			}
 		}
+		return allConstraints;
+	}
+
+	// try to replace actions, or add counterexamples in case of failure
+	public static Optional<Automaton> addCounterexamples(Logger logger, List<List<String>> counterexamples,
+			Automaton a, ExpandableStringFormula f, List<String> actions) throws IOException {
+		final List<List<Assignment>> allConstraints = counterexamplesToAssignments(logger, counterexamples, a, actions);
 		f.addProhibitionConstraints(allConstraints);
 		logger.info("ADDED " + allConstraints.size() + " COUNTEREXAMPLES");
+		return Optional.empty();
 	}
 	
 	public static Optional<Automaton> build(Logger logger, ScenariosTree tree, int size, String solverParams,
 			String resultFilePath, String ltlFilePath, List<LtlNode> formulae,
 			List<String> events, List<String> actions, SatSolver satSolver,
-			Verifier verifier, long finishTime, boolean complete, CompletenessType completenessType) throws IOException {
+			Verifier verifier, long finishTime, CompletenessType completenessType) throws IOException {
 		deleteTrash();
 		try (final ExpandableStringFormula f = new ExpandableStringFormula(
-				new SatFormulaBuilder(tree, size, events, actions, complete, completenessType, true).getFormula().simplify()
+				new SatFormulaBuilder(tree, size, events, actions, completenessType, true).getFormula().simplify()
 				.toLimbooleString(), logger, satSolver, solverParams)) {
 			for (int iteration = 0; System.currentTimeMillis() < finishTime; iteration++) {
 				final int secondsLeft = (int) ((finishTime - System.currentTimeMillis()) / 1000 + 1);
-				final Optional<Automaton> automaton = automatonFromFormula(f, logger,
-						secondsLeft, tree, size);
+				Optional<Automaton> automaton
+						= automatonFromFormula(f, logger, secondsLeft, tree, size, completenessType);
 				if (automaton.isPresent()) {
 					final List<List<String>> counterexamples
 						= verifier.verifyWithCounterExamples(automaton.get());
 					final boolean verified = counterexamples.stream().allMatch(List::isEmpty);
 					if (verified) {
-						return reportResult(logger, iteration, automaton);
+						return reportResult(logger, iteration, Optional.of(automaton.get()));
 					} else {
-						addCounterexamples(logger, counterexamples, automaton.get(), f, actions);
+						Optional<Automaton> a = addCounterexamples(logger, counterexamples, automaton.get(),
+								f, actions);
+						if (a.isPresent()) {
+							return reportResult(logger, iteration, a);
+						}
 					}
 				} else {
 					// no solution due to UNSAT or UNKNOWN, stop search

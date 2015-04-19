@@ -17,7 +17,7 @@ public class AutomatonCompleter {
 	private final Automaton automaton;
 	private final int colorSize;
 	private final List<String> events;
-	private final List<StringActions> preparedActions = new ArrayList<>();
+	private final List<StringActions> preparedActions;
 	private final long finishTime;
 	private final CompletenessType type;
 	
@@ -42,6 +42,11 @@ public class AutomatonCompleter {
 		
 		// prepare all action combinations (will be used while trying to enforce FSM completeness)
 		final int actionsNum = type == CompletenessType.NO_DEAD_ENDS_WALKINSHAW ? 0 : actions.size();
+		preparedActions = prepareActions(actions, actionsNum);
+	}
+	
+	public static List<StringActions> prepareActions(List<String> actions, int actionsNum) {
+		List<StringActions> prepared = new ArrayList<>();
 		final int maxI = 1 << actionsNum;
 		for (int i = 0; i < maxI; i++) {
 			final List<String> sequence = new ArrayList<>();
@@ -50,11 +55,12 @@ public class AutomatonCompleter {
 					sequence.add(actions.get(j));
 				}
 			}
-			preparedActions.add(new StringActions(String.join(",", sequence)));
+			prepared.add(new StringActions(String.join(",", sequence)));
 		}
-		preparedActions.sort((a1, a2) ->
+		prepared.sort((a1, a2) ->
 			Integer.compare(a1.getActions().length, a2.getActions().length)
 		);
+		return prepared;
 	}
 	
 	/*

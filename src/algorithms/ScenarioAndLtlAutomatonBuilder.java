@@ -12,11 +12,13 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.tuple.Pair;
 
 import qbf.reduction.Assignment;
+import qbf.reduction.BooleanVariable;
 import structures.Automaton;
 import structures.Node;
 import structures.ScenariosTree;
 import structures.Transition;
 import actions.StringActions;
+import algorithms.AutomatonCompleter.CompletenessType;
 import bool.MyBooleanExpression;
 
 /**
@@ -34,9 +36,9 @@ public abstract class ScenarioAndLtlAutomatonBuilder {
 	/*
 	 * Returns (automaton, transition variables supported by scenarios).
 	 */
-	public static Pair<Automaton, List<Assignment>> constructAutomatonFromAssignment(Logger logger, List<Assignment> ass,
-			ScenariosTree tree, int colorSize, boolean includeTransitionsNotFromScenarios) {
-		List<Assignment> filteredYVars = new ArrayList<>();
+	public static Pair<Automaton, List<BooleanVariable>> constructAutomatonFromAssignment(Logger logger, List<Assignment> ass,
+			ScenariosTree tree, int colorSize, boolean complete, CompletenessType completenessType) {
+		List<BooleanVariable> filteredYVars = new ArrayList<>();
 		int[] nodeColors = new int[tree.nodesCount()];
 
 		// color the scenario tree codes according to the assignment
@@ -64,23 +66,24 @@ public abstract class ScenarioAndLtlAutomatonBuilder {
 			}
 		}
 
-		// add other transitions
-		for (Assignment a : ass.stream()
-				.filter(a -> a.value && a.var.name.startsWith("y"))
-				.collect(Collectors.toList())) {
-			String[] tokens = a.var.name.split("_");
-			assert tokens.length == 4;
-			int from = Integer.parseInt(tokens[1]);
-			int to = Integer.parseInt(tokens[2]);
-			String event = tokens[3];
-
-			Node state = ans.getState(from);
-
-			if (state.hasTransition(event, MyBooleanExpression.getTautology())) {
-				filteredYVars.add(a);
-			}
-			
-			if (includeTransitionsNotFromScenarios) {
+		if (complete) {
+			// add other transitions
+			for (Assignment a : ass.stream()
+					.filter(a -> a.value && a.var.name.startsWith("y"))
+					.collect(Collectors.toList())) {
+				String[] tokens = a.var.name.split("_");
+				assert tokens.length == 4;
+				int from = Integer.parseInt(tokens[1]);
+				int to = Integer.parseInt(tokens[2]);
+				String event = tokens[3];
+	
+				Node state = ans.getState(from);
+	
+				if (state.hasTransition(event, MyBooleanExpression.getTautology())) {
+					filteredYVars.add(a.var);
+				}
+				
+				// include transitions not from scenarios
 				List<String> properUniqueActions = new ArrayList<>();
 				for (Assignment az : ass) {
 					if (az.value && az.var.name.startsWith("z_" + from + "_")
@@ -92,10 +95,23 @@ public abstract class ScenarioAndLtlAutomatonBuilder {
 	
 				if (!state.hasTransition(event, MyBooleanExpression.getTautology())) {
 					// add
-					state.addTransition(event, MyBooleanExpression.getTautology(),
-						new StringActions(String.join(",",
-						properUniqueActions)), ans.getState(to));
-					logger.info("ADDING TRANSITION NOT FROM SCENARIOS " + a.var + " " + properUniqueActions);
+					boolean include;
+					if (completenessType == CompletenessType.NORMAL) {
+						include = true;
+					} else if (completenessType == CompletenessType.NO_DEAD_ENDS) {
+						include = state.transitionsCount() == 0;
+					} else if (completenessType == CompletenessType.NO_DEAD_ENDS_WALKINSHAW) {
+						include = state.getTransitions().stream()
+								.allMatch(t -> t.getActions().getActions().length == 1);
+					} else {
+						throw new AssertionError();
+					}
+					if (include) {
+						state.addTransition(event, MyBooleanExpression.getTautology(),
+							new StringActions(String.join(",",
+							properUniqueActions)), ans.getState(to));
+						logger.info("ADDING TRANSITION NOT FROM SCENARIOS " + a.var + " " + properUniqueActions);
+					}
 				} else {
 					// check
 					Transition t = state.getTransition(event, MyBooleanExpression.getTautology());

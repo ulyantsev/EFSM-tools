@@ -48,8 +48,8 @@ public class QbfAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 			List<LtlNode> formulae, int size, String ltlFilePath,
 			QbfSolver qbfSolver, String solverParams, boolean extractSubterms,
 			boolean useSat, List<String> events, List<String> actions,
-			SatSolver satSolver, Verifier verifier, long finishTime, boolean complete,
-			CompletenessType completenessType) throws IOException {		
+			SatSolver satSolver, Verifier verifier, long finishTime,
+			CompletenessType completenessType) throws IOException {
 		if (useSat) {
 			final Set<String> forbiddenYs = getForbiddenYs(logger, size, events.size());
 			for (int k = 0; ; k++) {
@@ -60,7 +60,7 @@ public class QbfAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 				logger.info("TRYING k = " + k);
 				deleteTrash();
 				QuantifiedBooleanFormula qbf = new QbfFormulaBuilder(logger, tree,
-						formulae, size, k, extractSubterms, complete, completenessType,
+						formulae, size, k, extractSubterms, completenessType,
 						events, actions).getFormula(false);
 				final int timeLeft = (int) (finishTime - System.currentTimeMillis()) / 1000 + 1;
 				
@@ -83,7 +83,7 @@ public class QbfAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 					return Optional.empty();
 				} else {
 					final Automaton a = constructAutomatonFromAssignment(logger,
-							list, tree, size, true).getLeft();
+							list, tree, size, true, completenessType).getLeft();
 					if (verifier.verify(a)) {
 						logger.info(new SolverResult(list).toString().split("\n")[0]);
 						return Optional.of(a);
@@ -101,7 +101,7 @@ public class QbfAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 				logger.info("TRYING k = " + k);
 				deleteTrash();
 				QuantifiedBooleanFormula qbf = new QbfFormulaBuilder(logger, tree,
-						formulae, size, k, extractSubterms, complete, completenessType,
+						formulae, size, k, extractSubterms, completenessType,
 						events, actions).getFormula(false);
 				final int timeLeft = (int) (finishTime - System.currentTimeMillis()) / 1000 + 1;
 				SolverResult ass = qbf.solve(logger, qbfSolver, solverParams, timeLeft);
@@ -109,7 +109,7 @@ public class QbfAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 
 				if (ass.type() == SolverResults.SAT) {
 					final Automaton a = constructAutomatonFromAssignment(logger, ass.list(),
-							tree, size, true).getLeft();
+							tree, size, true, completenessType).getLeft();
 					if (verifier.verify(a)) {
 						return Optional.of(a);
 					} else {

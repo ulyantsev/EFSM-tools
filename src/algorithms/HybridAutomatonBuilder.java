@@ -17,6 +17,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import qbf.egorov.ltl.grammar.LtlNode;
 import qbf.reduction.Assignment;
 import qbf.reduction.BooleanFormula.SolveAsSatResult;
+import qbf.reduction.BooleanVariable;
 import qbf.reduction.ExpandableStringFormula;
 import qbf.reduction.QbfSolver;
 import qbf.reduction.QuantifiedBooleanFormula;
@@ -34,7 +35,7 @@ public class HybridAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 			List<LtlNode> formulae, int size, String ltlFilePath,
 			QbfSolver qbfSolver, String solverParams, boolean extractSubterms,
 			List<String> events, List<String> actions, SatSolver satSolver,
-			Verifier verifier, long finishTime, boolean complete, CompletenessType completenessType,
+			Verifier verifier, long finishTime, CompletenessType completenessType,
 			int secToGenerateFormula, int secToSolve) throws IOException {		
 		int k = -1;
 		boolean maxKFound = false;
@@ -48,33 +49,31 @@ public class HybridAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 		final Set<String> forbiddenYs = QbfAutomatonBuilder.getForbiddenYs(logger, size, events.size());
 		deleteTrash();
 		SolveAsSatResult solution = null;
-		Pair<Automaton, List<Assignment>> autoSolution = null;
+		Pair<Automaton, List<BooleanVariable>> autoSolution = null;
 		while (System.currentTimeMillis() < finishTime) {
 			if (maxKFound) {
 				// deal with the previous FSM
-				if (complete) {
-					logger.info("TRYING TO COMPLETE THE PREVIOUSLY FOUND FSM");
-					final Automaton b = constructAutomatonFromAssignment(logger,
-							solution.list(), tree, size, false).getLeft();
-					try {
-						new AutomatonCompleter(verifier, b, events, actions, finishTime, completenessType).ensureCompleteness();
-					} catch (AutomatonFound e) {
-						logger.info("SAT");
-						closer.accept(formula);
-						return Optional.of(b);
-					} catch (TimeLimitExceeded e) {
-						logger.info("TIME LIMIT EXCEEDED");
-						closer.accept(formula);
-						return Optional.empty();
-					}
+				logger.info("TRYING TO COMPLETE THE PREVIOUSLY FOUND FSM");
+				final Automaton b = constructAutomatonFromAssignment(logger,
+						solution.list(), tree, size, false, null).getLeft();
+				try {
+					new AutomatonCompleter(verifier, b, events, actions, finishTime, completenessType).ensureCompleteness();
+				} catch (AutomatonFound e) {
+					logger.info("SAT");
+					closer.accept(formula);
+					return Optional.of(b);
+				} catch (TimeLimitExceeded e) {
+					logger.info("TIME LIMIT EXCEEDED");
+					closer.accept(formula);
+					return Optional.empty();
 				}
 				formula.addProhibitionConstraint(autoSolution.getRight().stream()
-						.map(v -> v.negate()).collect(Collectors.toList()));
+						.map(v -> new Assignment(v, false)).collect(Collectors.toList()));
 			} else {
 				// try next k
 				k++;
 				final QuantifiedBooleanFormula qbf = new QbfFormulaBuilder(logger, tree,
-						formulae, size, k, extractSubterms, complete, completenessType,
+						formulae, size, k, extractSubterms, completenessType,
 						events, actions).getFormula(true);
 				final long time = System.currentTimeMillis();
 				try {
@@ -108,7 +107,8 @@ public class HybridAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 				closer.accept(formula);
 				return Optional.empty();
 			} else {
-				autoSolution = constructAutomatonFromAssignment(logger, solution.list(),tree, size, complete);
+				autoSolution = constructAutomatonFromAssignment(logger, solution.list(),
+						tree, size, true, completenessType);
 				if (verifier.verify(autoSolution.getLeft())) {
 					logger.info("SAT");
 					closer.accept(formula);

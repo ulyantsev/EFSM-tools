@@ -3,7 +3,7 @@
  */
 package qbf.egorov.ltl.buchi;
 
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 import qbf.egorov.ltl.grammar.IExpression;
@@ -18,8 +18,8 @@ public class TransitionCondition {
     private final Set<IExpression<Boolean>> negExprs;
 
     public TransitionCondition() {
-        exprs = new HashSet<>();
-        negExprs = new HashSet<>();
+        exprs = new LinkedHashSet<>();
+        negExprs = new LinkedHashSet<>();
     }
 
     public TransitionCondition(Set<IExpression<Boolean>> exprs, Set<IExpression<Boolean>> negExprs) {

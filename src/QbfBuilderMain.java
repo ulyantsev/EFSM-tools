@@ -30,14 +30,12 @@ import qbf.reduction.SolvingStrategy;
 import qbf.reduction.Verifier;
 import scenario.StringScenario;
 import structures.Automaton;
+import structures.Node;
 import structures.ScenariosTree;
 import structures.Transition;
-import tools.AutomatonCompletenessChecker;
 import algorithms.AutomatonCompleter.CompletenessType;
 import algorithms.BacktrackingAutomatonBuilder;
-import algorithms.CounterexampleAutomatonBuilder;
 import algorithms.HybridAutomatonBuilder;
-import algorithms.HybridCounterexampleAutomatonBuilder;
 import algorithms.IterativeAutomatonBuilder;
 import algorithms.QbfAutomatonBuilder;
 import bool.MyBooleanExpression;
@@ -97,16 +95,12 @@ public class QbfBuilderMain {
 	@Option(name = "--timeout", aliases = { "-to" }, usage = "solver timeout (sec)", metaVar = "<timeout>")
 	private int timeout = 60 * 60 * 24;
 	
-	@Option(name = "--strategy", aliases = { "-str" }, usage = "solving mode: QSAT, EXP_SAT, ITERATIVE_SAT, BACKTRACKING, HYBRID, ITERATIVE_COUNTEREXAMPLE_SAT, HYBRID_COUNTEREXAMPLE",
+	@Option(name = "--strategy", aliases = { "-str" }, usage = "solving mode: QSAT, EXP_SAT, BACKTRACKING, ITERATIVE_SAT, HYBRID",
 			metaVar = "<strategy>")
 	private String strategy = SolvingStrategy.QSAT.name();
 	
-	@Option(name = "--complete", aliases = { "-c" }, handler = BooleanOptionHandler.class,
-            usage = "generate automaton which has a transition for all (event, expression) pairs")
-	private boolean complete;
-	
 	@Option(name = "--completenessType", aliases = { "-ct" },
-            usage = "a special option for incomplete FSM induction: suppresses dead ends (NORMAL, NO_DEAD_ENDS, NO_DEAD_ENDS_WALKINSHAW)",
+            usage = "NORMAL = usual completeness, NO_DEAD_ENDS = at least one transition from each state, NO_DEAD_ENDS_WALKINSHAW)",
             metaVar = "<completenessType>")
 	private String completenessType = CompletenessType.NORMAL.name();
 	
@@ -257,8 +251,6 @@ public class QbfBuilderMain {
 				}
 			}
 			
-			
-			
 			Optional<Automaton> resultAutomaton = null;
 			final Verifier verifier = new Verifier(size, logger, ltlFilePath, events, actions, varNumber);
 			final long finishTime = System.currentTimeMillis() + timeout * 1000;
@@ -266,34 +258,23 @@ public class QbfBuilderMain {
 			case QSAT: case EXP_SAT:
 				resultAutomaton = QbfAutomatonBuilder.build(logger, tree, formulae, size, ltlFilePath,
 						qbfsolver, solverParams, extractSubterms, ss == SolvingStrategy.EXP_SAT,
-						events, actions, satsolver, verifier, finishTime, complete, completenesstype);
+						events, actions, satsolver, verifier, finishTime, completenesstype);
 				break;
 			case HYBRID:
 				resultAutomaton = HybridAutomatonBuilder.build(logger, tree, formulae, size, ltlFilePath,
 						qbfsolver, solverParams, extractSubterms,
-						events, actions, satsolver, verifier, finishTime, complete, completenesstype,
-						hybridSecToGenerateFormula, hybridSecToSolve);
-				break;
-			case HYBRID_COUNTEREXAMPLE:
-				resultAutomaton = HybridCounterexampleAutomatonBuilder.build(logger, tree, formulae, size, ltlFilePath,
-						qbfsolver, solverParams, extractSubterms,
-						events, actions, satsolver, verifier, finishTime, complete, completenesstype,
+						events, actions, satsolver, verifier, finishTime, completenesstype,
 						hybridSecToGenerateFormula, hybridSecToSolve);
 				break;
 			case ITERATIVE_SAT:
 				resultAutomaton = IterativeAutomatonBuilder.build(logger, tree, size, solverParams,
 						resultFilePath, ltlFilePath, formulae, events, actions, satsolver, verifier, finishTime,
-						complete, completenesstype);
-				break;
-			case ITERATIVE_COUNTEREXAMPLE_SAT:
-				resultAutomaton = CounterexampleAutomatonBuilder.build(logger, tree, size, solverParams,
-						resultFilePath, ltlFilePath, formulae, events, actions, satsolver, verifier, finishTime,
-						complete, completenesstype);
+						completenesstype);
 				break;
 			case BACKTRACKING:
 				resultAutomaton = BacktrackingAutomatonBuilder.build(logger, tree, size,
 						resultFilePath, ltlFilePath, formulae, events, actions, verifier, finishTime,
-						complete, completenesstype);
+						completenesstype);
 				break;
 			}
 			final double executionTime = (System.currentTimeMillis() - startTime) / 1000.;
@@ -337,23 +318,39 @@ public class QbfBuilderMain {
 					if (checkBfs(resultAutomaton.get(), events, logger)) {
 						logger.info("BFS");
 					} else {
-						if (ss == SolvingStrategy.ITERATIVE_SAT || ss == SolvingStrategy.HYBRID
-								|| ss == SolvingStrategy.HYBRID_COUNTEREXAMPLE) {
-							logger.info("NOT BFS (possibly due to transition redirections)");
-						} else {
-							logger.severe("NOT BFS");
-						}
+						logger.info("NOT BFS (possibly due to transition redirections)");
 					}
 				}
 				
 				// completeness check
-				if (complete && completenesstype == CompletenessType.NORMAL) {
-					String s = AutomatonCompletenessChecker.checkCompleteness(resultAutomaton.get());
-					if (s.equals("COMPLETE")) {
-						logger.info(s);
-					} else {
-						logger.severe(s);
+				boolean complete = true;
+				switch (completenesstype) {
+				case NORMAL:
+					for (Node s : resultAutomaton.get().getStates()) {
+						if (s.transitionsCount() != events.size()) {
+							complete = false;
+						}
 					}
+					break;
+				case NO_DEAD_ENDS:
+					for (Node s : resultAutomaton.get().getStates()) {
+						if (s.transitionsCount() == 0) {
+							complete = false;
+						}
+					}
+					break;
+				case NO_DEAD_ENDS_WALKINSHAW:
+					for (Node s : resultAutomaton.get().getStates()) {
+						if (s.getTransitions().stream().allMatch(t -> t.getActions().getActions().length == 1)) {
+							complete = false;
+						}
+					}
+					break;
+				}
+				if (complete) {
+					logger.info("COMPLETE");
+				} else {
+					logger.severe("INCOMPLETE");
 				}
 			}
 		} catch (ParseException | LtlParseException e) {

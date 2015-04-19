@@ -3,7 +3,11 @@
  */
 package qbf.egorov.ltl.buchi;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * TODO: add comment
@@ -12,8 +16,8 @@ import java.util.*;
  */
 public class BuchiAutomata {
     private BuchiNode startNode;
-    private Set<BuchiNode> nodes = new HashSet<>();
-    private Map<Integer, Set<? extends BuchiNode>> accept = new HashMap<>();
+    private final Set<BuchiNode> nodes = new LinkedHashSet<>();
+    private final Map<Integer, Set<? extends BuchiNode>> accept = new LinkedHashMap<>();
     private int acceptSetsCount = 0;
 
     public BuchiNode getStartNode() {
@@ -29,7 +33,7 @@ public class BuchiAutomata {
     }
 
     public Set<? extends BuchiNode> getAcceptSet(int i) {
-        if ((i < 0) || (i >= acceptSetsCount)) {
+        if (i < 0 || i >= acceptSetsCount) {
             throw new IndexOutOfBoundsException("Should be 0 <= i < acceptSetsCount");
         }
         return accept.get(i);
@@ -52,12 +56,6 @@ public class BuchiAutomata {
 
     public void addNode(BuchiNode node) {
         nodes.add(node);
-    }
-
-    public void addNodes(Collection<? extends BuchiNode> nodes) {
-        for (BuchiNode n: nodes) {
-            addNode(n);
-        }
     }
 
     public String toString() {

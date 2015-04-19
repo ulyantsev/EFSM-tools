@@ -13,6 +13,7 @@ import algorithms.AutomatonCompleter.CompletenessType;
 import qbf.egorov.ltl.grammar.LtlNode;
 import qbf.reduction.Assignment;
 import qbf.reduction.BooleanFormula.SolveAsSatResult;
+import qbf.reduction.BooleanVariable;
 import qbf.reduction.ExpandableStringFormula;
 import qbf.reduction.SatSolver;
 import qbf.reduction.SolverResult;
@@ -39,14 +40,14 @@ public class IterativeAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 		logger.info(ass.type().toString());
 
 		if (ass.type() == SolverResults.SAT) {
-			final Pair<Automaton, List<Assignment>> p = constructAutomatonFromAssignment
-					(logger, ass.list(), tree, size, false);
+			final Pair<Automaton, List<BooleanVariable>> p = constructAutomatonFromAssignment
+					(logger, ass.list(), tree, size, false, null);
 
 			// add new constraints
 			// important: scenario-unsupported y-variables are not included!
 			// (because we will try all the redirections of such transitions)
 			f.addProhibitionConstraint(p.getRight().stream()
-					.map(v -> v.negate()).collect(Collectors.toList()));
+					.map(v -> new Assignment(v, false)).collect(Collectors.toList()));
 			return Optional.of(p.getLeft());
 		} else {
 			return Optional.empty();
@@ -61,10 +62,10 @@ public class IterativeAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 	public static Optional<Automaton> build(Logger logger, ScenariosTree tree, int size, String solverParams,
 			String resultFilePath, String ltlFilePath, List<LtlNode> formulae,
 			List<String> events, List<String> actions, SatSolver satSolver,
-			Verifier verifier, long finishTime, boolean complete, CompletenessType completenessType) throws IOException {
+			Verifier verifier, long finishTime, CompletenessType completenessType) throws IOException {
 		deleteTrash();
 		try (final ExpandableStringFormula f = new ExpandableStringFormula(
-				new SatFormulaBuilder(tree, size, events, actions, false,
+				new SatFormulaBuilder(tree, size, events, actions,
 						CompletenessType.NORMAL, false).getFormula().simplify()
 				.toLimbooleString(), logger, satSolver, solverParams)) {
 			for (int iteration = 0; System.currentTimeMillis() < finishTime; iteration++) {
@@ -73,9 +74,6 @@ public class IterativeAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 						secondsLeft, tree, size);
 				if (automaton.isPresent()) {
 					if (verifier.verify(automaton.get())) {
-						if (!complete) {
-							return reportResult(logger, iteration, automaton);
-						}
 						try {
 							// extra transition search with verification
 							new AutomatonCompleter(verifier, automaton.get(), events, actions,

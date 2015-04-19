@@ -14,15 +14,15 @@ public class SatFormulaBuilder extends FormulaBuilder {
 	private final boolean includeActionVars;
 	
 	public SatFormulaBuilder(ScenariosTree tree, int colorSize,
-			List<String> events, List<String> actions, boolean complete,
+			List<String> events, List<String> actions,
 			CompletenessType completenessType, boolean includeActionVars) {
-		super(colorSize, tree, complete, completenessType, events, actions);
+		super(colorSize, tree, completenessType, events, actions);
 		this.includeActionVars = includeActionVars;
 	}
 
 	public BooleanFormula getFormula() {
 		addColorVars();
 		addTransitionVars(includeActionVars);
-		return scenarioConstraints(includeActionVars).assemble();
+		return scenarioConstraints(includeActionVars).assemble().and(varPresenceConstraints());
 	}
 }

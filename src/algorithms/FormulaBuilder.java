@@ -25,17 +25,15 @@ public abstract class FormulaBuilder {
 	protected final List<String> events;
 	protected final List<String> actions;
 	protected final ScenariosTree tree;
-	protected final boolean complete;
 	protected final CompletenessType completenessType;
 	protected final List<BooleanVariable> existVars = new ArrayList<>();
 	
-	public FormulaBuilder(int colorSize, ScenariosTree tree, boolean complete,
+	public FormulaBuilder(int colorSize, ScenariosTree tree,
 			CompletenessType completenessType, List<String> events, List<String> actions) {
 		this.colorSize = colorSize;
 		this.events = events;
 		this.actions = actions;
 		this.tree = tree;
-		this.complete = complete;
 		this.completenessType = completenessType;
 	}
 	
@@ -278,23 +276,21 @@ public abstract class FormulaBuilder {
 		constraints.add(notMoreThanOneEdgeConstraints());
 		constraints.add(transitionConstraints());
 		
-		if (complete) {
-			switch (completenessType) {
-			case NORMAL:
-				constraints.add(eventCompletenessConstraints());
-				break;
-			case NO_DEAD_ENDS:
-				constraints.add(noDeadEndsConstraints());
-				break;
-			case NO_DEAD_ENDS_WALKINSHAW:
-				constraints.add(noDeadEndsWalkinshawConstraints());
-				break;
-			}
+		switch (completenessType) {
+		case NORMAL:
+			constraints.add(eventCompletenessConstraints());
+			break;
+		case NO_DEAD_ENDS:
+			constraints.add(noDeadEndsConstraints());
+			break;
+		case NO_DEAD_ENDS_WALKINSHAW:
+			constraints.add(noDeadEndsWalkinshawConstraints());
+			break;
 		}
 		
 		if (includeActionConstrains) {
 			 constraints.add(actionScenarioConsistencyConstraints());
-             if (!(complete && completenessType == CompletenessType.NORMAL)) {
+             if (completenessType != CompletenessType.NORMAL) {
             	 constraints.add(actionTransitionExistenceConstraints());
              }
 		} else {
@@ -423,6 +419,16 @@ public abstract class FormulaBuilder {
 							.implies(yVar(i, j, events.get(0)))
 					);
 				}
+			}
+		}
+		return constraints.assemble();
+	}
+	
+	protected BooleanFormula varPresenceConstraints() {
+		FormulaList constraints = new FormulaList(BinaryOperations.AND);
+		for (BooleanVariable v : existVars) {
+			if (v.name.startsWith("z")) {
+				constraints.add(v.or(v.not()));
 			}
 		}
 		return constraints.assemble();

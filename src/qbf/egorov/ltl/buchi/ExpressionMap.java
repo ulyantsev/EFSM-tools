@@ -5,7 +5,7 @@ package qbf.egorov.ltl.buchi;
 
 import qbf.egorov.ltl.grammar.IExpression;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 
-public class ExpressionMap extends HashMap<String, IExpression<Boolean>> {
+public class ExpressionMap extends LinkedHashMap<String, IExpression<Boolean>> {
 }

@@ -80,13 +80,13 @@ public class VerifierTest {
 		new File(filename).delete();
 	}
 	
-	public static void test3() throws IOException, ParseException {
+	/*public static void test3() throws IOException, ParseException {
 		Logger logger = Logger.getLogger("Logger");
 		Automaton a = AutomatonGVLoader.load("qbf/t.gv");
 		Verifier v = new Verifier(a.statesCount(), logger, "qbf/testing-daniil/200n/nstates=5/5/formulae",
 				Arrays.asList("A00", "A01", "A10", "A11", "B00", "B01", "B10", "B11"), Arrays.asList("z0", "z1"), 2);
 		System.out.println(v.verifyWithCounterExamples(a));
-	}
+	}*/
 	
 	public static void randomTestsIgor() throws IOException, ParseException {
 		Logger logger = Logger.getLogger("Logger");
