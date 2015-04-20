@@ -38,6 +38,7 @@ import algorithms.BacktrackingAutomatonBuilder;
 import algorithms.HybridAutomatonBuilder;
 import algorithms.IterativeAutomatonBuilder;
 import algorithms.QbfAutomatonBuilder;
+import algorithms.TrueCounterexampleAutomatonBuilder;
 import bool.MyBooleanExpression;
 
 public class QbfBuilderMain {
@@ -268,6 +269,11 @@ public class QbfBuilderMain {
 				break;
 			case ITERATIVE_SAT:
 				resultAutomaton = IterativeAutomatonBuilder.build(logger, tree, size, solverParams,
+						resultFilePath, ltlFilePath, formulae, events, actions, satsolver, verifier, finishTime,
+						completenesstype);
+				break;
+			case COUNTEREXAMPLE:
+				resultAutomaton = TrueCounterexampleAutomatonBuilder.build(logger, tree, size, solverParams,
 						resultFilePath, ltlFilePath, formulae, events, actions, satsolver, verifier, finishTime,
 						completenesstype);
 				break;

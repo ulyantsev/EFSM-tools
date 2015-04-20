@@ -43,7 +43,7 @@ public abstract class ScenarioAndLtlAutomatonBuilder {
 
 		// color the scenario tree codes according to the assignment
 		ass.stream()
-				.filter(a -> a.value && a.var.name.startsWith("x"))
+				.filter(a -> a.value && a.var.name.startsWith("x_"))
 				.forEach(a -> {
 					String[] tokens = a.var.name.split("_");
 					assert tokens.length == 3;
@@ -51,7 +51,6 @@ public abstract class ScenarioAndLtlAutomatonBuilder {
 					int color = Integer.parseInt(tokens[2]);
 					nodeColors[node] = color;
 				});
-
 		// add transitions from scenarios
 		Automaton ans = new Automaton(colorSize);
 		for (int i = 0; i < tree.nodesCount(); i++) {
@@ -69,7 +68,7 @@ public abstract class ScenarioAndLtlAutomatonBuilder {
 		if (complete) {
 			// add other transitions
 			for (Assignment a : ass.stream()
-					.filter(a -> a.value && a.var.name.startsWith("y"))
+					.filter(a -> a.value && a.var.name.startsWith("y_"))
 					.collect(Collectors.toList())) {
 				String[] tokens = a.var.name.split("_");
 				assert tokens.length == 4;

@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import actions.StringActions;
 import bool.MyBooleanExpression;
@@ -89,7 +90,7 @@ public class StringScenario {
     									events.size() + " " + expressions.size() + " " + actions.size());
     	}
 
-    	this.events = new ArrayList<>(Collections.singletonList(events));
+    	this.events = events.stream().map(e -> Collections.singletonList(e)).collect(Collectors.toList());
     	this.expressions = new ArrayList<>(expressions);
     	this.actions = new ArrayList<>(actions);
     }

@@ -35,7 +35,7 @@ public class ScenariosTree {
         }
     }
 
-    private void addScenario(StringScenario scenario) throws ParseException {
+    public void addScenario(StringScenario scenario) throws ParseException {
         Node node = root;
         for (int i = 0; i < scenario.size(); i++) {
             addTransitions(node, scenario.getEvents(i), scenario.getExpr(i), scenario.getActions(i));
