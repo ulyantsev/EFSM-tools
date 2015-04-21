@@ -36,9 +36,9 @@ import rwth.i2.ltl2ba4j.model.IState;
  * @author Kirill Egorov
  */
 public class EgorovGrammarConverter {
-    private AutomataContext context;
-    private Object predicatesObj;
-    private Map<String, Method> predicates = new HashMap<>();
+    private final AutomataContext context;
+    private final Object predicatesObj;
+    private final Map<String, Method> predicates = new HashMap<>();
 
     public EgorovGrammarConverter(AutomataContext context, IPredicateFactory predicatesObj) {
         if (context == null) {
@@ -134,7 +134,7 @@ public class EgorovGrammarConverter {
             } else {
                 if (StateMachine.class.isAssignableFrom(pClass)) {
                     String name = getValue((ASTProperty) node._children[i]);
-                    addToList(args, context.getStateMachine(name), pClass, name);
+                    addToList(args, context.getStateMachine(), pClass, name);
                 } else if (ControlledObject.class.isAssignableFrom(pClass)) {
                     String name = getValue((ASTProperty) node._children[i]);
                     addToList(args, context.getControlledObject(), pClass, name);
@@ -143,8 +143,7 @@ public class EgorovGrammarConverter {
                     addToList(args, context.getEventProvider(), pClass, name);
                 } else if (IState.class.isAssignableFrom(pClass)) {
                     ASTChain chain = (ASTChain) node._children[i];
-                    String automata = getValue((ASTProperty) chain._children[0]);
-                    StateMachine sm = context.getStateMachine(automata);
+                    StateMachine sm = context.getStateMachine();
                     String state = getValue((ASTProperty) chain._children[1]);
                     SimpleState s = sm.getState(state);
                     addToList(args, s, pClass, chain.toString());

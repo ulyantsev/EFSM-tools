@@ -17,7 +17,7 @@ import java.util.Set;
 public class BuchiAutomata {
     private BuchiNode startNode;
     private final Set<BuchiNode> nodes = new LinkedHashSet<>();
-    private final Map<Integer, Set<? extends BuchiNode>> accept = new LinkedHashMap<>();
+    private final Map<Integer, Set<BuchiNode>> accept = new LinkedHashMap<>();
     private int acceptSetsCount = 0;
 
     public BuchiNode getStartNode() {
@@ -32,7 +32,7 @@ public class BuchiAutomata {
         return Collections.unmodifiableSet(nodes);
     }
 
-    public Set<? extends BuchiNode> getAcceptSet(int i) {
+    public Set<BuchiNode> getAcceptSet(int i) {
         if (i < 0 || i >= acceptSetsCount) {
             throw new IndexOutOfBoundsException("Should be 0 <= i < acceptSetsCount");
         }
@@ -43,7 +43,7 @@ public class BuchiAutomata {
         return acceptSetsCount;
     }
 
-    public void addAcceptSet(Set<? extends BuchiNode> acceptSet) {
+    public void addAcceptSet(Set<BuchiNode> acceptSet) {
         if (acceptSet == null || acceptSet.isEmpty()) {
             throw new IllegalArgumentException("acceptSet can't be null or emty");
         }
@@ -67,7 +67,7 @@ public class BuchiAutomata {
         for (BuchiNode n: nodes) {
             buf.append(n);
         }
-        for (Map.Entry<Integer, Set<? extends BuchiNode>> entry: accept.entrySet()) {
+        for (Map.Entry<Integer, Set<BuchiNode>> entry: accept.entrySet()) {
             buf.append(String.format("Accept set %d [", entry.getKey()));
             for (BuchiNode node: entry.getValue()) {
                 buf.append(node.getID()).append(", ");
@@ -76,5 +76,4 @@ public class BuchiAutomata {
         }
         return buf.toString();
     }
-
 }

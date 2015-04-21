@@ -29,7 +29,7 @@ public class AutomataContext {
         return ep;
     }
 
-    public StateMachine getStateMachine(String name) {
+    public StateMachine getStateMachine() {
         return machine;
     }
 

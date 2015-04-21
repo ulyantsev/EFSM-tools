@@ -95,7 +95,7 @@ public class VerifierFactory {
     // returns counterexamples
     public List<List<String>> verify() {
         List<List<String>> counterexamples = new ArrayList<>();
-        SimpleVerifier verifier = new SimpleVerifier(context.getStateMachine(null).getInitialState());
+        SimpleVerifier verifier = new SimpleVerifier(context.getStateMachine().getInitialState());
 
         for (BuchiAutomata buchi : preparedFormulas) {
             List<IntersectionTransition> list = verifier.verify(buchi, predicates);

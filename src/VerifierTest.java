@@ -29,7 +29,7 @@ public class VerifierTest {
 		String filename = "tmp.ltl";
 
 		for (String ltl : Arrays.asList(
-				"wasEvent(ep.A)", "!wasEvent(ep.B)", "!wasEvent(ep.A)", "wasEvent(ep.B)",
+				"!wasEvent(ep.A)", "wasEvent(ep.B)", "wasEvent(ep.A)", "!wasEvent(ep.B)",
 				"X(wasEvent(ep.B))", "X(wasEvent(ep.C))", "X(wasEvent(ep.B) || wasEvent(ep.C))",
 				"true", "false", "G(wasEvent(ep.A))", "G(wasEvent(ep.A) || wasEvent(ep.B))",
 				"G(!wasEvent(ep.C) || X(wasEvent(ep.C) || wasEvent(ep.B)))",
@@ -61,7 +61,8 @@ public class VerifierTest {
 				"G(!wasEvent(ep.setdim) || X(!wasEvent(ep.setpos)))",
 				"F(wasEvent(ep.setpos))", // false
 				"G(!wasEvent(ep.setpos) || X(F(wasEvent(ep.setpos))))", //false
-				"F(G(wasEvent(ep.figure)))", "F(G(wasEvent(ep.text)))", //false
+				"F(G(wasEvent(ep.figure)))",  //false
+				"F(G(wasEvent(ep.text)))", //false
 				"G(wasEvent(ep.figure) || wasEvent(ep.text) || wasEvent(ep.setpos) || wasEvent(ep.setdim))" // false
 				);
 		for (String ltl : formulae) {
@@ -94,6 +95,7 @@ public class VerifierTest {
 			for (String completeness : Arrays.asList("incomplete", "complete")) {
 				for (int i = 0; i < 50; i++) {
 					Automaton a = AutomatonGVLoader.load("qbf/testing/" + completeness + "/fsm-" + states + "-" + i + ".dot");
+					System.out.println(a);
 					for (boolean verdict : Arrays.asList(true, false)) {
 						System.out.println(completeness + " " + states + " " + i + " " + verdict);
 						Verifier v = new Verifier(a.statesCount(), logger, "qbf/testing/" + completeness + "/fsm-" + states + "-" + i + "-" + verdict + ".ltl",
@@ -101,7 +103,7 @@ public class VerifierTest {
 						List<List<String>> result = v.verifyWithCounterExamples(a);
 						boolean boolResult = result.stream().allMatch(List::isEmpty);
 						if (boolResult != verdict) {
-							throw new AssertionError("Fail");
+							throw new AssertionError("Expected " + verdict + ", got " + boolResult);
 						}
 						if (!boolResult) {
 							System.out.println(result.toString().replaceAll("[ ,]", ""));
@@ -112,9 +114,32 @@ public class VerifierTest {
 		}
 	}
 	
+	public static void randomTestsIgor_() throws IOException, ParseException {
+		Logger logger = Logger.getLogger("Logger");
+		int states = 3;
+		String completeness = "incomplete";
+		int i = 12;
+		Automaton a = AutomatonGVLoader.load("qbf/testing/" + completeness + "/fsm-" + states + "-" + i + ".dot");
+		System.out.println(a);
+		boolean verdict = false;
+		System.out.println(completeness + " " + states + " " + i + " " + verdict);
+		Verifier v = new Verifier(a.statesCount(), logger, "qbf/testing/" + completeness + "/fsm-" + states + "-" + i + "-" + verdict + ".ltl",
+			Arrays.asList("A", "B", "C", "D"), Arrays.asList("z0", "z1", "z2", "z3"), 0);
+		List<List<String>> result = v.verifyWithCounterExamples(a);
+		System.out.println(result);
+		boolean boolResult = result.stream().allMatch(List::isEmpty);
+		if (boolResult != verdict) {
+			throw new AssertionError("Expected " + verdict + ", got " + boolResult);
+		}
+		if (!boolResult) {
+			System.out.println(result.toString().replaceAll("[ ,]", ""));
+		}
+	}
+	
 	public static void main(String[] args) throws IOException, ParseException {
 		//test1();
 		//test2();
 		randomTestsIgor();
+		//randomTestsIgor_();
 	}
 }
