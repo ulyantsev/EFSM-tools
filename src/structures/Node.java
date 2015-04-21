@@ -8,7 +8,7 @@ import actions.StringActions;
 import bool.MyBooleanExpression;
 
 public class Node {
-    private final int number;
+    private int number;
     private final Map<String, Transition> transitions;
     
     public Node(int number) {
@@ -18,6 +18,10 @@ public class Node {
     
     public int getNumber() {
         return number;
+    }
+    
+    public void setNumber(int number) {
+    	this.number = number;
     }
     
     public boolean hasTransition(String event, MyBooleanExpression expr) {

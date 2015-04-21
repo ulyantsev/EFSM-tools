@@ -58,37 +58,14 @@ public class TrueCounterexampleAutomatonBuilder extends ScenarioAndLtlAutomatonB
 		return a;
 	}
 	
-	private static void addCounterexample__old(Logger logger, Automaton a,
-			List<String> counterexample, NegativeScenariosTree negativeTree) {
-		int state = a.getStartState().getNumber();
-		final List<MyBooleanExpression> expressions = new ArrayList<>();
-		final List<StringActions> actions = new ArrayList<>();
-		List<String> description = new ArrayList<>();
-		for (String event : counterexample) {
-			final Transition t = a.getState(state).getTransition(event, MyBooleanExpression.getTautology());
-			expressions.add(t.getExpr());
-			actions.add(t.getActions());
-			description.add(event + "/[" + t.getActions() + "]");
-			final int newState = t.getDst().getNumber();			
-			state = newState;
-		}
-		logger.info("ADDING COUNTEREXAMPLE: " + description);
-		try {
-			negativeTree.addScenario(new StringScenario(true, counterexample, expressions, actions));
-		} catch (ParseException e) {
-			throw new RuntimeException(e);
-		}
-	}
-	
 	private static void addCounterexample(Logger logger, Automaton a,
 			List<String> counterexample, NegativeScenariosTree negativeTree) {
 		int state = a.getStartState().getNumber();
 		final List<MyBooleanExpression> expressions = new ArrayList<>();
 		final List<StringActions> actions = new ArrayList<>();
 		List<String> description = new ArrayList<>();
-		int[] states = new int[counterexample.size() + 1];
-		states[0] = state;
-		int j = 1;
+		List<Integer> states = new ArrayList<>();
+		states.add(state);
 		for (String event : counterexample) {
 			final Transition t = a.getState(state).getTransition(event, MyBooleanExpression.getTautology());
 			expressions.add(t.getExpr());
@@ -96,10 +73,10 @@ public class TrueCounterexampleAutomatonBuilder extends ScenarioAndLtlAutomatonB
 			description.add(event + "/[" + t.getActions() + "]");
 			final int newState = t.getDst().getNumber();			
 			state = newState;
-			states[j++] = newState;
+			states.add(newState);
 		}
-		for (int i = states.length - 2; i >= 0; i--) {
-			if (states[i] == states[states.length - 1]) {
+		for (int i = states.size() - 2; i >= 0; i--) {
+			if (states.get(i) == states.get(states.size() - 1)) {
 				// duplicate the loop
 				counterexample.addAll(counterexample.subList(i, counterexample.size()));
 				expressions.addAll(expressions.subList(i, expressions.size()));
@@ -107,7 +84,6 @@ public class TrueCounterexampleAutomatonBuilder extends ScenarioAndLtlAutomatonB
 				description.addAll(description.subList(i, description.size()));
 				break;
 			}
-			// TODO consider adding a loop only if there is no repetition
 		}
 		logger.info("ADDING COUNTEREXAMPLE: " + description);
 		try {
