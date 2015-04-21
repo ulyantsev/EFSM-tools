@@ -113,7 +113,6 @@ public class TrueCounterexampleAutomatonBuilder extends ScenarioAndLtlAutomatonB
 				if (verified) {
 					return reportResult(logger, iteration, automaton);
 				}
-				System.out.println(automaton.get());
 				for (List<String> counterexample : counterexamples) {
 					if (!counterexample.isEmpty()) {
 						addCounterexample(logger, automaton.get(), counterexample, negativeTree);

@@ -6,7 +6,12 @@ print_sat() {
     else
         local med="[%3.0f]"
     fi
-    printf "%13s sat   %2d, unknown %2d, unsat %2d, total %2d, solved fraction %5s%%, median time $med\n" $1 $2 $3 $4 $(($2 + $3 + $4)) $(python -c "print(round(float($2) / ($2 + $3 + $4) * 100, 2))") $5
+    if (($2 > 37)); then
+        local q3="%5.1f"
+    else
+        local q3="[%3.0f]"
+    fi
+    printf "%13s sat   %2d, unknown %2d, unsat %2d, total %2d, solved fraction %5s%%, q2=$med, q3=$q3\n" $1 $2 $3 $4 $(($2 + $3 + $4)) $(python -c "print(round(float($2) / ($2 + $3 + $4) * 100, 2))") $5 $6
 }
 
 print_unsat() {
@@ -15,7 +20,12 @@ print_unsat() {
     else
         local med="[%3.0f]"
     fi
-    printf "%13s unsat %2d, unknown %2d, sat   %2d, total %2d, solved fraction %5s%%, median time $med\n" $1 $2 $3 $4 $(($2 + $3 + $4)) $(python -c "print(round(float($2) / ($2 + $3 + $4) * 100, 2))") $5
+    if (($2 > 37)); then
+        local q3="%5.1f"
+    else
+        local q3="[%3.0f]"
+    fi
+    printf "%13s unsat %2d, unknown %2d, sat   %2d, total %2d, solved fraction %5s%%, q2=$med, q3=$q3\n" $1 $2 $3 $4 $(($2 + $3 + $4)) $(python -c "print(round(float($2) / ($2 + $3 + $4) * 100, 2))") $5 $6
 }
 
 print_found_by_prefix() {
@@ -38,11 +48,12 @@ print_found_by_prefix() {
     else
         q2=${arr[$(($len / 2))]}
     fi
-    
+    q3=${arr[$(($len * 3 / 4))]}
+
     if [[ "$prefix" == "${prefix/-fa/}" ]]; then
-        print_sat $prefix $sat $unknown $unsat $q2
+        print_sat $prefix $sat $unknown $unsat $q2 $q3
     else
-        print_unsat $prefix $unsat $unknown $sat $q2
+        print_unsat $prefix $unsat $unknown $sat $q2 $q3
     fi
 }
 

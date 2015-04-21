@@ -5,7 +5,9 @@ package algorithms;
  */
 
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.lang3.ArrayUtils;
 
@@ -25,11 +27,29 @@ import algorithms.AutomatonCompleter.CompletenessType;
 public class SatFormulaBuilderNegativeSC extends FormulaBuilder {
 	private final NegativeScenariosTree negativeTree;
 	
+	// the ones present in the scenario tree
+    private final Map<NegativeNode, Node> verifiedNodes = new LinkedHashMap<>();
+	
 	public SatFormulaBuilderNegativeSC(ScenariosTree tree, int colorSize,
 			List<String> events, List<String> actions,
 			CompletenessType completenessType, NegativeScenariosTree negativeTree) {
 		super(colorSize, tree, completenessType, events, actions);
 		this.negativeTree = negativeTree;
+		findVerifiedNodes(tree.getRoot(), negativeTree.getRoot());
+	}
+	
+	private void findVerifiedNodes(Node positiveNode, NegativeNode negativeNode) {
+		// premise: this negativeNode is present in the scenario tree
+		if (negativeNode.terminal()) {
+			throw new AssertionError();
+		}
+		verifiedNodes.put(negativeNode, positiveNode);
+		for (Transition t : positiveNode.getTransitions()) {
+			Node negativeChild = negativeNode.getDst(t.getEvent(), t.getExpr(), t.getActions());
+			if (negativeChild != null) {
+				findVerifiedNodes(t.getDst(), (NegativeNode) negativeChild);
+			}
+		}
 	}
 	
 	public static BooleanVariable xxVar(int state, int color) {
@@ -47,29 +67,41 @@ public class SatFormulaBuilderNegativeSC extends FormulaBuilder {
 	private BooleanFormula eachNegativeNodeHasOneColorConstraints() {
 		FormulaList constraints = new FormulaList(BinaryOperations.AND);
 		for (NegativeNode node : negativeTree.getNodes()) {
-			if (node == negativeTree.getRoot()) { // the root has color 0
+			final int num = node.getNumber();
+			if (node == negativeTree.getRoot()) {
+				// the root has color 0
 				constraints.add(xxVar(0, 0));
 				for (int i = 1; i <= colorSize; i++) {
 					constraints.add(xxVar(0, i).not());
 				}
-			} else if (node.terminal()) { // each terminal node is invalid
+			} else if (verifiedNodes.containsKey(node)) {
+				// verified nodes are colored according to the coloring of the positive tree
+				final Node positiveNode = verifiedNodes.get(node);
+				constraints.add(invalid(node).not());
+				for (int i = 0; i < colorSize; i++) {
+					constraints.add(xxVar(num, i).equivalent(xVar(positiveNode.getNumber(), i)));
+				}
+			} else if (node.terminal()) {
+				// each terminal node is invalid
 				constraints.add(invalid(node));
 				for (int i = 0; i < colorSize; i++) {
-					constraints.add(xxVar(node.getNumber(), i).not());
+					constraints.add(xxVar(num, i).not());
 				}
 			} else {
+				// 'unknown' nodes
+				
 				// at least one color
 				FormulaList terms = new FormulaList(BinaryOperations.OR);
 				for (int color = 0; color <= colorSize; color++) {
-					terms.add(xxVar(node.getNumber(), color));
+					terms.add(xxVar(num, color));
 				}
 				constraints.add(terms.assemble());
 				
 				// at most one color
 				for (int color1 = 0; color1 <= colorSize; color1++) {
 					for (int color2 = 0; color2 < color1; color2++) {
-						BooleanVariable v1 = xxVar(node.getNumber(), color1);
-						BooleanVariable v2 = xxVar(node.getNumber(), color2);					
+						BooleanVariable v1 = xxVar(num, color1);
+						BooleanVariable v2 = xxVar(num, color2);					
 						constraints.add(v1.not().or(v2.not()));
 					}
 				}
@@ -80,15 +112,20 @@ public class SatFormulaBuilderNegativeSC extends FormulaBuilder {
 
 	private BooleanFormula properTransitionYConstraints() {
 		FormulaList constraints = new FormulaList(BinaryOperations.AND);
-		for (Node node : negativeTree.getNodes()) {
+		for (NegativeNode node : negativeTree.getNodes()) {
 			for (Transition t : node.getTransitions()) {
+				NegativeNode child = (NegativeNode) t.getDst();
+				if (verifiedNodes.containsKey(child)) {
+					continue;
+					// the positive tree implies these constraints
+				}
 				for (int nodeColor = 0; nodeColor < colorSize; nodeColor++) {
+					BooleanVariable nodeVar = xxVar(node.getNumber(), nodeColor);
 					for (int childColor = 0; childColor < colorSize; childColor++) {
-						BooleanVariable nodeVar = xxVar(node.getNumber(), nodeColor);
-						BooleanVariable childVar = xxVar(t.getDst().getNumber(), childColor);
+						BooleanVariable childVar = xxVar(child.getNumber(), childColor);
 						BooleanVariable relationVar = yVar(nodeColor, childColor, t.getEvent());
 						constraints.add(BinaryOperation.or(relationVar, nodeVar.not(), childVar.not()));
-						constraints.add(BinaryOperation.or(relationVar.not(), nodeVar.not(), childVar, invalid(t.getDst())));
+						constraints.add(BinaryOperation.or(relationVar.not(), nodeVar.not(), childVar, invalid(child)));
 					}
 				}
 			}
@@ -105,6 +142,12 @@ public class SatFormulaBuilderNegativeSC extends FormulaBuilder {
 				FormulaList zConstraints = new FormulaList(BinaryOperations.AND);
 				zConstraints.add(xxVar(node.getNumber(), i));
 				for (Transition t : node.getTransitions()) {
+					NegativeNode child = (NegativeNode) t.getDst();
+					if (verifiedNodes.containsKey(child)) {
+						continue;
+						// the positive tree implies these constraints
+					}
+					
 					FormulaList innerConstraints = new FormulaList(BinaryOperations.AND);
 					List<String> actionSequence = Arrays.asList(t.getActions().getActions());
 					for (String action : actions) {
@@ -130,6 +173,12 @@ public class SatFormulaBuilderNegativeSC extends FormulaBuilder {
 		for (NegativeNode parent : negativeTree.getNodes()) {
 			for (Transition t : parent.getTransitions()) {
 				Node child = t.getDst();
+				if (verifiedNodes.containsKey(child)) {
+					continue;
+					// it is already stated in the exactly-one-color constraints
+					// that this node is valid
+				}
+				
 				String event = t.getEvent();
 				FormulaList options = new FormulaList(BinaryOperations.OR);
 				options.add(invalid(parent));
