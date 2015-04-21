@@ -41,7 +41,10 @@ public class SatFormulaBuilderNegativeSC extends FormulaBuilder {
 	private void findVerifiedNodes(Node positiveNode, NegativeNode negativeNode) {
 		// premise: this negativeNode is present in the scenario tree
 		if (negativeNode.terminal()) {
-			throw new AssertionError();
+			//System.out.println("*************");
+			// this means that the scenario tree is inconsistent with LTL properties
+			// the solver will return UNSAT
+			return;
 		}
 		verifiedNodes.put(negativeNode, positiveNode);
 		for (Transition t : positiveNode.getTransitions()) {
