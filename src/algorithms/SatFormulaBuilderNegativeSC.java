@@ -26,15 +26,18 @@ import algorithms.AutomatonCompleter.CompletenessType;
 
 public class SatFormulaBuilderNegativeSC extends FormulaBuilder {
 	private final NegativeScenariosTree negativeTree;
+	private final List<BooleanFormula> prohibitedFsms;
 	
 	// the ones present in the scenario tree
     private final Map<NegativeNode, Node> verifiedNodes = new LinkedHashMap<>();
 	
 	public SatFormulaBuilderNegativeSC(ScenariosTree tree, int colorSize,
 			List<String> events, List<String> actions,
-			CompletenessType completenessType, NegativeScenariosTree negativeTree) {
+			CompletenessType completenessType, NegativeScenariosTree negativeTree,
+			List<BooleanFormula> prohibitedFsms) {
 		super(colorSize, tree, completenessType, events, actions);
 		this.negativeTree = negativeTree;
+		this.prohibitedFsms = prohibitedFsms;
 		findVerifiedNodes(tree.getRoot(), negativeTree.getRoot());
 	}
 	
@@ -84,20 +87,19 @@ public class SatFormulaBuilderNegativeSC extends FormulaBuilder {
 				for (int i = 0; i < colorSize; i++) {
 					constraints.add(xxVar(num, i).equivalent(xVar(positiveNode.getNumber(), i)));
 				}
-			} else if (node.terminal()) {
-				// for each loop, the terminal node is colored differently
-				for (NegativeNode loop : node.loops()) {
-					FormulaList options = new FormulaList(BinaryOperations.OR);
-					options.add(invalid(node));
-					int loopNum = loop.getNumber();
-					for (int i = 0; i < colorSize; i++) {
-						options.add(xxVar(num, i).equivalent(xxVar(loopNum, i)).not());
-					}
-					constraints.add(options.assemble());
-				}
 			} else {
-				// 'unknown' nodes
-				
+				// for each loop, the terminal node is colored differently
+				if (node.terminal()) {
+					for (NegativeNode loop : node.loops()) {
+						FormulaList options = new FormulaList(BinaryOperations.OR);
+						options.add(invalid(node));
+						int loopNum = loop.getNumber();
+						for (int i = 0; i < colorSize; i++) {
+							options.add(xxVar(num, i).equivalent(xxVar(loopNum, i)).not());
+						}
+						constraints.add(options.assemble());
+					}
+				}
 				// at least one color
 				FormulaList terms = new FormulaList(BinaryOperations.OR);
 				for (int color = 0; color <= colorSize; color++) {
@@ -223,6 +225,15 @@ public class SatFormulaBuilderNegativeSC extends FormulaBuilder {
 		return xxVar(n.getNumber(), colorSize);
 	}
 	
+	// for the completeness heuristics
+	private BooleanFormula fsmProhibitionConstraints() {
+		FormulaList constraints = new FormulaList(BinaryOperations.AND);
+		for (BooleanFormula prohibition : prohibitedFsms) {
+			constraints.add(prohibition);
+		}
+		return constraints.assemble();
+	}
+	
 	public BooleanFormula getFormula() {
 		// actions should be included into the model!
 		addColorVars();
@@ -233,6 +244,7 @@ public class SatFormulaBuilderNegativeSC extends FormulaBuilder {
 				.and(properTransitionYConstraints())
 				.and(properTransitionZConstraints())
 				.and(invalidDefinitionConstraints())
+				.and(fsmProhibitionConstraints())
 				.and(varPresenceConstraints());
 	}
 }

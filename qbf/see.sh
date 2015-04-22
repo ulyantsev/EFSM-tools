@@ -6,12 +6,9 @@ print_sat() {
     else
         local med="[%3.0f]"
     fi
-    if (($2 > 37)); then
-        local q3="%5.1f"
-    else
-        local q3="[%3.0f]"
-    fi
-    printf "%13s sat   %2d, unknown %2d, unsat %2d, total %2d, solved fraction %5s%%, q2=$med, q3=$q3\n" $1 $2 $3 $4 $(($2 + $3 + $4)) $(python -c "print(round(float($2) / ($2 + $3 + $4) * 100, 2))") $5 $6
+    local q3="%5.1f"
+    local max="%5.1f"
+    printf "%13s sat   %2d, unknown %2d, unsat %2d, total %2d, frac %5s%%, med=$med, q3=$q3, max=$max\n" $1 $2 $3 $4 $(($2 + $3 + $4)) $(python -c "print(round(float($2) / ($2 + $3 + $4) * 100, 2))") $5 $6 $7
 }
 
 print_unsat() {
@@ -20,12 +17,9 @@ print_unsat() {
     else
         local med="[%3.0f]"
     fi
-    if (($2 > 37)); then
-        local q3="%5.1f"
-    else
-        local q3="[%3.0f]"
-    fi
-    printf "%13s unsat %2d, unknown %2d, sat   %2d, total %2d, solved fraction %5s%%, q2=$med, q3=$q3\n" $1 $2 $3 $4 $(($2 + $3 + $4)) $(python -c "print(round(float($2) / ($2 + $3 + $4) * 100, 2))") $5 $6
+    local q3="%5.1f"
+    local max="%5.1f"
+    printf "%13s unsat %2d, unknown %2d, sat   %2d, total %2d, frac %5s%%, med=$med, q3=$q3, max=$max\n" $1 $2 $3 $4 $(($2 + $3 + $4)) $(python -c "print(round(float($2) / ($2 + $3 + $4) * 100, 2))") $5 $6 $7
 }
 
 print_found_by_prefix() {
@@ -49,18 +43,19 @@ print_found_by_prefix() {
         q2=${arr[$(($len / 2))]}
     fi
     q3=${arr[$(($len * 3 / 4))]}
+    max=${arr[$(($len - 1))]}
 
     if [[ "$prefix" == "${prefix/-fa/}" ]]; then
-        print_sat $prefix $sat $unknown $unsat $q2 $q3
+        print_sat $prefix $sat $unknown $unsat $q2 $q3 $max
     else
-        print_unsat $prefix $unsat $unknown $sat $q2 $q3
+        print_unsat $prefix $unsat $unknown $sat $q2 $q3 $max
     fi
 }
 
 for compdir in "complete" "incomplete"; do
     echo ">>> $compdir"
     for instance_type in tr fa; do
-        for prefix in COUNT*-$instance_type; do
+        for prefix in COUN*-$instance_type; do
         #for prefix in HYBR*-$instance_type EXP*-$instance_type ITER*-$instance_type QSAT*-$instance_type BACK*-$instance_type; do
             echo_str=
             for ((s = 3; s <= 10; s++)); do
