@@ -11,6 +11,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 
 import qbf.egorov.ltl.LtlParseException;
 import qbf.egorov.ltl.LtlParser;
@@ -92,21 +93,44 @@ public class VerifierFactory {
         context.setStateMachine(machine);
     }
 
+    public static class Counterexample {
+    	private final List<String> events;
+    	public final int loopLength;
+    	
+    	public List<String> events() {
+    		return Collections.unmodifiableList(events);
+    	}
+    	
+		public Counterexample(List<String> events, int loopLength) {
+			this.events = events;
+			this.loopLength = loopLength;
+		}
+		
+		public boolean isEmpty() {
+			return events.isEmpty();
+		}
+		
+		@Override
+		public String toString() {
+			return "[" + events + ", loop " + loopLength + "]";
+		}
+    }
+    
     // returns counterexamples
-    public List<List<String>> verify() {
-        List<List<String>> counterexamples = new ArrayList<>();
+    public List<Counterexample> verify() {
+        List<Counterexample> counterexamples = new ArrayList<>();
         SimpleVerifier verifier = new SimpleVerifier(context.getStateMachine().getInitialState());
 
         for (BuchiAutomata buchi : preparedFormulas) {
-            List<IntersectionTransition> list = verifier.verify(buchi, predicates);
+            Pair<List<IntersectionTransition>, Integer> list = verifier.verify(buchi, predicates);
             
-            if (!list.isEmpty()) {
-                List<String> eventList = list.stream().skip(1)
+            if (!list.getLeft().isEmpty()) {
+                List<String> eventList = list.getLeft().stream()
                     	.map(t -> String.valueOf(t.transition.event))
                     	.collect(Collectors.toList());
-                counterexamples.add(eventList);
+                counterexamples.add(new Counterexample(eventList, list.getRight()));
             } else {
-            	counterexamples.add(Collections.emptyList());
+            	counterexamples.add(new Counterexample(Collections.emptyList(), 0));
             }
         }
         return counterexamples;

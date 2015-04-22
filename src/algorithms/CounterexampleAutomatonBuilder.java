@@ -12,6 +12,7 @@ import java.util.Set;
 import java.util.logging.Logger;
 
 import qbf.egorov.ltl.grammar.LtlNode;
+import qbf.egorov.verifier.VerifierFactory.Counterexample;
 import qbf.reduction.Assignment;
 import qbf.reduction.BooleanFormula.SolveAsSatResult;
 import qbf.reduction.BooleanVariable;
@@ -57,11 +58,11 @@ public class CounterexampleAutomatonBuilder extends ScenarioAndLtlAutomatonBuild
 		return a;
 	}
 	
-	private static List<List<Assignment>> counterexamplesToAssignments(Logger logger, List<List<String>> counterexamples,
+	private static List<List<Assignment>> counterexamplesToAssignments(Logger logger, List<Counterexample> counterexamples,
 			Automaton a, List<String> actions) {
 		final List<List<Assignment>> allConstraints = new ArrayList<>();
 		final Set<String> uniqueCounterexamples = new HashSet<>();
-		for (List<String> counterexample : counterexamples) {
+		for (Counterexample counterexample : counterexamples) {
 			if (counterexample.isEmpty()) {
 				continue;
 			}
@@ -70,7 +71,7 @@ public class CounterexampleAutomatonBuilder extends ScenarioAndLtlAutomatonBuild
 			final List<Assignment> prohibitedVars = new ArrayList<>();
 			
 			int state = a.getStartState().getNumber();
-			for (String event : counterexample) {
+			for (String event : counterexample.events()) {
 				final Transition t = a.getState(state).getTransition(event, MyBooleanExpression.getTautology());
 				final int newState = t.getDst().getNumber();
 				final BooleanVariable yVar = FormulaBuilder.yVar(state, newState, event);
@@ -99,7 +100,7 @@ public class CounterexampleAutomatonBuilder extends ScenarioAndLtlAutomatonBuild
 	}
 
 	// try to replace actions, or add counterexamples in case of failure
-	public static Optional<Automaton> addCounterexamples(Logger logger, List<List<String>> counterexamples,
+	public static Optional<Automaton> addCounterexamples(Logger logger, List<Counterexample> counterexamples,
 			Automaton a, ExpandableStringFormula f, List<String> actions) throws IOException {
 		final List<List<Assignment>> allConstraints = counterexamplesToAssignments(logger, counterexamples, a, actions);
 		f.addProhibitionConstraints(allConstraints);
@@ -120,9 +121,9 @@ public class CounterexampleAutomatonBuilder extends ScenarioAndLtlAutomatonBuild
 				Optional<Automaton> automaton
 						= automatonFromFormula(f, logger, secondsLeft, tree, size, completenessType);
 				if (automaton.isPresent()) {
-					final List<List<String>> counterexamples
+					final List<Counterexample> counterexamples
 						= verifier.verifyWithCounterExamples(automaton.get());
-					final boolean verified = counterexamples.stream().allMatch(List::isEmpty);
+					final boolean verified = counterexamples.stream().allMatch(Counterexample::isEmpty);
 					if (verified) {
 						return reportResult(logger, iteration, Optional.of(automaton.get()));
 					} else {

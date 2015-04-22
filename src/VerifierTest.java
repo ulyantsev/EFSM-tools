@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Logger;
 
+import qbf.egorov.verifier.VerifierFactory.Counterexample;
 import qbf.reduction.Verifier;
 import structures.Automaton;
 import structures.Transition;
@@ -100,8 +101,8 @@ public class VerifierTest {
 						System.out.println(completeness + " " + states + " " + i + " " + verdict);
 						Verifier v = new Verifier(a.statesCount(), logger, "qbf/testing/" + completeness + "/fsm-" + states + "-" + i + "-" + verdict + ".ltl",
 							Arrays.asList("A", "B", "C", "D"), Arrays.asList("z0", "z1", "z2", "z3"), 0);
-						List<List<String>> result = v.verifyWithCounterExamples(a);
-						boolean boolResult = result.stream().allMatch(List::isEmpty);
+						List<Counterexample> result = v.verifyWithCounterExamples(a);
+						boolean boolResult = result.stream().allMatch(Counterexample::isEmpty);
 						if (boolResult != verdict) {
 							throw new AssertionError("Expected " + verdict + ", got " + boolResult);
 						}
@@ -125,9 +126,9 @@ public class VerifierTest {
 		System.out.println(completeness + " " + states + " " + i + " " + verdict);
 		Verifier v = new Verifier(a.statesCount(), logger, "qbf/testing/" + completeness + "/fsm-" + states + "-" + i + "-" + verdict + ".ltl",
 			Arrays.asList("A", "B", "C", "D"), Arrays.asList("z0", "z1", "z2", "z3"), 0);
-		List<List<String>> result = v.verifyWithCounterExamples(a);
+		List<Counterexample> result = v.verifyWithCounterExamples(a);
 		System.out.println(result);
-		boolean boolResult = result.stream().allMatch(List::isEmpty);
+		boolean boolResult = result.stream().allMatch(Counterexample::isEmpty);
 		if (boolResult != verdict) {
 			throw new AssertionError("Expected " + verdict + ", got " + boolResult);
 		}
@@ -137,9 +138,9 @@ public class VerifierTest {
 	}
 	
 	public static void main(String[] args) throws IOException, ParseException {
-		//test1();
+		test1();
 		//test2();
-		randomTestsIgor();
+		//randomTestsIgor();
 		//randomTestsIgor_();
 	}
 }

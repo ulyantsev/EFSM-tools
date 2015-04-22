@@ -16,6 +16,7 @@ import qbf.egorov.ltl.LtlParser;
 import qbf.egorov.ltl.buchi.translator.TranslationException;
 import qbf.egorov.transducer.FST;
 import qbf.egorov.verifier.VerifierFactory;
+import qbf.egorov.verifier.VerifierFactory.Counterexample;
 import structures.Automaton;
 import structures.Transition;
 
@@ -117,10 +118,10 @@ public class Verifier {
 	}
 	
 	public boolean verify(Automaton a) {
-		return verifyWithCounterExamples(a).stream().allMatch(List::isEmpty);
+		return verifyWithCounterExamples(a).stream().allMatch(Counterexample::isEmpty);
 	}
 	
-	public List<List<String>> verifyWithCounterExamples(Automaton a) {
+	public List<Counterexample> verifyWithCounterExamples(Automaton a) {
 		final FST fst = new FST(removeDeadEnds(a), allEvents, allActions, size);
 		verifier.configureStateMachine(fst);
 		return verifier.verify();

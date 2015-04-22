@@ -1,7 +1,6 @@
 package structures;
 
 import java.text.ParseException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -25,39 +24,18 @@ public class NegativeScenariosTree {
         return root;
     }
 
-    public void addScenario(StringScenario scenario) throws ParseException {
+    public void addScenario(StringScenario scenario, int loopLength) throws ParseException {
+    	NegativeNode loopNode = null;
     	NegativeNode node = root;
         for (int i = 0; i < scenario.size(); i++) {
+        	if (i == scenario.size() - loopLength) {
+        		loopNode = node;
+        	}
             addTransitions(node, scenario.getEvents(i), scenario.getExpr(i), scenario.getActions(i));
             node = node.getDst(scenario.getEvents(i).get(0), scenario.getExpr(i), scenario.getActions(i));
         }
-        node.setTerminal();
-        prune();
-    }
-    
-    // retains only leaves as terminal
-    public void prune() {
-    	prune(root, false);
-    	int j = 0;
-    	for (NegativeNode node : new ArrayList<>(nodes)) {
-    		node.setNumber(j++);
-    		if (node.transitionsCount() > 0 && node.terminal()) {
-    			throw new AssertionError();
-    		}
-    	}
-    }
-    
-    // retains only leaves as terminal
-    private void prune(NegativeNode node, boolean parentWasTerminal) {
-    	for (Transition t : node.getTransitions()) {
-    		prune((NegativeNode) t.getDst(), parentWasTerminal || node.terminal());
-    	}
-    	if (node.terminal()) {
-    		node.getTransitions().clear();
-    	}
-    	if (parentWasTerminal) {
-        	nodes.remove(node);
-    	}
+        assert loopNode != null;
+        node.addLoop(loopNode);
     }
 
     /*
@@ -92,11 +70,14 @@ public class NegativeScenariosTree {
         sb.append("# command: dot -Tpng <filename> > tree.png\n");
         sb.append("digraph ScenariosTree {\n    node [shape = circle];\n");
 
-        for (Node node : nodes) {
+        for (NegativeNode node : nodes) {
             for (Transition t : node.getTransitions()) {
                 sb.append("    " + t.getSrc().getNumber() + " -> " + t.getDst().getNumber());
                 sb.append(" [label = \"" + t.getEvent() + " [" + t.getExpr().toString() + "] ("
                         + t.getActions().toString() + ") \"];\n");
+            }
+            for (NegativeNode loop : node.loops()) {
+                sb.append("    " + node.getNumber() + " -> " + loop.getNumber() + ";\n");
             }
         }
 

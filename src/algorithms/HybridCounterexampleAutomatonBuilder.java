@@ -14,6 +14,7 @@ import java.util.logging.Logger;
 import org.apache.commons.lang3.tuple.Pair;
 
 import qbf.egorov.ltl.grammar.LtlNode;
+import qbf.egorov.verifier.VerifierFactory.Counterexample;
 import qbf.reduction.BooleanFormula.SolveAsSatResult;
 import qbf.reduction.BooleanVariable;
 import qbf.reduction.ExpandableStringFormula;
@@ -39,7 +40,7 @@ public class HybridCounterexampleAutomatonBuilder extends ScenarioAndLtlAutomato
 		boolean maxKFound = false;
 		int iteration = 1;
 		ExpandableStringFormula formula = null;
-		List<List<String>> counterexamples = null;
+		List<Counterexample> counterexamples = null;
 		Consumer<ExpandableStringFormula> closer = f -> {
 			if (f != null) {
 				f.close();
@@ -96,7 +97,7 @@ public class HybridCounterexampleAutomatonBuilder extends ScenarioAndLtlAutomato
 				autoSolution = constructAutomatonFromAssignment(logger, solution.list(), tree,
 						size, true, completenessType);
 				counterexamples = verifier.verifyWithCounterExamples(autoSolution.getLeft());
-				final boolean verified = counterexamples.stream().allMatch(List::isEmpty);
+				final boolean verified = counterexamples.stream().allMatch(Counterexample::isEmpty);
 				if (verified) {
 					logger.info("SAT");
 					closer.accept(formula);

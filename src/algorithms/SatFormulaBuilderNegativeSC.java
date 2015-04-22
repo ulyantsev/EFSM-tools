@@ -85,10 +85,15 @@ public class SatFormulaBuilderNegativeSC extends FormulaBuilder {
 					constraints.add(xxVar(num, i).equivalent(xVar(positiveNode.getNumber(), i)));
 				}
 			} else if (node.terminal()) {
-				// each terminal node is invalid
-				constraints.add(invalid(node));
-				for (int i = 0; i < colorSize; i++) {
-					constraints.add(xxVar(num, i).not());
+				// for each loop, the terminal node is colored differently
+				for (NegativeNode loop : node.loops()) {
+					FormulaList options = new FormulaList(BinaryOperations.OR);
+					options.add(invalid(node));
+					int loopNum = loop.getNumber();
+					for (int i = 0; i < colorSize; i++) {
+						options.add(xxVar(num, i).equivalent(xxVar(loopNum, i)).not());
+					}
+					constraints.add(options.assemble());
 				}
 			} else {
 				// 'unknown' nodes

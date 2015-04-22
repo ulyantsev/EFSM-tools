@@ -9,6 +9,7 @@ import java.util.Optional;
 import java.util.logging.Logger;
 
 import qbf.egorov.ltl.grammar.LtlNode;
+import qbf.egorov.verifier.VerifierFactory.Counterexample;
 import qbf.reduction.Assignment;
 import qbf.reduction.BooleanFormula;
 import qbf.reduction.BooleanFormula.SolveAsSatResult;
@@ -59,14 +60,14 @@ public class TrueCounterexampleAutomatonBuilder extends ScenarioAndLtlAutomatonB
 	}
 	
 	private static void addCounterexample(Logger logger, Automaton a,
-			List<String> counterexample, NegativeScenariosTree negativeTree) {
+			Counterexample counterexample, NegativeScenariosTree negativeTree) {
 		int state = a.getStartState().getNumber();
 		final List<MyBooleanExpression> expressions = new ArrayList<>();
 		final List<StringActions> actions = new ArrayList<>();
 		List<String> description = new ArrayList<>();
 		List<Integer> states = new ArrayList<>();
 		states.add(state);
-		for (String event : counterexample) {
+		for (String event : counterexample.events()) {
 			final Transition t = a.getState(state).getTransition(event, MyBooleanExpression.getTautology());
 			expressions.add(t.getExpr());
 			actions.add(t.getActions());
@@ -75,19 +76,10 @@ public class TrueCounterexampleAutomatonBuilder extends ScenarioAndLtlAutomatonB
 			state = newState;
 			states.add(newState);
 		}
-		for (int i = states.size() - 2; i >= 0; i--) {
-			if (states.get(i) == states.get(states.size() - 1)) {
-				// duplicate the loop
-				counterexample.addAll(counterexample.subList(i, counterexample.size()));
-				expressions.addAll(expressions.subList(i, expressions.size()));
-				actions.addAll(actions.subList(i, actions.size()));
-				description.addAll(description.subList(i, description.size()));
-				break;
-			}
-		}
 		logger.info("ADDING COUNTEREXAMPLE: " + description);
 		try {
-			negativeTree.addScenario(new StringScenario(true, counterexample, expressions, actions));
+			negativeTree.addScenario(new StringScenario(true, counterexample.events(), expressions, actions),
+					counterexample.loopLength);
 		} catch (ParseException e) {
 			throw new RuntimeException(e);
 		}
@@ -108,12 +100,12 @@ public class TrueCounterexampleAutomatonBuilder extends ScenarioAndLtlAutomatonB
 			final Optional<Automaton> automaton = automatonFromFormula(formula, logger,
 					secondsLeft, tree, size, satSolver, solverParams, completenessType);
 			if (automaton.isPresent()) {
-				List<List<String>> counterexamples = verifier.verifyWithCounterExamples(automaton.get());
-				boolean verified = counterexamples.stream().allMatch(List::isEmpty);
+				List<Counterexample> counterexamples = verifier.verifyWithCounterExamples(automaton.get());
+				boolean verified = counterexamples.stream().allMatch(Counterexample::isEmpty);
 				if (verified) {
 					return reportResult(logger, iteration, automaton);
 				}
-				for (List<String> counterexample : counterexamples) {
+				for (Counterexample counterexample : counterexamples) {
 					if (!counterexample.isEmpty()) {
 						addCounterexample(logger, automaton.get(), counterexample, negativeTree);
 					} else {

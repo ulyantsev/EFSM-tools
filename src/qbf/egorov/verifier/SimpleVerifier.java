@@ -11,6 +11,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.commons.lang3.tuple.Pair;
+
 import qbf.egorov.ltl.buchi.BuchiAutomata;
 import qbf.egorov.ltl.grammar.predicate.IPredicateFactory;
 import qbf.egorov.statemachine.SimpleState;
@@ -27,13 +29,10 @@ public class SimpleVerifier {
         this.initState = initState;
     }
 
-    public List<IntersectionTransition> verify(BuchiAutomata buchi, IPredicateFactory predicates) {
+    public Pair<List<IntersectionTransition>, Integer> verify(BuchiAutomata buchi, IPredicateFactory predicates) {
         IntersectionAutomata automata = new IntersectionAutomata(predicates, buchi);
         //System.out.println("\n" + buchi);
-        IntersectionNode initial = automata.getNode(initState, buchi.getStartNode(), 0);
-        List<IntersectionTransition> res = bfs(initial);
-        Collections.reverse(res);
-        return res;
+        return bfs(automata.getNode(initState, buchi.getStartNode(), 0));
     }
 
     private class QueueElement {
@@ -54,11 +53,11 @@ public class SimpleVerifier {
 		}
     }
     
-    private List<IntersectionTransition> bfs(IntersectionNode initialNode) {
+    private Pair<List<IntersectionTransition>, Integer> bfs(IntersectionNode initialNode) {
     	final Deque<QueueElement> queue = new LinkedList<>();
     	final Set<IntersectionNode> visited = new HashSet<>();
         queue.addLast(new QueueElement(new IntersectionTransition(null, initialNode), null));
-        final List<List<IntersectionTransition>> counterexamples = new ArrayList<>();
+        final List<Pair<List<IntersectionTransition>, Integer>> counterexamples = new ArrayList<>();
         
         while (!queue.isEmpty()) {
         	final QueueElement element = queue.pollFirst();
@@ -79,12 +78,12 @@ public class SimpleVerifier {
         	}
         }
         if (counterexamples.isEmpty()) {
-        	return new ArrayList<>();
+        	return Pair.of(new ArrayList<>(), 0);
         } else {
         	//System.out.println(counterexamples);
         	int minIndex = 0;
         	for (int i = 1; i < counterexamples.size(); i++) {
-        		if (counterexamples.get(i).size() < counterexamples.get(minIndex).size()) {
+        		if (counterexamples.get(i).getLeft().size() < counterexamples.get(minIndex).getLeft().size()) {
         			minIndex = i;
         		}
         	}
@@ -93,7 +92,7 @@ public class SimpleVerifier {
     }
     
     private void secondBfs(IntersectionNode initialNode, QueueElement parentQueueElement,
-    		List<List<IntersectionTransition>> counterexamples) {
+    		List<Pair<List<IntersectionTransition>, Integer>> counterexamples) {
     	final Deque<QueueElement> queue = new LinkedList<>();
     	final Set<IntersectionNode> visited = new HashSet<>();
         queue.addLast(new QueueElement(new IntersectionTransition(null, initialNode), null));
@@ -110,12 +109,15 @@ public class SimpleVerifier {
             			elem = elem.predecessor;
             		} while (elem != null);
             		path.remove(path.size() - 1);
+            		int loopLength = path.size();
             		elem = parentQueueElement;
             		do {
             			path.add(elem.trans);
             			elem = elem.predecessor;
             		} while (elem != null);
-	        		counterexamples.add(path);
+            		path.remove(path.size() - 1);
+            		Collections.reverse(path);
+	        		counterexamples.add(Pair.of(path, loopLength));
 	        		return;
 	        	}
         	} else {

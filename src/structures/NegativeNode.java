@@ -2,26 +2,36 @@ package structures;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import actions.StringActions;
 import bool.MyBooleanExpression;
 
 public class NegativeNode extends Node {
     private final List<Transition> transitionList;
-    private boolean terminal = false;
+    private Set<NegativeNode> loops = null;
     
     public NegativeNode(int number) {
     	super(number);
     	transitionList = new ArrayList<>();
     }
     
-    public void setTerminal() {
-    	terminal = true;
+    public void addLoop(NegativeNode node) {
+    	if (loops == null) {
+    		loops = new LinkedHashSet<>();
+    	}
+    	loops.add(node);
     }
     
     public boolean terminal() {
-    	return terminal;
+    	return loops != null;
+    }
+    
+    public Collection<NegativeNode> loops() {
+    	return Collections.unmodifiableSet(loops);
     }
     
     @Override

@@ -1,9 +1,9 @@
 #!/bin/bash
-states=6
+states=8
 events=4
 actions=4
-inst=10
-compl=complete
+inst=40
+compl=incomplete
 if [[ $compl == "complete" ]]; then
     compstr="NORMAL"
 else
