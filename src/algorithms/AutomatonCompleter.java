@@ -19,13 +19,11 @@ public class AutomatonCompleter {
 	private final List<String> events;
 	private final List<StringActions> preparedActions;
 	private final long finishTime;
-	private final CompletenessType type;
+	private final CompletenessType completenessType;
 	
 	public enum CompletenessType {
 		NORMAL, // usual completeness
-		NO_DEAD_ENDS, // no dead ends - resolves LTL semantics problems
-		NO_DEAD_ENDS_WALKINSHAW // at least one 'valid' transition for FS model induction
-		// valid <-> empty action sequence
+		NO_DEAD_ENDS // no dead ends - resolves LTL semantics problems
 	}
 	
 	/*
@@ -38,19 +36,18 @@ public class AutomatonCompleter {
 		colorSize = automaton.statesCount();
 		this.events = events;
 		this.finishTime = finishTime;
-		this.type = type;
+		this.completenessType = type;
 		
 		// prepare all action combinations (will be used while trying to enforce FSM completeness)
-		final int actionsNum = type == CompletenessType.NO_DEAD_ENDS_WALKINSHAW ? 0 : actions.size();
-		preparedActions = prepareActions(actions, actionsNum);
+		preparedActions = prepareActions(actions);
 	}
 	
-	public static List<StringActions> prepareActions(List<String> actions, int actionsNum) {
-		List<StringActions> prepared = new ArrayList<>();
-		final int maxI = 1 << actionsNum;
+	private static List<StringActions> prepareActions(List<String> actions) {
+		final List<StringActions> prepared = new ArrayList<>();
+		final int maxI = 1 << actions.size();
 		for (int i = 0; i < maxI; i++) {
 			final List<String> sequence = new ArrayList<>();
-			for (int j = 0; j < actionsNum; j++) {
+			for (int j = 0; j < actions.size(); j++) {
 				if (((i >> j) & 1) == 1) {
 					sequence.add(actions.get(j));
 				}
@@ -67,27 +64,15 @@ public class AutomatonCompleter {
 	 * NORMAL mode: usual missing transitions
 	 * NO_DEAD_ENDS: missing transitions such that there is some transition from the
 	 *    source state are not considered as missing
-	 * NO_DEAD_ENDS_WALKINSHAW: transitions with actions are not considered as
-	 * 	  transitions at all
 	 */
 	private List<Pair<Integer, String>> missingTransitions() {
 		final List<Pair<Integer, String>> missing = new ArrayList<>();
-		l: for (Node s : automaton.getStates()) {
-			if (type != CompletenessType.NORMAL) {
-				for (String e : events) {
-					boolean condition = s.getTransition(e,
-							MyBooleanExpression.getTautology()) != null;
-					if (condition && type == CompletenessType.NO_DEAD_ENDS_WALKINSHAW) {
-						condition = s.getTransition(e, MyBooleanExpression.getTautology())
-								.getActions().getActions().length == 0;
-					}
-					if (condition) {
-						continue l;
-					}
-				}
+		for (Node s : automaton.getStates()) {
+			if (completenessType == CompletenessType.NO_DEAD_ENDS && !s.getTransitions().isEmpty()) {
+				continue;
 			}
 			for (String e : events) {
-				if (s.getTransition(e, MyBooleanExpression.getTautology()) == null) {
+				if (!s.hasTransition(e, MyBooleanExpression.getTautology())) {
 					missing.add(Pair.of(s.getNumber(), e));
 				}
 			}

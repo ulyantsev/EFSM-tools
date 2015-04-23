@@ -33,7 +33,7 @@ public class HybridAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 	
 	public static Optional<Automaton> build(Logger logger, ScenariosTree tree,
 			List<LtlNode> formulae, int size, String ltlFilePath,
-			QbfSolver qbfSolver, String solverParams, boolean extractSubterms,
+			QbfSolver qbfSolver, String solverParams,
 			List<String> events, List<String> actions, SatSolver satSolver,
 			Verifier verifier, long finishTime, CompletenessType completenessType,
 			int secToGenerateFormula, int secToSolve) throws IOException {		
@@ -73,14 +73,13 @@ public class HybridAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 				// try next k
 				k++;
 				final QuantifiedBooleanFormula qbf = new QbfFormulaBuilder(logger, tree,
-						formulae, size, k, extractSubterms, completenessType,
-						events, actions).getFormula(true);
+						formulae, size, k, completenessType, events, actions).getFormula(true);
 				final long time = System.currentTimeMillis();
 				try {
 					@SuppressWarnings("resource")
-					ExpandableStringFormula newFormula = new ExpandableStringFormula(qbf.flatten(tree, size, k,
+					ExpandableStringFormula newFormula = new ExpandableStringFormula(qbf.flatten(size, k,
 							logger, events, actions, forbiddenYs, Math.min(finishTime,
-							System.currentTimeMillis() + secToGenerateFormula * 1000), MAX_FORMULA_SIZE),
+							System.currentTimeMillis() + secToGenerateFormula * 1000), MAX_FORMULA_SIZE, true),
 							logger, satSolver, solverParams);
 					closer.accept(formula);
 					formula = newFormula;

@@ -228,24 +228,7 @@ public abstract class FormulaBuilder {
 		}
 		return constraints.assemble("no dead ends (ensures that every finite path in the Kripke structure has an infinite continuation");
 	}
-	
-	// no-dead-ends constraint for incomplete FSM induction
-	private BooleanFormula noDeadEndsWalkinshawConstraints() {
-		assert actions.size() == 1;
-		final String invalid = actions.get(0);
-		FormulaList constraints = new FormulaList(BinaryOperations.AND);
-		for (int i1 = 0; i1 < colorSize; i1++) {
-			FormulaList options = new FormulaList(BinaryOperations.OR);
-			for (String e : events) {
-				for (int i2 = 0; i2 < colorSize; i2++) {
-					options.add(yVar(i1, i2, e).and(zVar(i1, invalid, e).not()));
-				}
-			}
-			constraints.add(options.assemble());
-		}
-		return constraints.assemble("no dead ends, invalid transitions are not counted.");
-	}
-	
+
 	// if there exists z, then it exists for some transition (unnecessary if
 	// completeness is enabled)
 	private BooleanFormula actionTransitionExistenceConstraints() {
@@ -282,9 +265,6 @@ public abstract class FormulaBuilder {
 			break;
 		case NO_DEAD_ENDS:
 			constraints.add(noDeadEndsConstraints());
-			break;
-		case NO_DEAD_ENDS_WALKINSHAW:
-			constraints.add(noDeadEndsWalkinshawConstraints());
 			break;
 		}
 		

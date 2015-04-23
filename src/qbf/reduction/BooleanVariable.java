@@ -19,11 +19,10 @@ public class BooleanVariable extends BooleanFormula implements Comparable<Boolea
 	public static void eraseVariables() {
 		ALL_VARS.clear();
 		VARS_BY_NAME.clear();
-		counter = auxiliaryCounter = 1;
+		counter = 1;
 	}
 	
 	private static int counter = 1;
-	private static int auxiliaryCounter = 1;
 	private static final List<BooleanVariable> ALL_VARS = new ArrayList<>();
 	private static final Map<String, BooleanVariable> VARS_BY_NAME = new HashMap<>();
 	
@@ -38,11 +37,7 @@ public class BooleanVariable extends BooleanFormula implements Comparable<Boolea
 				: Arrays.deepToString(indices).replace("[", prefix + "_")
 					.replace(", ", "_").replace("]", "");
 	}
-	
-	public static BooleanVariable newAuxiliaryVariable() {
-		return new BooleanVariable("h", auxiliaryCounter++);
-	}
-	
+
 	public BooleanVariable(String prefix, Object... indices) {
 		name = createName(prefix, indices);
 		number = counter++;

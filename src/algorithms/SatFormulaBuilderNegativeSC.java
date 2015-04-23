@@ -4,7 +4,10 @@ package algorithms;
  * (c) Igor Buzhinsky
  */
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +30,7 @@ import algorithms.AutomatonCompleter.CompletenessType;
 public class SatFormulaBuilderNegativeSC extends FormulaBuilder {
 	private final NegativeScenariosTree negativeTree;
 	private final List<BooleanFormula> prohibitedFsms;
+	private List<BooleanVariable> xxVars = new ArrayList<>();
 	
 	// the ones present in the scenario tree
     private final Map<NegativeNode, Node> verifiedNodes = new LinkedHashMap<>();
@@ -58,6 +62,10 @@ public class SatFormulaBuilderNegativeSC extends FormulaBuilder {
 		}
 	}
 	
+	public Collection<BooleanVariable> nagativeVars() {
+		return Collections.unmodifiableList(xxVars);
+	}
+	
 	public static BooleanVariable xxVar(int state, int color) {
 		return BooleanVariable.byName("xx", state, color).get();
 	}
@@ -65,9 +73,10 @@ public class SatFormulaBuilderNegativeSC extends FormulaBuilder {
 	private void addNegativeScenarioVars() {
 		for (Node node : negativeTree.getNodes()) {
 			for (int color = 0; color <= colorSize; color++) {
-				existVars.add(new BooleanVariable("xx", node.getNumber(), color));
+				xxVars.add(new BooleanVariable("xx", node.getNumber(), color));
 			}
 		}
+		existVars.addAll(xxVars);
 	}
 	
 	private BooleanFormula eachNegativeNodeHasOneColorConstraints() {
@@ -234,17 +243,21 @@ public class SatFormulaBuilderNegativeSC extends FormulaBuilder {
 		return constraints.assemble();
 	}
 	
+	public BooleanFormula negativeConstraints() {
+		return eachNegativeNodeHasOneColorConstraints()
+			.and(properTransitionYConstraints())
+			.and(properTransitionZConstraints())
+			.and(invalidDefinitionConstraints())
+			.and(fsmProhibitionConstraints());
+	}
+	
 	public BooleanFormula getFormula() {
 		// actions should be included into the model!
 		addColorVars();
 		addTransitionVars(true);
 		addNegativeScenarioVars();
 		return scenarioConstraints(true).assemble()
-				.and(eachNegativeNodeHasOneColorConstraints())
-				.and(properTransitionYConstraints())
-				.and(properTransitionZConstraints())
-				.and(invalidDefinitionConstraints())
-				.and(fsmProhibitionConstraints())
+				.and(negativeConstraints())
 				.and(varPresenceConstraints());
 	}
 }

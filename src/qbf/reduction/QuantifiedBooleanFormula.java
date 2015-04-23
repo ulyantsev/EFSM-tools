@@ -24,7 +24,6 @@ import java.util.stream.Collectors;
 
 import qbf.reduction.BooleanFormula.DimacsConversionInfo;
 import qbf.reduction.SolverResult.SolverResults;
-import structures.ScenariosTree;
 import algorithms.TimeLimitExceeded;
 
 public class QuantifiedBooleanFormula {
@@ -33,6 +32,10 @@ public class QuantifiedBooleanFormula {
 	private final BooleanFormula formulaExist; // the part which does not use forall-variables
 	private final BooleanFormula formulaTheRest;
 
+	public BooleanFormula existentialPart() {
+		return formulaExist;
+	}
+	
 	private BooleanFormula formula() {
 		return formulaExist.and(formulaTheRest);
 	}
@@ -231,13 +234,15 @@ public class QuantifiedBooleanFormula {
 	 * Produce an equivalent Boolean formula as a Limboole string.
 	 * The size of the formula is exponential of forallVars.size().
 	 */
-	public String flatten(ScenariosTree tree, int statesNum, int k, Logger logger,
+	public String flatten(int statesNum, int k, Logger logger,
 			List<String> events, List<String> actions,
-			Set<String> forbiddenYs, long finishTime, int sizeLimit) throws FormulaSizeException, TimeLimitExceeded {
+			Set<String> forbiddenYs, long finishTime, int sizeLimit, boolean withExistPart) throws FormulaSizeException, TimeLimitExceeded {
 		FormulaBuffer buffer = new FormulaBuffer(finishTime, sizeLimit);
 		logger.info("Number of 'forall' variables: " + forallVars.size());
 		long time = System.currentTimeMillis();
-		buffer.append(formulaExist.simplify());
+		if (withExistPart) {
+			buffer.append(formulaExist.simplify());
+		}
 		findAllAssignmentsSigmaEps(events, statesNum, actions, k, 0, formulaTheRest,
 				buffer, -1, -1, new HashMap<>(), forbiddenYs);
 		

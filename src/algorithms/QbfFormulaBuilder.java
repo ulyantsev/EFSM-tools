@@ -6,16 +6,11 @@ package algorithms;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.logging.Logger;
 
-import org.apache.commons.lang3.tuple.Pair;
-
-import algorithms.AutomatonCompleter.CompletenessType;
 import qbf.egorov.ltl.grammar.BinaryOperator;
 import qbf.egorov.ltl.grammar.BooleanNode;
 import qbf.egorov.ltl.grammar.LtlNode;
@@ -31,24 +26,22 @@ import qbf.reduction.LtlNormalizer;
 import qbf.reduction.QuantifiedBooleanFormula;
 import qbf.reduction.TrueFormula;
 import structures.ScenariosTree;
+import algorithms.AutomatonCompleter.CompletenessType;
 
 public class QbfFormulaBuilder extends FormulaBuilder {
 	private final Logger logger;
 	private final int k; // depth
 	private final List<LtlNode> formulae;
-	private final List<BooleanVariable> forallVars = new ArrayList<>();
-	private final Map<SubtermIdentifier, Pair<BooleanFormula, BooleanVariable>> subterms = new LinkedHashMap<>();	
-	private final boolean extractSubterms;
+	protected final List<BooleanVariable> forallVars = new ArrayList<>();
 
-	public QbfFormulaBuilder(Logger logger, ScenariosTree tree, List<LtlNode> formulae, int colorSize, int depth,
-			boolean extractSubterms, CompletenessType completenessType,
+	public QbfFormulaBuilder(Logger logger, ScenariosTree tree, List<LtlNode> formulae,
+			int colorSize, int depth, CompletenessType completenessType,
 			List<String> events, List<String> actions) {
 		super(colorSize, tree, completenessType, events, actions);
 		BooleanVariable.eraseVariables();
 		this.logger = logger;
 		this.formulae = formulae;
 		this.k = depth;
-		this.extractSubterms = extractSubterms;
 	}
 
 	private BooleanVariable sigmaVar(int state, int pathIndex) {
@@ -92,23 +85,16 @@ public class QbfFormulaBuilder extends FormulaBuilder {
 			return BooleanNode.FALSE;
 		}
 		
-		LtlNode f = formulae.stream().skip(1).reduce(formulae.get(0), (f1, f2) -> LtlNormalizer.and(f1, f2));
+		LtlNode f = formulae.stream().skip(1)
+				.reduce(formulae.get(0), (f1, f2) -> LtlNormalizer.and(f1, f2));
 		f = LtlNormalizer.toNegationNormalForm(LtlNormalizer.not(f));
 		
 		return f;
 	}
 	
-	public QuantifiedBooleanFormula getFormula(boolean forFurtherSatReduction) {
-		addColorVars(); // exist
-		addTransitionVars(true); // exist
-		
-		addSigmaVars(); // forall
-		addEpsVars(); // forall
-		addZetaVars(); // forall
-		
+	protected BooleanFormula mainQbfConstraint(boolean forFurtherSatReduction) {
 		LtlNode formulaToCheck = formulaToCheck();
 		logger.info(formulaToCheck.toString());
-		BooleanFormula scenarioConstraints = scenarioConstraints(true).assemble();
 		
 		BooleanFormula pathIsCorrect = forFurtherSatReduction
 				? cTerm().and(dTerm())
@@ -118,29 +104,34 @@ public class QbfFormulaBuilder extends FormulaBuilder {
 		for (int l = 0; l <= k; l++) {
 			cyclicPathFormula.add(llkTerm(l).and(translateCyclic(formulaToCheck, l, 0)));
 		}
-
+		
 		BooleanFormula pathFormula = lkTerm().not()
-			.and(translateNonCyclic(formulaToCheck, 0))
-			.or(cyclicPathFormula.assemble());
-		
-		// auxiliary "forall" variables
-		FormulaList subtermEquations = new FormulaList(BinaryOperations.AND);
-		
-		subterms.entrySet().forEach(entry -> {
-			BooleanFormula expansion = entry.getValue().getLeft();
-			BooleanVariable name = entry.getValue().getRight();
-			forallVars.add(name);
-			subtermEquations.add(name.equivalent(expansion));
-		});
+				.and(translateNonCyclic(formulaToCheck, 0))
+				.or(cyclicPathFormula.assemble());
 		
 		BooleanFormula mainQbfConstraint = BinaryOperation.or(Arrays.asList(
-				subtermEquations.assemble().not(),
 				pathIsCorrect.not(),
 				pathFormula.not()
 		), "main QBF constraint");
-
-		return new QuantifiedBooleanFormula(existVars, forallVars, scenarioConstraints,
-				mainQbfConstraint.and(varPresenceConstraints()));
+		
+		return mainQbfConstraint;
+	}
+	
+	protected void addVars() {
+		addColorVars(); // exist
+		addTransitionVars(true); // exist
+		addSigmaVars(); // forall
+		addEpsVars(); // forall
+		addZetaVars(); // forall
+	}
+	
+	public QuantifiedBooleanFormula getFormula(boolean forFurtherSatReduction) {
+		addVars();
+		BooleanFormula scenarioConstraints = scenarioConstraints(true).assemble();
+		BooleanFormula mainQbfConstraint = mainQbfConstraint(forFurtherSatReduction);
+		return new QuantifiedBooleanFormula(existVars, forallVars,
+				scenarioConstraints.and(varPresenceConstraints()),
+				mainQbfConstraint);
 	}
 
 	// not more than one state/event in the same place of the path
@@ -239,25 +230,16 @@ public class QbfFormulaBuilder extends FormulaBuilder {
 	private BooleanFormula llkTerm(int l) {
 		assert l >= 0 && l <= k;
 		
-		SubtermIdentifier si = new SubtermIdentifier(null, l, -1);
-		Pair<BooleanFormula, BooleanVariable> subterm = subterms.get(si);
-		if (subterm == null) {
-			BooleanVariable result = new BooleanVariable("llk", l);
-			FormulaList options = new FormulaList(BinaryOperations.OR);
-			for (int i1 = 0; i1 < colorSize; i1++) {
-				for (int i2 = 0; i2 < colorSize; i2++) {
-					for (String e : events) {
-						options.add(BinaryOperation.and(sigmaVar(i1, k),
-							epsVar(e, k), sigmaVar(i2, l), yVar(i1, i2, e)));
-					}
+		FormulaList options = new FormulaList(BinaryOperations.OR);
+		for (int i1 = 0; i1 < colorSize; i1++) {
+			for (int i2 = 0; i2 < colorSize; i2++) {
+				for (String e : events) {
+					options.add(BinaryOperation.and(sigmaVar(i1, k),
+						epsVar(e, k), sigmaVar(i2, l), yVar(i1, i2, e)));
 				}
 			}
-			BooleanFormula expansion = options.assemble("LLK_" + l);
-			storeSubterm(si, Pair.of(expansion, result));
-			return extractSubterms ? result : expansion;
-		} else {
-			return subterm.getRight();
 		}
+		return options.assemble("LLK_" + l);
 	}
 	
 	// path is a loop
@@ -300,85 +282,69 @@ public class QbfFormulaBuilder extends FormulaBuilder {
 			return translateConstant(node);
 		} 
 		
-		SubtermIdentifier si = new SubtermIdentifier(node, -1, index);
-		Pair<BooleanFormula, BooleanVariable> subterm = subterms.get(si);
-		if (subterm == null) {
-			BooleanFormula expansion;
-
-			if (node instanceof UnaryOperator) {
-				UnaryOperator op = (UnaryOperator) node;
-				LtlNode a = op.getOperand();
-				switch (op.getType()) {
-				case GLOBAL:
-					expansion = FalseFormula.INSTANCE;
-					break;
-				case FUTURE:
-					FormulaList orList = new FormulaList(BinaryOperations.OR);
-					for (int j = index; j <= k; j++) {
-						orList.add(translateNonCyclic(a, j));
-					}
-					expansion = orList.assemble();
-					break;
-				case NEXT:
-					expansion = index == k ? FalseFormula.INSTANCE : translateNonCyclic(a, index + 1);
-					break;
-				case NEG:
-					assert a instanceof BooleanNode || a instanceof Predicate;
-					expansion = translateNonCyclic(a, index).not();
-					break;
-				default:
-					throw new RuntimeException("Unknown unary operator " + op);
+		BooleanFormula expansion;
+		if (node instanceof UnaryOperator) {
+			UnaryOperator op = (UnaryOperator) node;
+			LtlNode a = op.getOperand();
+			switch (op.getType()) {
+			case GLOBAL:
+				expansion = FalseFormula.INSTANCE;
+				break;
+			case FUTURE:
+				FormulaList orList = new FormulaList(BinaryOperations.OR);
+				for (int j = index; j <= k; j++) {
+					orList.add(translateNonCyclic(a, j));
 				}
-			} else if (node instanceof BinaryOperator) {
-				BinaryOperator op = (BinaryOperator) node;
-				LtlNode a = op.getLeftOperand();
-				LtlNode b = op.getRightOperand();
-				
-				Function<Boolean, BooleanFormula> untilRelease = isUntil -> {
-					FormulaList orList = new FormulaList(BinaryOperations.OR);
-					for (int j = index; j <= k; j++) {
-						FormulaList andList = new FormulaList(BinaryOperations.AND);
-						andList.add(translateNonCyclic(isUntil ? b : a, j));
-						for (int n = index; n <= (isUntil ? j - 1 : j); n++) {
-							andList.add(translateNonCyclic(isUntil ? a : b, n));
-						}
-						orList.add(andList.assemble());
-					}
-					return orList.assemble();
-				};
-				
-				switch (op.getType()) {
-				case OR:
-					expansion = translateNonCyclic(a, index).or(translateNonCyclic(b, index));
-					break;
-				case AND:
-					expansion = translateNonCyclic(a, index).and(translateNonCyclic(b, index));
-					break;
-				case UNTIL:
-					expansion = untilRelease.apply(true);
-					break;
-				case RELEASE:
-					expansion = untilRelease.apply(false);
-					break;
-				default:
-					throw new RuntimeException("Unknown binary operator " + op);
-				}
-			} else {
-				throw new AssertionError();
+				expansion = orList.assemble();
+				break;
+			case NEXT:
+				expansion = index == k ? FalseFormula.INSTANCE : translateNonCyclic(a, index + 1);
+				break;
+			case NEG:
+				assert a instanceof BooleanNode || a instanceof Predicate;
+				expansion = translateNonCyclic(a, index).not();
+				break;
+			default:
+				throw new RuntimeException("Unknown unary operator " + op);
 			}
+		} else if (node instanceof BinaryOperator) {
+			BinaryOperator op = (BinaryOperator) node;
+			LtlNode a = op.getLeftOperand();
+			LtlNode b = op.getRightOperand();
 			
-			BooleanVariable result = BooleanVariable.newAuxiliaryVariable();
-			storeSubterm(si, Pair.of(expansion, result));
-			return extractSubterms ? result : expansion;
+			Function<Boolean, BooleanFormula> untilRelease = isUntil -> {
+				FormulaList orList = new FormulaList(BinaryOperations.OR);
+				for (int j = index; j <= k; j++) {
+					FormulaList andList = new FormulaList(BinaryOperations.AND);
+					andList.add(translateNonCyclic(isUntil ? b : a, j));
+					for (int n = index; n <= (isUntil ? j - 1 : j); n++) {
+						andList.add(translateNonCyclic(isUntil ? a : b, n));
+					}
+					orList.add(andList.assemble());
+				}
+				return orList.assemble();
+			};
+			
+			switch (op.getType()) {
+			case OR:
+				expansion = translateNonCyclic(a, index).or(translateNonCyclic(b, index));
+				break;
+			case AND:
+				expansion = translateNonCyclic(a, index).and(translateNonCyclic(b, index));
+				break;
+			case UNTIL:
+				expansion = untilRelease.apply(true);
+				break;
+			case RELEASE:
+				expansion = untilRelease.apply(false);
+				break;
+			default:
+				throw new RuntimeException("Unknown binary operator " + op);
+			}
 		} else {
-			return subterm.getRight();
-		}
-	}
-	
-	private void storeSubterm(SubtermIdentifier si, Pair<BooleanFormula, BooleanVariable> p) {
-		if (extractSubterms) {
-			subterms.put(si, p);
-		}
+			throw new AssertionError();
+		}			
+		return expansion;
 	}
 
 	private BooleanFormula translateCyclic(LtlNode node, int l, int index) {
@@ -390,130 +356,84 @@ public class QbfFormulaBuilder extends FormulaBuilder {
 		} else if (node instanceof BooleanNode) {
 			return translateConstant(node);
 		} 
-		
-		SubtermIdentifier si = new SubtermIdentifier(node, l, index);
-		Pair<BooleanFormula, BooleanVariable> subterm = subterms.get(si);
-		if (subterm == null) {
-			BooleanFormula expansion;
-			if (node instanceof UnaryOperator) {
-				UnaryOperator op = (UnaryOperator) node;
-				LtlNode a = op.getOperand();
-				
-				Function<BinaryOperations, BooleanFormula> globalFuture = operation -> {
-					FormulaList list = new FormulaList(operation);
-					for (int j = Math.min(index, l); j <= k; j++) {
-						list.add(translateCyclic(a, l, j));
-					}
-					return list.assemble();
-				};
-				
-				switch (op.getType()) {
-				case GLOBAL:
-					expansion = globalFuture.apply(BinaryOperations.AND);
-					break;
-				case FUTURE:
-					expansion = globalFuture.apply(BinaryOperations.OR);
-					break;
-				case NEXT:
-					expansion = translateCyclic(a, l, index < k ? index + 1 : l);
-					break;
-				case NEG:
-					assert a instanceof BooleanNode || a instanceof Predicate;
-					expansion = translateCyclic(a, l, index).not();
-					break;
-				default:
-					throw new RuntimeException("Unknown unary operator " + op);
+
+		BooleanFormula expansion;
+		if (node instanceof UnaryOperator) {
+			UnaryOperator op = (UnaryOperator) node;
+			LtlNode a = op.getOperand();
+			
+			Function<BinaryOperations, BooleanFormula> globalFuture = operation -> {
+				FormulaList list = new FormulaList(operation);
+				for (int j = Math.min(index, l); j <= k; j++) {
+					list.add(translateCyclic(a, l, j));
 				}
-			} else if (node instanceof BinaryOperator) {
-				BinaryOperator op = (BinaryOperator) node;
-				LtlNode a = op.getLeftOperand();
-				LtlNode b = op.getRightOperand();
-				
-				BiFunction<BinaryOperations, BinaryOperations, BooleanFormula> untilRelease = (op1, op2) -> {
-					FormulaList l1 = new FormulaList(op1);
-					for (int j = index; j <= k; j++) {
-						FormulaList l2 = new FormulaList(op2);
-						l2.add(translateCyclic(b, l, j));
-						for (int n = index; n < j; n++) {
+				return list.assemble();
+			};
+			
+			switch (op.getType()) {
+			case GLOBAL:
+				expansion = globalFuture.apply(BinaryOperations.AND);
+				break;
+			case FUTURE:
+				expansion = globalFuture.apply(BinaryOperations.OR);
+				break;
+			case NEXT:
+				expansion = translateCyclic(a, l, index < k ? index + 1 : l);
+				break;
+			case NEG:
+				assert a instanceof BooleanNode || a instanceof Predicate;
+				expansion = translateCyclic(a, l, index).not();
+				break;
+			default:
+				throw new RuntimeException("Unknown unary operator " + op);
+			}
+		} else if (node instanceof BinaryOperator) {
+			BinaryOperator op = (BinaryOperator) node;
+			LtlNode a = op.getLeftOperand();
+			LtlNode b = op.getRightOperand();
+			
+			BiFunction<BinaryOperations, BinaryOperations, BooleanFormula> untilRelease = (op1, op2) -> {
+				FormulaList l1 = new FormulaList(op1);
+				for (int j = index; j <= k; j++) {
+					FormulaList l2 = new FormulaList(op2);
+					l2.add(translateCyclic(b, l, j));
+					for (int n = index; n < j; n++) {
+						l2.add(translateCyclic(a, l, n));
+					}
+					l1.add(l2.assemble());
+				}
+				for (int j = l; j < index; j++) {
+					FormulaList l2 = new FormulaList(op2);
+					l2.add(translateCyclic(b, l, j));
+					for (int n = 0; n <= k; n++) {
+						if (n >= index || n >= l && n < j) {
 							l2.add(translateCyclic(a, l, n));
 						}
-						l1.add(l2.assemble());
 					}
-					for (int j = l; j < index; j++) {
-						FormulaList l2 = new FormulaList(op2);
-						l2.add(translateCyclic(b, l, j));
-						for (int n = 0; n <= k; n++) {
-							if (n >= index || n >= l && n < j) {
-								l2.add(translateCyclic(a, l, n));
-							}
-						}
-						l1.add(l2.assemble());
-					}
-					return l1.assemble();
-				};
-				
-				switch (op.getType()) {
-				case OR:
-					expansion = translateCyclic(a, l, index).or(translateCyclic(b, l, index));
-					break;
-				case AND:
-					expansion = translateCyclic(a, l, index).and(translateCyclic(b, l, index));
-					break;
-				case UNTIL:
-					expansion = untilRelease.apply(BinaryOperations.OR, BinaryOperations.AND);
-					break;
-				case RELEASE:
-					expansion = untilRelease.apply(BinaryOperations.AND, BinaryOperations.OR);
-					break;
-				default:
-					throw new RuntimeException("Unknown binary operator " + op);
+					l1.add(l2.assemble());
 				}
-			} else {
-				throw new AssertionError();
-			}
+				return l1.assemble();
+			};
 			
-			BooleanVariable result = BooleanVariable.newAuxiliaryVariable();
-			storeSubterm(si, Pair.of(expansion, result));
-			return extractSubterms ? result : expansion;
+			switch (op.getType()) {
+			case OR:
+				expansion = translateCyclic(a, l, index).or(translateCyclic(b, l, index));
+				break;
+			case AND:
+				expansion = translateCyclic(a, l, index).and(translateCyclic(b, l, index));
+				break;
+			case UNTIL:
+				expansion = untilRelease.apply(BinaryOperations.OR, BinaryOperations.AND);
+				break;
+			case RELEASE:
+				expansion = untilRelease.apply(BinaryOperations.AND, BinaryOperations.OR);
+				break;
+			default:
+				throw new RuntimeException("Unknown binary operator " + op);
+			}
 		} else {
-			return subterm.getRight();
+			throw new AssertionError();
 		}
-	}
-	
-	private static class SubtermIdentifier {
-		final LtlNode node;
-		final int l;
-		final int index;
-		
-		public SubtermIdentifier(LtlNode node, int l, int index) {
-			this.node = node;
-			this.l = l;
-			this.index = index;
-		}
-
-		@Override
-		public int hashCode() {
-			final int prime = 31;
-			int result = 1;
-			result = prime * result + index;
-			result = prime * result + l;
-			result = prime * result + ((node == null) ? 0 : node.hashCode());
-			return result;
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			if (obj == null)
-				throw new AssertionError();
-			if (getClass() != obj.getClass())
-				throw new AssertionError();
-			SubtermIdentifier other = (SubtermIdentifier) obj;
-			return node == other.node && index == other.index && l == other.l;
-		}
-		
-		@Override
-		public String toString() {
-			return node + " " + l + " " + index;
-		}
+		return expansion;
 	}
 }

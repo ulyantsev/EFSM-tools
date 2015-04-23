@@ -46,7 +46,7 @@ public class QbfAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 	
 	public static Optional<Automaton> build(Logger logger, ScenariosTree tree,
 			List<LtlNode> formulae, int size, String ltlFilePath,
-			QbfSolver qbfSolver, String solverParams, boolean extractSubterms,
+			QbfSolver qbfSolver, String solverParams,
 			boolean useSat, List<String> events, List<String> actions,
 			SatSolver satSolver, Verifier verifier, long finishTime,
 			CompletenessType completenessType) throws IOException {
@@ -60,14 +60,13 @@ public class QbfAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 				logger.info("TRYING k = " + k);
 				deleteTrash();
 				QuantifiedBooleanFormula qbf = new QbfFormulaBuilder(logger, tree,
-						formulae, size, k, extractSubterms, completenessType,
-						events, actions).getFormula(false);
+						formulae, size, k, completenessType, events, actions).getFormula(false);
 				final int timeLeft = (int) (finishTime - System.currentTimeMillis()) / 1000 + 1;
 				
 				String formula;
 				try {
-					formula = qbf.flatten(tree, size, k, logger, events, actions,
-							forbiddenYs, finishTime, MAX_FORMULA_SIZE);
+					formula = qbf.flatten(size, k, logger, events, actions,
+							forbiddenYs, finishTime, MAX_FORMULA_SIZE, true);
 				} catch (FormulaSizeException | TimeLimitExceeded e) {
 					logger.info("FORMULA FOR k = " + k + " IS TOO LARGE OR REQUIRES TOO MUCH TIME TO CONSTRUCT");
 					logger.info(new SolverResult(SolverResults.UNKNOWN).toString());
@@ -101,8 +100,7 @@ public class QbfAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 				logger.info("TRYING k = " + k);
 				deleteTrash();
 				QuantifiedBooleanFormula qbf = new QbfFormulaBuilder(logger, tree,
-						formulae, size, k, extractSubterms, completenessType,
-						events, actions).getFormula(false);
+						formulae, size, k, completenessType, events, actions).getFormula(false);
 				final int timeLeft = (int) (finishTime - System.currentTimeMillis()) / 1000 + 1;
 				SolverResult ass = qbf.solve(logger, qbfSolver, solverParams, timeLeft);
 				logger.info(ass.toString().split("\n")[0]);

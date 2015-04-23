@@ -19,7 +19,6 @@ import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
-import org.kohsuke.args4j.spi.BooleanOptionHandler;
 
 import qbf.egorov.ltl.LtlParseException;
 import qbf.egorov.ltl.LtlParser;
@@ -35,10 +34,11 @@ import structures.ScenariosTree;
 import structures.Transition;
 import algorithms.AutomatonCompleter.CompletenessType;
 import algorithms.BacktrackingAutomatonBuilder;
+import algorithms.CounterexampleAutomatonBuilder;
 import algorithms.HybridAutomatonBuilder;
+import algorithms.HybridCounterexampleAutomatonBuilder;
 import algorithms.IterativeAutomatonBuilder;
 import algorithms.QbfAutomatonBuilder;
-import algorithms.TrueCounterexampleAutomatonBuilder;
 import bool.MyBooleanExpression;
 
 public class QbfBuilderMain {
@@ -76,12 +76,7 @@ public class QbfBuilderMain {
 
 	@Option(name = "--ltl", aliases = { "-lt" }, usage = "file with LTL properties", metaVar = "<file>")
 	private String ltlFilePath;
-	
-	@Option(name = "--extractSubterms", aliases = { "-es" }, handler = BooleanOptionHandler.class,
-			usage = "whether subterms should be extracted to separate variables (only for QSAT strategy)",
-			metaVar = "<extractSubterms>")
-	private boolean extractSubterms;
-	
+
 	@Option(name = "--qbfSolver", aliases = { "-qs" }, usage = "QBF solver: SKIZZO or DEPQBF (only for the QSAT strategy)",
 			metaVar = "<qbfSolver>")
 	private String qbfSolver = QbfSolver.SKIZZO.name();
@@ -258,12 +253,18 @@ public class QbfBuilderMain {
 			switch (ss) {
 			case QSAT: case EXP_SAT:
 				resultAutomaton = QbfAutomatonBuilder.build(logger, tree, formulae, size, ltlFilePath,
-						qbfsolver, solverParams, extractSubterms, ss == SolvingStrategy.EXP_SAT,
+						qbfsolver, solverParams, ss == SolvingStrategy.EXP_SAT,
 						events, actions, satsolver, verifier, finishTime, completenesstype);
 				break;
 			case HYBRID:
 				resultAutomaton = HybridAutomatonBuilder.build(logger, tree, formulae, size, ltlFilePath,
-						qbfsolver, solverParams, extractSubterms,
+						qbfsolver, solverParams,
+						events, actions, satsolver, verifier, finishTime, completenesstype,
+						hybridSecToGenerateFormula, hybridSecToSolve);
+				break;
+			case HYBRID_COUNTEREXAMPLE:
+				resultAutomaton = HybridCounterexampleAutomatonBuilder.build(logger, tree, formulae, size, ltlFilePath,
+						qbfsolver, solverParams,
 						events, actions, satsolver, verifier, finishTime, completenesstype,
 						hybridSecToGenerateFormula, hybridSecToSolve);
 				break;
@@ -273,7 +274,7 @@ public class QbfBuilderMain {
 						completenesstype);
 				break;
 			case COUNTEREXAMPLE:
-				resultAutomaton = TrueCounterexampleAutomatonBuilder.build(logger, tree, size, solverParams,
+				resultAutomaton = CounterexampleAutomatonBuilder.build(logger, tree, size, solverParams,
 						resultFilePath, ltlFilePath, formulae, events, actions, satsolver, verifier, finishTime,
 						completenesstype);
 				break;
@@ -341,13 +342,6 @@ public class QbfBuilderMain {
 				case NO_DEAD_ENDS:
 					for (Node s : resultAutomaton.get().getStates()) {
 						if (s.transitionsCount() == 0) {
-							complete = false;
-						}
-					}
-					break;
-				case NO_DEAD_ENDS_WALKINSHAW:
-					for (Node s : resultAutomaton.get().getStates()) {
-						if (s.getTransitions().stream().allMatch(t -> t.getActions().getActions().length == 1)) {
 							complete = false;
 						}
 					}

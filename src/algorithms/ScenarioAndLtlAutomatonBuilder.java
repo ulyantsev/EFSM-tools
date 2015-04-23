@@ -99,9 +99,6 @@ public abstract class ScenarioAndLtlAutomatonBuilder {
 						include = true;
 					} else if (completenessType == CompletenessType.NO_DEAD_ENDS) {
 						include = state.transitionsCount() == 0;
-					} else if (completenessType == CompletenessType.NO_DEAD_ENDS_WALKINSHAW) {
-						include = state.getTransitions().stream()
-								.allMatch(t -> t.getActions().getActions().length == 1);
 					} else {
 						throw new AssertionError();
 					}
