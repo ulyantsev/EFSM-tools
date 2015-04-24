@@ -14,6 +14,7 @@ import java.util.Set;
 import org.apache.commons.lang3.tuple.Pair;
 
 import qbf.egorov.ltl.buchi.BuchiAutomata;
+import qbf.egorov.ltl.buchi.BuchiNode;
 import qbf.egorov.ltl.grammar.predicate.IPredicateFactory;
 import qbf.egorov.statemachine.SimpleState;
 
@@ -29,10 +30,11 @@ public class SimpleVerifier {
         this.initState = initState;
     }
 
-    public Pair<List<IntersectionTransition>, Integer> verify(BuchiAutomata buchi, IPredicateFactory predicates) {
+    public Pair<List<IntersectionTransition>, Integer> verify(BuchiAutomata buchi,
+    		IPredicateFactory predicates, Set<BuchiNode> finiteCounterexampleNodes) {
         IntersectionAutomata automata = new IntersectionAutomata(predicates, buchi);
         //System.out.println("\n" + buchi);
-        return bfs(automata.getNode(initState, buchi.getStartNode(), 0));
+        return bfs(automata.getNode(initState, buchi.getStartNode(), 0), finiteCounterexampleNodes);
     }
 
     private class QueueElement {
@@ -53,17 +55,32 @@ public class SimpleVerifier {
 		}
     }
     
-    private Pair<List<IntersectionTransition>, Integer> bfs(IntersectionNode initialNode) {
+    private Pair<List<IntersectionTransition>, Integer> bfs(IntersectionNode initialNode,
+    		Set<BuchiNode> finiteCounterexampleNodes) {
     	final Deque<QueueElement> queue = new LinkedList<>();
     	final Set<IntersectionNode> visited = new HashSet<>();
         queue.addLast(new QueueElement(new IntersectionTransition(null, initialNode), null));
         final List<Pair<List<IntersectionTransition>, Integer>> counterexamples = new ArrayList<>();
+        
+        Pair<List<IntersectionTransition>, Integer> finiteCounterexample = null;
         
         while (!queue.isEmpty()) {
         	final QueueElement element = queue.pollFirst();
         	if (!visited.contains(element.dest)) {
 	        	visited.add(element.dest);
 	
+	        	if (finiteCounterexample == null && finiteCounterexampleNodes.contains(element.dest.node)) {
+	        		// finite counterexample exists
+	        		List<IntersectionTransition> path = new ArrayList<>();
+	        		QueueElement elem = element;
+            		do {
+            			path.add(elem.trans);
+            			elem = elem.predecessor;
+            		} while (elem != null);
+            		path.remove(path.size() - 1);
+            		Collections.reverse(path);
+            		finiteCounterexample = Pair.of(path, 0);
+	        	}
 	        	if (element.dest.terminal) {
 	        		secondBfs(element.dest, element, counterexamples);
 	        	}
@@ -77,13 +94,21 @@ public class SimpleVerifier {
 	        	}
         	}
         }
+    	if (finiteCounterexample != null) {
+    		counterexamples.add(finiteCounterexample);
+    	}
         if (counterexamples.isEmpty()) {
         	return Pair.of(new ArrayList<>(), 0);
         } else {
-        	//System.out.println(counterexamples);
         	int minIndex = 0;
+        	// the counterexample of the minimal length
+        	// if the lengths are equal, then with the minumal loop size
         	for (int i = 1; i < counterexamples.size(); i++) {
-        		if (counterexamples.get(i).getLeft().size() < counterexamples.get(minIndex).getLeft().size()) {
+        		final int currentSize = counterexamples.get(i).getLeft().size();
+        		final int bestSize = counterexamples.get(minIndex).getLeft().size();
+        		final int currentLoopSize = counterexamples.get(i).getRight();
+        		final int bestLoopSize = counterexamples.get(minIndex).getRight();
+        		if (currentSize < bestSize || currentSize == bestSize && currentLoopSize < bestLoopSize) {
         			minIndex = i;
         		}
         	}
@@ -104,7 +129,7 @@ public class SimpleVerifier {
 	        		// found a loop
         			List<IntersectionTransition> path = new ArrayList<>();
             		QueueElement elem = element;
-            		do  {
+            		do {
             			path.add(elem.trans);
             			elem = elem.predecessor;
             		} while (elem != null);

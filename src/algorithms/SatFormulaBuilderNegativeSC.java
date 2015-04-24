@@ -100,13 +100,17 @@ public class SatFormulaBuilderNegativeSC extends FormulaBuilder {
 				// for each loop, the terminal node is colored differently
 				if (node.terminal()) {
 					for (NegativeNode loop : node.loops()) {
-						FormulaList options = new FormulaList(BinaryOperations.OR);
-						options.add(invalid(node));
-						int loopNum = loop.getNumber();
-						for (int i = 0; i < colorSize; i++) {
-							options.add(xxVar(num, i).equivalent(xxVar(loopNum, i)).not());
+						if (loop == node) {
+							constraints.add(invalid(node));
+						} else {
+							FormulaList options = new FormulaList(BinaryOperations.OR);
+							options.add(invalid(node));
+							final int loopNum = loop.getNumber();
+							for (int i = 0; i < colorSize; i++) {
+								options.add(xxVar(num, i).equivalent(xxVar(loopNum, i)).not());
+							}
+							constraints.add(options.assemble());
 						}
-						constraints.add(options.assemble());
 					}
 				}
 				// at least one color

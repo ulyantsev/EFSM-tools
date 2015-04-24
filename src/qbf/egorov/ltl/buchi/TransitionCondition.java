@@ -3,6 +3,7 @@
  */
 package qbf.egorov.ltl.buchi;
 
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -20,6 +21,14 @@ public class TransitionCondition {
     public TransitionCondition() {
         exprs = new LinkedHashSet<>();
         negExprs = new LinkedHashSet<>();
+    }
+    
+    public Set<IExpression<Boolean>> expressions() {
+    	return Collections.unmodifiableSet(exprs);
+    }
+    
+    public Set<IExpression<Boolean>> negativeExpressions() {
+    	return Collections.unmodifiableSet(negExprs);
     }
 
     public TransitionCondition(Set<IExpression<Boolean>> exprs, Set<IExpression<Boolean>> negExprs) {

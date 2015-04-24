@@ -51,7 +51,7 @@ public class CounterexampleAutomatonBuilder extends ScenarioAndLtlAutomatonBuild
 			state = newState;
 			states.add(newState);
 		}
-		logger.info("ADDING COUNTEREXAMPLE: " + description);
+		logger.info("ADDING COUNTEREXAMPLE: " + description + ", LOOP LENGTH " + counterexample.loopLength);
 		try {
 			negativeTree.addScenario(new StringScenario(true, counterexample.events(), expressions, actions),
 					counterexample.loopLength);

@@ -3,9 +3,12 @@
  */
 package qbf.egorov.verifier;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -16,7 +19,11 @@ import org.apache.commons.lang3.tuple.Pair;
 import qbf.egorov.ltl.LtlParseException;
 import qbf.egorov.ltl.LtlParser;
 import qbf.egorov.ltl.buchi.BuchiAutomata;
+import qbf.egorov.ltl.buchi.BuchiNode;
+import qbf.egorov.ltl.buchi.TransitionCondition;
 import qbf.egorov.ltl.buchi.translator.JLtl2baTranslator;
+import qbf.egorov.ltl.grammar.BooleanNode;
+import qbf.egorov.ltl.grammar.IExpression;
 import qbf.egorov.ltl.grammar.LtlNode;
 import qbf.egorov.ltl.grammar.LtlUtils;
 import qbf.egorov.ltl.grammar.predicate.IPredicateFactory;
@@ -49,7 +56,8 @@ public class VerifierFactory {
         parser = new LtlParser(context, predicates);
     }
     
-    public void prepareFormulas(List<String> formulas) throws LtlParseException {
+    @SuppressWarnings("unchecked")
+	public void prepareFormulas(List<String> formulas) throws LtlParseException {
     	 JLtl2baTranslator translator = new JLtl2baTranslator();
 
          int j = 0;
@@ -59,6 +67,139 @@ public class VerifierFactory {
              node = LtlUtils.getInstance().neg(node);
              preparedFormulas[j++] = translator.translate(node);
          }
+         
+         finiteCounterexampleBuchiStates = new Set[formulas.size()];
+         for (int i = 0; i < formulas.size(); i++) {
+        	 finiteCounterexampleBuchiStates[i] = new FiniteCounterexampleNodeSearcher()
+        			 .findCounterexampleBuchiStates(preparedFormulas[i]);
+        	 //System.out.println(preparedFormulas[i]);
+        	 //System.out.println(finiteCounterexampleBuchiStates[i]);
+         }
+    }
+    
+    private Set<BuchiNode>[] finiteCounterexampleBuchiStates;
+    
+    private static class FiniteCounterexampleNodeSearcher {
+	    private Set<BuchiNode> findCounterexampleBuchiStates(BuchiAutomata a) {
+	    	final Set<BuchiNode> nodesWithDevilTransitions = nodesWithDevilTransitions(a);
+	    	
+	    	final Set<BuchiNode> nodesWithRejectingLoops = new LinkedHashSet<>();
+	    	for (BuchiNode node : a.getNodes()) {
+	    		if (hasRejectingLoop(node, a, nodesWithDevilTransitions)) {
+	    			nodesWithRejectingLoops.add(node);
+	    		}
+	    	}
+	    	
+	    	final Set<BuchiNode> result = new HashSet<>(a.getNodes());
+	    	for (BuchiNode node : a.getNodes()) {
+	    		final Set<BuchiNode> reachabilitySet = reachibilitySet(node);
+	    		for (BuchiNode loopStart : reachabilitySet) {
+	    			if (nodesWithRejectingLoops.contains(loopStart)) {
+	    				result.remove(node);
+	    				break;
+	    			}
+	    		}
+	    	}
+	    	
+	    	return result;
+	    }
+	    
+	    private Set<BuchiNode> reachibilitySet(BuchiNode node) {
+	    	final Set<BuchiNode> visited = new HashSet<>();
+	    	visited.add(node);
+	    	final Deque<BuchiNode> queue = new ArrayDeque<>();
+	    	queue.add(node);
+	    	while (!queue.isEmpty()) {
+	    		final BuchiNode n = queue.removeFirst();
+	    		for (BuchiNode child : n.getTransitions().values()) {
+	    			if (!visited.contains(child)) {
+	    				visited.add(child);
+	    				queue.add(child);
+	    			}
+	    		}
+	    	}
+	    	return visited;
+	    }
+	    
+	    private Set<BuchiNode> nodesWithDevilTransitions(BuchiAutomata a) {
+	    	final Set<BuchiNode> result = new HashSet<>();
+	    	for (BuchiNode node : a.getNodes()) {
+	    		// if transition conditions are not complete, there is a rejecting loop!
+	    		final Set<IExpression<Boolean>> allExpressions = new HashSet<>();
+	    		final Set<TransitionCondition> conditions = node.getTransitions().keySet();
+	    		for (TransitionCondition condition : conditions) {
+	    			allExpressions.addAll(condition.expressions());
+					allExpressions.addAll(condition.negativeExpressions());
+	    		}
+	    		allExpressions.removeIf(x -> x instanceof BooleanNode);
+	    		final List<IExpression<Boolean>> allExpressionsList = new ArrayList<>(allExpressions);
+	    		
+	    		int maxI = 1 << allExpressions.size();
+	    		for (int i = 0; i < maxI; i++) {
+	    			final Set<IExpression<Boolean>> positive = new HashSet<>();
+	    			for (int j = 0; j < allExpressions.size(); j++) {
+	    				if (((i >> j) & 1) == 1) {
+	    					positive.add(allExpressionsList.get(j));
+	    				}
+	    			}
+	    			boolean transitionPassed = false; // either condition passes
+	    			for (TransitionCondition condition : conditions) {
+	        			boolean transitionConditionPassed = true; // all expressions pass
+	    				for (IExpression<Boolean> expression : allExpressions) {
+	    					final boolean failed = positive.contains(expression)
+	    						&& condition.negativeExpressions().contains(expression)
+	    						|| !positive.contains(expression)
+								&& condition.expressions().contains(expression);
+	    					if (failed) {
+	    						transitionConditionPassed = false;
+	    						break;
+	    					}
+	    				}
+	    				if (condition.expressions().stream()
+	    						.anyMatch(x -> x instanceof BooleanNode && x.toString().equals("false"))) {
+	    					transitionConditionPassed = false;
+	    				}
+	    				if (condition.negativeExpressions().stream()
+	    						.anyMatch(x -> x instanceof BooleanNode && x.toString().equals("true"))) {
+	    					transitionConditionPassed = false;
+	    				}
+	    				if (transitionConditionPassed) {
+	    					transitionPassed = true;
+	    					break;
+	    				}
+	    			}
+	    			if (!transitionPassed) {
+	    				result.add(node);
+	    			}
+	    		}
+	    	}
+	    	return result;
+	    }
+	    
+	    private boolean hasRejectingLoop(BuchiNode node, BuchiAutomata a,
+	    		Set<BuchiNode> nodesWithDevilTransitions) {
+	    	final Set<BuchiNode> visited = new HashSet<>();
+	    	visited.add(node);
+	    	final Deque<BuchiNode> queue = new ArrayDeque<>();
+	    	queue.add(node);
+	    	while (!queue.isEmpty()) {
+	    		final BuchiNode n = queue.removeFirst();
+	    		if (nodesWithDevilTransitions.contains(n)) {
+	    			return true;
+	    		}
+	    		for (BuchiNode child : n.getTransitions().values()) {
+	    			if (a.getAcceptSet(0).contains(child)) {
+	    				continue;
+	    			} else if (visited.contains(child)) {
+	    				return true;
+	    			} else {
+	    				visited.add(child);
+	    				queue.add(child);
+	    			}
+	    		}
+	    	}
+	    	return false;
+	    }
     }
 
     public void configureStateMachine(FST fst) {
@@ -120,9 +261,10 @@ public class VerifierFactory {
     public List<Counterexample> verify() {
         List<Counterexample> counterexamples = new ArrayList<>();
         SimpleVerifier verifier = new SimpleVerifier(context.getStateMachine().getInitialState());
-
-        for (BuchiAutomata buchi : preparedFormulas) {
-            Pair<List<IntersectionTransition>, Integer> list = verifier.verify(buchi, predicates);
+        for (int i = 0; i < preparedFormulas.length; i++) {
+        	BuchiAutomata buchi = preparedFormulas[i];
+            Pair<List<IntersectionTransition>, Integer> list = verifier.verify(buchi, predicates,
+            		finiteCounterexampleBuchiStates[i]);
             
             if (!list.getLeft().isEmpty()) {
                 List<String> eventList = list.getLeft().stream()
