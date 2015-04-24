@@ -37,13 +37,12 @@ public class HybridAutomatonBuilder extends CounterexampleAutomatonBuilder {
 			QbfSolver qbfSolver, String solverParams,
 			List<String> events, List<String> actions, SatSolver satSolver,
 			Verifier verifier, long finishTime, CompletenessType completenessType,
-			int secToGenerateFormula) throws IOException {		
+			int secToGenerateFormula, NegativeScenariosTree negativeTree) throws IOException {		
 		boolean maxKFound = false;
 		
 		deleteTrash();
 		final Set<String> forbiddenYs = QbfAutomatonBuilder.getForbiddenYs(logger, size, events.size());
 		
-		final NegativeScenariosTree negativeTree = new NegativeScenariosTree();
 		final List<BooleanFormula> prohibited = new ArrayList<>();
 		final CompletenessType effectiveCompletenessType = USE_COMPLETENESS_HEURISTICS
 				? CompletenessType.NO_DEAD_ENDS : completenessType;

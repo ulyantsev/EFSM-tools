@@ -76,10 +76,10 @@ public class CounterexampleAutomatonBuilder extends ScenarioAndLtlAutomatonBuild
 	public static Optional<Automaton> build(Logger logger, ScenariosTree tree, int size, String solverParams,
 			String resultFilePath, String ltlFilePath, List<LtlNode> formulae,
 			List<String> events, List<String> actions, SatSolver satSolver,
-			Verifier verifier, long finishTime, CompletenessType completenessType) throws IOException {
+			Verifier verifier, long finishTime, CompletenessType completenessType,
+			NegativeScenariosTree negativeTree) throws IOException {
 		deleteTrash();
 		
-		final NegativeScenariosTree negativeTree = new NegativeScenariosTree();
 		final List<BooleanFormula> prohibited = new ArrayList<>();
 		final CompletenessType effectiveCompletenessType = USE_COMPLETENESS_HEURISTICS
 				? CompletenessType.NO_DEAD_ENDS : completenessType;

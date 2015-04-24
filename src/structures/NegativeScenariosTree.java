@@ -1,5 +1,6 @@
 package structures;
 
+import java.io.FileNotFoundException;
 import java.text.ParseException;
 import java.util.Collection;
 import java.util.LinkedHashSet;
@@ -24,6 +25,15 @@ public class NegativeScenariosTree {
         return root;
     }
 
+    /*
+     * varNumber = -1 for no variable removal
+     */
+    public void load(String filepath, int varNumber) throws FileNotFoundException, ParseException {
+        for (StringScenario scenario : StringScenario.loadScenarios(filepath, varNumber)) {
+            addScenario(scenario, 0);
+        }
+    }
+    
     public void addScenario(StringScenario scenario, int loopLength) throws ParseException {
     	NegativeNode loopNode = null;
     	NegativeNode node = root;
@@ -33,6 +43,9 @@ public class NegativeScenariosTree {
         	}
             addTransitions(node, scenario.getEvents(i), scenario.getExpr(i), scenario.getActions(i));
             node = node.getDst(scenario.getEvents(i).get(0), scenario.getExpr(i), scenario.getActions(i));
+        }
+        if (loopLength == 0) {
+        	loopNode = node;
         }
         assert loopNode != null;
         node.addLoop(loopNode);
@@ -76,8 +89,10 @@ public class NegativeScenariosTree {
                 sb.append(" [label = \"" + t.getEvent() + " [" + t.getExpr().toString() + "] ("
                         + t.getActions().toString() + ") \"];\n");
             }
-            for (NegativeNode loop : node.loops()) {
-                sb.append("    " + node.getNumber() + " -> " + loop.getNumber() + ";\n");
+            if (node.terminal()) {
+	            for (NegativeNode loop : node.loops()) {
+	                sb.append("    " + node.getNumber() + " -> " + loop.getNumber() + ";\n");
+	            }
             }
         }
 

@@ -29,6 +29,7 @@ import qbf.reduction.SolvingStrategy;
 import qbf.reduction.Verifier;
 import scenario.StringScenario;
 import structures.Automaton;
+import structures.NegativeScenariosTree;
 import structures.Node;
 import structures.ScenariosTree;
 import structures.Transition;
@@ -75,6 +76,9 @@ public class QbfBuilderMain {
 	@Option(name = "--ltl", aliases = { "-lt" }, usage = "file with LTL properties", metaVar = "<file>")
 	private String ltlFilePath;
 
+	@Option(name = "--negsc", aliases = { "-ns" }, usage = "file with negative scenarios", metaVar = "<file>")
+	private String negscFilePath;
+	
 	@Option(name = "--qbfSolver", aliases = { "-qs" }, usage = "QBF solver: SKIZZO or DEPQBF (only for the QSAT strategy)",
 			metaVar = "<qbfSolver>")
 	private String qbfSolver = QbfSolver.SKIZZO.name();
@@ -245,6 +249,11 @@ public class QbfBuilderMain {
 				}
 			}
 			
+			final NegativeScenariosTree negativeTree = new NegativeScenariosTree();
+			if (negscFilePath != null) {
+				negativeTree.load(negscFilePath, varNumber);
+			}
+			
 			Optional<Automaton> resultAutomaton = null;
 			final Verifier verifier = new Verifier(size, logger, ltlFilePath, events, actions, varNumber);
 			final long finishTime = System.currentTimeMillis() + timeout * 1000;
@@ -258,12 +267,12 @@ public class QbfBuilderMain {
 				resultAutomaton = HybridAutomatonBuilder.build(logger, tree, formulae, size, ltlFilePath,
 						qbfsolver, solverParams,
 						events, actions, satsolver, verifier, finishTime, completenesstype,
-						hybridSecToGenerateFormula);
+						hybridSecToGenerateFormula, negativeTree);
 				break;
 			case COUNTEREXAMPLE:
 				resultAutomaton = CounterexampleAutomatonBuilder.build(logger, tree, size, solverParams,
 						resultFilePath, ltlFilePath, formulae, events, actions, satsolver, verifier, finishTime,
-						completenesstype);
+						completenesstype, negativeTree);
 				break;
 			case BACKTRACKING:
 				resultAutomaton = BacktrackingAutomatonBuilder.build(logger, tree, size,
