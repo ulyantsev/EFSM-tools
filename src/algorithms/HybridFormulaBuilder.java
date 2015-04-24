@@ -29,6 +29,7 @@ public class HybridFormulaBuilder extends QbfFormulaBuilder {
 
 	public QuantifiedBooleanFormula getFormula() {
 		addVars();
+		negativeBuilder.addNegativeScenarioVars();
 		existVars.addAll(negativeBuilder.nagativeVars());
 		
 		BooleanFormula fullExistConstraint = scenarioConstraints(true).assemble()

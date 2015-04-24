@@ -70,7 +70,7 @@ public class SatFormulaBuilderNegativeSC extends FormulaBuilder {
 		return BooleanVariable.byName("xx", state, color).get();
 	}
 
-	private void addNegativeScenarioVars() {
+	public void addNegativeScenarioVars() {
 		for (Node node : negativeTree.getNodes()) {
 			for (int color = 0; color <= colorSize; color++) {
 				xxVars.add(new BooleanVariable("xx", node.getNumber(), color));

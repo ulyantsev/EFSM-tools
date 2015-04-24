@@ -21,7 +21,7 @@ initialise[1]; connect[1]; login[1]; listfiles[1]; changedirectory[1]; listfiles
 initialise[1]; connect[1]; login[1]; changedirectory[1]; listnames[1]; delete[1]; delete[1]; delete[1]; changedirectory[1]; listnames[1]; delete[1]; appendfile[1]; logout[1]; disconnect[1]
 ;;;;;;;;;;;;;
 initialise[1]; connect[1]; login[1]; changedirectory[1]; listnames[1]; delete[1]; appendfile[1]; logout[1]; disconnect[1]
-;;;;;;;;;
+;;;;;;;;
 initialise[1]; connect[1]; login[1]; changedirectory[1]; listnames[1]; delete[1]; delete[1]; delete[1]; delete[1]; delete[1]
 ;;;;;;;;;
 initialise[1]; connect[1]; login[1]; changedirectory[1]; listnames[1]; delete[1]; delete[1]; delete[1]; delete[1]; appendfile[1]

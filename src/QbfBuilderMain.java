@@ -36,8 +36,6 @@ import algorithms.AutomatonCompleter.CompletenessType;
 import algorithms.BacktrackingAutomatonBuilder;
 import algorithms.CounterexampleAutomatonBuilder;
 import algorithms.HybridAutomatonBuilder;
-import algorithms.HybridCounterexampleAutomatonBuilder;
-import algorithms.IterativeAutomatonBuilder;
 import algorithms.QbfAutomatonBuilder;
 import bool.MyBooleanExpression;
 
@@ -91,9 +89,9 @@ public class QbfBuilderMain {
 	@Option(name = "--timeout", aliases = { "-to" }, usage = "solver timeout (sec)", metaVar = "<timeout>")
 	private int timeout = 60 * 60 * 24;
 	
-	@Option(name = "--strategy", aliases = { "-str" }, usage = "solving mode: QSAT, EXP_SAT, BACKTRACKING, ITERATIVE_SAT, HYBRID",
+	@Option(name = "--strategy", aliases = { "-str" }, usage = "solving mode: QSAT, EXP_SAT, BACKTRACKING, COUNTEREXAMPLE, NEWHYBRID",
 			metaVar = "<strategy>")
-	private String strategy = SolvingStrategy.QSAT.name();
+	private String strategy = SolvingStrategy.NEWHYBRID.name();
 	
 	@Option(name = "--completenessType", aliases = { "-ct" },
             usage = "NORMAL = usual completeness, NO_DEAD_ENDS = at least one transition from each state, NO_DEAD_ENDS_WALKINSHAW)",
@@ -256,22 +254,11 @@ public class QbfBuilderMain {
 						qbfsolver, solverParams, ss == SolvingStrategy.EXP_SAT,
 						events, actions, satsolver, verifier, finishTime, completenesstype);
 				break;
-			case HYBRID:
+			case NEWHYBRID:
 				resultAutomaton = HybridAutomatonBuilder.build(logger, tree, formulae, size, ltlFilePath,
 						qbfsolver, solverParams,
 						events, actions, satsolver, verifier, finishTime, completenesstype,
-						hybridSecToGenerateFormula, hybridSecToSolve);
-				break;
-			case HYBRID_COUNTEREXAMPLE:
-				resultAutomaton = HybridCounterexampleAutomatonBuilder.build(logger, tree, formulae, size, ltlFilePath,
-						qbfsolver, solverParams,
-						events, actions, satsolver, verifier, finishTime, completenesstype,
-						hybridSecToGenerateFormula, hybridSecToSolve);
-				break;
-			case ITERATIVE_SAT:
-				resultAutomaton = IterativeAutomatonBuilder.build(logger, tree, size, solverParams,
-						resultFilePath, ltlFilePath, formulae, events, actions, satsolver, verifier, finishTime,
-						completenesstype);
+						hybridSecToGenerateFormula);
 				break;
 			case COUNTEREXAMPLE:
 				resultAutomaton = CounterexampleAutomatonBuilder.build(logger, tree, size, solverParams,
