@@ -1,3 +1,8 @@
+
+/**
+ * (c) Igor Buzhinsky
+ */
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;

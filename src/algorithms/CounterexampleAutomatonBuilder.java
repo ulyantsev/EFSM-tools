@@ -1,5 +1,9 @@
 package algorithms;
 
+/**
+ * (c) Igor Buzhinsky
+ */
+
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;

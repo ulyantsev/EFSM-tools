@@ -1,10 +1,10 @@
 package qbf.reduction;
 
-import java.util.Map;
-
 /**
  * (c) Igor Buzhinsky
  */
+
+import java.util.Map;
 
 public class FalseFormula extends BooleanFormula {
 	public static final FalseFormula INSTANCE = new FalseFormula();

@@ -13,7 +13,6 @@ import actions.StringActions;
 import bool.MyBooleanExpression;
 
 public class ScenariosGenerator {
-	
     static public ArrayList<ArrayList<Transition>> getBFSPaths(Automaton automaton) {
     	ArrayList<ArrayList<Transition>> ans = new ArrayList<>();
     	
@@ -191,5 +190,4 @@ public class ScenariosGenerator {
 
         return length;
     }
-
 }

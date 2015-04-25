@@ -7,7 +7,7 @@ using namespace CMSat;
 
 int main(int argc, const char* argv[]) {
     if (argc < 2) {
-        std::cout << "Run: iterative-cryptominisat <varNumber> <timeLimit in seconds>" << std::endl;
+        std::cout << "Run: incremental-cryptominisat <varNumber> <timeLimit in seconds>" << std::endl;
         return 1;
     }
     

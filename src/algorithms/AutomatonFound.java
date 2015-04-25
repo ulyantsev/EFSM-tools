@@ -1,5 +1,9 @@
 package algorithms;
 
+/**
+ * (c) Igor Buzhinsky
+ */
+
 import structures.Automaton;
 
 public class AutomatonFound extends Exception {
