@@ -29,26 +29,25 @@ public class LtlUtils {
     }
 
     public LtlNode toNnf(LtlNode root) {
-        LtlNode newRoot = normalize(root);
-        return toNnfNormilized(newRoot);
+        return toNnfNormalized(normalize(root));
     }
 
-    protected LtlNode toNnfNormilized(LtlNode root) {
+    protected LtlNode toNnfNormalized(LtlNode root) {
         if (root instanceof UnaryOperator) {
             UnaryOperator op = (UnaryOperator) root;
             if (UnaryOperatorType.NEG == op.getType()) {
                 if (op.getOperand() instanceof Predicate) {
                     return op;
                 }
-                return toNnfNormilized(op.getOperand().accept(visitor, null));
+                return toNnfNormalized(op.getOperand().accept(visitor, null));
             } else {
-                op.setOperand(toNnfNormilized(op.getOperand()));
+                op.setOperand(toNnfNormalized(op.getOperand()));
                 return op;
             }
         } else if (root instanceof BinaryOperator) {
             BinaryOperator op = (BinaryOperator) root;
-            op.setLeftOperand(toNnfNormilized(op.getLeftOperand()));
-            op.setRightOperand(toNnfNormilized(op.getRightOperand()));
+            op.setLeftOperand(toNnfNormalized(op.getLeftOperand()));
+            op.setRightOperand(toNnfNormalized(op.getRightOperand()));
             return op;
         }
         return root;
@@ -81,7 +80,6 @@ public class LtlUtils {
     }
 
     private class NegationVisitor implements INodeVisitor<LtlNode, Void> {
-
         public LtlNode visitPredicate(Predicate p, Void aVoid) {
             throw new AssertionError();
         }
@@ -151,6 +149,5 @@ public class LtlUtils {
             newOp.setRightOperand(new UnaryOperator(UnaryOperatorType.NEG, op.getRightOperand()));
             return newOp;
         }
-
     }
 }

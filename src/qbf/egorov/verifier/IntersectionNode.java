@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.function.Consumer;
 
-import qbf.egorov.ltl.buchi.BuchiAutomata;
+import qbf.egorov.ltl.buchi.BuchiAutomaton;
 import qbf.egorov.ltl.buchi.BuchiNode;
 import qbf.egorov.ltl.buchi.TransitionCondition;
 import qbf.egorov.statemachine.SimpleState;
@@ -23,22 +23,16 @@ public class IntersectionNode {
     private final IntersectionAutomata automata;
     public final SimpleState state;
     public final BuchiNode node;
-    public final int acceptSet;
-    private final int nextAcceptSet;
     public final boolean terminal;
     private final TransitionIterator iterator;
 
-    public IntersectionNode(IntersectionAutomata automata, SimpleState state, BuchiNode node, int acceptSet) {
+    public IntersectionNode(IntersectionAutomata automata, SimpleState state, BuchiNode node) {
         this.automata = automata;
         this.state = state;
         this.node = node;
-        this.acceptSet = acceptSet;
 
-        BuchiAutomata buchi = automata.getBuchiAutomata();
-        terminal = buchi.getAcceptSet(acceptSet).contains(node);
-        nextAcceptSet = terminal ? (acceptSet + 1) % buchi.getAcceptSetsCount()
-                                 : acceptSet;
-
+        BuchiAutomaton buchi = automata.getBuchiAutomata();
+        terminal = buchi.getAcceptSet().contains(node);
         iterator = new TransitionIterator();
     }
 
@@ -61,8 +55,7 @@ public class IntersectionNode {
 
 		IntersectionNode intersectionNode = (IntersectionNode) o;
 
-        return node.equals(intersectionNode.node) && state.equals(intersectionNode.state)
-                && (acceptSet == intersectionNode.acceptSet);
+        return node.equals(intersectionNode.node) && state.equals(intersectionNode.state);
     }
 
     @Override
@@ -75,7 +68,7 @@ public class IntersectionNode {
 
     @Override
     public String toString() {
-        return String.format("[\"%s\", %d, %d]", state.name, node.getID(), acceptSet);
+        return String.format("[\"%s\", %d]", state.name, node.getID());
     }
 
     private class TransitionIterator implements Iterator<IntersectionTransition> {
@@ -110,7 +103,7 @@ public class IntersectionNode {
                     nextBuchiTransition = nodeIter.next();
                     if (nextBuchiTransition.getKey().getValue()) {
 						IntersectionNode node = automata.getNode(nextStateTransition.getTarget(),
-                                nextBuchiTransition.getValue(), nextAcceptSet);
+                                nextBuchiTransition.getValue());
                         next = new IntersectionTransition(nextStateTransition, node);
                         return true;
                     }

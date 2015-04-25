@@ -15,8 +15,8 @@ import qbf.egorov.ltl.LtlParseException;
 import qbf.egorov.ltl.LtlParser;
 import qbf.egorov.ltl.buchi.translator.TranslationException;
 import qbf.egorov.transducer.FST;
+import qbf.egorov.verifier.Counterexample;
 import qbf.egorov.verifier.VerifierFactory;
-import qbf.egorov.verifier.VerifierFactory.Counterexample;
 import structures.Automaton;
 import structures.Transition;
 

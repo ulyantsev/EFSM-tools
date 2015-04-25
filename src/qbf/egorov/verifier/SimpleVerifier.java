@@ -13,7 +13,7 @@ import java.util.Set;
 
 import org.apache.commons.lang3.tuple.Pair;
 
-import qbf.egorov.ltl.buchi.BuchiAutomata;
+import qbf.egorov.ltl.buchi.BuchiAutomaton;
 import qbf.egorov.ltl.buchi.BuchiNode;
 import qbf.egorov.ltl.grammar.predicate.IPredicateFactory;
 import qbf.egorov.statemachine.SimpleState;
@@ -30,11 +30,11 @@ public class SimpleVerifier {
         this.initState = initState;
     }
 
-    public Pair<List<IntersectionTransition>, Integer> verify(BuchiAutomata buchi,
+    public Pair<List<IntersectionTransition>, Integer> verify(BuchiAutomaton buchi,
     		IPredicateFactory predicates, Set<BuchiNode> finiteCounterexampleNodes) {
         IntersectionAutomata automata = new IntersectionAutomata(predicates, buchi);
         //System.out.println("\n" + buchi);
-        return bfs(automata.getNode(initState, buchi.getStartNode(), 0), finiteCounterexampleNodes);
+        return bfs(automata.getNode(initState, buchi.getStartNode()), finiteCounterexampleNodes);
     }
 
     private class QueueElement {

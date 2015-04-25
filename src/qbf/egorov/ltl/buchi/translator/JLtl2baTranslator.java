@@ -9,7 +9,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import qbf.egorov.ltl.buchi.BuchiAutomata;
+import qbf.egorov.ltl.buchi.BuchiAutomaton;
 import qbf.egorov.ltl.buchi.BuchiNode;
 import qbf.egorov.ltl.buchi.BuchiNodeFactory;
 import qbf.egorov.ltl.buchi.ExpressionMap;
@@ -44,7 +44,7 @@ public class JLtl2baTranslator {
     private final BuchiConverter buchiConverter = new BuchiConverter();
     private final ExpressionMap expr = new ExpressionMap();
 
-    public BuchiAutomata translate(LtlNode root) {
+    public BuchiAutomaton translate(LtlNode root) {
         try {
             IFormula formula = getFormula(root);
             Collection<ITransition> transitions = LTL2BA4J.formulaToBA(formula);
@@ -61,14 +61,14 @@ public class JLtl2baTranslator {
     }
 
     private class BuchiConverter {
-        BuchiAutomata buchi;
+        BuchiAutomaton buchi;
         BuchiNodeFactory nodeFactory;
 
         Map<IState, BuchiNode> bNodes;
         Set<BuchiNode> acceptNodes;
 
-        public BuchiAutomata convert(Collection<ITransition> transitions) {
-            buchi = new BuchiAutomata();
+        public BuchiAutomaton convert(Collection<ITransition> transitions) {
+            buchi = new BuchiAutomaton();
             nodeFactory = new BuchiNodeFactory();
 
             bNodes = new HashMap<>();
@@ -83,7 +83,7 @@ public class JLtl2baTranslator {
 
                 bSource.addTransition(getCondition(t), bTarget);
             }
-            buchi.addAcceptSet(acceptNodes);
+            buchi.setAcceptSet(acceptNodes);
             checkAcceptStates();
 
             return buchi;
@@ -147,7 +147,6 @@ public class JLtl2baTranslator {
     }
 
     private class VisitorImpl implements INodeVisitor<IFormula, Void> {
-
         public IFormula visitPredicate(Predicate p, Void aVoid) {
             String prop = p.getUniqueName();
             expr.put(prop, p);

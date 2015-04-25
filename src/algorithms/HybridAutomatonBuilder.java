@@ -12,7 +12,7 @@ import java.util.Set;
 import java.util.logging.Logger;
 
 import qbf.egorov.ltl.grammar.LtlNode;
-import qbf.egorov.verifier.VerifierFactory.Counterexample;
+import qbf.egorov.verifier.Counterexample;
 import qbf.reduction.Assignment;
 import qbf.reduction.BooleanFormula;
 import qbf.reduction.BooleanFormula.SolveAsSatResult;

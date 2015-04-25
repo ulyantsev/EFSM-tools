@@ -3,7 +3,7 @@
  */
 package qbf.egorov.verifier;
 
-import qbf.egorov.ltl.buchi.BuchiAutomata;
+import qbf.egorov.ltl.buchi.BuchiAutomaton;
 import qbf.egorov.ltl.buchi.BuchiNode;
 import qbf.egorov.ltl.grammar.predicate.IPredicateFactory;
 import qbf.egorov.statemachine.SimpleState;
@@ -17,24 +17,24 @@ import java.util.*;
  */
 public class IntersectionAutomata {
     private final IPredicateFactory predicates;
-    private final BuchiAutomata buchiAutomata;
+    private final BuchiAutomaton buchiAutomata;
     private final Map<String, IntersectionNode> nodeMap = new HashMap<>();
 
-    public IntersectionAutomata(IPredicateFactory predicates, BuchiAutomata buchi) {
+    public IntersectionAutomata(IPredicateFactory predicates, BuchiAutomaton buchi) {
         this.predicates = predicates;
         buchiAutomata = buchi;
     }
 
-    public BuchiAutomata getBuchiAutomata() {
+    public BuchiAutomaton getBuchiAutomata() {
         return buchiAutomata;
     }
 
-    public IntersectionNode getNode(SimpleState state, BuchiNode node, int acceptSet) {
-        String key = getUniqueKey(state, node, acceptSet);
+    public IntersectionNode getNode(SimpleState state, BuchiNode node) {
+        String key = getUniqueKey(state, node);
 
         IntersectionNode res = nodeMap.get(key);
         if (res == null) {
-            res = new IntersectionNode(this, state, node, acceptSet);
+            res = new IntersectionNode(this, state, node);
             nodeMap.put(key, res);
         }
         return res;
@@ -44,7 +44,7 @@ public class IntersectionAutomata {
         return predicates;
     }
 
-    protected String getUniqueKey(SimpleState state, BuchiNode node, int acceptSet) {
-        return state.getUniqueName() + "_" + node.getID() + "_" + acceptSet;
+    protected String getUniqueKey(SimpleState state, BuchiNode node) {
+        return state.getUniqueName() + "_" + node.getID();
     }
 }

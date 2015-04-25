@@ -7,7 +7,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Logger;
 
-import qbf.egorov.verifier.VerifierFactory.Counterexample;
+import qbf.egorov.verifier.Counterexample;
 import qbf.reduction.Verifier;
 import structures.Automaton;
 import structures.Transition;
@@ -138,9 +138,9 @@ public class VerifierTest {
 	}
 	
 	public static void main(String[] args) throws IOException, ParseException {
-		test1();
+		//test1();
 		//test2();
-		//randomTestsIgor();
+		randomTestsIgor();
 		//randomTestsIgor_();
 	}
 }
