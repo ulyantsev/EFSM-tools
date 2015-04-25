@@ -83,7 +83,7 @@ public class QbfBuilderMain {
 			metaVar = "<qbfSolver>")
 	private String qbfSolver = QbfSolver.SKIZZO.name();
 	
-	@Option(name = "--satSolver", aliases = { "-qss" }, usage = "SAT solver: CRYPTOMINISAT, LINGELING, INCREMENTAL_CRYPTOMINISAT, INCREMENTAL_LINGELING (for ITERATIVE_SAT, EXP_SAT and HYBRID strategies)",
+	@Option(name = "--satSolver", aliases = { "-qss" }, usage = "SAT solver: CRYPTOMINISAT, LINGELING",
 			metaVar = "<satSolver>")
 	private String satSolver = SatSolver.LINGELING.name();
 	
@@ -95,7 +95,7 @@ public class QbfBuilderMain {
 	
 	@Option(name = "--strategy", aliases = { "-str" }, usage = "solving mode: QSAT, EXP_SAT, BACKTRACKING, COUNTEREXAMPLE, NEWHYBRID",
 			metaVar = "<strategy>")
-	private String strategy = SolvingStrategy.NEWHYBRID.name();
+	private String strategy = SolvingStrategy.COUNTEREXAMPLE.name();
 	
 	@Option(name = "--completenessType", aliases = { "-ct" },
             usage = "NORMAL = usual completeness, NO_DEAD_ENDS = at least one transition from each state, NO_DEAD_ENDS_WALKINSHAW)",
