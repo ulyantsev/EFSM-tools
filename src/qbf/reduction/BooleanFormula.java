@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
 public abstract class BooleanFormula {
 	public static Optional<Assignment> fromDimacsToken(String token, DimacsConversionInfo dimacs) {
@@ -53,31 +52,90 @@ public abstract class BooleanFormula {
 		}
 	}
 	
-	public static void appendProhibitionConstraintsToDimacs(Logger logger,
-			List<List<Assignment>> prohibitedFSMs, DimacsConversionInfo info) throws IOException {
-		final List<String> newClauses = prohibitedFSMs.stream()
-			.map(fsm -> Assignment.toDimacsString(fsm, info))
-			.collect(Collectors.toList());
+	public static void appendConstraintsToDimacs(Logger logger,
+			List<String> newClauses, DimacsConversionInfo info) throws IOException {
 		try (final BufferedReader input = new BufferedReader(new FileReader(new File(DIMACS_FILENAME)))) {
 			final String[] tokens = input.readLine().split(" ");
 			assert tokens.length == 4;
 			final int oldConstraintsNum = Integer.parseInt(tokens[3]);
-			final int newConstraintNum = oldConstraintsNum + prohibitedFSMs.size();
+			final int newConstraintNum = oldConstraintsNum + newClauses.size();
+			final int newVarNum = info.varNumber();
 			String line = null;
 			try (final PrintWriter pw = new PrintWriter(COPY_DIMACS_FILENAME)) {
-				pw.println(tokens[0] + " " + tokens[1] + " " + tokens[2] + " " + newConstraintNum);
-				for (String clause : newClauses) {
-					pw.println(clause);
-				}
+				pw.println(tokens[0] + " " + tokens[1] + " " + newVarNum + " " + newConstraintNum);
 				while ((line = input.readLine()) != null) {
 					pw.println(line);
 				}
+				for (String clause : newClauses) {
+					pw.println(clause);
+				}
 			}
 		}
+		
 		final boolean moved = new File(COPY_DIMACS_FILENAME).renameTo(new File(DIMACS_FILENAME)); // mv
 		assert moved;
 		logger.info("ALTERED DIMACS FILE");
 	}
+	
+	// modifies the info and returns new constraints
+	public static List<String> extendDimacs(String limbooleFormula, Logger logger,
+			String tmpDimacsFilename, DimacsConversionInfo oldInfo) throws IOException {
+		final List<String> result = new ArrayList<>();
+		try (DimacsConversionInfo newInfo = toDimacs(limbooleFormula, logger, tmpDimacsFilename)) {
+					
+			final List<String> newDimacsLines = new ArrayList<>();
+			try (BufferedReader input = new BufferedReader(new InputStreamReader(new FileInputStream(tmpDimacsFilename)))) {
+				input.lines().forEach(newDimacsLines::add);
+			}
+
+			final Map<Integer, Integer> varMapping = new HashMap<>();
+			varMapping.put(0, 0);
+			// map primary vars to old numbers
+			for (Map.Entry<Integer, Integer> entry : newInfo.dimacsNumberToLimboole.entrySet()) {
+				final int dimacsBeforeMapping = entry.getKey();
+				final int limboole = entry.getValue();
+				final Integer oldDimacsValue = oldInfo.limbooleNumberToDimacs.get(limboole);
+				if (oldDimacsValue != null) {
+					// old primary var
+					varMapping.put(dimacsBeforeMapping, oldDimacsValue);
+				} else {
+					// new primary var
+					oldInfo.varNumber++;
+					varMapping.put(dimacsBeforeMapping, oldInfo.varNumber);
+					oldInfo.dimacsNumberToLimboole.put(oldInfo.varNumber, limboole);
+					oldInfo.limbooleNumberToDimacs.put(limboole, oldInfo.varNumber);
+				}
+			}
+			// map auxiliary vars to new values
+			for (int i = 1; i <= newInfo.varNumber(); i++) {
+				if (!newInfo.dimacsNumberToLimboole.containsKey(i)) {
+					oldInfo.varNumber++;
+					varMapping.put(i, oldInfo.varNumber);
+				}
+			}
+
+			for (String line : newDimacsLines) {
+				if (line.startsWith("p")) {
+					continue;
+				}
+				final String[] tokens = line.split(" ");
+				assert tokens[tokens.length - 1].equals("0");
+				final List<String> assList = new ArrayList<>();
+				for (String token : tokens) {
+					boolean isPositive = !token.startsWith("-");
+					if (!isPositive) {
+						token = token.substring(1);
+					}
+					final int var = Integer.parseInt(token);
+					final int mappedVar = varMapping.get(var);
+					assList.add((isPositive ? "" : "-") + mappedVar);
+				}
+				result.add(String.join(" ", assList));
+			}
+		}
+		return result;
+	}
+	
 	
 	private static int SOLVER_SEED = 0;
 	
@@ -125,7 +183,7 @@ public abstract class BooleanFormula {
 		private final Map<Integer, Integer> limbooleNumberToDimacs = new HashMap<>();
 		private final Map<Integer, Integer> dimacsNumberToLimboole = new HashMap<>();
 		private String title;
-		private Integer varCount;
+		private Integer varNumber;
 		private PrintWriter pw;
 		
 		public DimacsConversionInfo(String filename) throws FileNotFoundException {
@@ -145,7 +203,7 @@ public abstract class BooleanFormula {
 			} else if (line.startsWith("p")) {
 				pw.println(line);
 				title = line;
-				varCount = Integer.parseInt(line.split(" ")[2]);
+				varNumber = Integer.parseInt(line.split(" ")[2]);
 			} else {
 				pw.println(line);
 			}
@@ -160,8 +218,8 @@ public abstract class BooleanFormula {
 			return Optional.of(limbooleNumberToDimacs.get(num));
 		}
 		
-		public int varCount() {
-			return varCount;
+		public int varNumber() {
+			return varNumber;
 		}
 		
 		public Optional<Integer> toLimbooleNumber(int num) {
@@ -238,4 +296,16 @@ public abstract class BooleanFormula {
 		return value ? TrueFormula.INSTANCE : FalseFormula.INSTANCE;
 	}
 
+	@Override
+	public boolean equals(Object other) {
+		if (other.getClass() != getClass()) {
+			return false;
+		}
+		return toString().equals(other.toString());
+	}
+	
+	@Override
+	public int hashCode() {
+		return toString().hashCode();
+	}
 }

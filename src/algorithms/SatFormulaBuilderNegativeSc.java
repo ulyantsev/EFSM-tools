@@ -4,6 +4,7 @@ package algorithms;
  * (c) Igor Buzhinsky
  */
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -45,8 +46,7 @@ public class SatFormulaBuilderNegativeSc extends FormulaBuilder {
 	
 	private void findVerifiedNodes(Node positiveNode, NegativeNode negativeNode) {
 		// premise: this negativeNode is present in the scenario tree
-		if (negativeNode.terminal()) {
-			//System.out.println("*************");
+		if (negativeNode.strictInvalid()) {
 			// this means that the scenario tree is inconsistent with LTL properties
 			// the solver will return UNSAT
 			return;
@@ -78,8 +78,7 @@ public class SatFormulaBuilderNegativeSc extends FormulaBuilder {
 		}
 	}
 	
-	private BooleanFormula eachNegativeNodeHasOneColorConstraints() {
-		FormulaList constraints = new FormulaList(BinaryOperations.AND);
+	private void eachNegativeNodeHasOneColorConstraints(List<BooleanFormula> constraints) {
 		for (NegativeNode node : negativeTree.getNodes()) {
 			final int num = node.getNumber();
 			if (node == negativeTree.getRoot()) {
@@ -97,43 +96,39 @@ public class SatFormulaBuilderNegativeSc extends FormulaBuilder {
 				}
 			} else {
 				// for each loop, the terminal node is colored differently
-				if (node.terminal()) {
+				if (node.strictInvalid()) {
+					constraints.add(invalid(node));
+				} else {
 					for (NegativeNode loop : node.loops()) {
-						if (loop == node) {
-							constraints.add(invalid(node));
-						} else {
-							FormulaList options = new FormulaList(BinaryOperations.OR);
-							options.add(invalid(node));
-							final int loopNum = loop.getNumber();
-							for (int i = 0; i < colorSize; i++) {
-								options.add(xxVar(num, i).equivalent(xxVar(loopNum, i)).not());
-							}
-							constraints.add(options.assemble());
+						FormulaList options = new FormulaList(BinaryOperations.OR);
+						options.add(invalid(node));
+						final int loopNum = loop.getNumber();
+						for (int i = 0; i < colorSize; i++) {
+							options.add(xxVar(num, i).equivalent(xxVar(loopNum, i)).not());
 						}
+						constraints.add(options.assemble());
 					}
-				}
-				// at least one color
-				FormulaList terms = new FormulaList(BinaryOperations.OR);
-				for (int color = 0; color <= colorSize; color++) {
-					terms.add(xxVar(num, color));
-				}
-				constraints.add(terms.assemble());
-				
-				// at most one color
-				for (int color1 = 0; color1 <= colorSize; color1++) {
-					for (int color2 = 0; color2 < color1; color2++) {
-						BooleanVariable v1 = xxVar(num, color1);
-						BooleanVariable v2 = xxVar(num, color2);					
-						constraints.add(v1.not().or(v2.not()));
+					// at least one color
+					FormulaList terms = new FormulaList(BinaryOperations.OR);
+					for (int color = 0; color <= colorSize; color++) {
+						terms.add(xxVar(num, color));
+					}
+					constraints.add(terms.assemble());
+					
+					// at most one color
+					for (int color1 = 0; color1 <= colorSize; color1++) {
+						for (int color2 = 0; color2 < color1; color2++) {
+							BooleanVariable v1 = xxVar(num, color1);
+							BooleanVariable v2 = xxVar(num, color2);					
+							constraints.add(v1.not().or(v2.not()));
+						}
 					}
 				}
 			}
 		}
-		return constraints.assemble();
 	}
 
-	private BooleanFormula properTransitionYConstraints() {
-		FormulaList constraints = new FormulaList(BinaryOperations.AND);
+	private void properTransitionYConstraints(List<BooleanFormula> constraints) {
 		for (NegativeNode node : negativeTree.getNodes()) {
 			for (Transition t : node.getTransitions()) {
 				NegativeNode child = (NegativeNode) t.getDst();
@@ -152,12 +147,9 @@ public class SatFormulaBuilderNegativeSc extends FormulaBuilder {
 				}
 			}
 		}
-		return constraints.assemble();
 	}
 	
-	private BooleanFormula properTransitionZConstraints() {
-		FormulaList constraints = new FormulaList(BinaryOperations.AND);
-		
+	private void properTransitionZConstraints(List<BooleanFormula> constraints) {
 		for (NegativeNode node : negativeTree.getNodes()) {
 			FormulaList options = new FormulaList(BinaryOperations.OR);
 			for (int i = 0; i < colorSize; i++) {
@@ -185,13 +177,9 @@ public class SatFormulaBuilderNegativeSc extends FormulaBuilder {
 			}
 			constraints.add(invalid(node).or(options.assemble()));
 		}
-		
-		return constraints.assemble();
 	}
 	
-	private BooleanFormula invalidDefinitionConstraints() {
-		FormulaList constraints = new FormulaList(BinaryOperations.AND);
-		
+	private void invalidDefinitionConstraints(List<BooleanFormula> constraints) {
 		for (NegativeNode parent : negativeTree.getNodes()) {
 			for (Transition t : parent.getTransitions()) {
 				Node child = t.getDst();
@@ -229,8 +217,6 @@ public class SatFormulaBuilderNegativeSc extends FormulaBuilder {
 				constraints.add(invalid(child).equivalent(options.assemble()));
 			}
 		}
-		
-		return constraints.assemble();
 	}
 	
 	private BooleanVariable invalid(Node n) {
@@ -238,18 +224,18 @@ public class SatFormulaBuilderNegativeSc extends FormulaBuilder {
 	}
 	
 	// for the completeness heuristics
-	private BooleanFormula fsmProhibitionConstraints() {
-		FormulaList constraints = new FormulaList(BinaryOperations.AND);
+	private void fsmProhibitionConstraints(List<BooleanFormula> constraints) {
 		prohibitedFsms.forEach(constraints::add);
-		return constraints.assemble();
 	}
 	
-	public BooleanFormula negativeConstraints() {
-		return eachNegativeNodeHasOneColorConstraints()
-			.and(properTransitionYConstraints())
-			.and(properTransitionZConstraints())
-			.and(invalidDefinitionConstraints())
-			.and(fsmProhibitionConstraints());
+	public List<BooleanFormula> negativeConstraints() {
+		final List<BooleanFormula> constraints = new ArrayList<>();
+		eachNegativeNodeHasOneColorConstraints(constraints);
+		properTransitionYConstraints(constraints);
+		properTransitionZConstraints(constraints);
+		invalidDefinitionConstraints(constraints);
+		fsmProhibitionConstraints(constraints);
+		return constraints;
 	}
 	
 	// should be called only once
@@ -260,7 +246,7 @@ public class SatFormulaBuilderNegativeSc extends FormulaBuilder {
 				.and(varPresenceConstraints());
 	}
 	
-	public BooleanFormula getNegationFormula() {
+	public List<BooleanFormula> getNegationConstraints() {
 		addNegativeScenarioVars();
 		return negativeConstraints();
 	}

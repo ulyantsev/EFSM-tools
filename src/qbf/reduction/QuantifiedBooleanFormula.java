@@ -67,7 +67,7 @@ public class QuantifiedBooleanFormula {
 	
 	private String otherVars(DimacsConversionInfo info) {
 		List<Integer> nums = new ArrayList<>();
-		for (int i = 1; i <= info.varCount(); i++) {
+		for (int i = 1; i <= info.varNumber(); i++) {
 			if (!info.toLimbooleNumber(i).isPresent()) {
 				nums.add(i);
 			}

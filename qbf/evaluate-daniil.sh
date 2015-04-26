@@ -25,7 +25,7 @@ for l in 50 100 200; do
             ltl_name=$name/formulae
             echo ">>> s=$size num=$instance l=$l"
             rm -f "$fsm"
-            java -Xms2G -Xmx4G -jar ../jars/qbf-automaton-generator.jar "$sc_name" \
+            java -Xmx2G -jar ../jars/qbf-automaton-generator.jar "$sc_name" \
                 --ltl "$ltl_name" --size $size --eventNumber 2 --actionNumber 2 --varNumber 2 \
                 --timeout $timeout --result "$fsm" --strategy COUNTEREXAMPLE \
                 --hybridSecToGenerateFormula 15 --hybridSecToSolve 30 --completenessType NO_DEAD_ENDS \

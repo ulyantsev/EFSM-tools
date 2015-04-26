@@ -30,8 +30,12 @@ public class NegativeNode extends Node {
     	return loops != null;
     }
     
+    public boolean strictInvalid() {
+    	return terminal() && loops.contains(this);
+    }
+    
     public Collection<NegativeNode> loops() {
-    	return Collections.unmodifiableSet(loops);
+    	return terminal() ? Collections.unmodifiableSet(loops) : Collections.emptySet();
     }
     
     @Override

@@ -7,8 +7,10 @@ package algorithms;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.logging.Logger;
 
 import qbf.egorov.ltl.grammar.LtlNode;
@@ -17,6 +19,7 @@ import qbf.reduction.Assignment;
 import qbf.reduction.BinaryOperations;
 import qbf.reduction.BooleanFormula;
 import qbf.reduction.BooleanFormula.SolveAsSatResult;
+import qbf.reduction.ExpandableStringFormula;
 import qbf.reduction.FormulaList;
 import qbf.reduction.SatSolver;
 import qbf.reduction.SolverResult;
@@ -33,7 +36,7 @@ import bool.MyBooleanExpression;
 
 public class CounterexampleAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 	protected static Optional<Automaton> reportResult(Logger logger, int iterations, Optional<Automaton> a) {
-		logger.info("ITERATIONS: " + iterations);
+		logger.info("ITERATIONS: " + (iterations + 1));
 		return a;
 	}
 	
@@ -87,20 +90,36 @@ public class CounterexampleAutomatonBuilder extends ScenarioAndLtlAutomatonBuild
 		final CompletenessType effectiveCompletenessType = USE_COMPLETENESS_HEURISTICS
 				? CompletenessType.NO_DEAD_ENDS : completenessType;
 		
-		String basicFormula = null;
+		ExpandableStringFormula expandableFormula = null;
+		final Set<BooleanFormula> previousConstraints = new LinkedHashSet<>();
+		final Set<BooleanFormula> negationConstraints = new LinkedHashSet<>();
 		
 		for (int iteration = 0; System.currentTimeMillis() < finishTime; iteration++) {
 			final SatFormulaBuilderNegativeSc builder = new SatFormulaBuilderNegativeSc(tree, size, events, actions,
 					effectiveCompletenessType, negativeTree, prohibited);
-			if (basicFormula == null) {
-				basicFormula = builder.getBasicFormula().simplify().toLimbooleString();
+			final FormulaList negationList = new FormulaList(BinaryOperations.AND);
+			if (expandableFormula == null) {
+				final BooleanFormula basicFormula = builder.getBasicFormula();
+				negationConstraints.addAll(builder.getNegationConstraints());
+				negationConstraints.stream().forEach(negationList::add);
+				final String formula = basicFormula.and(negationList.assemble())
+						.simplify().toLimbooleString();
+				expandableFormula = new ExpandableStringFormula(formula, logger, satSolver, solverParams);
+			} else {
+				negationConstraints.addAll(builder.getNegationConstraints());
+				final Set<BooleanFormula> diffConstraints = new LinkedHashSet<>(negationConstraints);
+				diffConstraints.removeAll(previousConstraints);
+				diffConstraints.stream().forEach(negationList::add);
+				final String negationFormula = negationList.assemble().simplify().toLimbooleString();
+				final List<String> negativeDimacsConstraints = BooleanFormula.extendDimacs(negationFormula,
+						logger, "_tmp.incremental.dimacs", expandableFormula.info());
+				expandableFormula.addConstraints(negativeDimacsConstraints);
 			}
-			final String negationFormula = builder.getNegationFormula().simplify().toLimbooleString();
-			final String formula = "(" + basicFormula + ")&(" + negationFormula + ")";
+			previousConstraints.addAll(negationConstraints);
+
 			// SAT-solve
 			final int secondsLeft = timeLeftForSolver(finishTime);
-			final SolveAsSatResult solution = BooleanFormula.solveAsSat(formula,
-					logger, solverParams, secondsLeft, satSolver);
+			final SolveAsSatResult solution = expandableFormula.solve(secondsLeft);
 			final List<Assignment> list = solution.list();
 			final long time = solution.time;
 			
