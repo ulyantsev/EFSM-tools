@@ -1,10 +1,10 @@
 #!/bin/bash
 
 tl=300
-./evaluate.sh NEWHYBRID $tl 3 10 true true
-./evaluate.sh NEWHYBRID $tl 3 10 false true
-./evaluate.sh NEWHYBRID $tl 3 10 true false
-./evaluate.sh NEWHYBRID $tl 3 10 false false
+./evaluate.sh COUNTEREXAMPLE $tl 10 10 true true
+./evaluate.sh COUNTEREXAMPLE $tl 10 10 false true
+./evaluate.sh COUNTEREXAMPLE $tl 10 10 true false
+./evaluate.sh COUNTEREXAMPLE $tl 10 10 false false
 
 #./evaluate.sh COUNTEREXAMPLE $tl 3 8 false false
 #./evaluate.sh COUNTEREXAMPLE $tl 3 10 true true

@@ -152,16 +152,15 @@ public abstract class FormulaBuilder {
 	
 	private BooleanFormula consistencyConstraints() {
 		FormulaList constraints = new FormulaList(BinaryOperations.AND);
-		Map<Node, Set<Node>> adjacent = AdjacentCalculator.getAdjacent(tree);
+		final Map<Node, Set<Node>> adjacent = AdjacentCalculator.getAdjacent(tree);
 		for (Node node : tree.getNodes()) {
 			// removing the non-determinism of hash maps
 			adjacent.get(node).stream()
-				.sorted((n1, n2) -> n1.getNumber() - n2.getNumber())
 				.filter(other -> other.getNumber() < node.getNumber())
 				.forEach(other -> {
 					for (int color = 0; color < colorSize; color++) {
-						BooleanVariable v1 = xVar(node.getNumber(), color);
-						BooleanVariable v2 = xVar(other.getNumber(), color);
+						final BooleanVariable v1 = xVar(node.getNumber(), color);
+						final BooleanVariable v2 = xVar(other.getNumber(), color);
 						constraints.add(v1.and(v2).not());
 					}
 				});

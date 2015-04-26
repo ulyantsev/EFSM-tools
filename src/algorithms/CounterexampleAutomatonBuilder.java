@@ -17,7 +17,6 @@ import qbf.reduction.Assignment;
 import qbf.reduction.BinaryOperations;
 import qbf.reduction.BooleanFormula;
 import qbf.reduction.BooleanFormula.SolveAsSatResult;
-import qbf.reduction.BooleanVariable;
 import qbf.reduction.FormulaList;
 import qbf.reduction.SatSolver;
 import qbf.reduction.SolverResult;
@@ -88,11 +87,16 @@ public class CounterexampleAutomatonBuilder extends ScenarioAndLtlAutomatonBuild
 		final CompletenessType effectiveCompletenessType = USE_COMPLETENESS_HEURISTICS
 				? CompletenessType.NO_DEAD_ENDS : completenessType;
 		
+		String basicFormula = null;
+		
 		for (int iteration = 0; System.currentTimeMillis() < finishTime; iteration++) {
-			BooleanVariable.eraseVariables();
-			final String formula = new SatFormulaBuilderNegativeSC(tree, size, events, actions,
-					effectiveCompletenessType, negativeTree, prohibited)
-					.getFormula().simplify().toLimbooleString();
+			final SatFormulaBuilderNegativeSc builder = new SatFormulaBuilderNegativeSc(tree, size, events, actions,
+					effectiveCompletenessType, negativeTree, prohibited);
+			if (basicFormula == null) {
+				basicFormula = builder.getBasicFormula().simplify().toLimbooleString();
+			}
+			final String negationFormula = builder.getNegationFormula().simplify().toLimbooleString();
+			final String formula = "(" + basicFormula + ")&(" + negationFormula + ")";
 			// SAT-solve
 			final int secondsLeft = timeLeftForSolver(finishTime);
 			final SolveAsSatResult solution = BooleanFormula.solveAsSat(formula,

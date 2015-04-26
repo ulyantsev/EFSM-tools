@@ -15,7 +15,7 @@ import structures.ScenariosTree;
 import algorithms.AutomatonCompleter.CompletenessType;
 
 public class HybridFormulaBuilder extends QbfFormulaBuilder {
-	private final SatFormulaBuilderNegativeSC negativeBuilder;
+	private final SatFormulaBuilderNegativeSc negativeBuilder;
 	
 	public HybridFormulaBuilder(ScenariosTree tree, int colorSize,
 			List<String> events, List<String> actions,
@@ -23,7 +23,7 @@ public class HybridFormulaBuilder extends QbfFormulaBuilder {
 			NegativeScenariosTree negativeTree, List<BooleanFormula> prohibitedFsms) {
 		super(logger, tree, formulae,
 				colorSize, k, completenessType, events, actions);
-		negativeBuilder = new SatFormulaBuilderNegativeSC(tree, colorSize, events, actions,
+		negativeBuilder = new SatFormulaBuilderNegativeSc(tree, colorSize, events, actions,
 				completenessType, negativeTree, prohibitedFsms);
 	}
 

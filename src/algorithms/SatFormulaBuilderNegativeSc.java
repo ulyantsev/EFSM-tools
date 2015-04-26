@@ -4,13 +4,12 @@ package algorithms;
  * (c) Igor Buzhinsky
  */
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.ArrayUtils;
 
@@ -27,15 +26,14 @@ import structures.ScenariosTree;
 import structures.Transition;
 import algorithms.AutomatonCompleter.CompletenessType;
 
-public class SatFormulaBuilderNegativeSC extends FormulaBuilder {
+public class SatFormulaBuilderNegativeSc extends FormulaBuilder {
 	private final NegativeScenariosTree negativeTree;
 	private final List<BooleanFormula> prohibitedFsms;
-	private List<BooleanVariable> xxVars = new ArrayList<>();
 	
 	// the ones present in the scenario tree
     private final Map<NegativeNode, Node> verifiedNodes = new LinkedHashMap<>();
 	
-	public SatFormulaBuilderNegativeSC(ScenariosTree tree, int colorSize,
+	public SatFormulaBuilderNegativeSc(ScenariosTree tree, int colorSize,
 			List<String> events, List<String> actions,
 			CompletenessType completenessType, NegativeScenariosTree negativeTree,
 			List<BooleanFormula> prohibitedFsms) {
@@ -63,7 +61,7 @@ public class SatFormulaBuilderNegativeSC extends FormulaBuilder {
 	}
 	
 	public Collection<BooleanVariable> nagativeVars() {
-		return Collections.unmodifiableList(xxVars);
+		return existVars.stream().filter(v -> v.name.startsWith("xx_")).collect(Collectors.toList());
 	}
 	
 	public static BooleanVariable xxVar(int state, int color) {
@@ -73,10 +71,11 @@ public class SatFormulaBuilderNegativeSC extends FormulaBuilder {
 	public void addNegativeScenarioVars() {
 		for (Node node : negativeTree.getNodes()) {
 			for (int color = 0; color <= colorSize; color++) {
-				xxVars.add(new BooleanVariable("xx", node.getNumber(), color));
+				if (!BooleanVariable.byName("xx", node.getNumber(), color).isPresent()) {
+					existVars.add(new BooleanVariable("xx", node.getNumber(), color));
+				}
 			}
 		}
-		existVars.addAll(xxVars);
 	}
 	
 	private BooleanFormula eachNegativeNodeHasOneColorConstraints() {
@@ -241,9 +240,7 @@ public class SatFormulaBuilderNegativeSC extends FormulaBuilder {
 	// for the completeness heuristics
 	private BooleanFormula fsmProhibitionConstraints() {
 		FormulaList constraints = new FormulaList(BinaryOperations.AND);
-		for (BooleanFormula prohibition : prohibitedFsms) {
-			constraints.add(prohibition);
-		}
+		prohibitedFsms.forEach(constraints::add);
 		return constraints.assemble();
 	}
 	
@@ -255,13 +252,16 @@ public class SatFormulaBuilderNegativeSC extends FormulaBuilder {
 			.and(fsmProhibitionConstraints());
 	}
 	
-	public BooleanFormula getFormula() {
-		// actions should be included into the model!
+	// should be called only once
+	public BooleanFormula getBasicFormula() {
 		addColorVars();
 		addTransitionVars(true);
-		addNegativeScenarioVars();
 		return scenarioConstraints(true).assemble()
-				.and(negativeConstraints())
 				.and(varPresenceConstraints());
+	}
+	
+	public BooleanFormula getNegationFormula() {
+		addNegativeScenarioVars();
+		return negativeConstraints();
 	}
 }

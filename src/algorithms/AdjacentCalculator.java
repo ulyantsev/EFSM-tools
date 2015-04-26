@@ -1,7 +1,7 @@
 package algorithms;
 
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -19,7 +19,7 @@ public class AdjacentCalculator {
     
     private static void calcNode(ScenariosTree tree, Node node, Map<Node, Set<Node>> ans) {
         if (!ans.containsKey(node)) {
-            HashSet<Node> adjacentSet = new HashSet<>();
+            Set<Node> adjacentSet = new LinkedHashSet<>();
             ans.put(node, adjacentSet);
             if (node.transitionsCount() == 0) {
                 return;
@@ -39,8 +39,6 @@ public class AdjacentCalculator {
                                     }
                                 } else if (t1.getExpr().hasSolutionWith(t2.getExpr())) {
                                     adjacentSet.add(other);
-                                } else {
-
                                 }
                             }
                         }
