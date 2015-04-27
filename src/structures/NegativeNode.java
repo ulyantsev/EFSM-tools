@@ -26,16 +26,16 @@ public class NegativeNode extends Node {
     	loops.add(node);
     }
     
-    public boolean terminal() {
-    	return loops != null;
+    public boolean weakInvalid() {
+    	return !loops().isEmpty();
     }
     
-    public boolean strictInvalid() {
-    	return terminal() && loops.contains(this);
+    public boolean strongInvalid() {
+    	return loops().contains(this);
     }
     
     public Collection<NegativeNode> loops() {
-    	return terminal() ? Collections.unmodifiableSet(loops) : Collections.emptySet();
+    	return loops != null ? Collections.unmodifiableSet(loops) : Collections.emptySet();
     }
     
     @Override

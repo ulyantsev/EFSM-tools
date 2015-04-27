@@ -7,6 +7,7 @@ package algorithms;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
@@ -134,6 +135,7 @@ public class CounterexampleAutomatonBuilder extends ScenarioAndLtlAutomatonBuild
 				: Optional.empty();
 			
 			if (automaton.isPresent()) {
+				negativeTree.checkColoring(list, size);
 				final List<Counterexample> counterexamples = verifier.verifyWithCounterExamples(automaton.get());
 				final boolean verified = counterexamples.stream().allMatch(Counterexample::isEmpty);
 				if (verified) {
@@ -154,9 +156,15 @@ public class CounterexampleAutomatonBuilder extends ScenarioAndLtlAutomatonBuild
 						return reportResult(logger, iteration, automaton);
 					}
 				} else {
+					final Set<String> unique = new HashSet<String>();
 					for (Counterexample counterexample : counterexamples) {
 						if (!counterexample.isEmpty()) {
-							addCounterexample(logger, automaton.get(), counterexample, negativeTree);
+							if (!unique.contains(counterexample.toString())) {
+								unique.add(counterexample.toString());
+								addCounterexample(logger, automaton.get(), counterexample, negativeTree);
+							} else {
+								logger.info("DUPLICATE COUNTEREXAMPLES ON THE SAME ITERATION");
+							}
 						} else {
 							logger.info("NOT ADDING COUNTEREXAMPLE");
 						}

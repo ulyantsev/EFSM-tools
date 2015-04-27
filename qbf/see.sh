@@ -8,7 +8,7 @@ print_sat() {
     fi
     local q3="%5.1f"
     local max="%5.1f"
-    printf "%13s sat   %2d, unknown %2d, unsat %2d, total %2d, frac %5s%%, med=$med, q3=$q3, max=$max\n" $1 $2 $3 $4 $(($2 + $3 + $4)) $(python -c "print(round(float($2) / ($2 + $3 + $4) * 100, 2))") $5 $6 $7
+    printf "%13s sat   %2d, unknown %2d, unsat %2d, total %2d, frac %5s%%, med=$med, q3=$q3, max=$max\n" $1 $2 $3 $4 $8 $(python -c "print(round(float($2) / $8 * 100, 2))") $5 $6 $7
 }
 
 print_unsat() {
@@ -19,7 +19,7 @@ print_unsat() {
     fi
     local q3="%5.1f"
     local max="%5.1f"
-    printf "%13s unsat %2d, unknown %2d, sat   %2d, total %2d, frac %5s%%, med=$med, q3=$q3, max=$max\n" $1 $2 $3 $4 $(($2 + $3 + $4)) $(python -c "print(round(float($2) / ($2 + $3 + $4) * 100, 2))") $5 $6 $7
+    printf "%13s unsat %2d, unknown %2d, sat   %2d, total %2d, frac %5s%%, med=$med, q3=$q3, max=$max\n" $1 $2 $3 $4 $8 $(python -c "print(round(float($2) / $8 * 100, 2))") $5 $6 $7
 }
 
 print_found_by_prefix() {
@@ -29,6 +29,7 @@ print_found_by_prefix() {
     local sat=$(echo "$text" | grep "WAS FOUND" | wc -l)
     local unsat=$(echo "$text" | grep "UNSAT" | wc -l)
     local unknown=$(echo "$text" | grep "\\(TIME LIMIT EXCEEDED\\|UNKNOWN\\|OutOfMemoryError\\)" | wc -l)
+    local total=$(ls $dir/$prefix*.done | wc -l)
     
     # find median time
     local str=$(echo $(echo "$text" | grep "execution time" | sed -e "s/^.*time: //g" | sort -n))
@@ -46,9 +47,9 @@ print_found_by_prefix() {
     max=${arr[$(($len - 1))]}
 
     if [[ "$prefix" == "${prefix/-fa/}" ]]; then
-        print_sat $prefix $sat $unknown $unsat $q2 $q3 $max
+        print_sat $prefix $sat $unknown $unsat $q2 $q3 $max $total
     else
-        print_unsat $prefix $unsat $unknown $sat $q2 $q3 $max
+        print_unsat $prefix $unsat $unknown $sat $q2 $q3 $max $total
     fi
 }
 
@@ -72,4 +73,4 @@ for compdir in "complete" "incomplete"; do
     done
 done
 
-echo not verified $(cat $(ls evaluation/*/*) | grep "NOT VERIFIED" | wc -l), not complies to scenarios $(cat $(ls evaluation/*/*) | grep "NOT COMPLIES" | wc -l), severe $(cat $(ls evaluation/*/*) | grep "SEVERE" | wc -l), out of memory $(cat $(ls evaluation/*/*) | grep "OutOfMemoryError" | wc -l)
+echo not verified $(cat $(ls evaluation/*/*) | grep "NOT VERIFIED" | wc -l), not complies to scenarios $(cat $(ls evaluation/*/*) | grep "NOT COMPLIES" | wc -l), severe $(cat $(ls evaluation/*/*) | grep "SEVERE" | wc -l), out of memory $(cat $(ls evaluation/*/*) | grep "OutOfMemoryError" | wc -l), assertion $(cat $(ls evaluation/*/*) | grep "AssertionError" | wc -l)

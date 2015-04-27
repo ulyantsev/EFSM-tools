@@ -7,6 +7,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+import qbf.reduction.Assignment;
 import scenario.StringScenario;
 import actions.StringActions;
 import bool.MyBooleanExpression;
@@ -25,6 +26,41 @@ public class NegativeScenariosTree {
         return root;
     }
 
+    public void checkColoring(List<Assignment> coloring, int colorSize) {
+    	final Integer[] colors = new Integer[nodes.size()];
+    	for (Assignment ass : coloring) {
+    		if (!ass.value || !ass.var.name.startsWith("xx_")) {
+    			continue;
+    		}
+    		final String[] tokens = ass.var.name.split("_");
+    		int nodeIndex = Integer.parseInt(tokens[1]);
+    		int nodeColor = Integer.parseInt(tokens[2]);
+    		if (colors[nodeIndex] != null) {
+    			throw new AssertionError("Duplicate color!");
+    		}
+    		colors[nodeIndex] = nodeColor;
+    	}
+    	for (Integer color : colors) {
+    		if (color == null) {
+    			throw new AssertionError("Node without a color!");
+    		}
+    	}
+    	if (colors[root.getNumber()] != 0) {
+    		throw new AssertionError("Invalid color of the root!");
+    	}
+    	for (NegativeNode node : nodes) {
+    		int nodeCol = colors[node.getNumber()];
+    		if (node.strongInvalid() && nodeCol != colorSize) {
+    			throw new AssertionError("Invalid color of an invalid node!");
+    		}
+    		for (Node loop : node.loops()) {
+    			if (nodeCol == colors[loop.getNumber()] && nodeCol != colorSize) {
+    				throw new AssertionError("Loop restriction is not satisfied!");
+    			}
+    		}
+    	}
+    }
+    
     /*
      * varNumber = -1 for no variable removal
      */
@@ -47,7 +83,12 @@ public class NegativeScenariosTree {
         if (loopLength == 0) {
         	loopNode = node;
         }
-        assert loopNode != null;
+        if (loopNode == null) {
+        	throw new AssertionError("loopNode is null!");
+        }
+        if (node.loops().contains(loopNode)) {
+        	throw new AssertionError("Duplicate counterexample!");
+        }
         node.addLoop(loopNode);
     }
 
@@ -89,7 +130,7 @@ public class NegativeScenariosTree {
                 sb.append(" [label = \"" + t.getEvent() + " [" + t.getExpr().toString() + "] ("
                         + t.getActions().toString() + ") \"];\n");
             }
-            if (node.terminal()) {
+            if (node.weakInvalid()) {
 	            for (NegativeNode loop : node.loops()) {
 	                sb.append("    " + node.getNumber() + " -> " + loop.getNumber() + ";\n");
 	            }

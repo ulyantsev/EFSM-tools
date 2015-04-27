@@ -84,11 +84,11 @@ public class BinaryOperation extends BooleanFormula {
 	}
 	
 	private String commentStringStart() {
-		return comment == null ? "" : "\n/* " + comment + " */\n";
+		return comment == null ? "" : ("\n/* " + comment + " */\n");
 	}
 	
 	private String commentStringEnd() {
-		return comment == null ? "" : "\n/* " + "end of block" + " */\n";
+		return comment == null ? "" : ("\n/* " + "end of block" + " */\n");
 	}
 	
 	private String comment(String content) {
@@ -104,7 +104,7 @@ public class BinaryOperation extends BooleanFormula {
 			case OR:
 				return comment(FalseFormula.INSTANCE.toString());
 			default:
-				assert false;
+				throw new AssertionError();
 			}
 		} else if (children.size() == 1) {
 			return comment(children.get(0).toString());

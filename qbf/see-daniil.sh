@@ -3,7 +3,7 @@
 dir=evaluation-daniil
 
 print_sat() {
-    printf "%12s  sat %2d, unknown %2d, total %2d, solved fraction %5s%%\n" $1 $2 $3 $(($2 + $3)) $(python -c "print(round(float($2) / ($2 + $3) * 100, 2))")
+    printf "%12s  sat %2d, unknown %2d, total %2d, solved fraction %5s%%\n" $1 $2 $3 $4 $(python -c "print(round(float($2) / $4 * 100, 2))")
 }
 
 print_found_by_regexp() {
@@ -11,11 +11,12 @@ print_found_by_regexp() {
     local text=$(cat $dir/$prefix)
     local sat=$(echo "$text" | grep "WAS FOUND" | wc -l)
     local unsat=$(echo "$text" | grep "UNSAT" | wc -l)
+    local total=$(ls $dir/${prefix%.log}.done | wc -l)
     if [[ "$unsat" != 0 ]]; then
         echo "UNSAT!"
     fi
     local unknown=$(echo "$text" | grep "\\(TIME LIMIT EXCEEDED\\|UNKNOWN\\|OutOfMemoryError\\)" | wc -l)
-    print_sat $prefix $sat $unknown
+    print_sat $prefix $sat $unknown $total
 }
 
 for l in 50 100 200; do
@@ -56,4 +57,4 @@ cat $(ls -rt $dir/*) | grep "FOUND" | sed -e 's/INFO: Automaton with [0-9]\+//g;
 paste succ.tmp times.tmp > stats-daniil.csv
 rm times.tmp succ.tmp
 
-echo not verified $(cat $(ls $dir/*) | grep "NOT VERIFIED" | wc -l), not complies to scenarios $(cat $(ls $dir/*) | grep "NOT COMPLIES" | wc -l), severe $(cat $(ls $dir/*) | grep "SEVERE" | wc -l), out of memory $(cat $(ls $dir/*) | grep "OutOfMemoryError" | wc -l)
+echo not verified $(cat $(ls $dir/*) | grep "NOT VERIFIED" | wc -l), not complies to scenarios $(cat $(ls $dir/*) | grep "NOT COMPLIES" | wc -l), severe $(cat $(ls $dir/*) | grep "SEVERE" | wc -l), out of memory $(cat $(ls $dir/*) | grep "OutOfMemoryError" | wc -l), assertion $(cat $(ls $dir/*) | grep "AssertionError" | wc -l)

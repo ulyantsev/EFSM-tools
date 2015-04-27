@@ -14,8 +14,7 @@ public class TrueFormula extends BooleanFormula {
 
 	@Override
 	public String toLimbooleString() {
-		assert false;
-		return null;
+		throw new AssertionError();
 	}
 	
 	@Override

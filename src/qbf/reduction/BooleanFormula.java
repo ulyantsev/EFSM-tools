@@ -144,12 +144,13 @@ public abstract class BooleanFormula {
 		long time = System.currentTimeMillis();
 		final Map<String, Assignment> list = new LinkedHashMap<>();
 		if (solver == SatSolver.LINGELING) {
-			solverParams += " --seed=" + SOLVER_SEED++;
+			solverParams += " --seed=" + SOLVER_SEED;
 			timeoutSeconds = Math.max(1, timeoutSeconds);
 		} else if (solver == SatSolver.CRYPTOMINISAT) {
-			solverParams += " --random=" + SOLVER_SEED++;
+			solverParams += " --random=" + SOLVER_SEED;
 			timeoutSeconds = Math.max(2, timeoutSeconds); // cryptominisat does not accept time=1
 		}
+		SOLVER_SEED++;
 		final String solverStr = solver.command + timeoutSeconds + " " + solverParams
 				+ " " + DIMACS_FILENAME;
 		logger.info(solverStr);
