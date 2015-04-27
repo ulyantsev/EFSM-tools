@@ -8,10 +8,12 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -34,7 +36,6 @@ public abstract class BooleanFormula {
 	}
 	
 	public static final String DIMACS_FILENAME = "_tmp.dimacs";
-	private static final String COPY_DIMACS_FILENAME = "_tmp.dimacs.copy";
 	
 	public static class SolveAsSatResult {
 		private final List<Assignment> list;
@@ -52,28 +53,43 @@ public abstract class BooleanFormula {
 		}
 	}
 	
+	private static String fixedSizedDimacsHeader(int varNum, int clauseNum) {
+		final int numLength = 10;
+		String varStr = String.valueOf(varNum);
+		while (varStr.length() < numLength) {
+			varStr += " ";
+		}
+		String clauseStr = String.valueOf(clauseNum);
+		while (clauseStr.length() < numLength) {
+			clauseStr += " ";
+		}
+		return "p cnf " + varStr + " " + clauseStr;
+	}
+	
 	public static void appendConstraintsToDimacs(Logger logger,
 			List<String> newClauses, DimacsConversionInfo info) throws IOException {
-		try (final BufferedReader input = new BufferedReader(new FileReader(new File(DIMACS_FILENAME)))) {
-			final String[] tokens = input.readLine().split(" ");
+		int oldClauseNum;
+		final File file = new File(DIMACS_FILENAME);
+		try (final BufferedReader input = new BufferedReader(new FileReader(file))) {
+			final String[] tokens = input.readLine().split(" +");
 			assert tokens.length == 4;
-			final int oldConstraintsNum = Integer.parseInt(tokens[3]);
-			final int newConstraintNum = oldConstraintsNum + newClauses.size();
-			final int newVarNum = info.varNumber();
-			String line = null;
-			try (final PrintWriter pw = new PrintWriter(COPY_DIMACS_FILENAME)) {
-				pw.println(tokens[0] + " " + tokens[1] + " " + newVarNum + " " + newConstraintNum);
-				while ((line = input.readLine()) != null) {
-					pw.println(line);
-				}
-				for (String clause : newClauses) {
-					pw.println(clause);
-				}
-			}
+			oldClauseNum = Integer.parseInt(tokens[3]);
+		}
+		final int newClauseNum = oldClauseNum + newClauses.size();
+		final int newVarNum = info.varNumber();
+
+		// modify the header
+		final String header = fixedSizedDimacsHeader(newVarNum, newClauseNum);
+		final byte[] headerBytes = header.getBytes();
+		try (final RandomAccessFile f = new RandomAccessFile(file, "rw")) {
+			f.write(headerBytes, 0, headerBytes.length);
 		}
 		
-		final boolean moved = new File(COPY_DIMACS_FILENAME).renameTo(new File(DIMACS_FILENAME)); // mv
-		assert moved;
+		// append new clauses
+		try (final PrintWriter pw = new PrintWriter(new FileOutputStream(file, true))) {
+			newClauses.forEach(pw::println);
+		}
+
 		logger.info("ALTERED DIMACS FILE");
 	}
 	
@@ -202,9 +218,12 @@ public abstract class BooleanFormula {
 				limbooleNumberToDimacs.put(second, first);
 				dimacsNumberToLimboole.put(first, second);
 			} else if (line.startsWith("p")) {
-				pw.println(line);
 				title = line;
-				varNumber = Integer.parseInt(line.split(" ")[2]);
+				String[] tokens = line.split(" ");
+				assert tokens.length == 4;
+				varNumber = Integer.parseInt(tokens[2]);
+				final int clauseNumber = Integer.parseInt(tokens[3]);
+				pw.println(fixedSizedDimacsHeader(varNumber, clauseNumber));
 			} else {
 				pw.println(line);
 			}
