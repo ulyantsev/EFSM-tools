@@ -9,10 +9,10 @@ echo "Evaluating..."
 fsm="generated-fsm.gv"
 
 #for l in 50; do
-for l in 50 100 200; do
-#for l in 200 100 50; do
+#for l in 50 100 200; do
+for l in 200 100 50; do
     timeout=$(($l * 18))
-    for ((size = $min_size; size <= $max_size; size++)); do
+    for ((size = $max_size; size >= $min_size; size--)); do
         for ((instance = 0; instance < 50; instance++)); do
             ev_name=evaluation-daniil/$size-$instance-$l
             if [[ $(cat daniil-hard/$l-hard-runs | grep "^$size/$instance$") == "" ]]; then

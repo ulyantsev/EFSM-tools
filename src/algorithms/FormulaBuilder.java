@@ -154,7 +154,6 @@ public abstract class FormulaBuilder {
 		FormulaList constraints = new FormulaList(BinaryOperations.AND);
 		final Map<Node, Set<Node>> adjacent = AdjacentCalculator.getAdjacent(tree);
 		for (Node node : tree.getNodes()) {
-			// removing the non-determinism of hash maps
 			adjacent.get(node).stream()
 				.filter(other -> other.getNumber() < node.getNumber())
 				.forEach(other -> {
