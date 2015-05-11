@@ -15,8 +15,7 @@ import structures.APTA;
 import structures.Automaton;
 
 public class StateMergingAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
-	public static Optional<Automaton> build(Logger logger, List<String> events, Verifier verifier,
-			List<List<String>> possc, Set<List<String>> negsc) {		
+	private static APTA getAPTA(List<List<String>> possc, Set<List<String>> negsc) {
 		APTA a = new APTA();
 		for (List<String> sc : possc) {
 			a.addScenario(sc, true);
@@ -24,16 +23,24 @@ public class StateMergingAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder
 		for (List<String> sc : negsc) {
 			a.addScenario(sc, false);
 		}
+		a.resetColors();
+		return a;
+	}
+	
+	public static Optional<Automaton> build(Logger logger, List<String> events, Verifier verifier,
+			List<List<String>> possc, Set<List<String>> negsc) {		
+		APTA a = getAPTA(possc, negsc);
 		
-		l: while (true) {
+		while (true) {
 			//System.out.println(a);
 			/*try {
 				Thread.sleep(500);
 			} catch (InterruptedException e) {
 			}*/
 			
-			List<APTA> merges = a.possibleMerge();
-			for (APTA newA : merges) {
+			final Optional<APTA> merge = a.bestMerge();
+			if (merge.isPresent()) {
+				final APTA newA = merge.get();
 				final List<Counterexample> counterexamples
 					= verifier.verifyWithCounterexamplesWithNoDeadEndRemoval(newA.toAutomaton());
 				if (!counterexamples.stream().allMatch(Counterexample::isEmpty)) {
@@ -42,20 +49,21 @@ public class StateMergingAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder
 						if (ce.isEmpty()) {
 							continue;
 						}
-						added++;
 						if (ce.loopLength > 0) {
 							throw new RuntimeException("Looping counterexample!");
 						}
-						a.addScenario(ce.events(), false);
+						added++;
+						negsc.add(ce.events());
 						System.out.println("ADDING COUNTEREXAMPLE: " + ce.events());
 					}
 					System.out.println("(ADDED COUNTEREXAMPLES: " + added + ")");
+					 a = getAPTA(possc, negsc);
 				} else {
 					a = newA;
 				}
-				continue l;
+			} else {
+				break;
 			}
-			break;
 		}
 
 		return Optional.of(a.toAutomaton());
