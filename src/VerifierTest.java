@@ -45,8 +45,8 @@ public class VerifierTest {
 			try (PrintWriter pw = new PrintWriter(filename)) {
 				pw.println(ltl);
 			}
-			Verifier v = new Verifier(size, logger, filename, events, actions, varNumber);
-			System.out.println(v.verifyWithCounterExamples(a));
+			Verifier v = new Verifier(logger, filename, events, actions, varNumber);
+			System.out.println(v.verifyWithCounterexamples(a));
 			new File(filename).delete();
 		}
 	}
@@ -75,13 +75,13 @@ public class VerifierTest {
 			try (PrintWriter pw = new PrintWriter(filename)) {
 				pw.println(ltl);
 			}
-			Verifier v = new Verifier(a.statesCount(), logger, filename,
+			Verifier v = new Verifier(logger, filename,
 					Arrays.asList("figure", "text", "setpos", "edit", "setdim", "finalise"), Arrays.asList(), 0);
-			System.out.println(v.verifyWithCounterExamples(a));
+			System.out.println(v.verifyWithCounterexamples(a));
 			new File(filename).delete();
 		}
 		
-		Verifier v = new Verifier(a.statesCount(), logger, "qbf/walkinshaw/jhotdraw.ltl",
+		Verifier v = new Verifier(logger, "qbf/walkinshaw/jhotdraw.ltl",
 				Arrays.asList("figure", "text", "setpos", "edit", "setdim", "finalise"), Arrays.asList(), 0);
 		System.out.println(v.verify(a));
 		new File(filename).delete();
@@ -104,9 +104,9 @@ public class VerifierTest {
 					System.out.println(a);
 					for (boolean verdict : Arrays.asList(true, false)) {
 						System.out.println(completeness + " " + states + " " + i + " " + verdict);
-						Verifier v = new Verifier(a.statesCount(), logger, "qbf/testing/" + completeness + "/fsm-" + states + "-" + i + "-" + verdict + ".ltl",
+						Verifier v = new Verifier(logger, "qbf/testing/" + completeness + "/fsm-" + states + "-" + i + "-" + verdict + ".ltl",
 							Arrays.asList("A", "B", "C", "D"), Arrays.asList("z0", "z1", "z2", "z3"), 0);
-						List<Counterexample> result = v.verifyWithCounterExamples(a);
+						List<Counterexample> result = v.verifyWithCounterexamples(a);
 						boolean boolResult = result.stream().allMatch(Counterexample::isEmpty);
 						if (boolResult != verdict) {
 							throw new AssertionError("Expected " + verdict + ", got " + boolResult);
@@ -129,9 +129,9 @@ public class VerifierTest {
 		System.out.println(a);
 		boolean verdict = false;
 		System.out.println(completeness + " " + states + " " + i + " " + verdict);
-		Verifier v = new Verifier(a.statesCount(), logger, "qbf/testing/" + completeness + "/fsm-" + states + "-" + i + "-" + verdict + ".ltl",
+		Verifier v = new Verifier(logger, "qbf/testing/" + completeness + "/fsm-" + states + "-" + i + "-" + verdict + ".ltl",
 			Arrays.asList("A", "B", "C", "D"), Arrays.asList("z0", "z1", "z2", "z3"), 0);
-		List<Counterexample> result = v.verifyWithCounterExamples(a);
+		List<Counterexample> result = v.verifyWithCounterexamples(a);
 		System.out.println(result);
 		boolean boolResult = result.stream().allMatch(Counterexample::isEmpty);
 		if (boolResult != verdict) {

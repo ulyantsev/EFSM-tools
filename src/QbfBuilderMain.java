@@ -7,9 +7,11 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Deque;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.Set;
 import java.util.logging.FileHandler;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
@@ -38,6 +40,7 @@ import algorithms.BacktrackingAutomatonBuilder;
 import algorithms.CounterexampleAutomatonBuilder;
 import algorithms.HybridAutomatonBuilder;
 import algorithms.QbfAutomatonBuilder;
+import algorithms.StateMergingAutomatonBuilder;
 import bool.MyBooleanExpression;
 
 public class QbfBuilderMain {
@@ -255,7 +258,7 @@ public class QbfBuilderMain {
 			}
 			
 			Optional<Automaton> resultAutomaton = null;
-			final Verifier verifier = new Verifier(size, logger, ltlFilePath, events, actions, varNumber);
+			final Verifier verifier = new Verifier(logger, ltlFilePath, events, actions, varNumber);
 			final long finishTime = System.currentTimeMillis() + timeout * 1000;
 			switch (ss) {
 			case QSAT: case EXP_SAT:
@@ -273,6 +276,31 @@ public class QbfBuilderMain {
 				resultAutomaton = CounterexampleAutomatonBuilder.build(logger, tree, size, solverParams,
 						resultFilePath, ltlFilePath, formulae, events, actions, satsolver, verifier, finishTime,
 						completenesstype, negativeTree);
+				break;
+			case STATE_MERGING:
+				final List<List<String>> possc = new ArrayList<>();
+				for (String filePath : arguments) {
+					for (StringScenario sc : StringScenario.loadScenarios(filePath, 0)) {
+						List<String> l = new ArrayList<>();
+						for (int i = 0; i < sc.size(); i++) {
+							l.add(sc.getEvents(i).get(0));
+						}
+						possc.add(l);
+					}
+				}
+				
+				final Set<List<String>> negsc = new LinkedHashSet<>();
+				if (negscFilePath != null) {
+					for (StringScenario sc : StringScenario.loadScenarios(negscFilePath, 0)) {
+						List<String> l = new ArrayList<>();
+						for (int i = 0; i < sc.size(); i++) {
+							l.add(sc.getEvents(i).get(0));
+						}
+						negsc.add(l);
+					}
+				}
+				resultAutomaton = StateMergingAutomatonBuilder.build(logger,
+						events, verifier, possc, negsc);
 				break;
 			case BACKTRACKING:
 				resultAutomaton = BacktrackingAutomatonBuilder.build(logger, tree, size,

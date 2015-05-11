@@ -26,15 +26,13 @@ import structures.Transition;
 
 public class Verifier {
 	private final Logger logger;
-	private final int size;
 	private final List<String> ltlFormulae;
 	private final VerifierFactory verifier;
 	private final Set<String> allEvents;
 	private final Set<String> allActions;
 	
-	public Verifier(int size, Logger logger, String ltlPath, List<String> events, List<String> actions, int varNumber) {
+	public Verifier(Logger logger, String ltlPath, List<String> events, List<String> actions, int varNumber) {
 		this.logger = logger;
-		this.size = size;
 		ltlFormulae = loadFormulae(ltlPath, varNumber);
 		logger.info(ltlFormulae.toString());
 
@@ -42,8 +40,6 @@ public class Verifier {
 		allActions = new TreeSet<>(actions);
 		ensureContextSufficiency();
 		verifier = new VerifierFactory(allEvents.toArray(new String[allEvents.size()]), allActions.toArray(new String[allActions.size()]));
-		FST fst = new FST(new Automaton(size), allEvents, allActions, size);
-		verifier.configureStateMachine(fst);
 
 		try {
 			while (true) {
@@ -118,11 +114,15 @@ public class Verifier {
 	}
 	
 	public boolean verify(Automaton a) {
-		return verifyWithCounterExamples(a).stream().allMatch(Counterexample::isEmpty);
+		return verifyWithCounterexamples(a).stream().allMatch(Counterexample::isEmpty);
 	}
 	
-	public List<Counterexample> verifyWithCounterExamples(Automaton a) {
-		final FST fst = new FST(removeDeadEnds(a), allEvents, allActions, size);
+	public List<Counterexample> verifyWithCounterexamples(Automaton a) {
+		return verifyWithCounterexamplesWithNoDeadEndRemoval(removeDeadEnds(a));
+	}
+	
+	public List<Counterexample> verifyWithCounterexamplesWithNoDeadEndRemoval(Automaton a) {
+		final FST fst = new FST(a, allEvents, allActions, a.statesCount());
 		verifier.configureStateMachine(fst);
 		return verifier.verify();
 	}

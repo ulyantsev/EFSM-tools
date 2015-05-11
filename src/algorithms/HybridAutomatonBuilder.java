@@ -98,7 +98,7 @@ public class HybridAutomatonBuilder extends CounterexampleAutomatonBuilder {
 				: Optional.empty();
 			
 			if (automaton.isPresent()) {
-				final List<Counterexample> counterexamples = verifier.verifyWithCounterExamples(automaton.get());
+				final List<Counterexample> counterexamples = verifier.verifyWithCounterexamples(automaton.get());
 				final boolean verified = counterexamples.stream().allMatch(Counterexample::isEmpty);
 				if (verified) {
 					if (completenessType == CompletenessType.NORMAL && USE_COMPLETENESS_HEURISTICS) {

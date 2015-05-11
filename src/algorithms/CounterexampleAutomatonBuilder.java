@@ -136,7 +136,7 @@ public class CounterexampleAutomatonBuilder extends ScenarioAndLtlAutomatonBuild
 			
 			if (automaton.isPresent()) {
 				negativeTree.checkColoring(list, size);
-				final List<Counterexample> counterexamples = verifier.verifyWithCounterExamples(automaton.get());
+				final List<Counterexample> counterexamples = verifier.verifyWithCounterexamples(automaton.get());
 				final boolean verified = counterexamples.stream().allMatch(Counterexample::isEmpty);
 				if (verified) {
 					if (completenessType == CompletenessType.NORMAL && USE_COMPLETENESS_HEURISTICS) {
