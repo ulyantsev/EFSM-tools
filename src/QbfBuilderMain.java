@@ -300,7 +300,7 @@ public class QbfBuilderMain {
 					}
 				}
 				resultAutomaton = StateMergingAutomatonBuilder.build(logger,
-						events, verifier, possc, negsc);
+						verifier, possc, negsc);
 				break;
 			case BACKTRACKING:
 				resultAutomaton = BacktrackingAutomatonBuilder.build(logger, tree, size,

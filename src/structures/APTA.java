@@ -2,6 +2,7 @@ package structures;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -10,6 +11,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import org.apache.commons.lang3.tuple.Pair;
+
 import actions.StringActions;
 import bool.MyBooleanExpression;
 
@@ -17,6 +20,8 @@ public class APTA {
     private final Map<Integer, Map<String, Integer>> nodes = new LinkedHashMap<>();
     private final Map<Integer, NodeType> nodeTypes = new LinkedHashMap<>();
     private final Map<Integer, NodeColor> nodeColors = new LinkedHashMap<>();
+    private final Map<Pair<Integer, Integer>, Pair<APTA, Integer>> cachedMerges = new HashMap<>();
+    
     
     private enum NodeType {
     	POSITIVE("solid"), NEGATIVE("dashed"), UNKNOWN("dotted");
@@ -100,6 +105,17 @@ public class APTA {
     	return true;
     }
     
+    private Pair<APTA, Integer> aptaAndScore(int r, int b) {
+		final Pair<APTA, Integer> cached = cachedMerges.get(Pair.of(r, b));
+		if (cached != null) {
+			return cached;
+		}
+		final APTA copy = copy(r, b);
+		final int score = copy.merge(r, b, 0);
+		cachedMerges.put(Pair.of(r, b), Pair.of(copy, score));
+		return Pair.of(copy, score);
+    }
+    
     public void updateColors() {
     	final Set<Integer> bfsNodes = bfs();
     	
@@ -121,8 +137,8 @@ public class APTA {
 	    		if (nodeColors.get(b) == NodeColor.BLUE) {
 	    			for (int r : nodeColors.keySet()) {
 	    	    		if (nodeColors.get(r) == NodeColor.RED) {
-    	    				final APTA copy = copy(r, b);
-    	    				final int score = copy.merge(r, b, 0);
+	    	    			final Pair<APTA, Integer> pair = aptaAndScore(r, b);
+		    				final int score = pair.getRight();
     	    				if (score != Integer.MIN_VALUE) {
 	    	    				// there exists a red node such that the blue node
     	    					// can be merged with it
@@ -133,7 +149,6 @@ public class APTA {
 	    			// there is no such red node, promote b to RED
 	    			nodeColors.put(b, NodeColor.RED);
 	    			recoloredBlueRed = true;
-	    			//System.out.println(b + " -> RED");
 	    		}
 	    	}
     	
@@ -157,7 +172,6 @@ public class APTA {
 	    			// w is the root of an isolated tree, promote w to BLUE
 	    			nodeColors.put(w, NodeColor.BLUE);
 	    			recoloredWriteBlue = true;
-	    			//System.out.println(w + " -> BLUE");
     			}
     		}
     		if (recoloredBlueRed || recoloredWriteBlue) {
@@ -178,10 +192,10 @@ public class APTA {
     		if (nodeColors.get(r) == NodeColor.RED) {
     			for (int b : nodeColors.keySet()) {
 	    			if (nodeColors.get(b) == NodeColor.BLUE) {
-	    				final APTA copy = copy(r, b);
-	    				final int score = copy.merge(r, b, 0);
-	    				
+	    				final Pair<APTA, Integer> pair = aptaAndScore(r, b);
+	    				final int score = pair.getRight();
 	    				if (score > bestScore) {
+		    				final APTA copy = pair.getLeft();
 	    					bestScore = score;
 	    					bestMerge = copy;
 	    					bestB = b;
@@ -195,6 +209,7 @@ public class APTA {
     		//System.out.println("MERGED R=" + bestR + ", B=" + bestB);
     		bestMerge.removeNode(bestB);
     	}
+    	cachedMerges.clear();
 		return Optional.ofNullable(bestMerge);
 	}
     
