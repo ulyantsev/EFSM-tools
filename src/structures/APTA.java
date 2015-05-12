@@ -1,7 +1,6 @@
 package structures;
 
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -20,17 +19,17 @@ public class APTA {
     private final Map<Integer, NodeColor> nodeColors = new LinkedHashMap<>();
     
     private enum NodeType {
-    	POSITIVE("+"), NEGATIVE("-"), UNKNOWN("?");
+    	POSITIVE("solid"), NEGATIVE("dashed"), UNKNOWN("dotted");
 
-    	private final String symbol;
+    	private final String dotStyle;
     	
     	NodeType(String symbol) {
-    		this.symbol = symbol;
+    		this.dotStyle = symbol;
     	}
     	
     	@Override
     	public String toString() {
-    		return symbol;
+    		return "[style=" + dotStyle + "]";
     	}
     }
     
@@ -45,7 +44,7 @@ public class APTA {
     	
     	@Override
     	public String toString() {
-    		return "[color = " + dotColor + "]";
+    		return "[color=" + dotColor + "]";
     	}
     }
     
@@ -66,7 +65,7 @@ public class APTA {
     	nodeTypes.put(0, NodeType.POSITIVE);
     }
     
-    private List<Integer> bfs() {
+    private Set<Integer> bfs() {
     	final Deque<Integer> queue = new ArrayDeque<>();
     	final Set<Integer> visited = new LinkedHashSet<>();
     	queue.add(0);
@@ -79,13 +78,7 @@ public class APTA {
     			}
     		}
     	}
-    	return new ArrayList<>(visited);
-    }
-    
-    private boolean canMerge(int n1, int n2) {
-    	final NodeType l1 = nodeTypes.get(n1);
-    	final NodeType l2 = nodeTypes.get(n2);
-    	return l1 == NodeType.UNKNOWN || l2 == NodeType.UNKNOWN || l1 == l2;
+    	return visited;
     }
     
     private boolean isolated(int n) {
@@ -107,25 +100,21 @@ public class APTA {
     	return true;
     }
     
-    public Optional<APTA> bestMerge() {
-    	System.out.println("BEFORE: " + this);
-    	
-    	int bestScore = Integer.MIN_VALUE;
-    	APTA bestMerge = null;
-    	
-    	// while (there exists a blue node that cannot be merged with any red node)
-    	// 	 promote the shallowest such blue node to red
-    	final List<Integer> bfsNodes = bfs();
+    public void updateColors() {
+    	final Set<Integer> bfsNodes = bfs();
     	while (true) {
     		boolean recoloredBlueRed = false;
 	    	l1: for (int b : bfsNodes) {
 	    		if (nodeColors.get(b) == NodeColor.BLUE) {
 	    			for (int r : nodeColors.keySet()) {
 	    	    		if (nodeColors.get(r) == NodeColor.RED) {
-	    	    			if (canMerge(b, r)) {
-	    	    				// there exists a red node such that the blue node can be merged with it
-	    	    				continue l1;
-	    	    			}
+    	    				final APTA copy = copy(r, b);
+    	    				final int score = copy.merge(r, b, 0);
+    	    				if (score != Integer.MIN_VALUE) {
+	    	    				// there exists a red node such that the blue node
+    	    					// can be merged with it
+	    	    				continue l1;		
+    	    				}
 	    	    		}
 	    			}
 	    			// there is no such red node, promote b to RED
@@ -163,35 +152,50 @@ public class APTA {
     			break;
     		}
     	}
-
-    	System.out.println("AFTER: " + this);
+    }
+    
+    public Optional<APTA> bestMerge() {
+    	int bestScore = Integer.MIN_VALUE;
+    	APTA bestMerge = null;
+    	int bestB = -1;
+    	//int bestR = -1;
     	
     	for (int r : nodeColors.keySet()) {
     		if (nodeColors.get(r) == NodeColor.RED) {
     			for (int b : nodeColors.keySet()) {
 	    			if (nodeColors.get(b) == NodeColor.BLUE) {
 	    				final APTA copy = copy(r, b);
-	    				final int score = copy.mergeBlueFringe(r, b, 0);
+	    				final int score = copy.merge(r, b, 0);
 	    				
-	    				if (score >= bestScore) {
+	    				if (score > bestScore) {
 	    					bestScore = score;
 	    					bestMerge = copy;
-	    					copy.removeNode(b);
+	    					bestB = b;
+	    					//bestR = r;
 	    				}
 	    			}
 	    		}
     		}
+    	}
+    	if (bestMerge != null) {
+    		//System.out.println("MERGED R=" + bestR + ", B=" + bestB);
+    		bestMerge.removeNode(bestB);
     	}
 		return Optional.ofNullable(bestMerge);
 	}
     
     private void removeNode(int node) {
     	nodes.remove(node);
+    	for (Map<String, Integer> s : nodes.values()) {
+    		if (s.values().contains(node)) {
+    			throw new AssertionError();
+    		}
+    	}
     	nodeColors.remove(node);
     	nodeTypes.remove(node);
     }
     
-    public int mergeBlueFringe(int r, int b, int score) {
+    public int merge(int r, int b, int score) {
     	final NodeType rLabel = nodeTypes.get(r);
     	final NodeType bLabel = nodeTypes.get(b);
     	
@@ -200,20 +204,24 @@ public class APTA {
     			if (rLabel == bLabel) {
         			score++;
         		} else {
-        			score = Integer.MIN_VALUE;
+        			return Integer.MIN_VALUE;
         		}
         	} else {
         		nodeTypes.put(r, bLabel);
         	}
     	}
     	
-    	for (Map.Entry<String, Integer> redEdge : nodes.get(r).entrySet()) {
-    		final int redChild = redEdge.getValue();
-    		final String event = redEdge.getKey();
-    		final Integer blueChild = nodes.get(b).get(event);
-    		if (blueChild != null) {
-				score = mergeBlueFringe(redChild, blueChild, score);
-				redEdge.setValue(blueChild);
+    	for (Map.Entry<String, Integer> blueEdge : nodes.get(b).entrySet()) {
+    		final int blueChild = blueEdge.getValue();
+    		final String event = blueEdge.getKey();
+    		final Integer redChild = nodes.get(r).get(event);
+    		if (redChild != null) {
+    			score = merge(redChild, blueChild, score);
+				if (score == Integer.MIN_VALUE) {
+					return score;
+				}
+    		} else {
+    			nodes.get(r).put(event, blueChild);
     		}
     	}
     	
@@ -245,20 +253,24 @@ public class APTA {
         return dst;
     }
 
-    public int size() {
-        return nodes.size();
-    }
-    
     public Automaton toAutomaton() {
-		final Automaton a = new Automaton(size());
+    	final Set<Integer> reachable = bfs();
+    	
+		final Automaton a = new Automaton(nodes.keySet().stream().mapToInt(x -> x).max().getAsInt() + 1);
 		for (Map.Entry<Integer, Map<String, Integer>> node : nodes.entrySet()) {
 			int src = node.getKey();
+			if (!reachable.contains(src)) {
+				continue;
+			}
 			NodeType srcType = nodeTypes.get(node.getKey());
 			if (srcType == NodeType.NEGATIVE) {
 				continue;
 			}
 			for (Map.Entry<String, Integer> t : node.getValue().entrySet()) {
 				int dst = t.getValue();
+				if (!reachable.contains(dst)) {
+					continue;
+				}
 				NodeType dstType = nodeTypes.get(dst);
 				if (dstType == NodeType.NEGATIVE) {
 					continue;
@@ -292,20 +304,19 @@ public class APTA {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append("digraph APTA {\n    node [shape = circle];\n");
+        sb.append("digraph APTA { node [shape=circle, width=0.7, fixedsize=true];\n");
 
-        for (Map.Entry<Integer, NodeColor> entry : nodeColors.entrySet()) {
-        	sb.append("    " + entry.getKey() + " " + entry.getValue() + ";\n");
+        for (int node : nodes.keySet()) {
+        	sb.append(node + "" + nodeColors.get(node) + nodeTypes.get(node) + ";");
         }
+        sb.append("\n");
         for (Map.Entry<Integer, Map<String, Integer>> node : nodes.entrySet()) {
 			for (Map.Entry<String, Integer> t : node.getValue().entrySet()) {
-				int dst = t.getValue();
-				NodeType dstType = nodeTypes.get(dst);
-				sb.append("    " + node.getKey() + " -> " + dst +
-						" [label = \"" + dstType + t.getKey() + "\"];\n");
+				sb.append(node.getKey() + "->" + t.getValue() +
+						"[label=\"" + t.getKey() + "\"];");
 			}
         }
-        sb.append("}\n");
+        sb.append(" }\n");
         return sb.toString();
     }
 }

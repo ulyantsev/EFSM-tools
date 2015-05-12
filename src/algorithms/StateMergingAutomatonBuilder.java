@@ -27,20 +27,26 @@ public class StateMergingAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder
 		return a;
 	}
 	
+	private static void print(APTA a, String comment) {
+		System.out.println(comment + " " + a);
+		try {
+			Thread.sleep(10);
+		} catch (InterruptedException e) {
+		}
+	}
+	
 	public static Optional<Automaton> build(Logger logger, List<String> events, Verifier verifier,
 			List<List<String>> possc, Set<List<String>> negsc) {		
 		APTA a = getAPTA(possc, negsc);
 		
 		while (true) {
-			//System.out.println(a);
-			/*try {
-				Thread.sleep(500);
-			} catch (InterruptedException e) {
-			}*/
-			
+			//print(a, "RESTART");
+			a.updateColors();
+			//print(a, "NEW COLORS");
 			final Optional<APTA> merge = a.bestMerge();
 			if (merge.isPresent()) {
 				final APTA newA = merge.get();
+				//print(newA, "AFTER MERGE");
 				final List<Counterexample> counterexamples
 					= verifier.verifyWithCounterexamplesWithNoDeadEndRemoval(newA.toAutomaton());
 				if (!counterexamples.stream().allMatch(Counterexample::isEmpty)) {
