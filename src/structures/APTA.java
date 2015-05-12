@@ -102,6 +102,19 @@ public class APTA {
     
     public void updateColors() {
     	final Set<Integer> bfsNodes = bfs();
+    	
+    	final Map<Integer, Set<Integer>> backEdges = new LinkedHashMap<>();
+    	for (int node : nodes.keySet()) {
+    		backEdges.put(node, new HashSet<>());
+    	}
+    	for (Map.Entry<Integer, Map<String, Integer>> node : nodes.entrySet()) {
+			final int src = node.getKey();
+			for (Map.Entry<String, Integer> t : node.getValue().entrySet()) {
+				final int dst = t.getValue();
+				backEdges.get(dst).add(src);
+			}
+		}
+    	
     	while (true) {
     		boolean recoloredBlueRed = false;
 	    	l1: for (int b : bfsNodes) {
@@ -135,11 +148,12 @@ public class APTA {
     		boolean recoloredWriteBlue = false;
     		l2: for (int w : isolated) {
     			if (nodeColors.get(w) == NodeColor.WHITE) {
-	    			for (int wOther : isolated) {
-	        			if (nodes.get(wOther).values().contains(w)) {
-	        				continue l2;
-	        			}
-	        		}
+    				for (int parent : backEdges.get(w)) {
+    					if (isolated.contains(parent)) {
+    						continue l2;
+    					}
+    				}
+    				
 	    			// w is the root of an isolated tree, promote w to BLUE
 	    			nodeColors.put(w, NodeColor.BLUE);
 	    			recoloredWriteBlue = true;
