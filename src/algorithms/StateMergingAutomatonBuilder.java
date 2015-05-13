@@ -58,6 +58,7 @@ public class StateMergingAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder
 		
 		APTA a = getAPTA(possc, negsc);
 		
+		int iterations = 1;
 		while (true) {
 			a.updateColors();
 			final Optional<APTA> merge = a.bestMerge();
@@ -79,7 +80,8 @@ public class StateMergingAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder
 						logger.info("ADDING COUNTEREXAMPLE: " + ce.events());
 					}
 					logger.info("(ADDED COUNTEREXAMPLES: " + added + ")");
-					 a = getAPTA(possc, negsc);
+					a = getAPTA(possc, negsc);
+					iterations++;
 				} else {
 					a = newA;
 				}
@@ -88,6 +90,7 @@ public class StateMergingAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder
 			}
 		}
 
+		logger.info("ITERATIONS: " + iterations);
 		return Optional.of(a.toAutomaton());
 	}
 }
