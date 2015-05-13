@@ -7,11 +7,9 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Deque;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
-import java.util.Set;
 import java.util.logging.FileHandler;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
@@ -278,29 +276,8 @@ public class QbfBuilderMain {
 						completenesstype, negativeTree);
 				break;
 			case STATE_MERGING:
-				final List<List<String>> possc = new ArrayList<>();
-				for (String filePath : arguments) {
-					for (StringScenario sc : StringScenario.loadScenarios(filePath, 0)) {
-						List<String> l = new ArrayList<>();
-						for (int i = 0; i < sc.size(); i++) {
-							l.add(sc.getEvents(i).get(0));
-						}
-						possc.add(l);
-					}
-				}
-				
-				final Set<List<String>> negsc = new LinkedHashSet<>();
-				if (negscFilePath != null) {
-					for (StringScenario sc : StringScenario.loadScenarios(negscFilePath, 0)) {
-						List<String> l = new ArrayList<>();
-						for (int i = 0; i < sc.size(); i++) {
-							l.add(sc.getEvents(i).get(0));
-						}
-						negsc.add(l);
-					}
-				}
 				resultAutomaton = StateMergingAutomatonBuilder.build(logger,
-						verifier, possc, negsc);
+						verifier, arguments, negscFilePath);
 				break;
 			case BACKTRACKING:
 				resultAutomaton = BacktrackingAutomatonBuilder.build(logger, tree, size,

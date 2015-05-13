@@ -4,6 +4,10 @@ package algorithms;
  * (c) Igor Buzhinsky
  */
 
+import java.io.FileNotFoundException;
+import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -11,6 +15,7 @@ import java.util.logging.Logger;
 
 import qbf.egorov.verifier.Counterexample;
 import qbf.reduction.Verifier;
+import scenario.StringScenario;
 import structures.APTA;
 import structures.Automaton;
 
@@ -28,7 +33,29 @@ public class StateMergingAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder
 	}
 	
 	public static Optional<Automaton> build(Logger logger, Verifier verifier,
-			List<List<String>> possc, Set<List<String>> negsc) {		
+			List<String> scenarioFilePaths, String negscFilePath) throws FileNotFoundException, ParseException {		
+		final List<List<String>> possc = new ArrayList<>();
+		for (String filePath : scenarioFilePaths) {
+			for (StringScenario sc : StringScenario.loadScenarios(filePath, 0)) {
+				List<String> l = new ArrayList<>();
+				for (int i = 0; i < sc.size(); i++) {
+					l.add(sc.getEvents(i).get(0));
+				}
+				possc.add(l);
+			}
+		}
+		
+		final Set<List<String>> negsc = new LinkedHashSet<>();
+		if (negscFilePath != null) {
+			for (StringScenario sc : StringScenario.loadScenarios(negscFilePath, 0)) {
+				List<String> l = new ArrayList<>();
+				for (int i = 0; i < sc.size(); i++) {
+					l.add(sc.getEvents(i).get(0));
+				}
+				negsc.add(l);
+			}
+		}
+		
 		APTA a = getAPTA(possc, negsc);
 		
 		while (true) {

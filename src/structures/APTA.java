@@ -1,6 +1,7 @@
 package structures;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -21,7 +22,6 @@ public class APTA {
     private final Map<Integer, NodeType> nodeTypes = new LinkedHashMap<>();
     private final Map<Integer, NodeColor> nodeColors = new LinkedHashMap<>();
     private final Map<Pair<Integer, Integer>, Pair<APTA, Integer>> cachedMerges = new HashMap<>();
-    
     
     private enum NodeType {
     	POSITIVE("solid"), NEGATIVE("dashed"), UNKNOWN("dotted");
@@ -185,8 +185,6 @@ public class APTA {
     public Optional<APTA> bestMerge() {
     	int bestScore = Integer.MIN_VALUE;
     	APTA bestMerge = null;
-    	int bestB = -1;
-    	//int bestR = -1;
     	
     	for (int r : nodeColors.keySet()) {
     		if (nodeColors.get(r) == NodeColor.RED) {
@@ -198,28 +196,28 @@ public class APTA {
 		    				final APTA copy = pair.getLeft();
 	    					bestScore = score;
 	    					bestMerge = copy;
-	    					bestB = b;
-	    					//bestR = r;
 	    				}
 	    			}
 	    		}
     		}
     	}
     	if (bestMerge != null) {
-    		//System.out.println("MERGED R=" + bestR + ", B=" + bestB);
-    		bestMerge.removeNode(bestB);
+    		bestMerge.removeUnreachableNodes();
     	}
     	cachedMerges.clear();
 		return Optional.ofNullable(bestMerge);
 	}
     
+    private void removeUnreachableNodes() {
+    	final Set<Integer> nodesToRemove = new HashSet<>(nodes.keySet());
+		nodesToRemove.removeAll(bfs());
+		for (int n : nodesToRemove) {
+			removeNode(n);
+		}
+    }
+    
     private void removeNode(int node) {
     	nodes.remove(node);
-    	for (Map<String, Integer> s : nodes.values()) {
-    		if (s.values().contains(node)) {
-    			throw new AssertionError();
-    		}
-    	}
     	nodeColors.remove(node);
     	nodeTypes.remove(node);
     }
@@ -282,36 +280,71 @@ public class APTA {
         return dst;
     }
 
-    public Automaton toAutomaton() {
-    	final Set<Integer> reachable = bfs();
+    private APTA removeNegativeNodes() {
+    	final APTA a = copy(0, 0);
+    	final List<Integer> negative = new ArrayList<>();
+    	for (Map.Entry<Integer, NodeType> entry : nodeTypes.entrySet()) {
+    		if (entry.getValue() == NodeType.NEGATIVE) {
+    			negative.add(entry.getKey());
+    		}
+    	}
+    	for (int node : negative) {
+    		a.removeNode(node);
+    		for (Map<String, Integer> transitionMap : a.nodes.values()) {
+    			final List<String> events = new ArrayList<>(transitionMap.keySet());
+    			for (String event : events) {
+    				if (transitionMap.get(event) == node) {
+    					transitionMap.remove(event);
+    				}
+    			}
+    		}
+    	}
+    	a.removeUnreachableNodes();
+    	return a;
+    }
+    
+    private APTA removeNodeNumGaps() {
+    	final APTA a = new APTA();
+    	final int size = nodes.keySet().stream().mapToInt(x -> x).max().getAsInt() + 1;
+    	final int[] mapping = new int[size];
     	
-		final Automaton a = new Automaton(nodes.keySet().stream().mapToInt(x -> x).max().getAsInt() + 1);
-		for (Map.Entry<Integer, Map<String, Integer>> node : nodes.entrySet()) {
-			int src = node.getKey();
-			if (!reachable.contains(src)) {
-				continue;
-			}
-			NodeType srcType = nodeTypes.get(node.getKey());
-			if (srcType == NodeType.NEGATIVE) {
-				continue;
-			}
+    	int j = 0;
+    	for (int node : nodes.keySet()) {
+    		mapping[node] = j;
+    		a.nodes.put(j, new LinkedHashMap<>());
+    		j++;
+    	}
+    	for (Map.Entry<Integer, Map<String, Integer>> node : nodes.entrySet()) {
 			for (Map.Entry<String, Integer> t : node.getValue().entrySet()) {
-				int dst = t.getValue();
-				if (!reachable.contains(dst)) {
-					continue;
-				}
-				NodeType dstType = nodeTypes.get(dst);
-				if (dstType == NodeType.NEGATIVE) {
-					continue;
-				}
-				final Node from = a.getState(src);
-				final Node to = a.getState(dst);
-				a.addTransition(from, new Transition(from, to, t.getKey(),
+				a.nodes.get(mapping[node.getKey()]).put(t.getKey(), mapping[t.getValue()]);
+			}
+		}
+    	
+    	for (Map.Entry<Integer, NodeType> entry : nodeTypes.entrySet()) {
+    		a.nodeTypes.put(mapping[entry.getKey()], entry.getValue());
+    	}
+    	for (Map.Entry<Integer, NodeColor> entry : nodeColors.entrySet()) {
+    		a.nodeColors.put(mapping[entry.getKey()], entry.getValue());
+    	}
+
+    	return a;
+    }
+    
+    public Automaton toAutomaton() {
+    	final APTA a = removeNegativeNodes().removeNodeNumGaps();
+		final Automaton auto = new Automaton(a.nodes.size());
+		for (Map.Entry<Integer, Map<String, Integer>> node : a.nodes.entrySet()) {
+			final int src = node.getKey();
+			for (Map.Entry<String, Integer> t : node.getValue().entrySet()) {
+				final int dst = t.getValue();
+				final Node from = auto.getState(src);
+				final Node to = auto.getState(dst);
+				auto.addTransition(from, new Transition(from, to, t.getKey(),
 						MyBooleanExpression.getTautology(), new StringActions("")));
 			}
 		}
 		
-		return a;
+		return auto;
     }
     
     // additionally makes parent(b) point to r
