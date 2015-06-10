@@ -5,13 +5,15 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 FSM=
 NSTATES=
 NLTL=
+LTLPRIORITIES=
 
-while getopts ':a:n:f:' opt ; do
+while getopts ':a:n:f:u:' opt ; do
     case "$opt" in
         a) FSM="$OPTARG" ;;
         n) NSTATES="$OPTARG" ;;
         f) NLTL="$OPTARG" ;;
-        [?]) echo >&2 "Usage: $0 -a (EFSM file) -n (number of EFSM states) -f (number of LTL formulae)" && exit 1 ;;
+        u) LTLPRIORITIES="$OPTARG" ;;
+        [?]) echo >&2 "Usage: $0 -a (EFSM file) -n (number of EFSM states) -f (number of LTL formulae) -u (LTL priorities in the randltl format)" && exit 1 ;;
     esac
 done
 
@@ -24,5 +26,5 @@ fi
 cwd=$(pwd)
 
 
-$SCRIPT_DIR/genltl -a $FSM -n $NLTL | sed 's/&&/and/g' | $SCRIPT_DIR/spin2egorov | sed -r 's/^\((.+)\)$/\1/g' | grep -v -P '^!.+' | grep -v -P '^wasEvent\(.+\)$' | grep -v -P '^wasAction\(.+\)$' | grep -v -P '^true$' | grep -v -P '^false$'> formulas
+$SCRIPT_DIR/genltl -a $FSM -n $NLTL -u "$LTLPRIORITIES" | sed 's/&&/and/g' | $SCRIPT_DIR/spin2egorov | sed -r 's/^\((.+)\)$/\1/g' | grep -v -P '^!.+' | grep -v -P '^wasEvent\(.+\)$' | grep -v -P '^wasAction\(.+\)$' | grep -v -P '^true$' | grep -v -P '^false$'> formulas
 $SCRIPT_DIR/select-formulas -a $FSM -n $NSTATES -f $cwd/formulas

@@ -1,2 +1,0 @@
-* Added an extra scenario load;edit;close;load
-* At-least-one-event-from-state problem!!! Implemented a special completeness mode NO_DEAD_ENDS_WALKINSHAW.

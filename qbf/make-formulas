@@ -11,6 +11,7 @@ NACTIONS=
 ACTIONS_SEQ_LEN=
 NVARIABLES=
 TRANSITION_PERCENT=
+LTLPRIORITIES=
 
 #the number of initially generated LTL formulae is NSTATES * MULT
 MULT=200
@@ -35,7 +36,7 @@ then
 fi
 
 
-while getopts ':m:n:f:h:e:i:a:s:v:x:p:' opt ; do
+while getopts ':m:n:f:h:e:i:a:s:v:x:p:u:' opt ; do
     case "$opt" in
         m) FSM="$OPTARG" ;;
         n) NSTATES="$OPTARG" ;;
@@ -48,7 +49,8 @@ while getopts ':m:n:f:h:e:i:a:s:v:x:p:' opt ; do
         v) NVARIABLES="$OPTARG" ;; 
         x) MULT="$OPTARG" ;;
         p) TRANSITION_PERCENT="$OPTARG" ;;
-        [?]) echo >&2 "Usage: $0 -m (EFSM file in graphviz format) -n (desired number of EFSM states) -f (number of desired LTL formulae) -h (threshold, default = 50) -e (number of events) -i (min number of actions) -a (max number of actions) -s (max action sequence length) -v (number of internal variables) -t (percentage of generated transitions)" && exit 1 ;;
+        u) LTLPRIORITIES="$OPTARG" ;;
+        [?]) echo >&2 "Usage: $0 -m (EFSM file in graphviz format) -n (desired number of EFSM states) -f (number of desired LTL formulae) -h (threshold, default = 50) -e (number of events) -i (min number of actions) -a (max number of actions) -s (max action sequence length) -v (number of internal variables) -t (percentage of generated transitions) -u (LTL priorities in the randltl format)" && exit 1 ;;
     esac
 done
 
@@ -65,7 +67,7 @@ cd $root
 
 n_generate_ltl=$(expr $NLTL \* $MULT)
 
-TREE_SIZE=$TREE_SIZE $SCRIPT_DIR/prepare-formulas -a $fsmdir/$FSM -n $NSTATES -f $n_generate_ltl > selected-formulas
+TREE_SIZE=$TREE_SIZE $SCRIPT_DIR/prepare-formulas -a $fsmdir/$FSM -n $NSTATES -f $n_generate_ltl -u "$LTLPRIORITIES" > selected-formulas
 echo "    Prepared $(cat selected-formulas | wc -l) formulas, checking"
 
 cat selected-formulas | split -l 1 -d 
