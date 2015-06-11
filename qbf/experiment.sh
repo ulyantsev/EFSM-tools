@@ -1,10 +1,12 @@
 #!/bin/bash
 
 tl=300
-./evaluate.sh COUNTEREXAMPLE $tl 3 10 true true
-./evaluate.sh COUNTEREXAMPLE $tl 3 10 false true
-./evaluate.sh COUNTEREXAMPLE $tl 3 10 true false
-./evaluate.sh COUNTEREXAMPLE $tl 3 10 false false
+./evaluate.sh BACKTRACKING $tl 3 7 true true
+
+#./evaluate.sh COUNTEREXAMPLE $tl 3 10 true true
+#./evaluate.sh COUNTEREXAMPLE $tl 3 10 false true
+#./evaluate.sh COUNTEREXAMPLE $tl 3 10 true false
+#./evaluate.sh COUNTEREXAMPLE $tl 3 10 false false
 
 #./evaluate.sh COUNTEREXAMPLE $tl 3 8 false false
 #./evaluate.sh COUNTEREXAMPLE $tl 3 10 true true

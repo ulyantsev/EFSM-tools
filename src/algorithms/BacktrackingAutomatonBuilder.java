@@ -100,40 +100,39 @@ public class BacktrackingAutomatonBuilder {
 				throw new TimeLimitExceeded();
 			}
 			
-			for (Transition t : frontier) {
-				// further edges should be added from this state:
-				final Node stateFrom = automaton.getState(coloring[t.getSrc().getNumber()]);
-				final String event = t.getEvent();
-				final MyBooleanExpression expression = t.getExpr();
-				final StringActions stringActions = t.getActions();
-				assert stateFrom.getTransition(event, expression) == null;
-				for (int dst = 0; dst < colorSize; dst++) {
-					if (dst > 1 && incomingTransitionNumbers[dst - 1] == 0) {
-						break;
-						// this is done to reduce repeated checks (similar to BFS constraints)
-					}
-					
-					Transition autoT = new Transition(stateFrom,
-							automaton.getState(dst), event, expression, stringActions);
-					automaton.addTransition(stateFrom, autoT);
-					incomingTransitionNumbers[automaton.getState(dst).getNumber()]++;
-					final int[] coloringBackup = coloring;
-					final List<Transition> frontierBackup = frontier;
-					
-					if (findNewFrontier() != -1 && verify()) {
-						if (frontier.isEmpty()) {
-							new AutomatonCompleter(verifier, automaton, events,
-									actions, finishTime, completenessType).ensureCompleteness();
-						} else {
-							backtracking();
-						}
-					}
-					
-					coloring = coloringBackup;
-					frontier = frontierBackup;
-					stateFrom.removeTransition(autoT);
-					incomingTransitionNumbers[automaton.getState(dst).getNumber()]--;
+			Transition t = frontier.get(0);
+			// further edges should be added from this state:
+			final Node stateFrom = automaton.getState(coloring[t.getSrc().getNumber()]);
+			final String event = t.getEvent();
+			final MyBooleanExpression expression = t.getExpr();
+			final StringActions stringActions = t.getActions();
+			assert stateFrom.getTransition(event, expression) == null;
+			for (int dst = 0; dst < colorSize; dst++) {
+				if (dst > 1 && incomingTransitionNumbers[dst - 1] == 0) {
+					break;
+					// this is done to reduce repeated checks (similar to BFS constraints)
 				}
+				
+				Transition autoT = new Transition(stateFrom,
+						automaton.getState(dst), event, expression, stringActions);
+				automaton.addTransition(stateFrom, autoT);
+				incomingTransitionNumbers[automaton.getState(dst).getNumber()]++;
+				final int[] coloringBackup = coloring;
+				final List<Transition> frontierBackup = frontier;
+				
+				if (findNewFrontier() != -1 && verify()) {
+					if (frontier.isEmpty()) {
+						new AutomatonCompleter(verifier, automaton, events,
+								actions, finishTime, completenessType).ensureCompleteness();
+					} else {
+						backtracking();
+					}
+				}
+				
+				coloring = coloringBackup;
+				frontier = frontierBackup;
+				stateFrom.removeTransition(autoT);
+				incomingTransitionNumbers[automaton.getState(dst).getNumber()]--;
 			}
 		}
 	}
