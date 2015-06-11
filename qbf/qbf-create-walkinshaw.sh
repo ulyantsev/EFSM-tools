@@ -10,7 +10,7 @@ l=$((sc_factor * size))
 
 mkdir -p testing-walkinshaw
 
-for ((instance = 0; instance < 10; instance++)); do
+for ((instance = 0; instance < 100; instance++)); do
     name="testing-walkinshaw/fsm-$instance"
     echo $name : creating FSM
     java -jar ../jars/automaton-generator.jar -ac 0 -ec $events -maxa 0 -mina 0 -o "$name.dot" -s $size -p $p -vc 0
