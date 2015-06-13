@@ -47,9 +47,7 @@ public class BacktrackingAutomatonBuilder {
 			this.colorSize = colorSize;
 			this.automaton = new Automaton(colorSize);
 			this.coloring = new int[tree.nodesCount()];
-			Arrays.fill(coloring, -1);
 			frontier = new ArrayList<>(tree.getRoot().getTransitions());
-			coloring[tree.getRoot().getNumber()] = 0;
 			this.verifier = verifier;
 			this.finishTime = finishTime;
 			incomingTransitionNumbers = new int[colorSize];
@@ -63,36 +61,31 @@ public class BacktrackingAutomatonBuilder {
 		}
 		
 		/*
-		 * Returns the number of passed scenario transitions
-		 * or -1 if the automaton is inconsistent with scenarios.
+		 * Returns whether the automaton is consistent with scenarios.
 		 */
-		private int findNewFrontier() {
-			int passed = 0;
+		private boolean findNewFrontier() {
 			// proper sorting of the frontier is required to prevent losing feasible solutions
 			// due to the BFS constraint
 			final List<Transition> finalFrontier = new ArrayList<>();
 			final List<Transition> currentFrontier = new ArrayList<>();
 			currentFrontier.addAll(frontier);
-			final int[] newColoring = coloring.clone();
 			while (!currentFrontier.isEmpty()) {
 				final Transition t = currentFrontier.get(currentFrontier.size() - 1);
 				currentFrontier.remove(currentFrontier.size() - 1);
-				final int stateFrom = newColoring[t.getSrc().getNumber()];
+				final int stateFrom = coloring[t.getSrc().getNumber()];
 				final structures.Transition autoT = automaton.getState(stateFrom)
 						.getTransition(t.getEvent(), t.getExpr());
 				if (autoT == null) {
 					finalFrontier.add(t);
 				} else if (autoT.getActions().equals(t.getActions())) {
 					currentFrontier.addAll(t.getDst().getTransitions());
-					newColoring[t.getDst().getNumber()] = autoT.getDst().getNumber();
-					passed++;
+					coloring[t.getDst().getNumber()] = autoT.getDst().getNumber();
 				} else {
-					return -1;
+					return false;
 				}
 			}
 			frontier = finalFrontier;
-			coloring = newColoring;
-			return passed;
+			return true;
 		}
 
 		public void backtracking() throws AutomatonFound, TimeLimitExceeded {
@@ -116,11 +109,10 @@ public class BacktrackingAutomatonBuilder {
 				Transition autoT = new Transition(stateFrom,
 						automaton.getState(dst), event, expression, stringActions);
 				automaton.addTransition(stateFrom, autoT);
-				incomingTransitionNumbers[automaton.getState(dst).getNumber()]++;
-				final int[] coloringBackup = coloring;
+				incomingTransitionNumbers[dst]++;
 				final List<Transition> frontierBackup = frontier;
 				
-				if (findNewFrontier() != -1 && verify()) {
+				if (findNewFrontier() && verify()) {
 					if (frontier.isEmpty()) {
 						new AutomatonCompleter(verifier, automaton, events,
 								actions, finishTime, completenessType).ensureCompleteness();
@@ -129,10 +121,9 @@ public class BacktrackingAutomatonBuilder {
 					}
 				}
 				
-				coloring = coloringBackup;
 				frontier = frontierBackup;
 				stateFrom.removeTransition(autoT);
-				incomingTransitionNumbers[automaton.getState(dst).getNumber()]--;
+				incomingTransitionNumbers[dst]--;
 			}
 		}
 	}
