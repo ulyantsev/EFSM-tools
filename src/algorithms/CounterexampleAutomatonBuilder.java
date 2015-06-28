@@ -77,18 +77,16 @@ public class CounterexampleAutomatonBuilder extends ScenarioAndLtlAutomatonBuild
 		}
 		prohibited.add(options.assemble());
 	}
-	
-	protected final static boolean USE_COMPLETENESS_HEURISTICS = true;
-	
+		
 	public static Optional<Automaton> build(Logger logger, ScenariosTree tree, int size, String solverParams,
 			String resultFilePath, String ltlFilePath, List<LtlNode> formulae,
 			List<String> events, List<String> actions, SatSolver satSolver,
 			Verifier verifier, long finishTime, CompletenessType completenessType,
-			NegativeScenariosTree negativeTree) throws IOException {
+			NegativeScenariosTree negativeTree, boolean useCompletenessHeuristics) throws IOException {
 		deleteTrash();
 		
 		final List<BooleanFormula> prohibited = new ArrayList<>();
-		final CompletenessType effectiveCompletenessType = USE_COMPLETENESS_HEURISTICS
+		final CompletenessType effectiveCompletenessType = useCompletenessHeuristics
 				? CompletenessType.NO_DEAD_ENDS : completenessType;
 		
 		ExpandableStringFormula expandableFormula = null;
@@ -139,7 +137,7 @@ public class CounterexampleAutomatonBuilder extends ScenarioAndLtlAutomatonBuild
 				final List<Counterexample> counterexamples = verifier.verifyWithCounterexamples(automaton.get());
 				final boolean verified = counterexamples.stream().allMatch(Counterexample::isEmpty);
 				if (verified) {
-					if (completenessType == CompletenessType.NORMAL && USE_COMPLETENESS_HEURISTICS) {
+					if (completenessType == CompletenessType.NORMAL && useCompletenessHeuristics) {
 						logger.info("STARTING HEURISTIC COMPLETION");
 						try {
 							new AutomatonCompleter(verifier, automaton.get(), events, actions,

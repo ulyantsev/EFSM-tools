@@ -19,6 +19,7 @@ import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
+import org.kohsuke.args4j.spi.BooleanOptionHandler;
 
 import qbf.egorov.ltl.LtlParseException;
 import qbf.egorov.ltl.LtlParser;
@@ -36,7 +37,6 @@ import structures.Transition;
 import algorithms.AutomatonCompleter.CompletenessType;
 import algorithms.BacktrackingAutomatonBuilder;
 import algorithms.CounterexampleAutomatonBuilder;
-import algorithms.HybridAutomatonBuilder;
 import algorithms.QbfAutomatonBuilder;
 import algorithms.StateMergingAutomatonBuilder;
 import bool.MyBooleanExpression;
@@ -103,11 +103,8 @@ public class QbfBuilderMain {
             metaVar = "<completenessType>")
 	private String completenessType = CompletenessType.NORMAL.name();
 	
-	@Option(name = "--hybridSecToGenerateFormula", aliases = { "-hgf" }, usage = "time limit in seconds for formula generation in the HYBRID mode", metaVar = "<sec>")
-	private int hybridSecToGenerateFormula = 15;
-	
-	@Option(name = "--hybridSecToSolve", aliases = { "-hs" }, usage = "time limit in seconds for the solver in the HYBRID mode", metaVar = "<sec>")
-	private int hybridSecToSolve = 30;
+	@Option(name = "--noCompletenessHeuristics", aliases = { "-nc" }, handler = BooleanOptionHandler.class, usage = "disable the completeness heuristics")
+	private boolean noCompletenessHeuristics;
 	
 	private void launcher(String[] args) throws IOException {
 		Locale.setDefault(Locale.US);
@@ -264,16 +261,10 @@ public class QbfBuilderMain {
 						qbfsolver, solverParams, ss == SolvingStrategy.EXP_SAT,
 						events, actions, satsolver, verifier, finishTime, completenesstype);
 				break;
-			case NEWHYBRID:
-				resultAutomaton = HybridAutomatonBuilder.build(logger, tree, formulae, size, ltlFilePath,
-						qbfsolver, solverParams,
-						events, actions, satsolver, verifier, finishTime, completenesstype,
-						hybridSecToGenerateFormula, negativeTree);
-				break;
 			case COUNTEREXAMPLE:
 				resultAutomaton = CounterexampleAutomatonBuilder.build(logger, tree, size, solverParams,
 						resultFilePath, ltlFilePath, formulae, events, actions, satsolver, verifier, finishTime,
-						completenesstype, negativeTree);
+						completenesstype, negativeTree, !noCompletenessHeuristics);
 				break;
 			case STATE_MERGING:
 				resultAutomaton = StateMergingAutomatonBuilder.build(logger,

@@ -75,8 +75,6 @@ for ((size = 10; size >= 3; size--)); do
                     fi
                 fi
             done
-            pattern='1s/^\(.*\)$/!(\1)/g'
-            cat $name-true.ltl | sed -e "$pattern" > $name-false.ltl
             echo $name : done
         done
     done

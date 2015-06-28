@@ -1,10 +1,15 @@
 #!/bin/bash
 
 tl=300
-#./evaluate.sh BACKTRACKING $tl 3 10 false true
+./evaluate.sh EXP_SAT $tl 3 10 true
+./evaluate.sh EXP_SAT $tl 3 10 false
+./evaluate.sh QSAT $tl 3 6 true
+#./evaluate.sh COUNTEREXAMPLE $tl 3 10 false
+#./evaluate.sh COUNTEREXAMPLE $tl 3 10 true
+
 #./evaluate.sh BACKTRACKING $tl 3 10 false false
-./evaluate.sh BACKTRACKING $tl 3 10 true true
-./evaluate.sh BACKTRACKING $tl 3 10 true false
+#./evaluate.sh BACKTRACKING $tl 3 10 true true
+#./evaluate.sh BACKTRACKING $tl 3 10 true false
 
 #./evaluate.sh COUNTEREXAMPLE $tl 3 10 true true
 #./evaluate.sh COUNTEREXAMPLE $tl 3 10 false true
