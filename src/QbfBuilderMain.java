@@ -273,7 +273,7 @@ public class QbfBuilderMain {
 			case BACKTRACKING:
 				resultAutomaton = BacktrackingAutomatonBuilder.build(logger, tree, size,
 						resultFilePath, ltlFilePath, formulae, events, actions, verifier, finishTime,
-						completenesstype);
+						completenesstype, varNumber);
 				break;
 			}
 			final double executionTime = (System.currentTimeMillis() - startTime) / 1000.;
