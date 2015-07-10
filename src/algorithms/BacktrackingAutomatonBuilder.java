@@ -66,8 +66,6 @@ public class BacktrackingAutomatonBuilder {
 		 * Returns whether the automaton is consistent with scenarios.
 		 */
 		private boolean findNewFrontier() {
-			// proper sorting of the frontier is required to prevent losing feasible solutions
-			// due to the BFS constraint
 			final List<Transition> finalFrontier = new ArrayList<>();
 			final List<Transition> currentFrontier = new ArrayList<>();
 			currentFrontier.addAll(frontier);
@@ -140,7 +138,7 @@ public class BacktrackingAutomatonBuilder {
 		private final Automaton automaton;
 		private int[] coloring;
 		private List<List<Transition>> frontier;
-		
+				
 		/*
 		 * auxiliary list for search space reduction
 		 */
@@ -186,8 +184,6 @@ public class BacktrackingAutomatonBuilder {
 		 * Returns whether the automaton is consistent with scenarios.
 		 */
 		private boolean findNewFrontier() {
-			// proper sorting of the frontier is required to prevent losing feasible solutions
-			// due to the BFS constraint
 			final List<List<Transition>> finalFrontier = new ArrayList<>();
 			final List<List<Transition>> currentFrontier = new ArrayList<>();
 			currentFrontier.addAll(frontier);
@@ -207,6 +203,8 @@ public class BacktrackingAutomatonBuilder {
 							return false;
 						}
 						autoDst = autoT.getDst().getNumber();
+					} else if (autoDst != -1) {
+						return false;
 					}
 				}
 				if (autoDst != -1) {
@@ -222,6 +220,13 @@ public class BacktrackingAutomatonBuilder {
 		}
 
 		public void backtracking() throws AutomatonFound, TimeLimitExceeded {
+			/*for (StringScenario s : sc) {
+				if (!automaton.isCompliantWithScenario(s)) {
+					System.out.println(automaton);
+					throw new AssertionError();
+				}
+			}*/
+			
 			if (System.currentTimeMillis() > finishTime) {
 				throw new TimeLimitExceeded();
 			}
