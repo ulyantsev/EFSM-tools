@@ -191,23 +191,26 @@ public class BacktrackingAutomatonBuilder {
 				final List<Transition> tList = currentFrontier.get(currentFrontier.size() - 1);
 				currentFrontier.remove(currentFrontier.size() - 1);
 				final int stateFrom = coloring[tList.get(0).getSrc().getNumber()];
-				int autoDst = -1;
+				final List<structures.Transition> transitions = new ArrayList<>();
+				boolean wasNull = false;
+				boolean wasProper = false;
 				for (Transition t : tList) {
 					final structures.Transition autoT = automaton.getState(stateFrom)
 							.getTransition(t.getEvent(), MyBooleanExpression.getTautology());
-					if (autoT != null) {
-						if (!autoT.getActions().equals(t.getActions())) {
-							return false;
-						}
-						if (autoDst != -1 && autoDst != autoT.getDst().getNumber()) {
-							return false;
-						}
-						autoDst = autoT.getDst().getNumber();
-					} else if (autoDst != -1) {
+					if (autoT != null && !autoT.getActions().equals(t.getActions())) {
 						return false;
 					}
+					wasNull |= autoT == null;
+					wasProper |= autoT != null;
+					transitions.add(autoT);
 				}
-				if (autoDst != -1) {
+				if (wasNull && wasProper) {
+					return false;
+				} else if (wasProper) {
+					final int autoDst = transitions.get(0).getDst().getNumber();
+					if (!transitions.stream().allMatch(t -> t.getDst().getNumber() == autoDst)) {
+						return false;
+					}
 					final Node scDst = tList.get(0).getDst();
 					currentFrontier.addAll(groupByDst(scDst.getTransitions()));
 					coloring[scDst.getNumber()] = autoDst;
