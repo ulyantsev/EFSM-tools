@@ -66,8 +66,6 @@ public class BacktrackingAutomatonBuilder {
 		 * Returns whether the automaton is consistent with scenarios.
 		 */
 		private boolean findNewFrontier() {
-			// proper sorting of the frontier is required to prevent losing feasible solutions
-			// due to the BFS constraint
 			final List<Transition> finalFrontier = new ArrayList<>();
 			final List<Transition> currentFrontier = new ArrayList<>();
 			currentFrontier.addAll(frontier);
@@ -140,7 +138,7 @@ public class BacktrackingAutomatonBuilder {
 		private final Automaton automaton;
 		private int[] coloring;
 		private List<List<Transition>> frontier;
-		
+				
 		/*
 		 * auxiliary list for search space reduction
 		 */
@@ -186,8 +184,6 @@ public class BacktrackingAutomatonBuilder {
 		 * Returns whether the automaton is consistent with scenarios.
 		 */
 		private boolean findNewFrontier() {
-			// proper sorting of the frontier is required to prevent losing feasible solutions
-			// due to the BFS constraint
 			final List<List<Transition>> finalFrontier = new ArrayList<>();
 			final List<List<Transition>> currentFrontier = new ArrayList<>();
 			currentFrontier.addAll(frontier);
@@ -195,21 +191,26 @@ public class BacktrackingAutomatonBuilder {
 				final List<Transition> tList = currentFrontier.get(currentFrontier.size() - 1);
 				currentFrontier.remove(currentFrontier.size() - 1);
 				final int stateFrom = coloring[tList.get(0).getSrc().getNumber()];
-				int autoDst = -1;
+				final List<structures.Transition> transitions = new ArrayList<>();
+				boolean wasNull = false;
+				boolean wasProper = false;
 				for (Transition t : tList) {
 					final structures.Transition autoT = automaton.getState(stateFrom)
 							.getTransition(t.getEvent(), MyBooleanExpression.getTautology());
-					if (autoT != null) {
-						if (!autoT.getActions().equals(t.getActions())) {
-							return false;
-						}
-						if (autoDst != -1 && autoDst != autoT.getDst().getNumber()) {
-							return false;
-						}
-						autoDst = autoT.getDst().getNumber();
+					if (autoT != null && !autoT.getActions().equals(t.getActions())) {
+						return false;
 					}
+					wasNull |= autoT == null;
+					wasProper |= autoT != null;
+					transitions.add(autoT);
 				}
-				if (autoDst != -1) {
+				if (wasNull && wasProper) {
+					return false;
+				} else if (wasProper) {
+					final int autoDst = transitions.get(0).getDst().getNumber();
+					if (!transitions.stream().allMatch(t -> t.getDst().getNumber() == autoDst)) {
+						return false;
+					}
 					final Node scDst = tList.get(0).getDst();
 					currentFrontier.addAll(groupByDst(scDst.getTransitions()));
 					coloring[scDst.getNumber()] = autoDst;
@@ -222,6 +223,13 @@ public class BacktrackingAutomatonBuilder {
 		}
 
 		public void backtracking() throws AutomatonFound, TimeLimitExceeded {
+			/*for (StringScenario s : sc) {
+				if (!automaton.isCompliantWithScenario(s)) {
+					System.out.println(automaton);
+					throw new AssertionError();
+				}
+			}*/
+			
 			if (System.currentTimeMillis() > finishTime) {
 				throw new TimeLimitExceeded();
 			}
