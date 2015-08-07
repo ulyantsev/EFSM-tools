@@ -1,5 +1,9 @@
 package structures;
 
+/**
+ * (c) Igor Buzhinsky
+ */
+
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -14,7 +18,7 @@ import java.util.Set;
 
 import org.apache.commons.lang3.tuple.Pair;
 
-import actions.StringActions;
+import scenario.StringActions;
 import bool.MyBooleanExpression;
 
 public class APTA {

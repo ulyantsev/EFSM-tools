@@ -1,3 +1,7 @@
+/**
+ * (c) Igor Buzhinsky
+ */
+
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.Collection;
@@ -5,13 +9,12 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
+import algorithms.AutomatonGVLoader;
 import structures.Automaton;
 import structures.Node;
 import structures.Transition;
-import tools.AutomatonGVLoader;
 
 public class SafetyLTLGeneratorMain {
-
 	public static void main(String[] args) {
     	if (args.length != 1) {
             System.out.println("Generator of safety LTL formulae for a given FSM");

@@ -1,3 +1,6 @@
+/**
+ * (c) Igor Buzhinsky
+ */
 
 import java.io.File;
 import java.io.IOException;
@@ -12,14 +15,14 @@ import java.util.logging.Logger;
 
 import org.apache.commons.lang3.tuple.Pair;
 
-import qbf.reduction.Assignment;
-import qbf.reduction.BinaryOperation;
-import qbf.reduction.BinaryOperations;
-import qbf.reduction.BooleanFormula;
-import qbf.reduction.BooleanVariable;
-import qbf.reduction.FormulaList;
-import qbf.reduction.SatSolver;
-import algorithms.QbfAutomatonBuilder;
+import bnf_formulae.BinaryOperation;
+import bnf_formulae.BinaryOperations;
+import bnf_formulae.BooleanFormula;
+import bnf_formulae.BooleanVariable;
+import bnf_formulae.FormulaList;
+import sat_solving.Assignment;
+import sat_solving.SatSolver;
+import algorithms.automaton_builders.QbfAutomatonBuilder;
 
 public class BFSVariableProhibitionDeterminer {
 	public static void main(String[] args) throws ParseException, IOException {

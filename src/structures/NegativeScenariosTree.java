@@ -1,5 +1,9 @@
 package structures;
 
+/**
+ * (c) Igor Buzhinsky
+ */
+
 import java.io.FileNotFoundException;
 import java.text.ParseException;
 import java.util.Collection;
@@ -7,9 +11,9 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-import qbf.reduction.Assignment;
+import sat_solving.Assignment;
+import scenario.StringActions;
 import scenario.StringScenario;
-import actions.StringActions;
 import bool.MyBooleanExpression;
 
 public class NegativeScenariosTree {

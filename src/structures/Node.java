@@ -4,7 +4,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.TreeMap;
 
-import actions.StringActions;
+import scenario.StringActions;
 import bool.MyBooleanExpression;
 
 public class Node {

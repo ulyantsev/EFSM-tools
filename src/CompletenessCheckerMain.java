@@ -1,9 +1,9 @@
 import java.io.IOException;
 import java.text.ParseException;
 
+import algorithms.AutomatonCompletenessChecker;
+import algorithms.AutomatonGVLoader;
 import structures.Automaton;
-import tools.AutomatonCompletenessChecker;
-import tools.AutomatonGVLoader;
 
 public class CompletenessCheckerMain {
 

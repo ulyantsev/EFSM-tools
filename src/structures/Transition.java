@@ -1,6 +1,6 @@
 package structures;
 
-import actions.StringActions;
+import scenario.StringActions;
 import bool.MyBooleanExpression;
 
 public class Transition {

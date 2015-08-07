@@ -15,10 +15,9 @@ import org.kohsuke.args4j.Option;
 import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.spi.BooleanOptionHandler;
 
-import algorithms.CryptominisatAutomatonBuilder;
-
+import algorithms.automaton_builders.CryptominisatAutomatonBuilder;
 import structures.Automaton;
-import structures.ScenariosTree;
+import structures.ScenarioTree;
 
 public class SatBuilderMain {
 
@@ -83,7 +82,7 @@ public class SatBuilderMain {
 			}
 		}
 
-		ScenariosTree tree = new ScenariosTree();
+		ScenarioTree tree = new ScenarioTree();
 		for (String filePath : arguments) {
 			try {
 				tree.load(filePath);

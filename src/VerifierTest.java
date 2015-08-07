@@ -12,12 +12,12 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Logger;
 
-import qbf.egorov.verifier.Counterexample;
-import qbf.reduction.Verifier;
+import egorov.Verifier;
+import egorov.verifier.Counterexample;
+import scenario.StringActions;
 import structures.Automaton;
 import structures.Transition;
-import tools.AutomatonGVLoader;
-import actions.StringActions;
+import algorithms.AutomatonGVLoader;
 import bool.MyBooleanExpression;
 
 public class VerifierTest {

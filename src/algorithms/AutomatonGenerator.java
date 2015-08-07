@@ -6,9 +6,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
-import actions.StringActions;
 import bool.MyBooleanExpression;
-
+import scenario.StringActions;
 import structures.Automaton;
 import structures.Node;
 import structures.Transition;

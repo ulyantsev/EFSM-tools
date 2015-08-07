@@ -1,3 +1,7 @@
+/**
+ * (c) Igor Buzhinsky
+ */
+
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.LinkedHashSet;
@@ -6,8 +10,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import structures.Node;
-import structures.ScenariosTree;
-import algorithms.AdjacentCalculator;
+import structures.ScenarioTree;
+import algorithms.AdjacencyCalculator;
 
 public class MaxCliqueFinderMain {
 	public static void main(String[] args) throws IOException {
@@ -21,9 +25,9 @@ public class MaxCliqueFinderMain {
 		final String filename = args[0];
 
 		try {
-			final ScenariosTree tree = new ScenariosTree();
+			final ScenarioTree tree = new ScenarioTree();
 			tree.load(filename, 0);
-			final Map<Node, Set<Node>> adjacent = AdjacentCalculator.getAdjacent(tree);
+			final Map<Node, Set<Node>> adjacent = AdjacencyCalculator.getAdjacent(tree);
 			final Set<Node> clique = findClique(tree.getRoot(), adjacent);
 			checkClique(clique, adjacent);
 			System.out.println("MAX-CLIQUE SIZE: " + clique.size());

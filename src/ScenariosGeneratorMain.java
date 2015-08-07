@@ -10,8 +10,8 @@ import org.kohsuke.args4j.Option;
 import org.kohsuke.args4j.spi.BooleanOptionHandler;
 
 import structures.Automaton;
-import tools.AutomatonGVLoader;
-import algorithms.ScenariosGenerator;
+import algorithms.AutomatonGVLoader;
+import algorithms.ScenarioGenerator;
 
 public class ScenariosGeneratorMain {
 
@@ -82,9 +82,9 @@ public class ScenariosGeneratorMain {
 			}
 			
 			if (sumLength == 0) {
-				scenarios = ScenariosGenerator.generateScenariosWithBFS(automaton);
+				scenarios = ScenarioGenerator.generateScenariosWithBFS(automaton);
 			} else {
-				scenarios = ScenariosGenerator.generateScenariosWithBFS(automaton, sumLength, random);
+				scenarios = ScenarioGenerator.generateScenariosWithBFS(automaton, sumLength, random);
 			}			
 		} else {
 			if (scenariosCount == 0) {
@@ -100,7 +100,7 @@ public class ScenariosGeneratorMain {
 				sumLength = (maxLength + minLength) * scenariosCount / 2;
 			}
 
-			scenarios = ScenariosGenerator.generateScenarios(automaton, scenariosCount, minLength, maxLength,
+			scenarios = ScenarioGenerator.generateScenarios(automaton, scenariosCount, minLength, maxLength,
 					sumLength, random);
 		}
 		

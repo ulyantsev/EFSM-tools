@@ -21,24 +21,24 @@ import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 import org.kohsuke.args4j.spi.BooleanOptionHandler;
 
-import qbf.egorov.ltl.LtlParseException;
-import qbf.egorov.ltl.LtlParser;
-import qbf.egorov.ltl.grammar.LtlNode;
-import qbf.reduction.QbfSolver;
-import qbf.reduction.SatSolver;
-import qbf.reduction.SolvingStrategy;
-import qbf.reduction.Verifier;
+import egorov.Verifier;
+import egorov.ltl.LtlParseException;
+import egorov.ltl.LtlParser;
+import egorov.ltl.grammar.LtlNode;
+import sat_solving.QbfSolver;
+import sat_solving.SatSolver;
+import sat_solving.SolvingStrategy;
 import scenario.StringScenario;
 import structures.Automaton;
 import structures.NegativeScenariosTree;
 import structures.Node;
-import structures.ScenariosTree;
+import structures.ScenarioTree;
 import structures.Transition;
 import algorithms.AutomatonCompleter.CompletenessType;
-import algorithms.BacktrackingAutomatonBuilder;
-import algorithms.CounterexampleAutomatonBuilder;
-import algorithms.QbfAutomatonBuilder;
-import algorithms.StateMergingAutomatonBuilder;
+import algorithms.automaton_builders.BacktrackingAutomatonBuilder;
+import algorithms.automaton_builders.CounterexampleAutomatonBuilder;
+import algorithms.automaton_builders.QbfAutomatonBuilder;
+import algorithms.automaton_builders.StateMergingAutomatonBuilder;
 import bool.MyBooleanExpression;
 
 public class QbfBuilderMain {
@@ -146,7 +146,7 @@ public class QbfBuilderMain {
 			}
 		}
 
-		ScenariosTree tree = new ScenariosTree();
+		ScenarioTree tree = new ScenarioTree();
 		for (String filePath : arguments) {
 			try {
 				tree.load(filePath, varNumber);

@@ -4,9 +4,9 @@ import java.text.ParseException;
 import java.util.List;
 import java.util.Locale;
 
+import algorithms.AutomatonGVLoader;
 import scenario.StringScenario;
 import structures.Automaton;
-import tools.AutomatonGVLoader;
 
 public class ConsistencyCheckerMain {
     public static void main(String[] args) {

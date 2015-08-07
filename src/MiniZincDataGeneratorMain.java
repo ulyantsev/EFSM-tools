@@ -1,11 +1,11 @@
-import algorithms.AdjacentCalculator;
+import algorithms.AdjacencyCalculator;
 import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 
 import structures.Node;
-import structures.ScenariosTree;
+import structures.ScenarioTree;
 import structures.Transition;
 
 import java.io.FileNotFoundException;
@@ -67,7 +67,7 @@ public class MiniZincDataGeneratorMain {
             }
         }
 
-        ScenariosTree tree = new ScenariosTree();
+        ScenarioTree tree = new ScenarioTree();
         for (String filePath : arguments) {
             try {
                 tree.load(filePath);
@@ -79,7 +79,7 @@ public class MiniZincDataGeneratorMain {
             }
         }
 
-        Map<Node, Set<Node>> adjacent = AdjacentCalculator.getAdjacent(tree);
+        Map<Node, Set<Node>> adjacent = AdjacencyCalculator.getAdjacent(tree);
 
         try {
             PrintWriter pw = new PrintWriter(resultFilePath);
@@ -90,7 +90,7 @@ public class MiniZincDataGeneratorMain {
         }
     }
 
-    private String getDataString(ScenariosTree tree, Map<Node, Set<Node>> adjacent) {
+    private String getDataString(ScenarioTree tree, Map<Node, Set<Node>> adjacent) {
         Transition[] incomingTransition = new Transition[tree.nodesCount()];
 
         List<String> eventOrder = new ArrayList<String>();

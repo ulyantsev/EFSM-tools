@@ -1,9 +1,9 @@
 import java.io.IOException;
 import java.text.ParseException;
 
+import algorithms.AutomatonGVLoader;
+import algorithms.AutomatonIsomorphismChecker;
 import structures.Automaton;
-import tools.AutomatonGVLoader;
-import tools.AutomatonIsomorphismChecker;
 
 
 public class IsomorphismCheckerMain {

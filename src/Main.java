@@ -14,10 +14,9 @@ import org.kohsuke.args4j.Option;
 import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.spi.BooleanOptionHandler;
 
-import algorithms.ChocoAutomatonBuilder;
-
+import algorithms.automaton_builders.ChocoAutomatonBuilder;
 import structures.Automaton;
-import structures.ScenariosTree;
+import structures.ScenarioTree;
 
 public class Main {
 
@@ -85,7 +84,7 @@ public class Main {
             }
         }
 
-        ScenariosTree tree = new ScenariosTree();
+        ScenarioTree tree = new ScenarioTree();
         for (String filePath : arguments) {
             try {
                 tree.load(filePath);

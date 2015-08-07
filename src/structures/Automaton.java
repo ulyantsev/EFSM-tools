@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
-import actions.StringActions;
 import bool.MyBooleanExpression;
+import scenario.StringActions;
 import scenario.StringScenario;
 
 public class Automaton {

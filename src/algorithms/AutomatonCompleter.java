@@ -9,11 +9,13 @@ import java.util.List;
 
 import org.apache.commons.lang3.tuple.Pair;
 
-import qbf.reduction.Verifier;
+import egorov.Verifier;
+import scenario.StringActions;
 import structures.Automaton;
 import structures.Node;
 import structures.Transition;
-import actions.StringActions;
+import algorithms.exception.AutomatonFoundException;
+import algorithms.exception.TimeLimitExceededException;
 import bool.MyBooleanExpression;
 
 public class AutomatonCompleter {
@@ -84,20 +86,20 @@ public class AutomatonCompleter {
 		return missing;
 	}
 	
-	public void ensureCompleteness() throws AutomatonFound, TimeLimitExceeded {
+	public void ensureCompleteness() throws AutomatonFoundException, TimeLimitExceededException {
 		ensureCompleteness(missingTransitions());
 	}
 	
 	private void ensureCompleteness(List<Pair<Integer, String>> missingTransitions)
-			throws AutomatonFound, TimeLimitExceeded {
+			throws AutomatonFoundException, TimeLimitExceededException {
 		if (System.currentTimeMillis() > finishTime) {
-			throw new TimeLimitExceeded();
+			throw new TimeLimitExceededException();
 		}
 		if (!verifier.verify(automaton)) {
 			return;
 		}
 		if (missingTransitions.isEmpty()) {
-			throw new AutomatonFound(automaton);
+			throw new AutomatonFoundException(automaton);
 		}
 		
 		final Pair<Integer, String> missing = missingTransitions.get(missingTransitions.size() - 1);
