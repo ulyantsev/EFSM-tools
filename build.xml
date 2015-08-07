@@ -38,6 +38,9 @@
     <property name="safety.ltl.generator.main" value="SafetyLTLGeneratorMain"/>
     <property name="safety.ltl.generator.jar" value="safety-ltl-generator.jar"/>
 
+    <property name="max.clique.finder.main" value="MaxCliqueFinderMain"/>
+    <property name="max.clique.finder.jar" value="max-clique-finder.jar"/>
+
     <target name="all" 
             depends="consistency-jar, 
                      isomorphism-jar, 
@@ -48,7 +51,8 @@
                      scenarios-generator-jar,
                      minizinc-generator-jar,
                      qbf-automaton-generator-jar,
-                     safety-ltl-generator-jar">
+                     safety-ltl-generator-jar,
+                     max-clique-finder-jar">
     </target>
 
     <target name="minizinc-generator-jar">
@@ -266,6 +270,27 @@
              basedir="${bin.dir}">
             <manifest>
                 <attribute name="Main-Class" value="${safety.ltl.generator.main}"/>
+            </manifest>
+        </jar>
+
+        <delete dir="${bin.dir}"/>
+    </target>
+
+    <target name="max-clique-finder-jar">
+        <mkdir dir="${bin.dir}"/>
+        <javac srcdir="${src.dir}"
+               destdir="${bin.dir}"
+               classpath=""
+               includeantruntime="false"
+               debug="true"
+               debuglevel="lines,vars,source">
+            <include name="${max.clique.finder.main}.java"/>
+        </javac>
+
+        <jar destfile="${jars.dir}/${max.clique.finder.jar}"
+             basedir="${bin.dir}">
+            <manifest>
+                <attribute name="Main-Class" value="${max.clique.finder.main}"/>
             </manifest>
         </jar>
 

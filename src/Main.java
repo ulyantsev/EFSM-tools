@@ -24,9 +24,6 @@ public class Main {
     @Argument(usage = "paths to files with scenarios", metaVar = "files", required = true)
     private List<String> arguments = new ArrayList<String>();
 
-//    @Option(name = "--negative-scenarios", aliases = { "-n" }, usage = "file with negative scenarios", metaVar = "<file>")
-//    private String negativeScenariosPath;
-
     @Option(name = "--size", aliases = {"-s"}, usage = "automaton size", metaVar = "<size>", required = true)
     private int size;
 

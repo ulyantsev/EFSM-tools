@@ -1,7 +1,5 @@
-import java.io.File;
 import java.io.IOException;
 import java.text.ParseException;
-import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
@@ -11,35 +9,44 @@ import structures.Node;
 import structures.ScenariosTree;
 import algorithms.AdjacentCalculator;
 
-public class MaxCliqueFinder {
+public class MaxCliqueFinderMain {
 	public static void main(String[] args) throws IOException {
-		final File dir = new File("./qbf/testing/incomplete");
-		
-		for (String name : Arrays.stream(dir.list())
-				.filter(name -> name.endsWith(".sc"))
-				.sorted()
-				.collect(Collectors.toList())) {
-			System.out.println("*** " + name);
-				
+		if (args.length != 1) {
+            System.out.println("Greedy max-clique finder for a given scenario file");
+            System.out.println("Author: Igor Buzhinsky, igor.buzhinsky@gmail.com\n");
+            System.out.println("Usage: java -jar max-clique-finder.jar <scenarios.sc>");
+            return;
+        }
+
+		final String filename = args[0];
+
+		try {
 			final ScenariosTree tree = new ScenariosTree();
-
-			try {
-				tree.load(dir.getAbsolutePath() + "/" + name, 0);
-			} catch (IOException | ParseException e) {
-				e.printStackTrace();
-				return;
-			}
-
+			tree.load(filename, 0);
 			final Map<Node, Set<Node>> adjacent = AdjacentCalculator.getAdjacent(tree);
-			System.out.println(adjacent.size() + " nodes in the consistency graph");
-			System.out.println(findClique(adjacent).size() + " is the max-clique size");
+			final Set<Node> clique = findClique(tree.getRoot(), adjacent);
+			checkClique(clique, adjacent);
+			System.out.println("MAX-CLIQUE SIZE: " + clique.size());
+			System.out.println("NODES: " + clique.stream().map(node -> node.getNumber()).sorted().collect(Collectors.toList()));
+		} catch (IOException | ParseException e) {
+			e.printStackTrace();
+			return;
 		}
-		
-		// "./qbf/walkinshaw/editor.sc", "./qbf/walkinshaw/jhotdraw.sc", "./qbf/walkinshaw/cvs.sc"
-		// zero clique
 	}
 	
-	private static Set<Node> findClique(Map<Node, Set<Node>> adjacent) {
+	private static void checkClique(Set<Node> clique, Map<Node, Set<Node>> adjacent) {
+		for (Node u : clique) {
+			for (Node v : clique) {
+				if (u != v) {
+					if (!adjacent.get(u).contains(v)) {
+						throw new AssertionError();
+					}
+				}
+			}
+		}
+	}
+	
+	private static Set<Node> findClique(Node root, Map<Node, Set<Node>> adjacent) {
 		int maxDegree = 0;
 		Node maxV = null;
 		final Set<Node> clique = new LinkedHashSet<>();
@@ -62,17 +69,18 @@ public class MaxCliqueFinder {
 				last = anotherOne;
 				anotherOne = findNeighborWithHighestDegree(clique, last, adjacent);
 			}
+		} else {
+			clique.add(root);
 		}
+		
 		return clique;
 	}
 
 	private static Node findNeighborWithHighestDegree(Set<Node> cur, Node v, Map<Node, Set<Node>> adjacent) {
 		int maxDegree = 0;
 		Node maxNeighbour = null;
-		// uv - edge
 		for (Node u : adjacent.get(v)) {
 			boolean uInClique = true;
-			// check if other vertices in cur connected with u
 			for (Node w : cur) {
 				if (w != v) {
 					if (!adjacent.get(w).contains(u)) {
