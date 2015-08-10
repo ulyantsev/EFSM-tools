@@ -37,7 +37,8 @@ for ((size = $min_size; size <= $max_size; size++)); do
         sc_name=$name.sc
         instance_description="s=$size n=$instance"
         ltl_name=$name-true.ltl
-        for ((trysize = 1; trysize <= $size; trysize++)); do
+        minsize=$(java -jar ../jars/max-clique-finder.jar $sc_name | head -n 1 | sed -e 's/.* //')
+        for ((trysize = $minsize; trysize <= $size; trysize++)); do
             echo ">>> $instance_description: $trysize"
             rm -f $fsm
             java -Xms2G -Xmx4G -jar ../jars/qbf-automaton-generator.jar "$sc_name" \

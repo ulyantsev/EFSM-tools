@@ -283,7 +283,7 @@ public class BacktrackingAutomatonBuilder {
 			List<String> events, List<String> actions, Verifier verifier,
 			long finishTime, CompletenessType completenessType, int variables) throws IOException {
 		try {
-			if (variables == 1) {
+			if (variables == 0) {
 				new TraverseState(tree, verifier, size, finishTime, events, actions,
 						completenessType).backtracking();
 			} else {
