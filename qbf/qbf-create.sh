@@ -9,7 +9,7 @@ sc_factor=50
 
 echo "Generating FSMs, scenarios and LTL formulae..."
 mkdir -p "testing/complete" "testing/incomplete"
-for ((size = 10; size >= 3; size--)); do
+for ((size = 12; size >= 3; size--)); do
     for compl in "true" "false"; do
         if [[ $compl == "true" ]]; then
             compdir="complete"
