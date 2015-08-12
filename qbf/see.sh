@@ -20,10 +20,10 @@ print_found_by_prefix() {
             unsatname=$dir/$prefix$instance/$unsatsize.log
             #echo $satname $unsatname
             sattimes[${#sattimes[@]}]=$(grep "execution time" < $satname | sed -e "s/^.*time: //g")
-            if ((unsatsize == 0)); then
-                unsattimes[${#unsattimes[@]}]=0
-            else
+            if [ -f $unsatname ]; then
                 unsattimes[${#unsattimes[@]}]=$(grep "execution time" < $unsatname | sed -e "s/^.*time: //g")
+            else
+                unsattimes[${#unsattimes[@]}]=0
             fi
         else
             sattimes[${#sattimes[@]}]=300
