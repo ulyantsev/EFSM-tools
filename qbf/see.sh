@@ -19,21 +19,27 @@ print_found_by_prefix() {
             satname=$dir/$prefix$instance/$satsize.log 
             unsatname=$dir/$prefix$instance/$unsatsize.log
             #echo $satname $unsatname
-            sattimes[${#sattimes[@]}]=$(grep "execution time" < $satname | sed -e "s/^.*time: //g")
+            sattimes[$instance]=$(grep "execution time" < $satname | sed -e "s/^.*time: //g")
             if [ -f $unsatname ]; then
-                unsattimes[${#unsattimes[@]}]=$(grep "execution time" < $unsatname | sed -e "s/^.*time: //g")
+                unsattimes[$instance]=$(grep "execution time" < $unsatname | sed -e "s/^.*time: //g")
             else
-                unsattimes[${#unsattimes[@]}]=0
+                unsattimes[$instance]=0.0
             fi
         else
-            sattimes[${#sattimes[@]}]=300
-            unsattimes[${#unsattimes[@]}]=300
+            sattimes[$instance]=300.0
+            unsattimes[$instance]=300.0
         fi
     done
     if [[ $count == 0 ]]; then
         count=1
     fi
-    printf "%9s found %2d, unknown %2d, total %2d, frac %5s%%, realstates %4s, medsat %5s, medunsat %5s\n" $prefix $found $unknown $total $(python -c "print(round(float($found) / $total * 1000) / 10)") $(python -c "print(round(float($sumstates) / $count * 10)) / 10") $(python -c "print(round(${sattimes[25]} * 10) / 10)") $(python -c "print(round(${unsattimes[25]} * 10) / 10)")
+    str=${sattimes[@]}
+    str=$(echo $(echo -e ${str// /\\n} | sort -n))
+    IFS=' ' read -a sattimes_sorted <<< $str
+    str=${unsattimes[@]}
+    str=$(echo $(echo -e ${str// /\\n} | sort -n))
+    IFS=' ' read -a unsattimes_sorted <<< $str
+    printf "%9s found %2d, unknown %2d, total %2d, frac %5s%%, realstates %4s, medsat %5s, medunsat %5s\n" $prefix $found $unknown $total $(python -c "print(round(float($found) / $total * 1000) / 10)") $(python -c "print(round(float($sumstates) / $count * 10)) / 10") $(python -c "print(round(${sattimes_sorted[25]} * 10) / 10)") $(python -c "print(round(${unsattimes_sorted[25]} * 10) / 10)")
 
 }
 
@@ -41,7 +47,7 @@ for compdir in "complete" "incomplete"; do
     echo ">>> $compdir"
     for prefix in EXP* QSAT* COUN* BACK*; do
         echo_str=
-        for ((s = 3; s <= 10; s++)); do
+        for ((s = 3; s <= 12; s++)); do
             ls evaluation/$compdir/$prefix-$s-*/"done" 1>/dev/null 2>/dev/null
             if [[ $? != 0 ]]; then
                 continue
