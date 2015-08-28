@@ -70,7 +70,7 @@ public class LtlParser {
      */
     public static List<LtlNode> loadProperties(String filepath, int varNumber)
 			throws FileNotFoundException, LtlParseException {
-    	List<LtlNode> ans = new ArrayList<>();
+    	final List<LtlNode> ans = new ArrayList<>();
 
 		try (Scanner in = new Scanner(new File(filepath))) {
 			while (in.hasNextLine()) {

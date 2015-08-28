@@ -7,6 +7,7 @@ package egorov;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Scanner;
 import java.util.Set;
@@ -33,7 +34,7 @@ public class Verifier {
 	
 	public Verifier(Logger logger, String ltlPath, List<String> events, List<String> actions, int varNumber) {
 		this.logger = logger;
-		ltlFormulae = loadFormulae(ltlPath, varNumber);
+		ltlFormulae = ltlPath == null? Collections.emptyList() : loadFormulae(ltlPath, varNumber);
 		logger.info(ltlFormulae.toString());
 
 		allEvents = new TreeSet<>(events);
@@ -57,7 +58,7 @@ public class Verifier {
 	}
 
 	private List<String> loadFormulae(String path, int varNumber) {
-		List<String> formulae = new ArrayList<>();
+		final List<String> formulae = new ArrayList<>();
 		try (Scanner in = new Scanner(new File(path))) {
 			while (in.hasNext()) {
 				formulae.add(LtlParser.duplicateEvents(in.nextLine(), varNumber));
@@ -69,8 +70,8 @@ public class Verifier {
 	}
 	
 	private void ensureContextSufficiency() {
-		Pattern p1 = Pattern.compile("co\\.(\\w+)\\)");
-		Pattern p2 = Pattern.compile("ep\\.(\\w+)\\)");
+		final Pattern p1 = Pattern.compile("co\\.(\\w+)\\)");
+		final Pattern p2 = Pattern.compile("ep\\.(\\w+)\\)");
 		Matcher m;
 		for (String formula : ltlFormulae) {
 			m = p1.matcher(formula);

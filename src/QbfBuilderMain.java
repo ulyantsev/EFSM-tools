@@ -6,6 +6,7 @@ import java.text.ParseException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.List;
 import java.util.Locale;
@@ -48,16 +49,18 @@ public class QbfBuilderMain {
 	@Option(name = "--size", aliases = { "-s" }, usage = "automaton size", metaVar = "<size>", required = true)
 	private int size;
 	
-	@Option(name = "--eventNumber", aliases = { "-en" }, usage = "number of events (A, B, ...)", metaVar = "<eventNumber>", required = true)
+	@Option(name = "--eventNumber", aliases = { "-en" }, usage = "number of events", metaVar = "<eventNumber>", required = true)
 	private int eventNumber;
 	
-	@Option(name = "--eventNames", aliases = { "-enm" }, usage = "optional comma-separated event names", metaVar = "<eventNames>")
+	@Option(name = "--eventNames", aliases = { "-enm" }, usage = "optional comma-separated event names (default: A, B, C, ...)",
+			metaVar = "<eventNames>")
 	private String eventNames;
 	
-	@Option(name = "--actionNumber", aliases = { "-an" }, usage = "number of actions (z0, z1, ...)", metaVar = "<actionNumber>", required = true)
+	@Option(name = "--actionNumber", aliases = { "-an" }, usage = "number of actions", metaVar = "<actionNumber>", required = true)
 	private int actionNumber;
 	
-	@Option(name = "--actionNames", aliases = { "-anm" }, usage = "optional comma-separated action names", metaVar = "<actionNames>")
+	@Option(name = "--actionNames", aliases = { "-anm" }, usage = "optional comma-separated action names (default: z0, z1, z2, ...)",
+			metaVar = "<actionNames>")
 	private String actionNames;
 	
 	@Option(name = "--varNumber", aliases = { "-vn" }, usage = "number of variables (x0, x1, ...)", metaVar = "<varNumber>")
@@ -66,25 +69,26 @@ public class QbfBuilderMain {
 	@Option(name = "--log", aliases = { "-l" }, usage = "write log to this file", metaVar = "<file>")
 	private String logFilePath;
 
-	@Option(name = "--result", aliases = { "-r" }, usage = "write result automaton in GV format to this file",
+	@Option(name = "--result", aliases = { "-r" }, usage = "write the obtained automaton in the GV format to this file",
 			metaVar = "<GV file>")
 	private String resultFilePath = "automaton.gv";
 
-	@Option(name = "--tree", aliases = { "-t" }, usage = "write scenarios tree in GV format to this file",
+	@Option(name = "--tree", aliases = { "-t" }, usage = "write the obtained scenario tree in the GV format to this file",
 			metaVar = "<GV file>")
 	private String treeFilePath;
 
-	@Option(name = "--ltl", aliases = { "-lt" }, usage = "file with LTL properties", metaVar = "<file>")
+	@Option(name = "--ltl", aliases = { "-lt" }, usage = "file with LTL properties (optional)", metaVar = "<file>")
 	private String ltlFilePath;
 
-	@Option(name = "--negsc", aliases = { "-ns" }, usage = "file with negative scenarios", metaVar = "<file>")
+	@Option(name = "--negsc", aliases = { "-ns" }, usage = "file with negative scenarios (optional, does not work for all solving modes)",
+			metaVar = "<file>")
 	private String negscFilePath;
 	
-	@Option(name = "--qbfSolver", aliases = { "-qs" }, usage = "QBF solver: SKIZZO or DEPQBF (only for the QSAT strategy)",
+	@Option(name = "--qbfSolver", aliases = { "-qs" }, usage = "QBF solver (only for the QSAT strategy): SKIZZO (default), DEPQBF",
 			metaVar = "<qbfSolver>")
 	private String qbfSolver = QbfSolver.SKIZZO.name();
 	
-	@Option(name = "--satSolver", aliases = { "-qss" }, usage = "SAT solver: CRYPTOMINISAT, LINGELING",
+	@Option(name = "--satSolver", aliases = { "-qss" }, usage = "SAT solver: LINGELING (default), CRYPTOMINISAT",
 			metaVar = "<satSolver>")
 	private String satSolver = SatSolver.LINGELING.name();
 	
@@ -94,12 +98,12 @@ public class QbfBuilderMain {
 	@Option(name = "--timeout", aliases = { "-to" }, usage = "solver timeout (sec)", metaVar = "<timeout>")
 	private int timeout = 60 * 60 * 24;
 	
-	@Option(name = "--strategy", aliases = { "-str" }, usage = "solving mode: QSAT, EXP_SAT, BACKTRACKING, COUNTEREXAMPLE, NEWHYBRID",
+	@Option(name = "--strategy", aliases = { "-str" }, usage = "solving mode: QSAT, EXP_SAT, BACKTRACKING, COUNTEREXAMPLE (default), STATE_MERGING",
 			metaVar = "<strategy>")
 	private String strategy = SolvingStrategy.COUNTEREXAMPLE.name();
 	
 	@Option(name = "--completenessType", aliases = { "-ct" },
-            usage = "NORMAL = usual completeness, NO_DEAD_ENDS = at least one transition from each state, NO_DEAD_ENDS_WALKINSHAW)",
+            usage = "NORMAL = usual completeness, NO_DEAD_ENDS = at least one transition from each state)",
             metaVar = "<completenessType>")
 	private String completenessType = CompletenessType.NORMAL.name();
 	
@@ -169,7 +173,9 @@ public class QbfBuilderMain {
 		}
 		
 		try {
-			List<LtlNode> formulae = LtlParser.loadProperties(ltlFilePath, varNumber);
+			final List<LtlNode> formulae = ltlFilePath == null
+					? Collections.emptyList()
+					: LtlParser.loadProperties(ltlFilePath, varNumber);
 			logger.info("LTL formula from " + ltlFilePath);
 			
 			long startTime = System.currentTimeMillis();
