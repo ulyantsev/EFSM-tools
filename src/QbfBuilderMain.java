@@ -126,14 +126,6 @@ public class QbfBuilderMain {
 			return;
 		}
 		
-		try {
-			Runtime.getRuntime().exec(QbfSolver.valueOf(qbfSolver).command);
-		} catch (IOException e) {
-			System.err.println("ERROR: Problems with solver execution (" + qbfSolver + ")");
-			e.printStackTrace();
-			return;
-		}
-
 		Logger logger = Logger.getLogger("Logger");
 		if (logFilePath != null) {
 			try {
@@ -195,6 +187,16 @@ public class QbfBuilderMain {
 			} catch (IllegalArgumentException e) {
 				logger.warning(qbfSolver + " is not a valid QBF solver.");
 				return;
+			}
+			
+			if (ss == SolvingStrategy.QSAT) {
+				try {
+					Runtime.getRuntime().exec(QbfSolver.valueOf(qbfSolver).command);
+				} catch (IOException e) {
+					System.err.println("ERROR: Problems with solver execution (" + qbfSolver + ")");
+					e.printStackTrace();
+					return;
+				}
 			}
 			
 			SatSolver satsolver;
