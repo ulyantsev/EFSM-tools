@@ -110,6 +110,10 @@ public class QbfBuilderMain {
 	@Option(name = "--noCompletenessHeuristics", aliases = { "-nc" }, handler = BooleanOptionHandler.class, usage = "disable the completeness heuristics")
 	private boolean noCompletenessHeuristics;
 	
+	@Option(name = "--ensureCoverageAndWeakCompleteness", aliases = { "-ec" }, handler = BooleanOptionHandler.class,
+			usage = "special backtracking execution mode which ensures FSM coverage by the scenarios and its so-called weak completeness (this is a temporary feature)")
+	private boolean ensureCoverageAndWeakCompleteness;
+	
 	private void launcher(String[] args) throws IOException {
 		Locale.setDefault(Locale.US);
 
@@ -281,7 +285,7 @@ public class QbfBuilderMain {
 			case BACKTRACKING:
 				resultAutomaton = BacktrackingAutomatonBuilder.build(logger, tree, size,
 						resultFilePath, ltlFilePath, formulae, events, actions, verifier, finishTime,
-						completenesstype, varNumber);
+						completenesstype, varNumber, ensureCoverageAndWeakCompleteness, eventnames);
 				break;
 			}
 			final double executionTime = (System.currentTimeMillis() - startTime) / 1000.;
