@@ -70,12 +70,14 @@ constraint forall (i in apta_edges) (
 % completeness constraints
 
 constraint forall (c in colors, e in events) (
-   (exists (i in apta_edges where tree_event[i] == e) (x[tree_parent[i]] == c) <-> z[c, e] = true) /\
-   (not z[c, e] -> y[c, e] = c)
+    (exists (i in apta_edges where tree_event[i] == e) (x[tree_parent[i]] == c) <-> z[c, e] = true) 
+    /\
+    (not z[c, e] -> y[c, e] = c)
 );
 
 constraint forall (c in colors, te in true_events) (
-    forall (e in events where ee_event[e] == te) (z[c, e] == false) \/ 
+    forall (e in events where ee_event[e] == te) (z[c, e] == false) 
+    \/ 
     (sum (e in events where ee_event[e] == te) (bool2int(z[c, e]) * ee_sat_sets[e]) == TSC)
 );
 
@@ -101,20 +103,14 @@ constraint forall (i in colors, where i > 1) (
     p[i - 1] <= p[i]
 );
 
-% node i is the last child of j
-constraint forall (i in colors, j in colors, where i + 1 < j) (
-    (p[i] = j /\ p[i + 1] > j) -> 
-        forall (k in colors where k > i + 1) (p[k] != j)
-);
-
 % defining m[i, j] as minimum label on transitions between i and j
 constraint forall (i in colors, j in colors, e in events) (
     if i < j then
         (tr[i, j] -> (
             m[i, j] = e <-> (y[i, e] = j /\ forall (ee in events where ee < e) (y[i, ee] != j))
         )) 
-%         /\
-%         ((not tr[i, j]) -> m[i, j] = 0)
+        /\
+        ((not tr[i, j]) -> m[i, j] = 1)
     else
         m[i, j] = 1
     endif
@@ -131,7 +127,8 @@ solve satisfy;
 
 % I have no idea, why do I have to add " + 1" in event_str[e + 1] and action_str[a + 1]
 
-output ["# x = ", show(x), "\n",
+% "// x = ", show(x), "\n",
+output [
         "# y = ", show(y), "\n",
         "# tr = ", show(tr), "\n",
         "# m = ", show(m), "\n",
