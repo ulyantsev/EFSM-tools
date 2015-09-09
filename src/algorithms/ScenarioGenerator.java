@@ -53,7 +53,6 @@ public class ScenarioGenerator {
     		expressions.add(t.getExpr());
     		actions.add(t.getActions());
     	}
-    	
     	return new StringScenario(true, events, expressions, actions).toString();
     }
     

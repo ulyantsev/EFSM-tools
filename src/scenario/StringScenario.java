@@ -143,6 +143,14 @@ public class StringScenario {
         return actions.get(pos);
     }
     
+    /*
+     * Since events are now event vectors (to support multiple transitions from parents to children in the scenario tree),
+     * the correct way to display a normal event is without "[", "]".
+     */
+    private static String eventListToString(List<String> eventList) {
+    	return eventList.size() == 1 ? eventList.get(0) : eventList.toString();
+    }
+    
     public String toString() {
         String inp = "";
         String out = "";
@@ -151,7 +159,7 @@ public class StringScenario {
                 inp += "; ";
                 out += "; ";
             }
-            inp += events.get(i) + "[" + expressions.get(i).toString() + "]";
+            inp += eventListToString(events.get(i)) + "[" + expressions.get(i).toString() + "]";
             out += actions.get(i).toString();
         }
         return inp + "\n" + out;
