@@ -32,8 +32,8 @@ BT_PARAMS_TEMPLATE = '%(path)s --size %(size)d --eventNumber %(ecnt)d --eventNam
 TR_PERSENT, EVENTS_COUNT, ACTIONS_COUNT, VARS_COUNT, MIN_ACTIONS, MAX_ACTIONS = 50, 4, 2, 1, 1, 2
 MIN_LEN_C, MAX_LEN_C = 1, 3
 
-LAUNCHES_COUNT = 1
-SIZES = [5, 10]
+LAUNCHES_COUNT = 4
+SIZES = [4, 5, 6, 7, 8]
 
 SUM_LEN_MULT = [50]
 
@@ -101,7 +101,7 @@ def solve_backtracking(size, dir_path, result_path, scenarios_path):
     start_time = datetime.datetime.now()
     os.system(bt_command)
     end_time = datetime.datetime.now() 
-    return end_time - start_time
+    return (end_time - start_time).total_seconds()
 
 def solve_mzn(data_path, result_path):
     builder_command = MZN_TEMPLATE % (data_path, result_path)
@@ -113,7 +113,7 @@ def solve_mzn(data_path, result_path):
     # ??
     # os.system('python postprocess.py ' + result_path)
 
-    return (end_time - start_time).micro
+    return (end_time - start_time).total_seconds()
 
 def launch(dir_path, size, sum_length):
     automaton_path = os.path.join(dir_path, 'automaton.gv')
@@ -128,12 +128,16 @@ def launch(dir_path, size, sum_length):
     mzn_result_path = os.path.join(dir_path, 'mzn-result.gv')
     mzn_time = solve_mzn(mzn_data_path, mzn_result_path)
 
+    bt_result_path = os.path.join(dir_path, 'backtracking-result.gv')
+    bt_time = solve_backtracking(size, dir_path, bt_result_path, scenarios_path)
+
     #compl_path = os.path.join(dir_path, 'completeness-result')
     #is_complete = check_completeness(compl_path, result_path)
 
     result = {'size' : size,
               'sum_length' : sum_length,
-              'mzn_time' : mzn_time}
+              'mzn_time' : mzn_time,
+              'backtracking_time' : bt_time}
     
     return result
 
