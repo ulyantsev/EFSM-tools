@@ -20,11 +20,30 @@ public class StringActions {
 	public int size() {
 		return actions.length;
 	}
-	
-	public boolean equals(StringActions other) {
-		return Arrays.deepEquals(actions, other.actions);
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + Arrays.hashCode(actions);
+		return result;
 	}
 
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		StringActions other = (StringActions) obj;
+		if (!Arrays.equals(actions, other.actions))
+			return false;
+		return true;
+	}
+
+	@Override
 	public String toString() {
 		return String.join(", ", actions);
 	}

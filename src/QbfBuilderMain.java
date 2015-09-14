@@ -111,8 +111,13 @@ public class QbfBuilderMain {
 	private boolean noCompletenessHeuristics;
 	
 	@Option(name = "--ensureCoverageAndWeakCompleteness", aliases = { "-ec" }, handler = BooleanOptionHandler.class,
-			usage = "special backtracking execution mode which ensures FSM coverage by the scenarios and its so-called weak completeness (this is a temporary feature)")
+			usage = "special backtracking execution mode which ensures FSM coverage by the scenarios and its so-called weak completeness (this is a temporary feature, no LTL support!)")
 	private boolean ensureCoverageAndWeakCompleteness;
+	
+	@Option(name = "--backtrackingErrorNumber", aliases = { "-ben" },
+			usage = "special backtracking execution mode for the case of errors in scenarios (this is a temporary feature, no LTL support!)",
+			metaVar = "<errorNumber>")
+	private int backtrackingErrorNumber = 0;
 	
 	private void launcher(String[] args) throws IOException {
 		Locale.setDefault(Locale.US);
@@ -259,6 +264,11 @@ public class QbfBuilderMain {
 				}
 			}
 			
+			final List<StringScenario> scenarios = new ArrayList<>();
+			for (String scenarioPath : arguments) {
+				scenarios.addAll(StringScenario.loadScenarios(scenarioPath, varNumber));
+			}
+			
 			final NegativeScenariosTree negativeTree = new NegativeScenariosTree();
 			if (negscFilePath != null) {
 				negativeTree.load(negscFilePath, varNumber);
@@ -285,7 +295,8 @@ public class QbfBuilderMain {
 			case BACKTRACKING:
 				resultAutomaton = BacktrackingAutomatonBuilder.build(logger, tree, size,
 						resultFilePath, ltlFilePath, formulae, events, actions, verifier, finishTime,
-						completenesstype, varNumber, ensureCoverageAndWeakCompleteness, eventnames);
+						completenesstype, varNumber, ensureCoverageAndWeakCompleteness, eventnames,
+						backtrackingErrorNumber, scenarios);
 				break;
 			}
 			final double executionTime = (System.currentTimeMillis() - startTime) / 1000.;
@@ -297,12 +308,7 @@ public class QbfBuilderMain {
 				logger.info("Automaton with " + size + " states WAS FOUND!");
 				logger.info("Automaton builder execution time: " + executionTime);
 				
-				// test compliance
-				final List<StringScenario> scenarios = new ArrayList<>();
-				for (String scenarioPath : arguments) {
-					scenarios.addAll(StringScenario.loadScenarios(scenarioPath, varNumber));
-				}
-				
+				// compliance with scenarios
 				if (scenarios.stream().allMatch(resultAutomaton.get()::isCompliantWithScenario)) {
 					logger.info("COMPLIES WITH SCENARIOS");
 				} else {
