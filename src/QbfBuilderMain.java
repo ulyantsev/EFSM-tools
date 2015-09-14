@@ -117,7 +117,7 @@ public class QbfBuilderMain {
 	@Option(name = "--backtrackingErrorNumber", aliases = { "-ben" },
 			usage = "special backtracking execution mode for the case of errors in scenarios (this is a temporary feature, no LTL support!)",
 			metaVar = "<errorNumber>")
-	private int backtrackingErrorNumber = 0;
+	private int backtrackingErrorNumber = -1;
 	
 	private void launcher(String[] args) throws IOException {
 		Locale.setDefault(Locale.US);

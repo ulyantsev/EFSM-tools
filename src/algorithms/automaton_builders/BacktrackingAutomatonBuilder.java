@@ -378,14 +378,13 @@ public class BacktrackingAutomatonBuilder {
 
 			@Override
 			public String toString() {
-				return "(" + scenarioIndex + ", " + scenarioPosition + ")";
+				return "(" + scenarioIndex + ":" + scenarioPosition + ")";
 			}
 			
 			FrontierElement advance() {
 				final int newPos = scenarioPosition + 1;
 				return scenario().size() > newPos
-						? new FrontierElement(scenarioIndex, newPos)
-						: null;
+						? new FrontierElement(scenarioIndex, newPos) : null;
 			}
 		}
 		
@@ -433,8 +432,8 @@ public class BacktrackingAutomatonBuilder {
 						}
 						final FrontierElement newElem = cur.advance();
 						if (newElem != null) {
-							cur.setColoring(autoDst);
 							cur = newElem;
+							cur.setColoring(autoDst);
 						} else {
 							// the frontier becomes smaller
 							break;
@@ -446,7 +445,6 @@ public class BacktrackingAutomatonBuilder {
 					}
 				}
 			}
-			System.out.println(frontier);
 			frontier = newFrontier;
 			return label();
 		}
@@ -456,19 +454,21 @@ public class BacktrackingAutomatonBuilder {
 				throw new AssertionError();
 			}
 			final Map<StringActions, Integer> map = new HashMap<>();
-			int max = 0;
+			int maxCount = 0;
 			StringActions ans = null;
 			for (StringActions elem : list) {
-				if (map.containsKey(elem)) {
-					int count = map.get(elem) + 1;
-					map.put(elem, count);
-					if (count > max) {
-						max = count;
-						ans = elem;
-					}
-				} else {
-					map.put(elem, 1);
+				if (!map.containsKey(elem)) {
+					map.put(elem, 0);
 				}
+				int count = map.get(elem) + 1;
+				map.put(elem, count);
+				if (count > maxCount) {
+					maxCount = count;
+					ans = elem;
+				}
+			}
+			if (ans == null) {
+				throw new AssertionError();
 			}
 			return ans;
 		}
@@ -496,7 +496,6 @@ public class BacktrackingAutomatonBuilder {
 					state = t.getDst();
 				}
 			}
-			System.out.println(actionOccurrencies);
 			int madeErrors = 0;
 			for (int i = 0; i < colorSize; i++) {
 				for (Transition t : new ArrayList<>(automaton.getState(i).getTransitions())) {
@@ -533,13 +532,11 @@ public class BacktrackingAutomatonBuilder {
 					addedTransitions.add(autoT);
 					automaton.addTransition(stateFrom, autoT);
 				}
-				System.out.println("adding " + addedTransitions);
 				incomingTransitionNumbers[dst]++;
 				
 				final List<FrontierElement> frontierBackup = frontier;
 				
 				if (findNewFrontier()) {
-					System.out.println(frontier.size());
 					if (frontier.isEmpty()) {
 						// check weak completeness
 						if (isWeakComplete(automaton, eventNames, eventExtensions)) {
@@ -614,7 +611,7 @@ public class BacktrackingAutomatonBuilder {
 			boolean ensureCoverageAndWeakCompleteness, List<String> eventNames,
 			int errorNumber, List<StringScenario> scenarios) throws IOException {
 		try {
-			if (errorNumber > 0) {
+			if (errorNumber >= 0) {
 				// for Vladimir's comparison
 				new TraverseStateWithErrors(scenarios, size, finishTime, events, eventNames,
 						variables, errorNumber).backtracking();
