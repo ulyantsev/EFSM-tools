@@ -1,5 +1,0 @@
-G(!(wasAction(co.top) && X(wasEvent(ep.observe)) || X(wasAction(co.top)))
-G(!(wasAction(co.bottom) && X(wasEvent(ep.observe)) || X(wasAction(co.bottom)))
-G(!(wasAction(co.middle) && X(wasEvent(ep.observe)) || X(wasAction(co.middle)))
-G(!(wasEvent(ep.up) && wasAction(co.bottom))
-G(!(wasEvent(ep.down) && wasAction(co.top))
