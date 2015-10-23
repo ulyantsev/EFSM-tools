@@ -16,14 +16,13 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import structures.Automaton;
+import structures.Transition;
 import egorov.ltl.LtlParseException;
 import egorov.ltl.LtlParser;
 import egorov.ltl.buchi.translator.TranslationException;
-import egorov.transducer.FST;
 import egorov.verifier.Counterexample;
 import egorov.verifier.VerifierFactory;
-import structures.Automaton;
-import structures.Transition;
 
 public class Verifier {
 	private final Logger logger;
@@ -123,8 +122,7 @@ public class Verifier {
 	}
 	
 	public List<Counterexample> verifyWithCounterexamplesWithNoDeadEndRemoval(Automaton a) {
-		final FST fst = new FST(a);
-		verifier.configureStateMachine(fst);
+		verifier.configureStateMachine(a);
 		return verifier.verify();
 	}
 }
