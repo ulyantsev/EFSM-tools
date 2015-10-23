@@ -1,0 +1,28 @@
+      ; observe
+bottom; top
+      ; observe
+bottom; middle
+      ; observe
+middle; top
+      ; observe
+middle; bottom
+      ; observe
+top   ; bottom
+      ; observe
+top   ; middle
+      ; down   ; down
+top   ; bottom ; middle
+      ; down   ; down
+top   ; bottom ; top
+      ; down
+top   ; top
+      ; up
+bottom; bottom
+      ; up
+middle; middle
+      ; down
+middle; middle
+      ; up
+top   ; middle
+      ; down
+middle; top

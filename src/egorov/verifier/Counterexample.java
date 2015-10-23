@@ -5,14 +5,20 @@ import java.util.List;
 
 public class Counterexample {
 	private final List<String> events;
+	private final List<List<String>> actions;
 	public final int loopLength;
 	
 	public List<String> events() {
 		return Collections.unmodifiableList(events);
 	}
 	
-	public Counterexample(List<String> events, int loopLength) {
+	public List<List<String>> actions() {
+		return Collections.unmodifiableList(actions);
+	}
+	
+	public Counterexample(List<String> events, List<List<String>> actions, int loopLength) {
 		this.events = events;
+		this.actions = actions;
 		this.loopLength = loopLength;
 	}
 	

@@ -107,12 +107,15 @@ public class VerifierFactory {
             		finiteCounterexampleBuchiStates.get(i));
             
             if (!list.getLeft().isEmpty()) {
-                List<String> eventList = list.getLeft().stream()
+                final List<String> eventList = list.getLeft().stream()
                     	.map(t -> String.valueOf(t.transition.event))
                     	.collect(Collectors.toList());
-                counterexamples.add(new Counterexample(eventList, list.getRight()));
+                final List<List<String>> actionList = list.getLeft().stream()
+                    	.map(t -> t.transition.getActions().stream().map(Action::toString).collect(Collectors.toList()))
+                    	.collect(Collectors.toList());
+                counterexamples.add(new Counterexample(eventList, actionList, list.getRight()));
             } else {
-            	counterexamples.add(new Counterexample(Collections.emptyList(), 0));
+            	counterexamples.add(new Counterexample(Collections.emptyList(), Collections.emptyList(), 0));
             }
         }
         return counterexamples;

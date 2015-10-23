@@ -1,8 +1,8 @@
-; up [1]; up [1]; observe[1]; down [1]; down [1]; observe[1]
+; up; up; observe; down; down; observe
 top;top;top;top;middle;bottom;bottom
-; up [1]; up [1]; observe[1]; down [1]; down [1]; observe[1]
+; up; up; observe; down; down; observe
 bottom;middle;top;top;bottom;bottom;bottom
-; observe[1]
+; observe
 middle; middle
-; observe[1]
+; observe
 bottom; bottom

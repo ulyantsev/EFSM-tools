@@ -1,6 +1,7 @@
 package scenario;
 
 import java.util.Arrays;
+import java.util.TreeSet;
 
 public class StringActions {
 	private final String[] actions;
@@ -29,6 +30,10 @@ public class StringActions {
 		return result;
 	}
 
+	public boolean setEquals(StringActions other) {
+		return new TreeSet<>(Arrays.asList(actions)).equals(new TreeSet<>(Arrays.asList(other.actions)));
+	}
+	
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)
