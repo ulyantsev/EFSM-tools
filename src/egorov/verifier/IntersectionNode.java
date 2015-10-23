@@ -32,7 +32,7 @@ public class IntersectionNode {
         this.node = node;
 
         final BuchiAutomaton buchi = automata.getBuchiAutomata();
-        terminal = buchi.getAcceptSet().contains(node);
+        terminal = buchi.acceptSet().contains(node);
         iterator = new TransitionIterator();
     }
 
@@ -83,7 +83,7 @@ public class IntersectionNode {
         }
 
         public void reset() {
-            stateIter = state.getOutcomingTransitions().iterator();
+            stateIter = state.outgoingTransitions().iterator();
             nodeIter = node.getTransitions().entrySet().iterator();
             if (stateIter.hasNext()) {
                 nextStateTransition = stateIter.next();
@@ -123,7 +123,7 @@ public class IntersectionNode {
             if (!hasNext()) {
                 throw new NoSuchElementException();
             }
-            IntersectionTransition res = next;
+            final IntersectionTransition res = next;
             next = null;
             return res;
         }

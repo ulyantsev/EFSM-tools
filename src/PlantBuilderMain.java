@@ -29,6 +29,7 @@ import egorov.Verifier;
 import egorov.ltl.LtlParseException;
 import egorov.ltl.LtlParser;
 import egorov.ltl.grammar.LtlNode;
+import egorov.verifier.Counterexample;
 
 public class PlantBuilderMain {
 	@Argument(usage = "paths to files with scenarios", metaVar = "files", required = true)
@@ -240,7 +241,20 @@ public class PlantBuilderMain {
 					logger.warning("File " + resultFilePath + " not found: " + e.getMessage());
 				}
 				
-				// TODO verification
+				final List<Counterexample> counterexamples =
+						verifier.verifyWithCounterexamplesWithNoDeadEndRemoval(resultAutomaton.get());
+				if (counterexamples.stream().allMatch(Counterexample::isEmpty)) {
+					logger.info("VERIFIED");
+				} else {
+					logger.severe("NOT VERIFIED");
+					for (Counterexample counterexample : counterexamples) {
+						if (!counterexample.isEmpty()) {
+							logger.severe(counterexample.toString());
+						} else {
+							logger.info("---");
+						}
+					}
+				}
 				
 				// completeness check
 				boolean complete = true;

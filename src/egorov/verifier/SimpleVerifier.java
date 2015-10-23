@@ -19,7 +19,7 @@ import egorov.ltl.grammar.PredicateFactory;
 import egorov.statemachine.SimpleState;
 
 /**
- * Simple IVerifier implementation. Use one thread and can't be used cuncurrently.
+ * Simple IVerifier implementation. Use one thread and can't be used concurrently.
  *
  * @author Kirill Egorov
  */
@@ -32,9 +32,8 @@ public class SimpleVerifier {
 
     public Pair<List<IntersectionTransition>, Integer> verify(BuchiAutomaton buchi,
     		PredicateFactory predicates, Set<BuchiNode> finiteCounterexampleNodes) {
-        IntersectionAutomata automata = new IntersectionAutomata(predicates, buchi);
-        //System.out.println("\n" + buchi);
-        return bfs(automata.getNode(initState, buchi.getStartNode()), finiteCounterexampleNodes);
+        final IntersectionAutomata automata = new IntersectionAutomata(predicates, buchi);
+        return bfs(automata.getNode(initState, buchi.startNode()), finiteCounterexampleNodes);
     }
 
     private class QueueElement {
@@ -42,8 +41,7 @@ public class SimpleVerifier {
     	private final IntersectionNode dest;
     	private final QueueElement predecessor;
     	
-		public QueueElement(IntersectionTransition trans,
-				QueueElement predecessor) {
+		public QueueElement(IntersectionTransition trans, QueueElement predecessor) {
 			this.trans = trans;
 			this.dest = trans.target;
 			this.predecessor = predecessor;
@@ -101,8 +99,8 @@ public class SimpleVerifier {
         	return Pair.of(new ArrayList<>(), 0);
         } else {
         	int minIndex = 0;
-        	// the counterexample of the minimal length
-        	// if the lengths are equal, then with the minumal loop size
+        	// the counterexample of the minimum length
+        	// if the lengths are equal, then with the minimum loop size
         	for (int i = 1; i < counterexamples.size(); i++) {
         		final int currentSize = counterexamples.get(i).getLeft().size();
         		final int bestSize = counterexamples.get(minIndex).getLeft().size();
@@ -127,7 +125,7 @@ public class SimpleVerifier {
         	if (visited.contains(element.dest)) {
         		if (element.dest == initialNode && element.predecessor != null) {
 	        		// found a loop
-        			List<IntersectionTransition> path = new ArrayList<>();
+        			final List<IntersectionTransition> path = new ArrayList<>();
             		QueueElement elem = element;
             		do {
             			path.add(elem.trans);

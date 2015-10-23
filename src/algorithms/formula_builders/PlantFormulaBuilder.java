@@ -181,7 +181,6 @@ public class PlantFormulaBuilder {
 				constraints.add(actionEquality(nodeColor, root.getActions()).implies(xxVar(root.getNumber(), nodeColor)));
 			}
 		}
-		System.out.println(constraints);
 		return constraints.assemble("negative scenario basis");
 	}
 	
@@ -202,7 +201,6 @@ public class PlantFormulaBuilder {
 				}
 			}
 		}
-		System.out.println(constraints);
 		return constraints.assemble("negative scenario propagation");
 	}
 	
@@ -213,7 +211,6 @@ public class PlantFormulaBuilder {
 				constraints.add(xxVar(node.getNumber(), nodeColor).not());
 			}
 		}
-		System.out.println(constraints);
 		return constraints.assemble("negative scenario termination");
 	}
 	

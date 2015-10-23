@@ -7,8 +7,10 @@ package algorithms.automaton_builders;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -18,15 +20,18 @@ import sat_solving.SatSolver;
 import sat_solving.SolverResult;
 import sat_solving.SolverResult.SolverResults;
 import scenario.StringActions;
+import scenario.StringScenario;
 import structures.Automaton;
+import structures.plant.MooreNode;
 import structures.plant.NegativePlantScenarioForest;
 import structures.plant.NondetMooreAutomaton;
-import structures.plant.MooreNode;
 import structures.plant.PositivePlantScenarioForest;
 import algorithms.formula_builders.PlantFormulaBuilder;
 import bnf_formulae.BooleanFormula.SolveAsSatResult;
+import bool.MyBooleanExpression;
 import egorov.Verifier;
 import egorov.ltl.grammar.LtlNode;
+import egorov.verifier.Counterexample;
 
 public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 	protected static Optional<Automaton> reportResult(Logger logger, int iterations, Optional<Automaton> a) {
@@ -89,26 +94,60 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 			Verifier verifier, long finishTime) throws IOException {
 		deleteTrash();
 		
-		final PlantFormulaBuilder builder = new PlantFormulaBuilder(size, positiveForest, negativeForest, events, actions);
-		final String formula = builder.scenarioConstraints().assemble().simplify().toLimbooleString();
-		final ExpandableStringFormula expandableFormula = new ExpandableStringFormula(formula, logger, satSolver, solverParams);
+		while (true) {
+			final PlantFormulaBuilder builder = new PlantFormulaBuilder(size, positiveForest, negativeForest, events, actions);
+			final String formula = builder.scenarioConstraints().assemble().simplify().toLimbooleString();
+			final ExpandableStringFormula expandableFormula = new ExpandableStringFormula(formula, logger, satSolver, solverParams);
+			
+			// SAT-solve
+			final int secondsLeft = timeLeftForSolver(finishTime);
+			final SolveAsSatResult solution = expandableFormula.solve(secondsLeft);
+			final List<Assignment> list = solution.list();
+			final long time = solution.time;
+			
+			final SolverResult ass = list.isEmpty()
+				? new SolverResult(time >= secondsLeft * 1000 ? SolverResults.UNKNOWN : SolverResults.UNSAT)
+				: new SolverResult(list);
+			logger.info(ass.type().toString());
+			if (ass.type() != SolverResults.SAT) {
+				return Optional.empty();
+			}
+			
+			final NondetMooreAutomaton automaton = constructAutomatonFromAssignment(logger, ass.list(), positiveForest, size);
+			// verify
+			final List<Counterexample> counterexamples =
+					verifier.verifyWithCounterexamplesWithNoDeadEndRemoval(automaton);
+			if (counterexamples.stream().allMatch(Counterexample::isEmpty)) {
+				return Optional.of(automaton);
+			} else {
+				final Set<String> unique = new HashSet<String>();
+				for (Counterexample counterexample : counterexamples) {
+					if (!counterexample.isEmpty()) {
+						if (!unique.contains(counterexample.toString())) {
+							unique.add(counterexample.toString());
+							addCounterexample(logger, automaton, counterexample, negativeForest);
+						} else {
+							logger.info("DUPLICATE COUNTEREXAMPLES ON THE SAME ITERATION");
+						}
+					} else {
+						logger.info("NOT ADDING COUNTEREXAMPLE");
+					}
+				}
+			}
+		}
+	}
+	
+	protected static void addCounterexample(Logger logger, NondetMooreAutomaton a,
+			Counterexample counterexample, NegativePlantScenarioForest negativeForest) {
 		
-		// SAT-solve
-		final int secondsLeft = timeLeftForSolver(finishTime);
-		final SolveAsSatResult solution = expandableFormula.solve(secondsLeft);
-		final List<Assignment> list = solution.list();
-		final long time = solution.time;
-		
-		final SolverResult ass = list.isEmpty()
-			? new SolverResult(time >= secondsLeft * 1000 ? SolverResults.UNKNOWN : SolverResults.UNSAT)
-			: new SolverResult(list);
-		logger.info(ass.type().toString());
-
-		final Optional<NondetMooreAutomaton> automaton = ass.type() == SolverResults.SAT
-			? Optional.of(constructAutomatonFromAssignment(logger, ass.list(), positiveForest, size))
-			: Optional.empty();
-		
-		return automaton;
+		final List<MyBooleanExpression> expr = new ArrayList<>();
+		for (int i = 0; i < counterexample.events().size(); i++) {
+			expr.add(MyBooleanExpression.getTautology());
+		}
+		final List<StringActions> actions =
+				counterexample.actions().stream().map(action -> new StringActions(String.join(",", action))).collect(Collectors.toList());
+		negativeForest.addScenario(new StringScenario(true, counterexample.events(), expr, actions), counterexample.loopLength);
+		logger.info("ADDING COUNTEREXAMPLE: " + counterexample);
 	}
 	
 	protected static int timeLeftForSolver(long finishTime) {

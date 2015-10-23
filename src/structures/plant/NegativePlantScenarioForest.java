@@ -22,6 +22,11 @@ public class NegativePlantScenarioForest extends PlantScenarioForest {
 	
 	@Override
 	public void addScenario(StringScenario scenario, int loopLength) {
+		if (loopLength > 0) {
+			throw new AssertionError("loopLength > 0 currently not supported!");
+			// FIXME
+		}
+		
     	checkScenario(scenario);
     	final StringActions firstActions = scenario.getActions(0);
     	

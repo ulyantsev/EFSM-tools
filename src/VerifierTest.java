@@ -102,7 +102,7 @@ public class VerifierTest {
 				for (int i = 0; i < 50; i++) {
 					Automaton a = AutomatonGVLoader.load("qbf/testing/" + completeness + "/fsm-" + states + "-" + i + ".dot");
 					System.out.println(a);
-					for (boolean verdict : Arrays.asList(true, false)) {
+					for (boolean verdict : Arrays.asList(true)) {
 						System.out.println(completeness + " " + states + " " + i + " " + verdict);
 						Verifier v = new Verifier(logger, "qbf/testing/" + completeness + "/fsm-" + states + "-" + i + "-" + verdict + ".ltl",
 							Arrays.asList("A", "B", "C", "D"), Arrays.asList("z0", "z1", "z2", "z3"), 0);

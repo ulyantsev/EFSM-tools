@@ -15,9 +15,9 @@ public class StateMachine {
     private SimpleState initialState;
     private final Map<String, SimpleState> states = new HashMap<>();
 
-    public SimpleState getInitialState() {
+    public SimpleState initialState() {
         if (initialState == null) {
-            throw new RuntimeException("Automata has not been initialized yet or has not initial state");
+            throw new RuntimeException("StateMachine has no initial state!");
         }
         return initialState;
     }
@@ -34,7 +34,7 @@ public class StateMachine {
     private void checkInitial(SimpleState s)  {
         if (s.isInitial) {
             if (initialState != null) {
-                throw new IllegalArgumentException("StateMachine can't contain more than one initial state");
+                throw new IllegalArgumentException("StateMachine can't contain more than one initial state!");
             }
             initialState = s;
         }

@@ -18,7 +18,7 @@ public class BuchiAutomaton {
     private final Set<BuchiNode> nodes = new LinkedHashSet<>();
     private Set<BuchiNode> acceptSet;
 
-    public BuchiNode getStartNode() {
+    public BuchiNode startNode() {
         return startNode;
     }
 
@@ -26,11 +26,11 @@ public class BuchiAutomaton {
         this.startNode = startNode;
     }
 
-    public Set<BuchiNode> getNodes() {
+    public Set<BuchiNode> nodes() {
         return Collections.unmodifiableSet(nodes);
     }
 
-    public Set<BuchiNode> getAcceptSet() {
+    public Set<BuchiNode> acceptSet() {
         return acceptSet;
     }
 

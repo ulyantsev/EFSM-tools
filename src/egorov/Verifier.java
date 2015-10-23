@@ -18,6 +18,7 @@ import java.util.regex.Pattern;
 
 import structures.Automaton;
 import structures.Transition;
+import structures.plant.NondetMooreAutomaton;
 import egorov.ltl.LtlParseException;
 import egorov.ltl.LtlParser;
 import egorov.ltl.buchi.translator.TranslationException;
@@ -123,6 +124,11 @@ public class Verifier {
 	
 	public List<Counterexample> verifyWithCounterexamplesWithNoDeadEndRemoval(Automaton a) {
 		verifier.configureStateMachine(a);
+		return verifier.verify();
+	}
+	
+	public List<Counterexample> verifyWithCounterexamplesWithNoDeadEndRemoval(NondetMooreAutomaton a) {
+		verifier.configureNondetMooreMachine(a);
 		return verifier.verify();
 	}
 }

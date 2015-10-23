@@ -19,14 +19,14 @@ public class FiniteCounterexampleNodeSearcher {
     	final Set<BuchiNode> nodesWithDevilTransitions = nodesWithDevilTransitions(a);
     	
     	final Set<BuchiNode> nodesWithRejectingLoops = new LinkedHashSet<>();
-    	for (BuchiNode node : a.getNodes()) {
+    	for (BuchiNode node : a.nodes()) {
     		if (hasRejectingLoop(node, a, nodesWithDevilTransitions)) {
     			nodesWithRejectingLoops.add(node);
     		}
     	}
     	
-    	final Set<BuchiNode> result = new HashSet<>(a.getNodes());
-    	for (BuchiNode node : a.getNodes()) {
+    	final Set<BuchiNode> result = new HashSet<>(a.nodes());
+    	for (BuchiNode node : a.nodes()) {
     		final Set<BuchiNode> reachabilitySet = reachibilitySet(node);
     		for (BuchiNode loopStart : reachabilitySet) {
     			if (nodesWithRejectingLoops.contains(loopStart)) {
@@ -58,7 +58,7 @@ public class FiniteCounterexampleNodeSearcher {
     
     private static Set<BuchiNode> nodesWithDevilTransitions(BuchiAutomaton a) {
     	final Set<BuchiNode> result = new HashSet<>();
-    	for (BuchiNode node : a.getNodes()) {
+    	for (BuchiNode node : a.nodes()) {
     		// if transition conditions are not complete, there is a rejecting loop!
     		final Set<IExpression<Boolean>> allExpressions = new HashSet<>();
     		final Set<TransitionCondition> conditions = node.getTransitions().keySet();
@@ -123,7 +123,7 @@ public class FiniteCounterexampleNodeSearcher {
     			return true;
     		}
     		for (BuchiNode child : n.getTransitions().values()) {
-    			if (a.getAcceptSet().contains(child)) {
+    			if (a.acceptSet().contains(child)) {
     				continue;
     			} else if (visited.contains(child)) {
     				return true;

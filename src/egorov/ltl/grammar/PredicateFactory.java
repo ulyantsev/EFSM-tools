@@ -28,18 +28,16 @@ public class PredicateFactory {
 
     private boolean wasTransition() {
         return !(transition.event == null
-                && transition.getTarget() == state && state.getOutcomingTransitions().size() > 1);
+                && transition.getTarget() == state && state.outgoingTransitions().size() > 1);
     }
     
 	@Predicate
     public Boolean wasEvent(String e) {
-        return (wasTransition()) ? e.equals(transition.event) : null;
+        return wasTransition() ? e.equals(transition.event) : null;
     }
 
     @Predicate
     public Boolean wasAction(String z) {
-        return (wasTransition())
-                ? transition.getActions().contains(z) || transition.getTarget().getActions().contains(z)
-                : null;
+        return wasTransition() ? transition.getActions().contains(z) : null;
     }
 }

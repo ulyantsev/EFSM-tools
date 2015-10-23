@@ -16,6 +16,9 @@ import org.apache.commons.lang3.tuple.Pair;
 import structures.Automaton;
 import structures.Node;
 import structures.Transition;
+import structures.plant.MooreNode;
+import structures.plant.MooreTransition;
+import structures.plant.NondetMooreAutomaton;
 import egorov.ltl.LtlParseException;
 import egorov.ltl.LtlParser;
 import egorov.ltl.buchi.BuchiAutomaton;
@@ -37,7 +40,7 @@ public class VerifierFactory {
     private final PredicateFactory predicates = new PredicateFactory();
     private final LtlParser parser;
     
-    private final List<BuchiAutomaton> preparedFormulas = new ArrayList<>();
+    private final List<BuchiAutomaton> preparedFormulae = new ArrayList<>();
     private final List<Set<BuchiNode>> finiteCounterexampleBuchiStates = new ArrayList<>();;
     
     public VerifierFactory() {
@@ -50,10 +53,10 @@ public class VerifierFactory {
          for (String f : formulas) {
              LtlNode node = parser.parse(f);
              node = LtlUtils.getInstance().neg(node);
-             preparedFormulas.add(translator.translate(node));
+             preparedFormulae.add(translator.translate(node));
          }
          
-         finiteCounterexampleBuchiStates.addAll(preparedFormulas.stream()
+         finiteCounterexampleBuchiStates.addAll(preparedFormulae.stream()
         		 .map(FiniteCounterexampleNodeSearcher::findCounterexampleBuchiStates)
         		 .collect(Collectors.toList()));
     }
@@ -63,9 +66,8 @@ public class VerifierFactory {
 
     	final SimpleState[] statesArr = new SimpleState[automaton.statesCount()];
 		for (int i = 0; i < automaton.statesCount(); i++) {
-			statesArr[i] = new SimpleState("" + i,
-                    automaton.getStartState().getNumber() == i, 
-                    Collections.emptyList());
+			statesArr[i] = new SimpleState(String.valueOf(i),
+                    automaton.getStartState().getNumber() == i);
 		}
 		for (int i = 0; i < automaton.statesCount(); i++) {
 			final Node currentState = automaton.getState(i);
@@ -73,24 +75,53 @@ public class VerifierFactory {
 				final StateTransition out = new StateTransition(
                         extractEvent(t.getEvent()), statesArr[t.getDst().getNumber()]);
 				Arrays.stream(t.getActions().getActions()).forEach(out::addAction);
-				statesArr[i].addOutcomingTransition(out);
+				statesArr[i].addOutgoingTransition(out);
 			}
 			machine.addState(statesArr[i]);
 		}
 		this.machine = machine;
     }
 
+    public void configureNondetMooreMachine(NondetMooreAutomaton automaton) {
+    	final StateMachine machine = new StateMachine();
+
+    	final SimpleState[] statesArr = new SimpleState[automaton.statesCount() + 1];
+		for (int i = 0; i < automaton.statesCount(); i++) {
+			statesArr[i] = new SimpleState(String.valueOf(i), false);
+		}
+		final SimpleState nondetInit = new SimpleState("nondet_init", true);
+		for (int i = 0; i < automaton.statesCount(); i++) {
+			if (automaton.isStartState(i)) {
+				final StateTransition out = new StateTransition("", statesArr[i]);
+				Arrays.stream(automaton.getState(i).getActions().getActions()).forEach(out::addAction);
+				nondetInit.addOutgoingTransition(out);
+			}
+		}
+		machine.addState(nondetInit);
+		for (int i = 0; i < automaton.statesCount(); i++) {
+			final MooreNode currentState = automaton.getState(i);
+			for (MooreTransition t : currentState.getTransitions()) {
+				final StateTransition out = new StateTransition(
+                        extractEvent(t.getEvent()), statesArr[t.getDst().getNumber()]);
+				Arrays.stream(t.getDst().getActions().getActions()).forEach(out::addAction);
+				statesArr[i].addOutgoingTransition(out);
+			}
+			machine.addState(statesArr[i]);
+		}
+		this.machine = machine;
+    }
+    
     public List<Counterexample> verify() {
         final List<Counterexample> counterexamples = new ArrayList<>();
-        final SimpleVerifier verifier = new SimpleVerifier(machine.getInitialState());
-        for (int i = 0; i < preparedFormulas.size(); i++) {
-        	final BuchiAutomaton buchi = preparedFormulas.get(i);
+        final SimpleVerifier verifier = new SimpleVerifier(machine.initialState());
+        for (int i = 0; i < preparedFormulae.size(); i++) {
+        	final BuchiAutomaton buchi = preparedFormulae.get(i);
         	final Pair<List<IntersectionTransition>, Integer> list = verifier.verify(buchi, predicates,
             		finiteCounterexampleBuchiStates.get(i));
             
             if (!list.getLeft().isEmpty()) {
                 final List<String> eventList = list.getLeft().stream()
-                    	.map(t -> String.valueOf(t.transition.event))
+                    	.map(t -> t.transition.event)
                     	.collect(Collectors.toList());
                 final List<List<String>> actionList = list.getLeft().stream()
                     	.map(t -> t.transition.getActions())

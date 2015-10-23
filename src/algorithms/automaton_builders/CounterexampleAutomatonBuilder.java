@@ -50,19 +50,14 @@ public class CounterexampleAutomatonBuilder extends ScenarioAndLtlAutomatonBuild
 		int state = a.getStartState().getNumber();
 		final List<MyBooleanExpression> expressions = new ArrayList<>();
 		final List<StringActions> actions = new ArrayList<>();
-		List<String> description = new ArrayList<>();
-		List<Integer> states = new ArrayList<>();
-		states.add(state);
 		for (String event : counterexample.events()) {
 			final Transition t = a.getState(state).getTransition(event, MyBooleanExpression.getTautology());
 			expressions.add(t.getExpr());
 			actions.add(t.getActions());
-			description.add(event + "/[" + t.getActions() + "]");
 			final int newState = t.getDst().getNumber();			
 			state = newState;
-			states.add(newState);
 		}
-		logger.info("ADDING COUNTEREXAMPLE: " + description + ", LOOP LENGTH " + counterexample.loopLength);
+		logger.info("ADDING COUNTEREXAMPLE: " + counterexample);
 		try {
 			negativeTree.addScenario(new StringScenario(true, counterexample.events(), expressions, actions),
 					counterexample.loopLength);

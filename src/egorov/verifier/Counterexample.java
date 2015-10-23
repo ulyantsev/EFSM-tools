@@ -1,5 +1,6 @@
 package egorov.verifier;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -28,6 +29,10 @@ public class Counterexample {
 	
 	@Override
 	public String toString() {
-		return "[" + events + ", loop " + loopLength + "]";
+		final List<String> elements = new ArrayList<>();
+		for (int i = 0; i < events.size(); i++) {
+			elements.add(events.get(i) + "/" + actions.get(i));
+		}
+		return "[" + String.join(", ", elements) + ", loop " + loopLength + "]";
 	}
 }
