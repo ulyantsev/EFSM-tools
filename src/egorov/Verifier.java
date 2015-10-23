@@ -123,7 +123,7 @@ public class Verifier {
 	}
 	
 	public List<Counterexample> verifyWithCounterexamplesWithNoDeadEndRemoval(Automaton a) {
-		final FST fst = new FST(a, allEvents, allActions, a.statesCount());
+		final FST fst = new FST(a);
 		verifier.configureStateMachine(fst);
 		return verifier.verify();
 	}

@@ -67,7 +67,7 @@ public class VerifierFactory {
     }
         
     public void configureStateMachine(FST fst) {
-        Transition[][] states = fst.getStates();
+        Transition[][] states = fst.states();
 
         ControlledObject co = context.getControlledObject();
         EventProvider ep = context.getEventProvider();
@@ -76,7 +76,7 @@ public class VerifierFactory {
 		SimpleState[] statesArr = new SimpleState[states.length];
 		for (int i = 0; i < states.length; i++) {
 			statesArr[i] = new SimpleState("" + i,
-                    (fst.getInitialState() == i) ? StateType.INITIAL : StateType.NORMAL, 
+                    (fst.initialState() == i) ? StateType.INITIAL : StateType.NORMAL, 
                     Collections.emptyList());
 		}
 		for (int i = 0; i < states.length; i++) {
