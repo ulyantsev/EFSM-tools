@@ -31,7 +31,7 @@ public class IntersectionNode {
         this.state = state;
         this.node = node;
 
-        BuchiAutomaton buchi = automata.getBuchiAutomata();
+        final BuchiAutomaton buchi = automata.getBuchiAutomata();
         terminal = buchi.getAcceptSet().contains(node);
         iterator = new TransitionIterator();
     }
@@ -53,7 +53,7 @@ public class IntersectionNode {
             return false;
         }
 
-		IntersectionNode intersectionNode = (IntersectionNode) o;
+		final IntersectionNode intersectionNode = (IntersectionNode) o;
 
         return node.equals(intersectionNode.node) && state.equals(intersectionNode.state);
     }

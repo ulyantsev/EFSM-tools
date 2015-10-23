@@ -15,16 +15,16 @@ import egorov.automata.ITransition;
  * @author Kirill Egorov
  */
 public class StateTransition implements ITransition<SimpleState> {
-    public final Event event;
-    private final List<Action> actions = new ArrayList<>();
+    public final String event;
+    private final List<String> actions = new ArrayList<>();
     private final SimpleState target;
 
-    public StateTransition(Event event, SimpleState target) {
+    public StateTransition(String event, SimpleState target) {
         this.event = event;
         this.target = target;
     }
 
-    public List<Action> getActions() {
+    public List<String> getActions() {
         return Collections.unmodifiableList(actions);
     }
 
@@ -32,7 +32,7 @@ public class StateTransition implements ITransition<SimpleState> {
         return target;
     }
 
-    public void addAction(Action a) {
+    public void addAction(String a) {
         actions.add(a);
     }
 }

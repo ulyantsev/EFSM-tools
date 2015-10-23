@@ -3,11 +3,8 @@
  */
 package egorov.ltl.grammar;
 
-import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.lang.reflect.Method;
 
 /**
  * TODO: add comment
@@ -15,29 +12,34 @@ import java.util.stream.Collectors;
  * @author Kirill Egorov
  */
 public class Predicate extends LtlNode implements IExpression<Boolean> {
-    protected Object[] args;
-    protected Method method;
-    protected Object target;
+    protected final String arg;
+    protected final Method method;
+    protected final Object target;
 
     /*
      * For simplified usage.
      */
-    public List<String> args() {
-    	return Arrays.stream(args).map(Object::toString).collect(Collectors.toList());
+    public String arg() {
+    	return arg;
     }
     
     /*
      * For simplified usage.
      */
-    public Predicate(String name, List<String> args) {
+    public Predicate(String name, String arg) {
     	super(name);
     	target = null;
     	method = null;
-    	this.args = args.toArray();
+    	this.arg = arg;
     }
     
-    public Predicate(Object target, Method m, Object ... args) {
+    public Predicate(Object target, Method m, String arg) {
         super(m.getName());
+        
+    	if (arg.startsWith("ep.") || arg.startsWith("co.")) {
+    		arg = arg.substring(3);
+    	}
+    	
         if (!boolean.class.equals(m.getReturnType()) && !Boolean.class.equals(m.getReturnType())) {
             throw new IllegalArgumentException("Method should return boolean type");
         }
@@ -49,24 +51,14 @@ public class Predicate extends LtlNode implements IExpression<Boolean> {
         } catch (NoSuchMethodException e) {
             throw new IllegalArgumentException("Object hasn't such method");
         }
-        if (params.length != args.length) {
-            throw new IllegalArgumentException("Wrong arguments count");
-        }
-        int i = 0;
-        for (Object a: args) {
-            if ((a != null) && !params[i].isAssignableFrom(a.getClass())) {
-                throw new IllegalArgumentException("Wrong argument's type: " + a.getClass());
-            }
-            i++;
-        }
-        this.args = args;
+        this.arg = arg;
         this.method = m;
         this.target = target;
     }
 
     public Boolean getValue() {
         try {
-            return (Boolean) method.invoke(target, args);
+            return (Boolean) method.invoke(target, arg);
         } catch (IllegalAccessException e) {
             throw new RuntimeException(e);
         } catch (InvocationTargetException e) {
@@ -78,15 +70,8 @@ public class Predicate extends LtlNode implements IExpression<Boolean> {
         if (this == obj) {
             return true;
         } else if (obj instanceof Predicate) {
-            Predicate p = (Predicate) obj;
-            if (method.equals(p.method) && target.equals(p.target) && (args.length == p.args.length)) {
-                for (int i = 0; i < args.length; i++) {
-                    if (!args[i].equals(p.args[i])) {
-                        return false;
-                    }
-                }
-                return true;
-            }
+            final Predicate p = (Predicate) obj;
+            return method.equals(p.method) && target.equals(p.target) && arg.equals(p.arg);
         }
         return false;
     }
@@ -97,32 +82,11 @@ public class Predicate extends LtlNode implements IExpression<Boolean> {
 
     @Override
     public String toString() {
-    	if (method == null) {
-    		// simplified version
-        	return getName() + "(" + String.join(", ", Arrays.stream(args)
-        			.map(Object::toString).collect(Collectors.toList())) + ")";
-    	}
-    	
-        StringBuilder buf = new StringBuilder(method.getName());
-        buf.append("(");
-        for (Object obj: args) {
-            buf.append(obj).append(", ");
-        }
-        if (args.length > 0) {
-            buf.replace(buf.length() - 2, buf.length(), ")");
-        } else {
-            buf.append(")");
-        }
-        return buf.toString();
+        return (method == null ? getName() : method.getName()) + "(" + arg + ")";
     }
 
     public String getUniqueName() {
-        StringBuilder buf = new StringBuilder();
-        buf.append(method.getName());
-        for (Object o : args) {
-            buf.append(o);
-        }
-        return buf.toString().replace(' ', '_');
+        return (method.getName() + arg).replace(' ', '_');
     }
 
     public <R, D> R accept(INodeVisitor<R, D> visitor, D data) {

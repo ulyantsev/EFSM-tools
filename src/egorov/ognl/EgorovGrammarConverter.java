@@ -4,31 +4,21 @@
 package egorov.ognl;
 
 import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import egorov.ltl.grammar.BinaryOperator;
 import egorov.ltl.grammar.BinaryOperatorType;
 import egorov.ltl.grammar.BooleanNode;
 import egorov.ltl.grammar.LtlNode;
+import egorov.ltl.grammar.PredicateFactory;
 import egorov.ltl.grammar.UnaryOperator;
 import egorov.ltl.grammar.UnaryOperatorType;
+import egorov.ltl.grammar.annotation.Predicate;
 import egorov.ltl.grammar.exception.NotPredicateException;
 import egorov.ltl.grammar.exception.UnexpectedMethodException;
 import egorov.ltl.grammar.exception.UnexpectedOperatorException;
 import egorov.ltl.grammar.exception.UnexpectedParameterException;
-import egorov.ltl.grammar.predicate.IPredicateFactory;
-import egorov.ltl.grammar.predicate.annotation.Predicate;
-import egorov.statemachine.Action;
-import egorov.statemachine.ControlledObject;
-import egorov.statemachine.Event;
-import egorov.statemachine.EventProvider;
-import egorov.statemachine.SimpleState;
-import egorov.statemachine.StateMachine;
-import egorov.verifier.AutomataContext;
-import rwth.i2.ltl2ba4j.model.IState;
 
 /**
  * Convert from Ognl tree to LtlNode tree
@@ -36,20 +26,15 @@ import rwth.i2.ltl2ba4j.model.IState;
  * @author Kirill Egorov
  */
 public class EgorovGrammarConverter {
-    private final AutomataContext context;
     private final Object predicatesObj;
     private final Map<String, Method> predicates = new HashMap<>();
 
-    public EgorovGrammarConverter(AutomataContext context, IPredicateFactory predicatesObj) {
-        if (context == null) {
-            throw new IllegalArgumentException("AutomataContext shouldn't be null");
-        }
+    public EgorovGrammarConverter(PredicateFactory predicatesObj) {
         if (predicatesObj == null) {
             throw new IllegalArgumentException("Predicates object shouldn't be null");
         }
-        this.context = context;
         this.predicatesObj = predicatesObj;
-        for (Method m: predicatesObj.getClass().getMethods()) {
+        for (Method m : predicatesObj.getClass().getMethods()) {
             if (m.isAnnotationPresent(Predicate.class)) {
                 if (!m.getReturnType().equals(boolean.class) && !m.getReturnType().equals(Boolean.class)) {
                     throw new NotPredicateException("Predicate method should return boolean type (" + m + ")");
@@ -84,8 +69,7 @@ public class EgorovGrammarConverter {
             //is predicate?
             Method predMethod = predicates.get(name);
             if (predMethod != null) {
-                List<?> args = findArgs(node, predMethod);
-                return new egorov.ltl.grammar.Predicate(predicatesObj, predMethod, args.toArray());
+                return new egorov.ltl.grammar.Predicate(predicatesObj, predMethod, node._children[0].toString());
             }
             throw new UnexpectedMethodException(node.getMethodName());
         } else if (root instanceof ASTAnd) {
@@ -103,81 +87,6 @@ public class EgorovGrammarConverter {
             }
         }
         throw new UnexpectedOperatorException(root.getClass().toString());
-    }
-
-    private List<?> findArgs(SimpleNode node, Method method) {
-        Class<?>[] params = method.getParameterTypes();
-        if ((node._children ==  null && params.length > 0)
-                || (node._children !=  null && node._children.length != params.length)) {
-            throw new UnexpectedMethodException("Unexpected method parameters count: " + method.getName());
-        }
-        List<Object> args = new ArrayList<Object>(params.length);
-        for (int i = 0; i < params.length; i++) {
-            Class<?> pClass = params[i];
-            if (node._children[i] instanceof ASTConst) {
-                Object o = ((ASTConst) node._children[i]).getValue();
-                if (o == null) {
-                    args.add(null);
-                    continue;
-                } else if (Number.class.isAssignableFrom(pClass)) {
-                    if (o instanceof Number) {
-                        args.add(o);
-                        continue;
-                    }
-                } else if (Boolean.class.isAssignableFrom(pClass) || boolean.class.isAssignableFrom(pClass)) {
-                    if (o instanceof Boolean) {
-                        args.add(o);
-                        continue;
-                    }
-                }
-                throw new UnexpectedParameterException(pClass, o.toString());
-            } else {
-                if (StateMachine.class.isAssignableFrom(pClass)) {
-                    String name = getValue((ASTProperty) node._children[i]);
-                    addToList(args, context.getStateMachine(), pClass, name);
-                } else if (ControlledObject.class.isAssignableFrom(pClass)) {
-                    String name = getValue((ASTProperty) node._children[i]);
-                    addToList(args, context.getControlledObject(), pClass, name);
-                } else if (EventProvider.class.isAssignableFrom(pClass)) {
-                    String name = getValue((ASTProperty) node._children[i]);
-                    addToList(args, context.getEventProvider(), pClass, name);
-                } else if (IState.class.isAssignableFrom(pClass)) {
-                    ASTChain chain = (ASTChain) node._children[i];
-                    StateMachine sm = context.getStateMachine();
-                    String state = getValue((ASTProperty) chain._children[1]);
-                    SimpleState s = sm.getState(state);
-                    addToList(args, s, pClass, chain.toString());
-                } else if (Event.class.isAssignableFrom(pClass)) {
-                    ASTChain chain = (ASTChain) node._children[i];
-                    EventProvider ep = context.getEventProvider();
-                    String eventName = getValue((ASTProperty) chain._children[1]);
-                    Event eventInst = ep.getEvent(eventName);
-                    addToList(args, eventInst, pClass, chain.toString());
-                } else if (Action.class.isAssignableFrom(pClass)) {
-                    ASTChain chain = (ASTChain) node._children[i];
-                    ControlledObject ctrlInst = context.getControlledObject();
-                    String actionName = getValue((ASTProperty) chain._children[1]);
-                    Action actionInst = ctrlInst.getAction(actionName);
-                    addToList(args, actionInst, pClass, chain.toString());
-                } else {
-                    throw new UnexpectedParameterException(pClass);
-                }
-            }
-        }
-        return args;
-    }
-
-    private <E> void addToList(List<? super E> list, E e, Class<?> pClass, String param)
-            throws UnexpectedParameterException {
-        if (e == null) {
-            throw new UnexpectedParameterException(pClass, param);
-        }
-        list.add(e);
-    }
-
-    private String getValue(ASTProperty prop) {
-        ASTConst c = (ASTConst) prop._children[0];
-        return (String) c.getValue();
     }
 
     private UnaryOperator createUnaryOperator(SimpleNode node, UnaryOperatorType type) {

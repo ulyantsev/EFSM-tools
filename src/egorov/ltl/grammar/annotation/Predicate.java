@@ -1,7 +1,7 @@
 /**
  * Predicate.java, 12.03.2008
  */
-package egorov.ltl.grammar.predicate.annotation;
+package egorov.ltl.grammar.annotation;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;

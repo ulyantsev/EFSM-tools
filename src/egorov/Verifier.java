@@ -39,7 +39,7 @@ public class Verifier {
 		allEvents = new TreeSet<>(events);
 		allActions = new TreeSet<>(actions);
 		ensureContextSufficiency();
-		verifier = new VerifierFactory(allEvents.toArray(new String[allEvents.size()]), allActions.toArray(new String[allActions.size()]));
+		verifier = new VerifierFactory();
 
 		try {
 			while (true) {

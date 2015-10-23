@@ -252,12 +252,11 @@ public class QbfFormulaBuilder extends FormulaBuilder {
 	}
 
 	private BooleanFormula translatePredicate(Predicate p, int index) {
-		String arg = p.args().get(0);
 		switch (p.getName()) {
 		case "wasEvent":
-			return epsVar(arg, index);
+			return epsVar(p.arg(), index);
 		case "wasAction": 
-			return zetaVar(arg, index);
+			return zetaVar(p.arg(), index);
 		default:
 			throw new RuntimeException("Unsupported predicate " + p.getName());
 		}

@@ -6,7 +6,6 @@ package egorov.ltl;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Scanner;
 import java.util.regex.Matcher;
@@ -16,15 +15,14 @@ import egorov.ltl.grammar.BinaryOperator;
 import egorov.ltl.grammar.BinaryOperatorType;
 import egorov.ltl.grammar.BooleanNode;
 import egorov.ltl.grammar.LtlNode;
+import egorov.ltl.grammar.PredicateFactory;
 import egorov.ltl.grammar.UnaryOperator;
 import egorov.ltl.grammar.UnaryOperatorType;
-import egorov.ltl.grammar.predicate.IPredicateFactory;
 import egorov.ognl.EgorovGrammarConverter;
 import egorov.ognl.Node;
 import egorov.ognl.Ognl;
 import egorov.ognl.OgnlException;
 import egorov.ognl.SimpleNode;
-import egorov.verifier.AutomataContext;
 
 /**
  * The ILtlparser implementation that use Ognl library
@@ -34,8 +32,8 @@ import egorov.verifier.AutomataContext;
 public class LtlParser {
     private EgorovGrammarConverter converter;
 
-    public LtlParser(AutomataContext context, IPredicateFactory predicatesObj) {
-        converter = new EgorovGrammarConverter(context, predicatesObj);
+    public LtlParser(PredicateFactory predicatesObj) {
+        converter = new EgorovGrammarConverter(predicatesObj);
     }
     
     public static String duplicateEvents(String formula, int varNumber) {
@@ -114,8 +112,7 @@ public class LtlParser {
 					}
 				}
 				return new egorov.ltl.grammar.Predicate(name,
-						Collections.singletonList(root.jjtGetChild(0)
-								.toString().replaceAll(".*\\.", "")));
+						root.jjtGetChild(0).toString().replaceAll(".*\\.", ""));
 			} else if (className.equals("ASTAnd")) {
 				return createBinaryOperator((SimpleNode) root,
 						BinaryOperatorType.AND);

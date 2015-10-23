@@ -15,7 +15,7 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import egorov.ltl.buchi.BuchiAutomaton;
 import egorov.ltl.buchi.BuchiNode;
-import egorov.ltl.grammar.predicate.IPredicateFactory;
+import egorov.ltl.grammar.PredicateFactory;
 import egorov.statemachine.SimpleState;
 
 /**
@@ -31,7 +31,7 @@ public class SimpleVerifier {
     }
 
     public Pair<List<IntersectionTransition>, Integer> verify(BuchiAutomaton buchi,
-    		IPredicateFactory predicates, Set<BuchiNode> finiteCounterexampleNodes) {
+    		PredicateFactory predicates, Set<BuchiNode> finiteCounterexampleNodes) {
         IntersectionAutomata automata = new IntersectionAutomata(predicates, buchi);
         //System.out.println("\n" + buchi);
         return bfs(automata.getNode(initState, buchi.getStartNode()), finiteCounterexampleNodes);
@@ -71,7 +71,7 @@ public class SimpleVerifier {
 	
 	        	if (finiteCounterexample == null && finiteCounterexampleNodes.contains(element.dest.node)) {
 	        		// finite counterexample exists
-	        		List<IntersectionTransition> path = new ArrayList<>();
+	        		final List<IntersectionTransition> path = new ArrayList<>();
 	        		QueueElement elem = element;
             		do {
             			path.add(elem.trans);

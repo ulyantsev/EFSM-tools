@@ -3,11 +3,12 @@
  */
 package egorov.verifier;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 import egorov.ltl.buchi.BuchiAutomaton;
 import egorov.ltl.buchi.BuchiNode;
-import egorov.ltl.grammar.predicate.IPredicateFactory;
+import egorov.ltl.grammar.PredicateFactory;
 import egorov.statemachine.SimpleState;
 
 /**
@@ -16,11 +17,11 @@ import egorov.statemachine.SimpleState;
  * @author Kirill Egorov
  */
 public class IntersectionAutomata {
-    private final IPredicateFactory predicates;
+    private final PredicateFactory predicates;
     private final BuchiAutomaton buchiAutomata;
     private final Map<String, IntersectionNode> nodeMap = new HashMap<>();
 
-    public IntersectionAutomata(IPredicateFactory predicates, BuchiAutomaton buchi) {
+    public IntersectionAutomata(PredicateFactory predicates, BuchiAutomaton buchi) {
         this.predicates = predicates;
         buchiAutomata = buchi;
     }
@@ -40,7 +41,7 @@ public class IntersectionAutomata {
         return res;
     }
 
-    public IPredicateFactory getPredicates() {
+    public PredicateFactory getPredicates() {
         return predicates;
     }
 

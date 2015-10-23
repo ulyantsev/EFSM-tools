@@ -27,7 +27,7 @@ public class IntersectionTransition {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        IntersectionTransition that = (IntersectionTransition) o;
+        final IntersectionTransition that = (IntersectionTransition) o;
 
         if (!target.equals(that.target)) return false;
         if (transition != null ? !transition.equals(that.transition) : that.transition != null) return false;

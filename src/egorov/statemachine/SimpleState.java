@@ -16,10 +16,10 @@ import egorov.automata.INode;
 public class SimpleState implements INode<StateTransition> {
     public final String name;
     public final StateType type;
-    private final List<Action> actions;
+    private final List<String> actions;
     private final List<StateTransition> outTransitions = new ArrayList<>();
 
-    public SimpleState(String name, StateType type, List<Action> actions) {
+    public SimpleState(String name, StateType type, List<String> actions) {
         this.name = name;
         this.type = type;
         this.actions = actions;
@@ -27,7 +27,7 @@ public class SimpleState implements INode<StateTransition> {
         outTransitions.add(new StateTransition(null, this));
     }
 
-    public List<Action> getActions() {
+    public List<String> getActions() {
         return actions;
     }
 
