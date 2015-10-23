@@ -6,22 +6,20 @@ package egorov.statemachine;
 import java.util.ArrayList;
 import java.util.List;
 
-import egorov.automata.INode;
-
 /**
- * IState implementation whithout nested state machines
+ * IState implementation without nested state machines
  * @author kegorov
  *         Date: Jun 18, 2009
  */
-public class SimpleState implements INode<StateTransition> {
+public class SimpleState {
     public final String name;
-    public final StateType type;
+    public final boolean isInitial;
     private final List<String> actions;
     private final List<StateTransition> outTransitions = new ArrayList<>();
 
-    public SimpleState(String name, StateType type, List<String> actions) {
+    public SimpleState(String name, boolean isInitial, List<String> actions) {
         this.name = name;
-        this.type = type;
+        this.isInitial = isInitial;
         this.actions = actions;
 
         outTransitions.add(new StateTransition(null, this));
@@ -29,10 +27,6 @@ public class SimpleState implements INode<StateTransition> {
 
     public List<String> getActions() {
         return actions;
-    }
-
-    public boolean isTerminal() {
-        return type == StateType.FINAL;
     }
 
     public List<StateTransition> getOutcomingTransitions() {

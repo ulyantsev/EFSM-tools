@@ -7,14 +7,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import egorov.automata.ITransition;
-
 /**
  * The IStateTransition implementation
  *
  * @author Kirill Egorov
  */
-public class StateTransition implements ITransition<SimpleState> {
+public class StateTransition {
     public final String event;
     private final List<String> actions = new ArrayList<>();
     private final SimpleState target;

@@ -12,13 +12,8 @@ import java.util.Map;
  * @author Kirill Egorov
  */
 public class StateMachine {
-    public final String name;
     private SimpleState initialState;
     private final Map<String, SimpleState> states = new HashMap<>();
-
-    public StateMachine(String name) {
-        this.name = name;
-    }
 
     public SimpleState getInitialState() {
         if (initialState == null) {
@@ -37,7 +32,7 @@ public class StateMachine {
     }
 
     private void checkInitial(SimpleState s)  {
-        if (s.type == StateType.INITIAL) {
+        if (s.isInitial) {
             if (initialState != null) {
                 throw new IllegalArgumentException("StateMachine can't contain more than one initial state");
             }
@@ -47,6 +42,6 @@ public class StateMachine {
 
     @Override
     public String toString() {
-        return name; 
+        return "StateMachine"; 
     }
 }

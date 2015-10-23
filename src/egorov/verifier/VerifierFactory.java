@@ -27,7 +27,6 @@ import egorov.ltl.grammar.PredicateFactory;
 import egorov.statemachine.SimpleState;
 import egorov.statemachine.StateMachine;
 import egorov.statemachine.StateTransition;
-import egorov.statemachine.StateType;
 
 /**
  * @author kegorov
@@ -60,12 +59,12 @@ public class VerifierFactory {
     }
         
     public void configureStateMachine(Automaton automaton) {
-    	final StateMachine machine = new StateMachine("A1");
+    	final StateMachine machine = new StateMachine();
 
     	final SimpleState[] statesArr = new SimpleState[automaton.statesCount()];
 		for (int i = 0; i < automaton.statesCount(); i++) {
 			statesArr[i] = new SimpleState("" + i,
-                    (automaton.getStartState().getNumber() == i) ? StateType.INITIAL : StateType.NORMAL, 
+                    automaton.getStartState().getNumber() == i, 
                     Collections.emptyList());
 		}
 		for (int i = 0; i < automaton.statesCount(); i++) {
