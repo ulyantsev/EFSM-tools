@@ -4,29 +4,36 @@ package structures.plant;
  * (c) Igor Buzhinsky
  */
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 import scenario.StringActions;
 import scenario.StringScenario;
 
 public class NegativePlantScenarioForest extends PlantScenarioForest {
-	
 	private final Set<MooreNode> terminalNodes = new LinkedHashSet<>();
+	private final List<Loop> loops = new ArrayList<>();
 	
-	/*
-	 * Currently no loop support.
-	 */
+	public static class Loop {
+		public final MooreNode source;
+		public final MooreNode destination;
+		public final int length;
+		public final String event;
+		
+		public Loop(MooreNode source, MooreNode destination, int length, String event) {
+			this.source = source;
+			this.destination = destination;
+			this.length = length;
+			this.event = event;
+		}
+	}
 	
 	@Override
 	public void addScenario(StringScenario scenario, int loopLength) {
-		if (loopLength > 0) {
-			throw new AssertionError("loopLength > 0 currently not supported!");
-			// FIXME
-		}
-		
     	checkScenario(scenario);
     	final StringActions firstActions = scenario.getActions(0);
     	
@@ -44,14 +51,30 @@ public class NegativePlantScenarioForest extends PlantScenarioForest {
     	}
     	
     	MooreNode node = properRoot;
+    	MooreNode loopDestination = null;
+    	String loopEvent = null;
         for (int i = 1; i < scenario.size(); i++) {
-        	node = addTransition(node, scenario.getEvents(i).get(0), scenario.getActions(i));
+        	final String event = scenario.getEvents(i).get(0);
+        	node = addTransition(node, event, scenario.getActions(i));
+        	if (loopLength > 0 && i == scenario.size() - loopLength) {
+    			loopDestination = node;
+    			loopEvent = event;
+        	}
         }
-        terminalNodes.add(node);
+        
+        if (loopLength == 0) {
+        	terminalNodes.add(node);
+        } else {
+        	loops.add(new Loop(node, loopDestination, loopLength, loopEvent));
+        }
     }
 
-	public Collection<MooreNode> getTerminalNodes() {
+	public Collection<MooreNode> terminalNodes() {
         return Collections.unmodifiableSet(terminalNodes);
+    }
+	
+	public Collection<Loop> loops() {
+        return Collections.unmodifiableList(loops);
     }
 	
 	@Override

@@ -12,6 +12,7 @@ import scenario.StringActions;
 import structures.plant.MooreNode;
 import structures.plant.MooreTransition;
 import structures.plant.NegativePlantScenarioForest;
+import structures.plant.NegativePlantScenarioForest.Loop;
 import structures.plant.PositivePlantScenarioForest;
 import bnf_formulae.BinaryOperation;
 import bnf_formulae.BinaryOperations;
@@ -131,7 +132,6 @@ public class PlantFormulaBuilder {
 						final BooleanVariable nodeVar = xVar(node.getNumber(), nodeColor);
 						final BooleanVariable childVar = xVar(t.getDst().getNumber(), childColor);
 						final BooleanVariable relationVar = yVar(nodeColor, childColor, t.getEvent());
-						//constraints.add(nodeVar.implies(childVar.equivalent(relationVar)));
 						constraints.add(BinaryOperation.or(relationVar, nodeVar.not(), childVar.not()));
 					}
 				}
@@ -206,12 +206,27 @@ public class PlantFormulaBuilder {
 	
 	private BooleanFormula negativeScenarioTermination() {
 		final FormulaList constraints = new FormulaList(BinaryOperations.AND);
-		for (MooreNode node : negativeForest.getTerminalNodes()) {
+		for (MooreNode node : negativeForest.terminalNodes()) {
 			for (int nodeColor = 0; nodeColor < colorSize; nodeColor++) {
 				constraints.add(xxVar(node.getNumber(), nodeColor).not());
 			}
 		}
 		return constraints.assemble("negative scenario termination");
+	}
+	
+	private BooleanFormula negativeScenarioLoopPrevention() {
+		final FormulaList constraints = new FormulaList(BinaryOperations.AND);
+		for (Loop loop : negativeForest.loops()) {
+			for (int color1 = 0; color1 < colorSize; color1++) {
+				for (int color2 = 0; color2 < colorSize; color2++) {
+					constraints.add(xxVar(loop.source.getNumber(), color1)
+							.and(xxVar(loop.destination.getNumber(), color2))
+							.implies(yVar(color1, color2, loop.event).not()));
+
+				}
+			}
+		}
+		return constraints.assemble("negative scenario loop prevention");
 	}
 	
 	public FormulaList scenarioConstraints() {
@@ -231,6 +246,7 @@ public class PlantFormulaBuilder {
 		constraints.add(negativeScenarioBasis());
 		constraints.add(negativeScenarioPropagation());
 		constraints.add(negativeScenarioTermination());
+		constraints.add(negativeScenarioLoopPrevention());
 		
 		return constraints;
 	}
