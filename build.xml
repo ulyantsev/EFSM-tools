@@ -19,6 +19,7 @@
     <property name="commons.lang3.path" value="lib/commons-lang3-3.1.jar"/>
     <property name="javassist.path" value="lib/javassist.jar"/>
     <property name="ltl2ba.path" value="lib/ltl2ba4j.jar"/>
+    <property name="ognl.path" value="lib/ognl-3.1.jar"/>
 
     <property name="sat-builder.main" value="SatBuilderMain"/>
     <property name="sat-builder.jar" value="sat-builder.jar"/>
@@ -233,7 +234,7 @@
         <mkdir dir="${bin.dir}"/>
         <javac srcdir="${src.dir}"
                destdir="${bin.dir}"
-               classpath="${args4j.path}:${commons.lang3.path}:${javassist.path}:${ltl2ba.path}"
+               classpath="${args4j.path}:${commons.lang3.path}:${javassist.path}:${ltl2ba.path}:${ognl.path}"
                includeantruntime="false"
                debug="true"
                debuglevel="lines,vars,source">
@@ -250,6 +251,7 @@
             <zipfileset src="${commons.lang3.path}" excludes="META-INF/*.SF"/>
             <zipfileset src="${javassist.path}" excludes="META-INF/*.SF"/>
             <zipfileset src="${ltl2ba.path}" excludes="META-INF/*.SF"/>
+            <zipfileset src="${ognl.path}" excludes="META-INF/*.SF"/>
         </jar>
 
         <delete dir="${bin.dir}"/>

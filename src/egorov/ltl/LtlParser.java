@@ -11,6 +11,7 @@ import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import egorov.EgorovGrammarConverter;
 import egorov.ltl.grammar.BinaryOperator;
 import egorov.ltl.grammar.BinaryOperatorType;
 import egorov.ltl.grammar.BooleanNode;
@@ -18,11 +19,10 @@ import egorov.ltl.grammar.LtlNode;
 import egorov.ltl.grammar.PredicateFactory;
 import egorov.ltl.grammar.UnaryOperator;
 import egorov.ltl.grammar.UnaryOperatorType;
-import egorov.ognl.EgorovGrammarConverter;
-import egorov.ognl.Node;
-import egorov.ognl.Ognl;
-import egorov.ognl.OgnlException;
-import egorov.ognl.SimpleNode;
+import ognl.Node;
+import ognl.Ognl;
+import ognl.OgnlException;
+import ognl.SimpleNode;
 
 /**
  * The ILtlparser implementation that use Ognl library
