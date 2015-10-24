@@ -8,7 +8,6 @@ import scenario.StringActions;
 import scenario.StringScenario;
 
 public class PositivePlantScenarioForest extends PlantScenarioForest {
-    
 	@Override
 	public void addScenario(StringScenario scenario, int loopLength) {
     	checkScenario(scenario);
@@ -37,13 +36,13 @@ public class PositivePlantScenarioForest extends PlantScenarioForest {
         sb.append("digraph ScenariosTree {\n    node [shape = circle];\n");
 
         for (MooreNode node : nodes) {
-    		sb.append("    " + node.getNumber() + " [label = \"" + node + "\"];\n");
+    		sb.append("    " + node.number() + " [label = \"" + node + "\"];\n");
     	}
     	
         for (MooreNode node : nodes) {
-            for (MooreTransition t : node.getTransitions()) {
-                sb.append("    " + t.getSrc().getNumber() + " -> " + t.getDst().getNumber()
-                		+ " [label = \"" + t.getEvent() + "\"];\n");
+            for (MooreTransition t : node.transitions()) {
+                sb.append("    " + t.src().number() + " -> " + t.dst().number()
+                		+ " [label = \"" + t.event() + "\"];\n");
             }
         }
 

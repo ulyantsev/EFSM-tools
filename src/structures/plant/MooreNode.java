@@ -17,20 +17,16 @@ public class MooreNode {
         this.actions = actions;
     }
     
-    public int getNumber() {
+    public int number() {
         return number;
     }
     
-    public StringActions getActions() {
+    public StringActions actions() {
         return actions;
     }
     
-    public void setNumber(int number) {
-    	this.number = number;
-    }
-    
     public boolean hasTransition(String event) {
-    	return transitions.stream().anyMatch(t -> t.getEvent().equals(event));
+    	return transitions.stream().anyMatch(t -> t.event().equals(event));
     }
     
     public void addTransition(String event, MooreNode dst) {
@@ -38,11 +34,7 @@ public class MooreNode {
         transitions.add(transition);
     }
     
-    public void removeTransition(MooreTransition transition) {
-        transitions.remove(transition.getEvent());
-    }
-    
-    public Collection<MooreTransition> getTransitions() {
+    public Collection<MooreTransition> transitions() {
         return Collections.unmodifiableList(transitions);
     }
     
@@ -57,8 +49,8 @@ public class MooreNode {
     
     public MooreNode getScenarioDst(String event, StringActions actions) {
     	for (MooreTransition t : transitions) {
-    		if (t.getEvent().equals(event) && t.getDst().getActions().equals(actions)) {
-    			return t.getDst();
+    		if (t.event().equals(event) && t.dst().actions().equals(actions)) {
+    			return t.dst();
     		}
     	}
     	return null;
@@ -67,8 +59,8 @@ public class MooreNode {
     public List<MooreNode> getAllDst(String event) {
     	final List<MooreNode> ans = new ArrayList<>();
     	for (MooreTransition t : transitions) {
-    		if (t.getEvent().equals(event)) {
-    			ans.add(t.getDst());
+    		if (t.event().equals(event)) {
+    			ans.add(t.dst());
     		}
     	}
     	return ans;

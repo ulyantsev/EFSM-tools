@@ -54,8 +54,8 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 			if (a.value) {
 				final String tokens[] = a.var.name.split("_");
 				if (tokens[0].equals("x")) {
-					for (MooreNode root : tree.getRoots()) {
-						if (tokens[1].equals(root.getNumber() + "")) {
+					for (MooreNode root : tree.roots()) {
+						if (tokens[1].equals(root.number() + "")) {
 							final int state = Integer.parseInt(tokens[2]);
 							isStart.set(state, true);
 						}
@@ -79,7 +79,7 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 					final int from = Integer.parseInt(tokens[1]);
 					final int to = Integer.parseInt(tokens[2]);
 					final String event = tokens[3];
-					automaton.getState(from).addTransition(event, automaton.getState(to));
+					automaton.state(from).addTransition(event, automaton.state(to));
 				}
 			}
 		}

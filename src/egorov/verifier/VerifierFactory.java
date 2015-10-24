@@ -93,17 +93,17 @@ public class VerifierFactory {
 		for (int i = 0; i < automaton.statesCount(); i++) {
 			if (automaton.isStartState(i)) {
 				final StateTransition out = new StateTransition("", statesArr[i]);
-				Arrays.stream(automaton.getState(i).getActions().getActions()).forEach(out::addAction);
+				Arrays.stream(automaton.state(i).actions().getActions()).forEach(out::addAction);
 				nondetInit.addOutgoingTransition(out);
 			}
 		}
 		machine.addState(nondetInit);
 		for (int i = 0; i < automaton.statesCount(); i++) {
-			final MooreNode currentState = automaton.getState(i);
-			for (MooreTransition t : currentState.getTransitions()) {
+			final MooreNode currentState = automaton.state(i);
+			for (MooreTransition t : currentState.transitions()) {
 				final StateTransition out = new StateTransition(
-                        extractEvent(t.getEvent()), statesArr[t.getDst().getNumber()]);
-				Arrays.stream(t.getDst().getActions().getActions()).forEach(out::addAction);
+                        extractEvent(t.event()), statesArr[t.dst().number()]);
+				Arrays.stream(t.dst().actions().getActions()).forEach(out::addAction);
 				statesArr[i].addOutgoingTransition(out);
 			}
 			machine.addState(statesArr[i]);

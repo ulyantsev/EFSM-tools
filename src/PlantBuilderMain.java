@@ -258,9 +258,9 @@ public class PlantBuilderMain {
 				
 				// completeness check
 				boolean complete = true;
-				for (MooreNode s : resultAutomaton.get().getStates()) {
+				for (MooreNode s : resultAutomaton.get().states()) {
 					for (String event : events) {
-						if (!s.getTransitions().stream().anyMatch(t -> t.getEvent().endsWith(event))) {
+						if (!s.transitions().stream().anyMatch(t -> t.event().endsWith(event))) {
 							complete = false;
 						}
 					}

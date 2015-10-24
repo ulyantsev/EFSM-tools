@@ -14,19 +14,19 @@ public class NondetMooreAutomaton {
     public NondetMooreAutomaton(int statesCount, List<StringActions> actions, List<Boolean> isStart) {
         for (int i = 0; i < statesCount; i++) {
             states.add(new MooreNode(i, actions.get(i)));
-            this.isStart.add(isStart.get(i));
         }
+        this.isStart.addAll(isStart);
     }
 
     public boolean isStartState(int index) {
         return isStart.get(index);
     }
 
-    public MooreNode getState(int i) {
+    public MooreNode state(int i) {
         return states.get(i);
     }
 
-    public List<MooreNode> getStates() {
+    public List<MooreNode> states() {
         return states;
     }
 
@@ -35,16 +35,12 @@ public class NondetMooreAutomaton {
     }
 
     public void addTransition(MooreNode state, MooreTransition transition) {
-        state.addTransition(transition.getEvent(), transition.getDst());
+        state.addTransition(transition.event(), transition.dst());
     }
     
-    public void removeTransition(MooreNode state, MooreTransition transition) {
-        state.removeTransition(transition);
-    }
-
     @Override
     public String toString() {
-    	StringBuilder sb = new StringBuilder();
+    	final StringBuilder sb = new StringBuilder();
     	sb.append("# generated file\n"
         	+ "# command: dot -Tpng <filename> > filename.png\n"
         	+ "digraph Automaton {\n");
@@ -52,16 +48,16 @@ public class NondetMooreAutomaton {
 		sb.append("    init [shape = circle] [size=0.2] [label=\" \"];\n");
     	for (int i = 0; i < states.size(); i++) {
     		final MooreNode state = states.get(i);
-    		sb.append("    " + state.getNumber() + " [label = \"" + state + "\"] [shape=circle]" + ";\n");
+    		sb.append("    " + state.number() + " [label = \"" + state + "\"] [shape=circle]" + ";\n");
     		if (isStart.get(i)) {
-    			sb.append("    init -> " + state.getNumber() + ";\n");
+    			sb.append("    init -> " + state.number() + ";\n");
     		}
     	}
     	
         for (MooreNode state : states) {
-            for (MooreTransition t : state.getTransitions()) {
-                sb.append("    " + t.getSrc().getNumber() + " -> " + t.getDst().getNumber()
-                		+ " [label = \"" + t.getEvent() + "\"];\n");
+            for (MooreTransition t : state.transitions()) {
+                sb.append("    " + t.src().number() + " -> " + t.dst().number()
+                		+ " [label = \"" + t.event() + "\"];\n");
             }
         }
 
@@ -70,18 +66,18 @@ public class NondetMooreAutomaton {
     }
     
     private boolean recursiveScenarioCompliance(MooreNode scenarioNode, MooreNode automatonNode) {
-    	if (!scenarioNode.getActions().setEquals(automatonNode.getActions())) {
+    	if (!scenarioNode.actions().setEquals(automatonNode.actions())) {
     		return false;
     	}
-    	if (scenarioNode.getTransitions().isEmpty()) {
+    	if (scenarioNode.transitions().isEmpty()) {
     		return true;
     	}
-    	final MooreTransition scenarioTransition = scenarioNode.getTransitions().iterator().next();
-    	final String scenarioEvent = scenarioTransition.getEvent();
-    	final MooreNode scenarioDst = scenarioTransition.getDst();
-    	for (MooreTransition automatonTransition : automatonNode.getTransitions()) {
-    		if (automatonTransition.getEvent().equals(scenarioEvent)) {
-    			if (recursiveScenarioCompliance(scenarioDst, automatonTransition.getDst())) {
+    	final MooreTransition scenarioTransition = scenarioNode.transitions().iterator().next();
+    	final String scenarioEvent = scenarioTransition.event();
+    	final MooreNode scenarioDst = scenarioTransition.dst();
+    	for (MooreTransition automatonTransition : automatonNode.transitions()) {
+    		if (automatonTransition.event().equals(scenarioEvent)) {
+    			if (recursiveScenarioCompliance(scenarioDst, automatonTransition.dst())) {
     				return true;
     			}
     		}
@@ -90,7 +86,7 @@ public class NondetMooreAutomaton {
     }
     
     public boolean isCompliantWithScenarios(PositivePlantScenarioForest forest) {
-    	for (MooreNode root : forest.getRoots()) {
+    	for (MooreNode root : forest.roots()) {
     		boolean complies = false;
     		for (int i = 0; i < states.size(); i++) {
     			if (isStartState(i) && recursiveScenarioCompliance(root, states.get(i))) {
@@ -110,7 +106,7 @@ public class NondetMooreAutomaton {
         	boolean[] curStates = new boolean[states.size()];
         	final StringActions firstActions = sc.getActions(0);
     		for (int i = 0; i < states.size(); i++) {
-    			if (isStartState(i) && states.get(i).getActions().setEquals(firstActions)) {
+    			if (isStartState(i) && states.get(i).actions().setEquals(firstActions)) {
     				curStates[i] = true;
     			}
     		}
@@ -121,8 +117,8 @@ public class NondetMooreAutomaton {
     			for (int j = 0; j < states.size(); j++) {
     				if (curStates[j]) {
     					for (MooreNode dst : states.get(j).getAllDst(event)) {
-    						if (dst.getActions().setEquals(actions)) {
-    							newStates[dst.getNumber()] = true;
+    						if (dst.actions().setEquals(actions)) {
+    							newStates[dst.number()] = true;
     						}
     					}
     				}

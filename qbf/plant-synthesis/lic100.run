@@ -1,0 +1,1 @@
+plant-synthesis/lic100.sc --actionNames abovehh,aboveh,abovethreshold,abovesetpoint,belowthreshold,belowsetpoint,belowl,belowll --actionNumber 8 --eventNames open,closed --eventNumber 2 --ltl plant-synthesis/lic100.ltl --size 16 --varNumber 0 --tree tree.gv

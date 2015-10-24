@@ -39,7 +39,7 @@ public class NegativePlantScenarioForest extends PlantScenarioForest {
     	
     	MooreNode properRoot = null;
     	for (MooreNode root : roots) {
-    		if (root.getActions().equals(firstActions)) {
+    		if (root.actions().equals(firstActions)) {
     			properRoot = root;
     			break;
     		}
@@ -96,13 +96,13 @@ public class NegativePlantScenarioForest extends PlantScenarioForest {
         sb.append("digraph ScenariosTree {\n    node [shape = circle];\n");
 
         for (MooreNode node : nodes) {
-    		sb.append("    " + node.getNumber() + " [label = \"" + node + "\"];\n");
+    		sb.append("    " + node.number() + " [label = \"" + node + "\"];\n");
     	}
     	
         for (MooreNode node : nodes) {
-            for (MooreTransition t : node.getTransitions()) {
-                sb.append("    " + t.getSrc().getNumber() + " -> " + t.getDst().getNumber()
-                		+ " [label = \"" + t.getEvent() + "\"];\n");
+            for (MooreTransition t : node.transitions()) {
+                sb.append("    " + t.src().number() + " -> " + t.dst().number()
+                		+ " [label = \"" + t.event() + "\"];\n");
             }
         }
 

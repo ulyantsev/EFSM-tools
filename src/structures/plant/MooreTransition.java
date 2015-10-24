@@ -11,15 +11,15 @@ public class MooreTransition {
 		this.event = event;
 	}
 
-	public String getEvent() {
+	public String event() {
 		return event;
 	}
 
-	public MooreNode getSrc() {
+	public MooreNode src() {
 		return src;
 	}
 
-	public MooreNode getDst() {
+	public MooreNode dst() {
 		return dst;
 	}
 

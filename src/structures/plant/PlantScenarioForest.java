@@ -14,11 +14,11 @@ public abstract class PlantScenarioForest {
 	protected final Set<MooreNode> roots = new LinkedHashSet<>();
 	protected final Set<MooreNode> nodes = new LinkedHashSet<>();
 
-    public Collection<MooreNode> getRoots() {
+    public Collection<MooreNode> roots() {
         return Collections.unmodifiableSet(roots);
     }
     
-    public Collection<MooreNode> getNodes() {
+    public Collection<MooreNode> nodes() {
         return Collections.unmodifiableSet(nodes);
     }
 
