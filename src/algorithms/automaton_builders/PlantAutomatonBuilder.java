@@ -21,7 +21,6 @@ import sat_solving.SolverResult;
 import sat_solving.SolverResult.SolverResults;
 import scenario.StringActions;
 import scenario.StringScenario;
-import structures.Automaton;
 import structures.plant.MooreNode;
 import structures.plant.NegativePlantScenarioForest;
 import structures.plant.NondetMooreAutomaton;
@@ -34,7 +33,7 @@ import egorov.ltl.grammar.LtlNode;
 import egorov.verifier.Counterexample;
 
 public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
-	protected static Optional<Automaton> reportResult(Logger logger, int iterations, Optional<Automaton> a) {
+	protected static Optional<NondetMooreAutomaton> reportResult(Logger logger, int iterations, Optional<NondetMooreAutomaton> a) {
 		logger.info("ITERATIONS: " + (iterations + 1));
 		return a;
 	}
@@ -94,7 +93,7 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 			Verifier verifier, long finishTime) throws IOException {
 		deleteTrash();
 		
-		while (true) {
+		for (int iteration = 0; System.currentTimeMillis() < finishTime; iteration++) {
 			final PlantFormulaBuilder builder = new PlantFormulaBuilder(size, positiveForest, negativeForest, events, actions);
 			final String formula = builder.scenarioConstraints().assemble().simplify().toLimbooleString();
 			final ExpandableStringFormula expandableFormula = new ExpandableStringFormula(formula, logger, satSolver, solverParams);
@@ -110,7 +109,7 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 				: new SolverResult(list);
 			logger.info(ass.type().toString());
 			if (ass.type() != SolverResults.SAT) {
-				return Optional.empty();
+				return reportResult(logger, iteration, Optional.empty());
 			}
 			
 			final NondetMooreAutomaton automaton = constructAutomatonFromAssignment(logger, ass.list(), positiveForest, size);
@@ -118,7 +117,7 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 			final List<Counterexample> counterexamples =
 					verifier.verifyWithCounterexamplesWithNoDeadEndRemoval(automaton);
 			if (counterexamples.stream().allMatch(Counterexample::isEmpty)) {
-				return Optional.of(automaton);
+				return reportResult(logger, iteration, Optional.of(automaton));
 			} else {
 				final Set<String> unique = new HashSet<String>();
 				for (Counterexample counterexample : counterexamples) {
@@ -135,6 +134,8 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 				}
 			}
 		}
+		logger.info("TOTAL TIME LIMIT EXCEEDED, ANSWER IS UNKNOWN");
+		return Optional.empty();
 	}
 	
 	protected static void addCounterexample(Logger logger, NondetMooreAutomaton a,

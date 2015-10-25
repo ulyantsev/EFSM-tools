@@ -30,7 +30,7 @@ public class PlantFormulaBuilder {
 	protected final List<String> actions;
 	protected final PositivePlantScenarioForest positiveForest;
 	protected final NegativePlantScenarioForest negativeForest;
-	protected final List<BooleanVariable> existVars = new ArrayList<>();
+	protected final List<BooleanVariable> vars = new ArrayList<>();
 	
 	public PlantFormulaBuilder(int colorSize, PositivePlantScenarioForest positiveForest,
 			NegativePlantScenarioForest negativeForest, List<String> events, List<String> actions) {
@@ -60,7 +60,7 @@ public class PlantFormulaBuilder {
 	protected void addColorVars() {
 		for (MooreNode node : positiveForest.nodes()) {
 			for (int color = 0; color < colorSize; color++) {
-				existVars.add(new BooleanVariable("x", node.number(), color));
+				vars.add(new BooleanVariable("x", node.number(), color));
 			}
 		}
 	}
@@ -69,11 +69,11 @@ public class PlantFormulaBuilder {
 		for (int nodeColor = 0; nodeColor < colorSize; nodeColor++) {
 			for (String e : events) {
 				for (int childColor = 0; childColor < colorSize; childColor++) {
-					existVars.add(new BooleanVariable("y", nodeColor, childColor, e));
+					vars.add(new BooleanVariable("y", nodeColor, childColor, e));
 				}
 			}
 			for (String action : actions) {
-				existVars.add(new BooleanVariable("z", nodeColor, action));
+				vars.add(new BooleanVariable("z", nodeColor, action));
 			}
 		}
 	}
@@ -81,7 +81,7 @@ public class PlantFormulaBuilder {
 	protected void addActionVars() {
 		for (int nodeColor = 0; nodeColor < colorSize; nodeColor++) {
 			for (String action : actions) {
-				existVars.add(new BooleanVariable("z", nodeColor, action));
+				vars.add(new BooleanVariable("z", nodeColor, action));
 			}
 		}
 	}
@@ -89,7 +89,7 @@ public class PlantFormulaBuilder {
 	protected void addNegativeColorVars() {
 		for (MooreNode node : negativeForest.nodes()) {
 			for (int color = 0; color < colorSize; color++) {
-				existVars.add(new BooleanVariable("xx", node.number(), color));
+				vars.add(new BooleanVariable("xx", node.number(), color));
 			}
 		}
 	}

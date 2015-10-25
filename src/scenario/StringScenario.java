@@ -102,7 +102,7 @@ public class StringScenario {
         String[] events = input.split(";");
         String[] actions = (output + " ").split(";");
         if (actions.length != events.length) {
-            throw new ParseException("events length " + events.length + " != actions length " + actions.length, 0);
+            throw new ParseException("events length " + events.length + " != actions length " + actions.length + ": [" + input + "] / [" + output + "]", 0);
         }
          
         int n = actions.length;
