@@ -68,6 +68,9 @@ public class PlantBuilderMain {
 
 	@Option(name = "--ltl", aliases = { "-lt" }, usage = "file with LTL properties (optional)", metaVar = "<file>")
 	private String ltlFilePath;
+	
+	@Option(name = "--actionspec", aliases = { "-as" }, usage = "file with action propositional formulae", metaVar = "<file>")
+	private String actionspecFilePath;
 
 	@Option(name = "--negsc", aliases = { "-ns" }, usage = "file with negative scenarios (optional)",
 			metaVar = "<file>")
@@ -91,7 +94,7 @@ public class PlantBuilderMain {
 			parser.parseArgument(args);
 		} catch (CmdLineException e) {
 			System.out.println("Plant automaton builder from scenarios and LTL formulae");
-			System.out.println("Authors: Vladimir Ulyantsev (ulyantsev@rain.ifmo.ru), Igor Buzhinsky (igor.buzhinsky@gmail.com)\n");
+			System.out.println("Authors: Igor Buzhinsky (igor.buzhinsky@gmail.com), Vladimir Ulyantsev (ulyantsev@rain.ifmo.ru)\n");
 			System.out.print("Usage: ");
 			parser.printSingleLineUsage(System.out);
 			System.out.println();
@@ -102,9 +105,9 @@ public class PlantBuilderMain {
 		Logger logger = Logger.getLogger("Logger");
 		if (logFilePath != null) {
 			try {
-				FileHandler fh = new FileHandler(logFilePath, false);
+				final FileHandler fh = new FileHandler(logFilePath, false);
 				logger.addHandler(fh);
-				SimpleFormatter formatter = new SimpleFormatter();
+				final SimpleFormatter formatter = new SimpleFormatter();
 				fh.setFormatter(formatter);
 
 				logger.setUseParentHandlers(false);
@@ -212,7 +215,7 @@ public class PlantBuilderMain {
 			final Verifier verifier = new Verifier(logger, ltlFilePath, events, actions, varNumber);
 			final long finishTime = System.currentTimeMillis() + timeout * 1000;
 			resultAutomaton = PlantAutomatonBuilder.build(logger, positiveForest, negativeForest, size, solverParams,
-					resultFilePath, ltlFilePath, formulae, events, actions, satsolver, verifier, finishTime);
+					resultFilePath, ltlFilePath, actionspecFilePath, formulae, events, actions, satsolver, verifier, finishTime);
 			final double executionTime = (System.currentTimeMillis() - startTime) / 1000.;
 			
 			if (!resultAutomaton.isPresent()) {
@@ -247,13 +250,6 @@ public class PlantBuilderMain {
 					logger.info("VERIFIED");
 				} else {
 					logger.severe("NOT VERIFIED");
-					for (Counterexample counterexample : counterexamples) {
-						if (!counterexample.isEmpty()) {
-							logger.severe(counterexample.toString());
-						} else {
-							logger.info("---");
-						}
-					}
 				}
 				
 				// completeness check

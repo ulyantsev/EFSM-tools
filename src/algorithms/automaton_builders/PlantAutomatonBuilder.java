@@ -4,12 +4,15 @@ package algorithms.automaton_builders;
  * (c) Igor Buzhinsky
  */
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Scanner;
 import java.util.Set;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -27,6 +30,7 @@ import structures.plant.NondetMooreAutomaton;
 import structures.plant.PositivePlantScenarioForest;
 import algorithms.formula_builders.PlantFormulaBuilder;
 import bnf_formulae.BooleanFormula.SolveAsSatResult;
+import bnf_formulae.BooleanVariable;
 import bool.MyBooleanExpression;
 import egorov.Verifier;
 import egorov.ltl.grammar.LtlNode;
@@ -86,9 +90,44 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 		return automaton;
 	}
 	
+	/*
+	 * If the filename is not null, appends additional action specification into the formula.
+	 * The specification is given as in LTL, but without temporal operators.
+	 * If there is a propositional formula F over wasAction(...), then the meaning of this formula would be:
+	 *   In all states of the automaton, F holds.
+	 */
+	private static String addActionSpecification(String formula, String actionspecFilePath, int states, List<String> actions) throws FileNotFoundException {
+		if (actionspecFilePath == null) {
+			return formula;
+		}
+		final List<String> additionalFormulae = new ArrayList<>();
+		try (final Scanner sc = new Scanner(new File(actionspecFilePath))) {
+			while (sc.hasNextLine()) {
+				final String line = sc.nextLine();
+				if (line.isEmpty()) {
+					continue;
+				}
+				final String transformed = line.replace("&&", "&").replace("||", "|");
+				for (int i = 0; i < states; i++) {
+					String constraint = transformed;
+					for (String action : actions) {
+						constraint = constraint.replaceAll("wasAction\\(" + action + "\\)",
+								BooleanVariable.byName("z", i, action).get().toLimbooleString());
+					}
+					additionalFormulae.add(constraint);
+				}
+			}
+		}
+		if (additionalFormulae.isEmpty()) {
+			return formula;
+		} else {
+			return "(" + formula + ")&(" + String.join(")&(", additionalFormulae) + ")";
+		}
+	}
+	
 	public static Optional<NondetMooreAutomaton> build(Logger logger, PositivePlantScenarioForest positiveForest,
 			NegativePlantScenarioForest negativeForest, int size, String solverParams,
-			String resultFilePath, String ltlFilePath, List<LtlNode> formulae,
+			String resultFilePath, String ltlFilePath, String actionspecFilePath, List<LtlNode> formulae,
 			List<String> events, List<String> actions, SatSolver satSolver,
 			Verifier verifier, long finishTime) throws IOException {
 		deleteTrash();
@@ -96,7 +135,9 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 		for (int iteration = 0; System.currentTimeMillis() < finishTime; iteration++) {
 			final PlantFormulaBuilder builder = new PlantFormulaBuilder(size, positiveForest, negativeForest, events, actions);
 			final String formula = builder.scenarioConstraints().assemble().simplify().toLimbooleString();
-			final ExpandableStringFormula expandableFormula = new ExpandableStringFormula(formula, logger, satSolver, solverParams);
+			final String formulaWithActionSpec = addActionSpecification(formula, actionspecFilePath, size, actions);
+			final ExpandableStringFormula expandableFormula = new ExpandableStringFormula(formulaWithActionSpec, logger,
+					satSolver, solverParams);
 			
 			// SAT-solve
 			final int secondsLeft = timeLeftForSolver(finishTime);
