@@ -30,6 +30,7 @@ public class PlantFormulaBuilder {
 	protected final List<String> actions;
 	protected final PositivePlantScenarioForest positiveForest;
 	protected final NegativePlantScenarioForest negativeForest;
+	
 	protected final List<BooleanVariable> vars = new ArrayList<>();
 	
 	public PlantFormulaBuilder(int colorSize, PositivePlantScenarioForest positiveForest,
@@ -222,7 +223,6 @@ public class PlantFormulaBuilder {
 					constraints.add(xxVar(loop.source.number(), color1)
 							.and(xxVar(loop.destination.number(), color2))
 							.implies(yVar(color1, color2, loop.event).not()));
-
 				}
 			}
 		}

@@ -41,10 +41,15 @@ public class VerifierFactory {
     private final LtlParser parser;
     
     private final List<BuchiAutomaton> preparedFormulae = new ArrayList<>();
-    private final List<Set<BuchiNode>> finiteCounterexampleBuchiStates = new ArrayList<>();;
+    private final List<Set<BuchiNode>> finiteCounterexampleBuchiStates = new ArrayList<>();
+    private final List<LtlNode> preparedLtlNodes = new ArrayList<>();
     
     public VerifierFactory() {
         parser = new LtlParser(predicates);
+    }
+    
+    public List<LtlNode> preparedLtlNodes() {
+    	return Collections.unmodifiableList(preparedLtlNodes);
     }
     
 	public void prepareFormulas(List<String> formulas) throws LtlParseException {
@@ -52,6 +57,7 @@ public class VerifierFactory {
 
          for (String f : formulas) {
              LtlNode node = parser.parse(f);
+             preparedLtlNodes.add(node);
              node = LtlUtils.getInstance().neg(node);
              preparedFormulae.add(translator.translate(node));
          }

@@ -34,7 +34,7 @@ public class Verifier {
 	
 	public Verifier(Logger logger, String ltlPath, List<String> events, List<String> actions, int varNumber) {
 		this.logger = logger;
-		ltlFormulae = ltlPath == null? Collections.emptyList() : loadFormulae(ltlPath, varNumber);
+		ltlFormulae = ltlPath == null ? Collections.emptyList() : loadFormulae(ltlPath, varNumber);
 		logger.info(ltlFormulae.toString());
 
 		allEvents = new TreeSet<>(events);
@@ -56,7 +56,7 @@ public class Verifier {
 			e.printStackTrace();
 		}
 	}
-
+	
 	private List<String> loadFormulae(String path, int varNumber) {
 		final List<String> formulae = new ArrayList<>();
 		try (Scanner in = new Scanner(new File(path))) {
