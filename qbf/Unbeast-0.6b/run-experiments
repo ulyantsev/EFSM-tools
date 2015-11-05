@@ -1,0 +1,24 @@
+#!/bin/bash
+
+rootdir=$(pwd)
+
+function collect_sc {
+    start=$1
+    end=$2
+    
+    rm -rf tmp
+    for ((n=$start; n<=$end; n+=1)) ; do
+        cat $rootdir/scenarios/$n
+    done
+}
+
+
+for ((nltl=1; nltl<=13; nltl+=1)) ; do
+    workdir=$rootdir/runs/$nltl
+   
+    echo "running unbeast for $nltl formulas..."
+    start_unbeast=$(date +%s)
+    echo $(collect_sc 1 9 | ./scenarios-to-unbeast-simulator) | ./unbeast $workdir/spec.xml --synBDD --runSimulator > $workdir/result 2>$workdir/errlog
+    end_unbeast=$(date +%s)
+    echo $(echo "scale=4; $end_unbeast - $start_unbeast" | bc) > $workdir/t
+done

@@ -1,0 +1,324 @@
+********************************************************************
+* Unbeast v.0.6b                                                    *
+* A tool for synthesis of finite state systems from specifications *
+* written in linear-time temporal logic (LTL)                      *
+* (C) 2010-2011 by Ruediger Ehlers                                 *
+********************************************************************
+
+Table of Contents:
+- 0. About this tool
+- 1. Installation
+- 2. Usage
+
++-------------------------------------------------------------------+
+| 0. About this tool                                                |
++-------------------------------------------------------------------+
+The README file you are reading is part of the distribution of the
+Unbeast tool for synthesis of finite state systems from 
+specifications written in LTL. Note that this is a prototype tool
+and is mainly distributed to allow other researchers in this area to
+compare their implementations against this one. As a prototype tool,
+bugs are likely to exist. 
+
+The tool is an implementation of the ideas stated in the paper
+"Symbolic bounded synthesis", presented at the CAV 2010 conference
+in Edinburgh.
+
+If you find any bugs, please write an e-mail to 
+"ehlers@cs.myuniversity.de" where you replace "myuniversity" by 
+"uni-saarland". If possible, please enclose the specification file
+you used in the mail. Please make sure beforehand that the specifi-
+cation file is valid. This can be done by checking it against the
+DTD file for specifications provided (see the end of Section 3 for
+details).
+
+The tool is free for use in the academic context. Furthermore, the
+licensing details as stated in the document at the following URL
+apply: http://react.cs.uni-saarland.de/tools/caissa/LICENSE
+
++-------------------------------------------------------------------+
+| 1. Version history                                                |
++-------------------------------------------------------------------+
+
+- v.0.5  - July 2010: Initial public release
+- v.0.6  - October 2010: Added simulator for the synthesised system,
+           also allows simulating an environment that witnesses
+           the unrealisability of the specification in such a case. 
+           Added some minor tweaks to the variable ordering to
+           typically speed up the computation
+- v.0.6b - March 2011: Bugfix in the simulator for unrealisable
+           specifications
+
++-------------------------------------------------------------------+
+| 2. Installation                                                   |
++-------------------------------------------------------------------+
+The "unbeast" tool is written in C++ and can be compiled using the
+GNU G++ compiler. It uses the CUDD library for manipulating binary
+decision diagrams, which needs to be downloaded from its homepage
+seperately.
+
+Prerequisites:
+- A Linux system with the GCC 4.3 (or above) installed. Additionally,
+  the development packages of "libxml2", "libxslt", "boost-iostreams"
+  and "boost" need to be installed. How to do so depends on
+  your Linux distribution used. As an example, at the time of
+  writing, for an Ubuntu system, the following packages need to be
+  installed:
+  * build-essential
+  * libxml2-dev, libxml2-utils
+  * libboost-iostreams1.37.0 or libboost-iostreams1.40-dev, libboost-dev
+  In case you use a version of GCC higher than 4.3, compilation
+  errors yet unknown to the author may occur. In this case, please
+  write an e-mail.
+- A copy of the CuDD library. Download this from its homepage and
+  extract it to the Unbeast directory. Make sure that either the
+  folder is named "cudd" (so it does not contain version 
+  information) or add a symbolic link called "cudd" to it.
+- The Unbeast tools calls an external program for converting LTL
+  formulas to Büchi automata. Currently, two of these are supported:
+  "ltl2ba" and "ltl2tgba" from the SPOT distribution. At least one of
+  them needs to be downloaded & compiled separately.
+
+Steps for compilation:
+- The following step can usually be skipped on 32-bit machines:
+  For correct interfacing of the CuDD library with the Unbeast tool,
+  it is important that they use the same settings on the memory
+  layout. For this, the file "Makefile" in the CuDD distribution
+  needs to be modified. In particular, the line "XCFLAGS = ..." for
+  some "..." needs to be modified to: "XCFLAGS = $(shell gcc 
+  ../compilerOptionGenerator.c -o /tmp/b-$(USER);/tmp/b-$(USER))",
+  with line breaks replaced by whitespaces. 
+- Afterwards, CuDD needs to be compiled by running "make" in 
+  the "cudd" directory.
+- Now, the unbeast tool can be compiled. This is easily done by
+  running "make" in the Unbeast root directory. In case of
+  problems, please write an e-mail to the author. After all, this
+  is only a prototype tool and has not undergone compatibility
+  testing.
+
++-------------------------------------------------------------------+
+| 3. Usage                                                          |
++-------------------------------------------------------------------+
+The Unbeast tool is invoked as follows:
+
+  unbeast inputFile.xml [--unsat] [--synBDD|--synDNF] [--runSimulator]
+
+In this line, "inputFile.xml" refers to the specification input file,
+which contains both the LTL specification as well as the declaration
+of the input and output bits of the system to be synthesized. The
+format of this file is explained later in this document.
+
+The Unbeast tool implements a semi-algorithm for realisability 
+checking. When invoking just "unbeast inputFile.xml", the program
+continues computing until it runs out of memory in the case that
+the specification is unrealisable. By giving the "--unsat" option, the
+user can specify that instead, unrealisability is to be checked. In
+the latter cases, the program will instead run out of memory when
+applied to realisable specifications. For finding out whether a
+specification is realisable, one would typically run two copies of
+the program in parallel (one with "--unsat" and one without) and
+once one run has finished, the other one can be terminated manually.
+
+By default, the tool only checks for the realisability of a 
+specification. If also an implementation is to be extracted in case
+of realisability, the "--synBDD" option should be given. This results
+in the generation of a NuSMV model including some specification lines
+for verifying the generated model. If the "--synDNF" option is given
+instead, the transitions in the model are always given in disjunctive
+normal form. This often results in huge models but these are 
+occasionally easier to verify by NuSMV. Don't use the latter option
+when benchmarking.
+
+In case of a realisable specification, a simulator for a system
+satisfying the specification can be started. In case of an 
+unrealisable specification, the roles in the simulation are swapped:
+the computer then plays an environment that makes sure that the
+system cannot satisfy its specification. Details on the simulator
+are provided in Section 7.
+
+Note that the tool will only issue a warning on malformed input
+files but it will not abort running. In case of problems, the
+user is advised to check the XML file by running:
+  
+  xmllint <inputFile> --postvalid
+
++-------------------------------------------------------------------+
+| 4. The input file format                                          |
++-------------------------------------------------------------------+
+The Unbeast tool reads specifications in a special XML format,
+described in the file "SynSpec.dtd". In this section, we explain
+for format of this XML file. We start with an example:
+
+----------[Example begin]--------------------------------------------
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<!DOCTYPE SynthesisProblem SYSTEM "SynSpec.dtd">
+<SynthesisProblem>
+  <Title>A mutex</Title>
+  <Description>A not quite complex example</Description>
+  <PathToLTLCompiler>ltl2ba-1.1/ltl2ba</PathToLTLCompiler>
+  <GlobalInputs>
+    <Bit>Request0</Bit>
+    <Bit>Request1</Bit>
+  </GlobalInputs>
+  <GlobalOutputs>
+    <Bit>Grant0</Bit>
+    <Bit>Grant1</Bit>
+  </GlobalOutputs>
+  <Assumptions>
+    <LTL><G><F><Not><Var>Request0</Var></Not></F></G></LTL>
+    <LTL><G><F><Not><Var>Request1</Var></Not></F></G></LTL>
+  </Assumptions>
+  <Specification>
+    <LTL><G><Or><Not><Var>Grant0</Var></Not>
+       <Not><Var>Grant1</Var></Not></Or></G></LTL>
+    <LTL><G><Or><Not><Var>Request0</Var></Not><F>
+       <Var>Grant0</Var></F></Or></G></LTL>
+    <LTL><G><Or><Not><Var>Request1</Var></Not><F>
+       <Var>Grant1</Var></F></Or></G></LTL>
+  </Specification>
+</SynthesisProblem>
+----------[Example end]--------------------------------------------
+
+This example can also be found in the file "Examples/Mutex1.xml".
+We assume that the reader knows the basics of the XML file format
+idea. The file starts with an XML preamble including information 
+about the encoding and a link to the DTD file. The definition of 
+the synthesis problem is included in the "SynthesisProblem" tags. 
+Some information about the title and the description of the model
+follows (which is ignored by the tool). The next line tells the
+Unbeast tool where an LTL-to-Büchi compiler can be found (relative
+to the directory from which the tool is invoked). Add the path
+to either "ltl2ba" or "ltl2tgba" and the corresponding options
+to the tool here. If it is incorrect, you will see an error when
+executing the tool. Typically, the LTL-to-Büchi string will look
+like one of the following lines:
+
+- /path/to/ltl2ba/ltl2ba -f
+- /path/to/spot-0.6/src/tgbatest/ltl2tgba -N -R3 -r7
+
+Next, the input and output bits to the system are declared. In this
+example, there are two input bits not under the control of the
+system and two output bits it can set depending on the input. A
+list of assumptions about the environment follows. Each assumption
+is stated as an LTL formula with the usual temporal operators.
+Whenever a referral to one of the declared variables is to be done,
+the name of the variables has to be enclosed in "Var" tags. In this
+example, we assume that the environment sets both "Request0" and
+"Request1" bits infinitely often to false. Note that output bits
+may also occur in the assumptions, but extra care should be taken
+for making sure that there is no simple way for the system to be
+synthesized to just falsify such an assumption (as this is 
+normally not the intended meaning of the specification written
+by the user).
+
+Finally, the guarantees are specified in the same way as the
+assumptions. 
+
++-------------------------------------------------------------------+
+| 5. A convenience script                                           |
++-------------------------------------------------------------------+
+As already stated, the path to the LTL-to-Buechi compiler (and its
+options) is part of the XML file. Also, the path to the DTD-file
+for the validation of the input XML file might differ if the XML-file
+is not in the "Examples" directory. For this reason, there is a
+script called "updatePathsInXML.py" in the "Tools" directory. Its
+purpose is to adjust these paths in the XML files. It works as
+follows:
+
+Assume that the path to the LTL-to-Büchi converter is 
+"/path/to/ltl2ba" and it needs the option "-f". Then a specification
+XML-file can be adjusted by typing the following command into the
+terminal:
+
+/path/to/Tools/updatePathsInXML.py /path/to/xmlFile.xml /path/to/ltl2ba -f
+
+This script is convenient for adapting the example specifications
+that come with the Unbeast distribution.
+
++-------------------------------------------------------------------+
+| 6. Putting it together                                            |
++-------------------------------------------------------------------+
+As an example, we apply the Unbeast tool to the XML file given in
+the previous section:
+
+./unbeast Examples/Mutex1.xml
+
+The tool outputs some statistics and the automata used. Finally, the
+line "Result: Specification is realisable!" is put out. If this does
+not happen, then it is likely that calling the LTL-to-Büchi tool
+has failed. Use the script described in the previous section to fix
+the path in the XML file to the tool. On the other hand, running
+
+./unbeast --unsat Examples/Mutex1.xml
+
+takes a long time. As already stated, the tool implements a semi-
+algorithm and thus running the tool with "--unsat" on realisable
+specifications or without "--unsat" on unrealisable specifications
+will not lead to a satisfactory result. However, as also already
+stated, by running the program with and without "--unsat" at the
+same time, we always obtain the correct result.
+
+As in our example, the specification is realisable, we turn towards
+synthesizing a mutex. We run:
+
+./unbeast --synBDD Examples/Mutex1.xml > /tmp/model.txt
+
+Then, by using a text editor, the output of the tool is cleaned to
+a correct NuSMV model by removing all lines up to (and including)
+the line "---------NuSMV model:---------".
+
+The model can then be verified (assuming that NuSMV is installed)
+by calling:
+
+/path/to/NuSMV /tmp/model.txt
+
+Technically, one also has to verify that the chosen inputs and
+outputs are reflected in the model correctly, which can however
+easily be done by examining the model text file.
+
++-------------------------------------------------------------------+
+| 7. Running the simulator                                          |
++-------------------------------------------------------------------+
+If the Unbeast tool is started with the paramter "--runSimulator",
+after a specification is found to be realisable, a simulator is 
+started. 
+
+First of all, the simulator asks whether the state information should
+be printed during the simulation. Typically, you do not care about
+the structure of the game produced by Unbeast, which suggests the
+answer 'n'. If you press 'y', make sure that your terminal width is
+sufficiently high.
+
+Then, you will obtain a summary of the commands that can be used
+during the simulation. After each round of input and output, you
+are asked to specify one command. In case of doubt, just press 'c'
+to continue or 'x' if you want to exit from Unbeast.
+
+In case of a realisable specification, in every round you are asked
+to provide an input atomic proposition vector to the tool. By
+using the keys '0' and '1', this can easily be done. The output
+is then determined by the system automatically. In case of an
+unrealisable specification, the input/output roles are swapped.
+
+By pressing 'z' instead of 'c', the simulator tries to behave as
+randomly as possible. In fact, the simulator works directly on the
+game graph instead of computing an implementation of the system
+beforehand, which allows it to change its behaviour over the run.
+Using the randomisation feature, a specification engineer can often
+observe underspecification of a system.
+
+The command 'r' resets the system in order to allow starting from
+scratch again. Also, 'g' allows jumping to a previous state of the
+simulation.
+
+Note that the simulator will typically not tell you once some 
+guarantee or assumption that is meant to be satisfied by the user
+input is violated. However, in some cases you will get notified
+about violations of some safety assumption or guarantee. This
+behaviour is due to fact that as described in the paper "Symbolic
+bounded synthesis", published at CAV 2010, the Unbeast tool solves
+a mixed reachability/safety game and thus leaving the set of safe
+states for the system player in the safety game is possible.
+
+
+

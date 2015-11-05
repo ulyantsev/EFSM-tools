@@ -1,0 +1,22 @@
+#!/bin/bash
+
+rootdir=$(pwd)
+
+function collect_sc {
+    start=$1
+    end=$2
+    
+    rm -rf tmp
+    for ((n=$start; n<=$end; n+=1)) ; do
+        cat $rootdir/scenarios/$n
+    done
+}
+
+for ((nltl=1; nltl<=13; nltl+=1)) ; do
+    echo "checking for nltl=$nltl"
+    workdir=$rootdir/runs/$nltl
+    collect_sc 1 9 > $workdir/scenarios
+
+    cat $workdir/result | grep -P '\|r|\|c' | ./check-sc $workdir/scenarios
+   
+done

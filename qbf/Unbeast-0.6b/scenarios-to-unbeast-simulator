@@ -1,0 +1,60 @@
+#!/usr/bin/python
+import sys
+
+events = ["e11", "e12", "e2", "e3", "e4"]
+actions = ["z1", "z2", "z3"]
+
+
+class ScenarioElement:
+    def __init__(self, event, action):
+        self.event = event;
+        self.action = action
+ 
+    def __str__(self):
+        return "[%s, %s]" % (self.event, self.action)
+
+    def __repr__(self):
+        return self.__str__()
+
+def printEvent(event):
+    index = events.index(event)
+    result = ""
+    for i in range(index):
+        result += "0"
+    result += "1"
+    for i in range(len(events) - index - 1):
+        result += "0" 
+    return result
+
+def printScenario(scenario):
+    result = "r " 
+    for i in range(len(scenario)):
+       result += printEvent(scenario[i].event) + " "
+       if i < len(scenario) - 1:
+           result += "c "
+    return result
+
+def main():
+    scenarios = []
+    for line in sys.stdin:
+        scenario = []
+        for s in line[:-1].split(";"):
+            event_action = s.strip().split("/")
+            if len(event_action) == 1:
+                scenario += [ScenarioElement(event_action[0], "")]
+            else:
+                scenario += [ScenarioElement(event_action[0], event_action[1])]
+        scenarios += [scenario]
+
+    
+    result = "y "
+    for scenario in scenarios:
+       result += printScenario(scenario)
+    result += " x"
+    print result
+        
+            
+ 
+
+if __name__ == '__main__':
+    main()

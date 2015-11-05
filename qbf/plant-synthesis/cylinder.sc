@@ -1,6 +1,6 @@
-; wait
-home; home
-; wait
-end; end
+; wait; extend; extend
+home; home; ; end
+; wait; retract; retract
+end; end; ; home
 ; wait
 ;

@@ -1,0 +1,24 @@
+<LTL>
+    <G>
+	<Or>
+	    <Not>
+		<And>
+		    <Var>z239</Var>
+		    <Not><Var>z1</Var></Not>
+		    <Not><Var>z2</Var></Not>
+		    <Not><Var>z3</Var></Not>
+		</And>
+	    </Not>
+	    <X>
+		<G>
+		    <And>
+			<Var>z239</Var>
+			<Not><Var>z1</Var></Not>
+			<Not><Var>z2</Var></Not>
+			<Not><Var>z3</Var></Not>
+		    </And>
+		</G>
+	    </X>
+	</Or>    
+    </G>
+</LTL>

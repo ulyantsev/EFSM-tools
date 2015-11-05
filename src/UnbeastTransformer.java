@@ -9,11 +9,18 @@ import java.io.PrintWriter;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Deque;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Scanner;
 
+import org.apache.commons.lang3.tuple.Pair;
+
+import scenario.StringScenario;
 import bool.MyBooleanExpression;
 import choco.kernel.common.util.tools.ArrayUtils;
-import scenario.StringScenario;
 import egorov.ltl.LtlParseException;
 import egorov.ltl.LtlParser;
 import egorov.ltl.grammar.BinaryOperator;
@@ -102,12 +109,16 @@ public class UnbeastTransformer {
 		return "<" + tag + ">" + text + "</" + tag + ">";
 	}
 	
-	private static List<String> ltlSpecification(List<LtlNode> nodes) {
+	private static List<String> ltlSpecification(List<LtlNode> nodes, boolean incomplete) {
 		final List<String> ltlStrings = new ArrayList<>();
 		for (LtlNode node : nodes) {
 			final StringBuilder xmlBuilder = new StringBuilder();
 			node.accept(new Visitor(), xmlBuilder);
-			ltlStrings.add(xmlBuilder.toString());
+			String ltlString = xmlBuilder.toString();
+			if (incomplete) {
+				ltlString = tag("Or", tag("F", tag("Var", "Invalid")) + ltlString);
+			}
+			ltlStrings.add(ltlString);
 		}
 		return ltlStrings;
 	}
@@ -150,25 +161,30 @@ public class UnbeastTransformer {
 		return ans;
 	}
 	
-	private static String outputFormula(StringScenario sc, int index, List<String> actions) {
+	private static String outputFormula(StringScenario sc, int index, List<String> actions,
+			boolean incomplete) {
 		final String[] thisActions = sc.getActions(index).getActions();
 		String formula = actionFormula(actions.get(0), ArrayUtils.contains(thisActions, actions.get(0)));
 		for (int i = 1; i < actions.size(); i++) {
 			formula = tag("And", actionFormula(actions.get(i),
 					ArrayUtils.contains(thisActions, actions.get(i))) + formula);
 		}
+		if (incomplete) {
+			formula = tag("And", tag("Not", tag("Var", "Invalid")) + formula);
+		}
 		
 		return formula;
 	}
 	
-	private static List<String> scenarioSpecification(List<StringScenario> scenarios, List<String> actions) {
+	private static List<String> scenarioSpecification(List<StringScenario> scenarios, List<String> actions,
+			boolean incomplete) {
 		final List<String> scenarioStrings = new ArrayList<>();
 		for (StringScenario sc : scenarios) {
 			String formula = tag("Or", tag("Not", inputFormula(sc, sc.size() - 1))
-					+ outputFormula(sc, sc.size() - 1, actions));
+					+ outputFormula(sc, sc.size() - 1, actions, incomplete));
 			for (int i = sc.size() - 2; i >= 0; i--) {
 				formula = tag("Or", tag("Not", inputFormula(sc, i)) + tag("And", 
-						outputFormula(sc, i, actions) + tag("X", formula)));
+						outputFormula(sc, i, actions, incomplete) + tag("X", formula)));
 			}
 			scenarioStrings.add(formula);
 		}
@@ -191,7 +207,8 @@ public class UnbeastTransformer {
 		return assumptions;
 	}
 	
-	private static String problemDescription(List<String> events, List<String> variables, List<String> actions, List<String> specification) {
+	private static String problemDescription(List<String> events, List<String> variables,
+			List<String> actions, List<String> specification, boolean incomplete) {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("<?xml version=\"1.0\" encoding=\"ISO-8859-1\" ?>\n");
 		sb.append("<!DOCTYPE SynthesisProblem SYSTEM \"SynSpec.dtd\">\n");
@@ -205,6 +222,9 @@ public class UnbeastTransformer {
 		sb.append("</GlobalInputs>\n");
 		sb.append("<GlobalOutputs>\n");
 		actions.forEach(a -> sb.append("  <Bit>" + a + "</Bit>\n"));
+		if (incomplete) {
+			sb.append("  <Bit>Invalid</Bit>\n");
+		}
 		sb.append("</GlobalOutputs>\n");
 		sb.append("<Assumptions>\n");
 		eventAssumptions(events).forEach(a -> sb.append("  <LTL>" + a + "</LTL>\n"));
@@ -216,24 +236,271 @@ public class UnbeastTransformer {
 		return sb.toString();
 	}
 	
+	private static class Problem {
+		final String ltlPath;
+		final String scenarioPath;
+		final List<String> events;
+		final List<String> variables;
+		final List<String> actions;
+		final boolean incomplete;
+		
+		public Problem(String ltlPath, String scenarioPath,
+				List<String> events, List<String> variables,
+				List<String> actions, boolean incomplete) {
+			this.ltlPath = ltlPath;
+			this.scenarioPath = scenarioPath;
+			this.events = events;
+			this.variables = variables;
+			this.actions = actions;
+			this.incomplete = incomplete;
+		}
+	}
+	
 	public static void main(String[] args) throws IOException, ParseException, LtlParseException {
-		final String ltlPath = "qbf/testing-daniil/50n/nstates=5/30/formulae";
-		final String scenarioPath = "qbf/testing-daniil/50n/nstates=5/30/plain-scenarios";
 		final String outputPath = "generated-problem.xml";
 		
+		/*
+		final String ltlPath = "qbf/testing-daniil/50n/nstates=5/30/formulae";
+		final String scenarioPath = "qbf/testing-daniil/50n/nstates=5/30/plain-scenarios";
 		final List<String> events = Arrays.asList("A", "B");
 		final List<String> variables = Arrays.asList("x0", "x1");
 		final List<String> actions = Arrays.asList("z0", "z1");
+		final boolean incomplete = true;
+		*/
+		/*
+		final String ltlPath = "qbf/Unbeast-0.6b/my/elevator.ltl";
+		final String scenarioPath = "qbf/Unbeast-0.6b/my/elevator-mini.sc";
+		final List<String> events = Arrays.asList("e11", "e2", "e12", "e3", "e4");
+		final List<String> variables = Arrays.asList();
+		final List<String> actions = Arrays.asList("z1", "z2", "z3");
+		final boolean incomplete = true;
+		*/
 		
-		final List<LtlNode> nodes = LtlParser.loadProperties(ltlPath, 0);
-		final List<StringScenario> scenarios = StringScenario.loadScenarios(scenarioPath, -1);
+		final Problem pElevatorMini = new Problem("qbf/Unbeast-0.6b/my/elevator.ltl",
+				"qbf/Unbeast-0.6b/my/elevator-mini.sc",
+				Arrays.asList("e11", "e2", "e12", "e3", "e4"),
+				Arrays.asList(),
+				Arrays.asList("z1", "z2", "z3"),
+				true);
+		
+		final Problem pSwitch = new Problem("qbf/Unbeast-0.6b/my/switch.ltl",
+				"qbf/Unbeast-0.6b/my/switch.sc",
+				Arrays.asList("turnon", "turnoff", "touch"),
+				Arrays.asList(),
+				Arrays.asList("on", "off"),
+				false);
+		
+		final Problem p = pElevatorMini;
+		
+		final List<LtlNode> nodes = LtlParser.loadProperties(p.ltlPath, 0);
+		final List<StringScenario> scenarios = StringScenario.loadScenarios(p.scenarioPath, -1);
 		final List<String> specification = new ArrayList<>();
-		specification.addAll(ltlSpecification(nodes));
-		specification.addAll(scenarioSpecification(scenarios, actions));
-		final String problem = problemDescription(events, variables, actions, specification);
+		specification.addAll(ltlSpecification(nodes, p.incomplete));
+		specification.addAll(scenarioSpecification(scenarios, p.actions, p.incomplete));
+		final String problem = problemDescription(p.events, p.variables, p.actions, specification, p.incomplete);
 		System.out.println(problem);
 		try (PrintWriter pw = new PrintWriter(new File(outputPath))) {
 			pw.println(problem);
+		}
+		
+		final Process unbeast = Runtime.getRuntime().exec(
+				new String[] { "./unbeast", "../../" + outputPath, "--runSimulator" },
+				new String[0], new File("./qbf/Unbeast-0.6b"));
+		try (
+				final Scanner inputScanner = new Scanner(unbeast.getInputStream());
+				final Scanner errorScanner = new Scanner(unbeast.getErrorStream());
+				final PrintWriter writer = new PrintWriter(unbeast.getOutputStream(), true);
+		) {
+			while (true) {
+				final String line = inputScanner.nextLine();
+				System.out.println(line);
+				if (line.equals("Do you want the game position to be printed? (y/n)")) {
+					writer.println("y");
+					break;
+				}
+			}
+			while (true) {
+				final String line = inputScanner.nextLine();
+				System.out.println(line);
+				if (line.startsWith("+-+")) {
+					break;
+				}
+			}
+			final Game game = new Game(inputScanner, writer, p.actions, p.events,
+					p.variables, p.incomplete);
+			game.reconstructAutomaton();
+			unbeast.destroy();
+		}
+	}
+	
+	static class Game {
+		private final Scanner input;
+		private final PrintWriter output;
+		private final List<String> actions;
+		private final List<String> events;
+		private final List<String> variables; // FIXME add support
+		private final boolean incomplete;
+		
+		public Game(Scanner input, PrintWriter output, List<String> actions,
+				List<String> events, List<String> variables, boolean incomplete) {
+			this.input = input;
+			this.output = output;
+			this.actions = actions;
+			this.events = events;
+			this.variables = variables;
+			this.incomplete = incomplete;
+		}
+
+		static class GameState {
+			final int number;
+			final String description;
+			final List<String> inputPath;
+			final List<String> events = new ArrayList<>();
+			final List<GameState> transitions = new ArrayList<>();
+			final List<String> actions = new ArrayList<>();
+			
+			GameState(int actualNumber, String description, List<String> inputPath) {
+				this.number = actualNumber;
+				this.description = description;
+				this.inputPath = inputPath;
+			}
+		}
+		
+		private String eventString(int num) {
+			final StringBuilder combination = new StringBuilder();
+			for (int j = 0; j < num; j++) {
+				combination.append("0");
+			}
+			combination.append("1");
+			for (int j = num + 1; j < events.size(); j++) {
+				combination.append("0");
+			}
+			return combination.toString();
+		}
+		
+		private void command(String command) {
+			System.out.println("command : " + command);
+			output.println(command);
+		}
+		
+		private String read() {
+			final String line = input.nextLine();
+			System.out.println("response: " + line);
+			return line;
+		}
+		
+		private void reachState(GameState state) {
+			System.out.println("reaching " + state.description + "...");
+			//input.nextLine();
+			command("r");
+
+			for (String element : state.inputPath) {
+				command(element);
+				command("c");
+				read();
+			}
+			System.out.println("reached  " + state.description);
+		}
+		
+		private List<String> step(int num) {
+			command(eventString(num));
+			final String line1 = read();
+			final String[] tokens1 = line1.split("\\|");
+			command("c");
+			command(eventString(num));
+			final String line2 = read();
+			final String[] tokens2 = line2.split("\\|");
+			return Arrays.asList(
+					tokens1[tokens1.length - 3].trim(),
+					tokens1[tokens1.length - 2].trim(),
+					tokens1[tokens1.length - 1].trim(),
+					tokens2[tokens2.length - 3].trim()
+			);
+		}
+		
+		private String describeEvents(String eventStr) {
+			String varStr;
+			if (eventStr.length() > events.size()) {
+				varStr = "[" + eventStr.substring(events.size()) + "]";
+			} else {
+				varStr = "";
+			}
+			for (int i = 0; i < events.size(); i++) {
+				if (eventStr.charAt(i) == '1') {
+					return events.get(i) + varStr;
+				}
+			}
+			throw new AssertionError();
+		}
+		
+		private String describeActions(String actionStr) {
+			if (incomplete && actionStr.charAt(actions.size()) == '1') {
+				return null; // special output
+			}
+			final List<String> elements = new ArrayList<>();
+			for (int i = 0; i < actions.size(); i++) {
+				if (actionStr.charAt(i) == '1') {
+					elements.add(actions.get(i));
+				}
+			}
+			return "{" + String.join(", ", elements) + "}";
+		}
+		
+		void reconstructAutomaton() throws IOException {
+			final List<String> firstStateData = step(0);
+			final Map<String, GameState> states = new LinkedHashMap<>();
+			final Deque<GameState> unprocessedStates = new LinkedList<>();
+			int statesNum = 0;
+			final GameState initialState = new GameState(statesNum++,
+					firstStateData.get(0), Arrays.asList());
+			unprocessedStates.add(initialState);
+			states.put(initialState.description, initialState);
+			while (!unprocessedStates.isEmpty()) {
+				final GameState s = unprocessedStates.removeFirst();
+				for (int j = 0; j < events.size(); j++) {
+					reachState(s);
+					final List<String> reply = step(j);
+					System.out.println("transition: " + reply);
+					final String input = reply.get(1);
+					final String output = reply.get(2);
+					final String newDescription = reply.get(3);
+					GameState dest = states.get(newDescription);
+					if (dest == null) {
+						final List<String> newPath = new ArrayList<>(s.inputPath);
+						newPath.add(input);
+						dest = new GameState(statesNum++, newDescription, newPath);
+						states.put(newDescription, dest);
+						unprocessedStates.add(dest);
+					}
+					s.events.add(input);
+					s.actions.add(output);
+					s.transitions.add(dest);
+				}
+			}
+			final StringBuilder automaton = new StringBuilder();
+			automaton.append("digraph automaton {\n");
+			for (GameState s : states.values()) {
+				automaton.append("  " + s.number + ";\n");
+			}
+			for (GameState s : states.values()) {
+				for (int i = 0; i < s.transitions.size(); i++) {
+					final String input = describeEvents(s.events.get(i));
+					final int dest = s.transitions.get(i).number;
+					final String output = describeActions(s.actions.get(i));
+					if (output == null) {
+						continue;
+					}
+					automaton.append("  " + s.number + " -> "
+							+ dest + " [label=\""  + input + "/" + output + "\"];\n");
+				}
+			}
+			automaton.append("}\n");
+			
+			System.out.println();
+			System.out.println(automaton);
+			try (PrintWriter pw = new PrintWriter(new File("unbeast-automaton.dot"))) {
+				pw.println(automaton);
+			}
 		}
 	}
 }

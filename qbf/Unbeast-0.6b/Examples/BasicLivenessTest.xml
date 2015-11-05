@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<!DOCTYPE SynthesisProblem SYSTEM "SynSpec.dtd">
+<SynthesisProblem>
+  <Title>Just a test</Title>
+  <Description>A test with liveness components</Description>
+  <PathToLTLCompiler>ltl2ba-1.1/ltl2ba -f</PathToLTLCompiler>
+  <GlobalInputs>
+    <Bit>x</Bit>
+  </GlobalInputs>
+  <GlobalOutputs>
+    <Bit>y</Bit>
+  </GlobalOutputs>
+  <Assumptions>
+    <LTL><G><Not><Var>x</Var></Not></G></LTL>
+    <LTL><G><F>
+      <Or>
+        <And><Not><Var>x</Var></Not><Not><Var>y</Var></Not></And>
+        <And><Var>x</Var><Var>y</Var></And>
+      </Or>
+    </F></G></LTL>
+  </Assumptions>
+  <Specification>
+    <LTL><G>
+      <Or>
+        <And><Not><Var>x</Var></Not><Not><Var>y</Var></Not></And>
+        <And><Var>x</Var><Var>y</Var></And>
+      </Or>
+    </G></LTL>
+    <LTL><G><F><Var>y</Var></F></G></LTL>
+  </Specification>
+</SynthesisProblem>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<!DOCTYPE SynthesisProblem SYSTEM "SynSpec.dtd">
+<SynthesisProblem>
+  <Title>A variation of a mutex, unrealisable</Title>
+  <Description>A not quite complex example</Description>
+  <PathToLTLCompiler>ltl2ba-1.1/ltl2ba -f</PathToLTLCompiler>
+  <GlobalInputs>
+    <Bit>Request0</Bit>
+    <Bit>Request1</Bit>
+  </GlobalInputs>
+  <GlobalOutputs>
+    <Bit>Grant0</Bit>
+    <Bit>Grant1</Bit>
+  </GlobalOutputs>
+  <Assumptions>
+    <LTL><G><F><Not><Var>Request0</Var></Not></F></G></LTL>
+    <LTL><G><F><Not><Var>Request1</Var></Not></F></G></LTL>
+  </Assumptions>
+  <Specification>
+    <LTL><G><And><Not><Var>Grant0</Var></Not>
+       <Not><Var>Grant1</Var></Not></And></G></LTL>
+    <LTL><G><Or><Not><Var>Request0</Var></Not><F>
+       <Var>Grant0</Var></F></Or></G></LTL>
+    <LTL><G><Or><Not><Var>Request1</Var></Not><F>
+       <Var>Grant1</Var></F></Or></G></LTL>
+  </Specification>
+</SynthesisProblem>

@@ -1,0 +1,1760 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<!DOCTYPE SynthesisProblem SYSTEM "SynSpec.dtd">
+<SynthesisProblem>
+  <Title>A mutex</Title>
+  <Description>A not quite complex example</Description>
+  <PathToLTLCompiler>./ltl2tgba-wrapper</PathToLTLCompiler>
+  <GlobalInputs>
+    <Bit>e11</Bit>
+    <Bit>e12</Bit>
+    <Bit>e2</Bit>
+    <Bit>e3</Bit>
+    <Bit>e4</Bit>
+  </GlobalInputs>
+  <GlobalOutputs>
+    <Bit>z1</Bit>
+    <Bit>z2</Bit>
+    <Bit>z3</Bit>
+    <Bit>z239</Bit>
+  </GlobalOutputs>
+  <Assumptions>
+     <LTL>
+    <G>
+    	<Or>
+ 	    <Not>
+		<And> 
+		    <Var>e2</Var>
+		    <Not><Var>e11</Var></Not>
+		    <Not><Var>e12</Var></Not>
+		    <Not><Var>e3</Var></Not>
+		    <Not><Var>e4</Var></Not>
+		</And>
+	    </Not>
+            <X>
+                <Or>
+		    <And> 
+			<Var>e11</Var>
+			<Not><Var>e12</Var></Not>
+			<Not><Var>e2</Var></Not>
+			<Not><Var>e3</Var></Not>
+			<Not><Var>e4</Var></Not>
+		    </And>
+		    <And> 
+			<Var>e12</Var>
+			<Not><Var>e11</Var></Not>
+			<Not><Var>e2</Var></Not>
+			<Not><Var>e3</Var></Not>
+			<Not><Var>e4</Var></Not>
+		    </And>
+                </Or>
+            </X>
+        </Or>
+    </G>
+</LTL>
+<LTL>
+    <G>
+    	<Or>
+ 	    <Not>
+		<And> 
+		    <Var>e11</Var>
+		    <Not><Var>e12</Var></Not>
+		    <Not><Var>e2</Var></Not>
+		    <Not><Var>e3</Var></Not>
+		    <Not><Var>e4</Var></Not>
+		</And>
+	    </Not>
+            <X>
+                <Or>
+		    <And> 
+			<Var>e4</Var>
+			<Not><Var>e11</Var></Not>
+			<Not><Var>e12</Var></Not>
+			<Not><Var>e2</Var></Not>
+			<Not><Var>e3</Var></Not>
+		    </And>
+		    <And> 
+			<Var>e2</Var>
+			<Not><Var>e11</Var></Not>
+			<Not><Var>e12</Var></Not>
+			<Not><Var>e3</Var></Not>
+			<Not><Var>e4</Var></Not>
+		    </And>
+                </Or>
+            </X>
+        </Or>
+    </G>
+</LTL>
+<LTL>
+    <G>
+    	<Or>
+ 	    <Not>
+		<And> 
+		    <Var>z1</Var>
+		    <Not><Var>z2</Var></Not>
+		    <Not><Var>z3</Var></Not>
+		    <Not><Var>z239</Var></Not>
+		</And>
+	    </Not>
+            <X>
+                <Or>
+		    <And> 
+			<Var>e2</Var>
+			<Not><Var>e11</Var></Not>
+			<Not><Var>e12</Var></Not>
+			<Not><Var>e3</Var></Not>
+			<Not><Var>e4</Var></Not>
+		    </And>
+		    <And> 
+			<Var>e4</Var>
+			<Not><Var>e11</Var></Not>
+			<Not><Var>e12</Var></Not>
+			<Not><Var>e2</Var></Not>
+			<Not><Var>e3</Var></Not>
+		    </And>
+                </Or>
+            </X>
+        </Or>
+    </G>
+</LTL>
+  </Assumptions>
+  <Specification>
+     
+<LTL>
+    
+    <Or>
+	<Not>
+	    <And>
+    <Var>e11</Var>
+<Not><Var>e12</Var></Not>
+<Not><Var>e2</Var></Not>
+<Not><Var>e3</Var></Not>
+<Not><Var>e4</Var></Not>
+
+</And>
+	</Not>
+	<And>
+	    
+<And>
+    
+<Var>z1</Var>
+<Not><Var>z239</Var></Not>
+<Not><Var>z2</Var></Not>
+<Not><Var>z3</Var></Not>
+</And>
+
+	    <X>
+		
+    <Or>
+	<Not>
+	    <And>
+    <Var>e2</Var>
+<Not><Var>e11</Var></Not>
+<Not><Var>e12</Var></Not>
+<Not><Var>e3</Var></Not>
+<Not><Var>e4</Var></Not>
+
+</And>
+	</Not>
+	<And>
+	    
+<And>
+    
+<Not><Var>z1</Var></Not>
+<Not><Var>z239</Var></Not>
+<Not><Var>z2</Var></Not>
+<Not><Var>z3</Var></Not>
+</And>
+
+	    <X>
+		
+    <Or>
+	<Not>
+	    <And>
+    <Var>e12</Var>
+<Not><Var>e11</Var></Not>
+<Not><Var>e2</Var></Not>
+<Not><Var>e3</Var></Not>
+<Not><Var>e4</Var></Not>
+
+</And>
+	</Not>
+	<And>
+	    
+<And>
+    
+<Var>z2</Var>
+<Not><Var>z239</Var></Not>
+<Not><Var>z1</Var></Not>
+<Not><Var>z3</Var></Not>
+</And>
+
+	    <X>
+		
+    <Or>
+	<Not>
+	    <And>
+    <Var>e2</Var>
+<Not><Var>e11</Var></Not>
+<Not><Var>e12</Var></Not>
+<Not><Var>e3</Var></Not>
+<Not><Var>e4</Var></Not>
+
+</And>
+	</Not>
+	
+<And>
+    
+<Not><Var>z1</Var></Not>
+<Not><Var>z239</Var></Not>
+<Not><Var>z2</Var></Not>
+<Not><Var>z3</Var></Not>
+</And>
+
+    </Or>
+	    </X>
+	</And>
+    </Or>>
+	    </X>
+	</And>
+    </Or>>
+	    </X>
+	</And>
+    </Or>>
+</LTL>
+
+
+<LTL>
+    
+    <Or>
+	<Not>
+	    <And>
+    <Var>e11</Var>
+<Not><Var>e12</Var></Not>
+<Not><Var>e2</Var></Not>
+<Not><Var>e3</Var></Not>
+<Not><Var>e4</Var></Not>
+
+</And>
+	</Not>
+	<And>
+	    
+<And>
+    
+<Var>z1</Var>
+<Not><Var>z239</Var></Not>
+<Not><Var>z2</Var></Not>
+<Not><Var>z3</Var></Not>
+</And>
+
+	    <X>
+		
+    <Or>
+	<Not>
+	    <And>
+    <Var>e2</Var>
+<Not><Var>e11</Var></Not>
+<Not><Var>e12</Var></Not>
+<Not><Var>e3</Var></Not>
+<Not><Var>e4</Var></Not>
+
+</And>
+	</Not>
+	<And>
+	    
+<And>
+    
+<Not><Var>z1</Var></Not>
+<Not><Var>z239</Var></Not>
+<Not><Var>z2</Var></Not>
+<Not><Var>z3</Var></Not>
+</And>
+
+	    <X>
+		
+    <Or>
+	<Not>
+	    <And>
+    <Var>e12</Var>
+<Not><Var>e11</Var></Not>
+<Not><Var>e2</Var></Not>
+<Not><Var>e3</Var></Not>
+<Not><Var>e4</Var></Not>
+
+</And>
+	</Not>
+	<And>
+	    
+<And>
+    
+<Var>z2</Var>
+<Not><Var>z239</Var></Not>
+<Not><Var>z1</Var></Not>
+<Not><Var>z3</Var></Not>
+</And>
+
+	    <X>
+		
+    <Or>
+	<Not>
+	    <And>
+    <Var>e2</Var>
+<Not><Var>e11</Var></Not>
+<Not><Var>e12</Var></Not>
+<Not><Var>e3</Var></Not>
+<Not><Var>e4</Var></Not>
+
+</And>
+	</Not>
+	<And>
+	    
+<And>
+    
+<Not><Var>z1</Var></Not>
+<Not><Var>z239</Var></Not>
+<Not><Var>z2</Var></Not>
+<Not><Var>z3</Var></Not>
+</And>
+
+	    <X>
+		
+    <Or>
+	<Not>
+	    <And>
+    <Var>e11</Var>
+<Not><Var>e12</Var></Not>
+<Not><Var>e2</Var></Not>
+<Not><Var>e3</Var></Not>
+<Not><Var>e4</Var></Not>
+
+</And>
+	</Not>
+	<And>
+	    
+<And>
+    
+<Var>z1</Var>
+<Not><Var>z239</Var></Not>
+<Not><Var>z2</Var></Not>
+<Not><Var>z3</Var></Not>
+</And>
+
+	    <X>
+		
+    <Or>
+	<Not>
+	    <And>
+    <Var>e2</Var>
+<Not><Var>e11</Var></Not>
+<Not><Var>e12</Var></Not>
+<Not><Var>e3</Var></Not>
+<Not><Var>e4</Var></Not>
+
+</And>
+	</Not>
+	<And>
+	    
+<And>
+    
+<Not><Var>z1</Var></Not>
+<Not><Var>z239</Var></Not>
+<Not><Var>z2</Var></Not>
+<Not><Var>z3</Var></Not>
+</And>
+
+	    <X>
+		
+    <Or>
+	<Not>
+	    <And>
+    <Var>e12</Var>
+<Not><Var>e11</Var></Not>
+<Not><Var>e2</Var></Not>
+<Not><Var>e3</Var></Not>
+<Not><Var>e4</Var></Not>
+
+</And>
+	</Not>
+	<And>
+	    
+<And>
+    
+<Var>z2</Var>
+<Not><Var>z239</Var></Not>
+<Not><Var>z1</Var></Not>
+<Not><Var>z3</Var></Not>
+</And>
+
+	    <X>
+		
+    <Or>
+	<Not>
+	    <And>
+    <Var>e2</Var>
+<Not><Var>e11</Var></Not>
+<Not><Var>e12</Var></Not>
+<Not><Var>e3</Var></Not>
+<Not><Var>e4</Var></Not>
+
+</And>
+	</Not>
+	
+<And>
+    
+<Not><Var>z1</Var></Not>
+<Not><Var>z239</Var></Not>
+<Not><Var>z2</Var></Not>
+<Not><Var>z3</Var></Not>
+</And>
+
+    </Or>
+	    </X>
+	</And>
+    </Or>>
+	    </X>
+	</And>
+    </Or>>
+	    </X>
+	</And>
+    </Or>>
+	    </X>
+	</And>
+    </Or>>
+	    </X>
+	</And>
+    </Or>>
+	    </X>
+	</And>
+    </Or>>
+	    </X>
+	</And>
+    </Or>>
+</LTL>
+
+
+<LTL>
+    
+    <Or>
+	<Not>
+	    <And>
+    <Var>e11</Var>
+<Not><Var>e12</Var></Not>
+<Not><Var>e2</Var></Not>
+<Not><Var>e3</Var></Not>
+<Not><Var>e4</Var></Not>
+
+</And>
+	</Not>
+	<And>
+	    
+<And>
+    
+<Var>z1</Var>
+<Not><Var>z239</Var></Not>
+<Not><Var>z2</Var></Not>
+<Not><Var>z3</Var></Not>
+</And>
+
+	    <X>
+		
+    <Or>
+	<Not>
+	    <And>
+    <Var>e2</Var>
+<Not><Var>e11</Var></Not>
+<Not><Var>e12</Var></Not>
+<Not><Var>e3</Var></Not>
+<Not><Var>e4</Var></Not>
+
+</And>
+	</Not>
+	<And>
+	    
+<And>
+    
+<Not><Var>z1</Var></Not>
+<Not><Var>z239</Var></Not>
+<Not><Var>z2</Var></Not>
+<Not><Var>z3</Var></Not>
+</And>
+
+	    <X>
+		
+    <Or>
+	<Not>
+	    <And>
+    <Var>e12</Var>
+<Not><Var>e11</Var></Not>
+<Not><Var>e2</Var></Not>
+<Not><Var>e3</Var></Not>
+<Not><Var>e4</Var></Not>
+
+</And>
+	</Not>
+	<And>
+	    
+<And>
+    
+<Var>z2</Var>
+<Not><Var>z239</Var></Not>
+<Not><Var>z1</Var></Not>
+<Not><Var>z3</Var></Not>
+</And>
+
+	    <X>
+		
+    <Or>
+	<Not>
+	    <And>
+    <Var>e3</Var>
+<Not><Var>e11</Var></Not>
+<Not><Var>e12</Var></Not>
+<Not><Var>e2</Var></Not>
+<Not><Var>e4</Var></Not>
+
+</And>
+	</Not>
+	<And>
+	    
+<And>
+    
+<Var>z1</Var>
+<Not><Var>z239</Var></Not>
+<Not><Var>z2</Var></Not>
+<Not><Var>z3</Var></Not>
+</And>
+
+	    <X>
+		
+    <Or>
+	<Not>
+	    <And>
+    <Var>e2</Var>
+<Not><Var>e11</Var></Not>
+<Not><Var>e12</Var></Not>
+<Not><Var>e3</Var></Not>
+<Not><Var>e4</Var></Not>
+
+</And>
+	</Not>
+	<And>
+	    
+<And>
+    
+<Not><Var>z1</Var></Not>
+<Not><Var>z239</Var></Not>
+<Not><Var>z2</Var></Not>
+<Not><Var>z3</Var></Not>
+</And>
+
+	    <X>
+		
+    <Or>
+	<Not>
+	    <And>
+    <Var>e12</Var>
+<Not><Var>e11</Var></Not>
+<Not><Var>e2</Var></Not>
+<Not><Var>e3</Var></Not>
+<Not><Var>e4</Var></Not>
+
+</And>
+	</Not>
+	<And>
+	    
+<And>
+    
+<Var>z2</Var>
+<Not><Var>z239</Var></Not>
+<Not><Var>z1</Var></Not>
+<Not><Var>z3</Var></Not>
+</And>
+
+	    <X>
+		
+    <Or>
+	<Not>
+	    <And>
+    <Var>e2</Var>
+<Not><Var>e11</Var></Not>
+<Not><Var>e12</Var></Not>
+<Not><Var>e3</Var></Not>
+<Not><Var>e4</Var></Not>
+
+</And>
+	</Not>
+	
+<And>
+    
+<Not><Var>z1</Var></Not>
+<Not><Var>z239</Var></Not>
+<Not><Var>z2</Var></Not>
+<Not><Var>z3</Var></Not>
+</And>
+
+    </Or>
+	    </X>
+	</And>
+    </Or>>
+	    </X>
+	</And>
+    </Or>>
+	    </X>
+	</And>
+    </Or>>
+	    </X>
+	</And>
+    </Or>>
+	    </X>
+	</And>
+    </Or>>
+	    </X>
+	</And>
+    </Or>>
+</LTL>
+
+
+<LTL>
+    
+    <Or>
+	<Not>
+	    <And>
+    <Var>e11</Var>
+<Not><Var>e12</Var></Not>
+<Not><Var>e2</Var></Not>
+<Not><Var>e3</Var></Not>
+<Not><Var>e4</Var></Not>
+
+</And>
+	</Not>
+	<And>
+	    
+<And>
+    
+<Var>z1</Var>
+<Not><Var>z239</Var></Not>
+<Not><Var>z2</Var></Not>
+<Not><Var>z3</Var></Not>
+</And>
+
+	    <X>
+		
+    <Or>
+	<Not>
+	    <And>
+    <Var>e2</Var>
+<Not><Var>e11</Var></Not>
+<Not><Var>e12</Var></Not>
+<Not><Var>e3</Var></Not>
+<Not><Var>e4</Var></Not>
+
+</And>
+	</Not>
+	<And>
+	    
+<And>
+    
+<Not><Var>z1</Var></Not>
+<Not><Var>z239</Var></Not>
+<Not><Var>z2</Var></Not>
+<Not><Var>z3</Var></Not>
+</And>
+
+	    <X>
+		
+    <Or>
+	<Not>
+	    <And>
+    <Var>e12</Var>
+<Not><Var>e11</Var></Not>
+<Not><Var>e2</Var></Not>
+<Not><Var>e3</Var></Not>
+<Not><Var>e4</Var></Not>
+
+</And>
+	</Not>
+	<And>
+	    
+<And>
+    
+<Var>z2</Var>
+<Not><Var>z239</Var></Not>
+<Not><Var>z1</Var></Not>
+<Not><Var>z3</Var></Not>
+</And>
+
+	    <X>
+		
+    <Or>
+	<Not>
+	    <And>
+    <Var>e2</Var>
+<Not><Var>e11</Var></Not>
+<Not><Var>e12</Var></Not>
+<Not><Var>e3</Var></Not>
+<Not><Var>e4</Var></Not>
+
+</And>
+	</Not>
+	<And>
+	    
+<And>
+    
+<Not><Var>z1</Var></Not>
+<Not><Var>z239</Var></Not>
+<Not><Var>z2</Var></Not>
+<Not><Var>z3</Var></Not>
+</And>
+
+	    <X>
+		
+    <Or>
+	<Not>
+	    <And>
+    <Var>e11</Var>
+<Not><Var>e12</Var></Not>
+<Not><Var>e2</Var></Not>
+<Not><Var>e3</Var></Not>
+<Not><Var>e4</Var></Not>
+
+</And>
+	</Not>
+	<And>
+	    
+<And>
+    
+<Var>z1</Var>
+<Not><Var>z239</Var></Not>
+<Not><Var>z2</Var></Not>
+<Not><Var>z3</Var></Not>
+</And>
+
+	    <X>
+		
+    <Or>
+	<Not>
+	    <And>
+    <Var>e2</Var>
+<Not><Var>e11</Var></Not>
+<Not><Var>e12</Var></Not>
+<Not><Var>e3</Var></Not>
+<Not><Var>e4</Var></Not>
+
+</And>
+	</Not>
+	<And>
+	    
+<And>
+    
+<Not><Var>z1</Var></Not>
+<Not><Var>z239</Var></Not>
+<Not><Var>z2</Var></Not>
+<Not><Var>z3</Var></Not>
+</And>
+
+	    <X>
+		
+    <Or>
+	<Not>
+	    <And>
+    <Var>e12</Var>
+<Not><Var>e11</Var></Not>
+<Not><Var>e2</Var></Not>
+<Not><Var>e3</Var></Not>
+<Not><Var>e4</Var></Not>
+
+</And>
+	</Not>
+	<And>
+	    
+<And>
+    
+<Var>z2</Var>
+<Not><Var>z239</Var></Not>
+<Not><Var>z1</Var></Not>
+<Not><Var>z3</Var></Not>
+</And>
+
+	    <X>
+		
+    <Or>
+	<Not>
+	    <And>
+    <Var>e3</Var>
+<Not><Var>e11</Var></Not>
+<Not><Var>e12</Var></Not>
+<Not><Var>e2</Var></Not>
+<Not><Var>e4</Var></Not>
+
+</And>
+	</Not>
+	<And>
+	    
+<And>
+    
+<Var>z1</Var>
+<Not><Var>z239</Var></Not>
+<Not><Var>z2</Var></Not>
+<Not><Var>z3</Var></Not>
+</And>
+
+	    <X>
+		
+    <Or>
+	<Not>
+	    <And>
+    <Var>e2</Var>
+<Not><Var>e11</Var></Not>
+<Not><Var>e12</Var></Not>
+<Not><Var>e3</Var></Not>
+<Not><Var>e4</Var></Not>
+
+</And>
+	</Not>
+	<And>
+	    
+<And>
+    
+<Not><Var>z1</Var></Not>
+<Not><Var>z239</Var></Not>
+<Not><Var>z2</Var></Not>
+<Not><Var>z3</Var></Not>
+</And>
+
+	    <X>
+		
+    <Or>
+	<Not>
+	    <And>
+    <Var>e12</Var>
+<Not><Var>e11</Var></Not>
+<Not><Var>e2</Var></Not>
+<Not><Var>e3</Var></Not>
+<Not><Var>e4</Var></Not>
+
+</And>
+	</Not>
+	<And>
+	    
+<And>
+    
+<Var>z2</Var>
+<Not><Var>z239</Var></Not>
+<Not><Var>z1</Var></Not>
+<Not><Var>z3</Var></Not>
+</And>
+
+	    <X>
+		
+    <Or>
+	<Not>
+	    <And>
+    <Var>e2</Var>
+<Not><Var>e11</Var></Not>
+<Not><Var>e12</Var></Not>
+<Not><Var>e3</Var></Not>
+<Not><Var>e4</Var></Not>
+
+</And>
+	</Not>
+	
+<And>
+    
+<Not><Var>z1</Var></Not>
+<Not><Var>z239</Var></Not>
+<Not><Var>z2</Var></Not>
+<Not><Var>z3</Var></Not>
+</And>
+
+    </Or>
+	    </X>
+	</And>
+    </Or>>
+	    </X>
+	</And>
+    </Or>>
+	    </X>
+	</And>
+    </Or>>
+	    </X>
+	</And>
+    </Or>>
+	    </X>
+	</And>
+    </Or>>
+	    </X>
+	</And>
+    </Or>>
+	    </X>
+	</And>
+    </Or>>
+	    </X>
+	</And>
+    </Or>>
+	    </X>
+	</And>
+    </Or>>
+	    </X>
+	</And>
+    </Or>>
+</LTL>
+
+
+<LTL>
+    
+    <Or>
+	<Not>
+	    <And>
+    <Var>e11</Var>
+<Not><Var>e12</Var></Not>
+<Not><Var>e2</Var></Not>
+<Not><Var>e3</Var></Not>
+<Not><Var>e4</Var></Not>
+
+</And>
+	</Not>
+	<And>
+	    
+<And>
+    
+<Var>z1</Var>
+<Not><Var>z239</Var></Not>
+<Not><Var>z2</Var></Not>
+<Not><Var>z3</Var></Not>
+</And>
+
+	    <X>
+		
+    <Or>
+	<Not>
+	    <And>
+    <Var>e2</Var>
+<Not><Var>e11</Var></Not>
+<Not><Var>e12</Var></Not>
+<Not><Var>e3</Var></Not>
+<Not><Var>e4</Var></Not>
+
+</And>
+	</Not>
+	<And>
+	    
+<And>
+    
+<Not><Var>z1</Var></Not>
+<Not><Var>z239</Var></Not>
+<Not><Var>z2</Var></Not>
+<Not><Var>z3</Var></Not>
+</And>
+
+	    <X>
+		
+    <Or>
+	<Not>
+	    <And>
+    <Var>e12</Var>
+<Not><Var>e11</Var></Not>
+<Not><Var>e2</Var></Not>
+<Not><Var>e3</Var></Not>
+<Not><Var>e4</Var></Not>
+
+</And>
+	</Not>
+	<And>
+	    
+<And>
+    
+<Var>z2</Var>
+<Not><Var>z239</Var></Not>
+<Not><Var>z1</Var></Not>
+<Not><Var>z3</Var></Not>
+</And>
+
+	    <X>
+		
+    <Or>
+	<Not>
+	    <And>
+    <Var>e3</Var>
+<Not><Var>e11</Var></Not>
+<Not><Var>e12</Var></Not>
+<Not><Var>e2</Var></Not>
+<Not><Var>e4</Var></Not>
+
+</And>
+	</Not>
+	<And>
+	    
+<And>
+    
+<Var>z1</Var>
+<Not><Var>z239</Var></Not>
+<Not><Var>z2</Var></Not>
+<Not><Var>z3</Var></Not>
+</And>
+
+	    <X>
+		
+    <Or>
+	<Not>
+	    <And>
+    <Var>e2</Var>
+<Not><Var>e11</Var></Not>
+<Not><Var>e12</Var></Not>
+<Not><Var>e3</Var></Not>
+<Not><Var>e4</Var></Not>
+
+</And>
+	</Not>
+	<And>
+	    
+<And>
+    
+<Not><Var>z1</Var></Not>
+<Not><Var>z239</Var></Not>
+<Not><Var>z2</Var></Not>
+<Not><Var>z3</Var></Not>
+</And>
+
+	    <X>
+		
+    <Or>
+	<Not>
+	    <And>
+    <Var>e12</Var>
+<Not><Var>e11</Var></Not>
+<Not><Var>e2</Var></Not>
+<Not><Var>e3</Var></Not>
+<Not><Var>e4</Var></Not>
+
+</And>
+	</Not>
+	<And>
+	    
+<And>
+    
+<Var>z2</Var>
+<Not><Var>z239</Var></Not>
+<Not><Var>z1</Var></Not>
+<Not><Var>z3</Var></Not>
+</And>
+
+	    <X>
+		
+    <Or>
+	<Not>
+	    <And>
+    <Var>e3</Var>
+<Not><Var>e11</Var></Not>
+<Not><Var>e12</Var></Not>
+<Not><Var>e2</Var></Not>
+<Not><Var>e4</Var></Not>
+
+</And>
+	</Not>
+	<And>
+	    
+<And>
+    
+<Var>z1</Var>
+<Not><Var>z239</Var></Not>
+<Not><Var>z2</Var></Not>
+<Not><Var>z3</Var></Not>
+</And>
+
+	    <X>
+		
+    <Or>
+	<Not>
+	    <And>
+    <Var>e2</Var>
+<Not><Var>e11</Var></Not>
+<Not><Var>e12</Var></Not>
+<Not><Var>e3</Var></Not>
+<Not><Var>e4</Var></Not>
+
+</And>
+	</Not>
+	<And>
+	    
+<And>
+    
+<Not><Var>z1</Var></Not>
+<Not><Var>z239</Var></Not>
+<Not><Var>z2</Var></Not>
+<Not><Var>z3</Var></Not>
+</And>
+
+	    <X>
+		
+    <Or>
+	<Not>
+	    <And>
+    <Var>e12</Var>
+<Not><Var>e11</Var></Not>
+<Not><Var>e2</Var></Not>
+<Not><Var>e3</Var></Not>
+<Not><Var>e4</Var></Not>
+
+</And>
+	</Not>
+	<And>
+	    
+<And>
+    
+<Var>z2</Var>
+<Not><Var>z239</Var></Not>
+<Not><Var>z1</Var></Not>
+<Not><Var>z3</Var></Not>
+</And>
+
+	    <X>
+		
+    <Or>
+	<Not>
+	    <And>
+    <Var>e2</Var>
+<Not><Var>e11</Var></Not>
+<Not><Var>e12</Var></Not>
+<Not><Var>e3</Var></Not>
+<Not><Var>e4</Var></Not>
+
+</And>
+	</Not>
+	
+<And>
+    
+<Not><Var>z1</Var></Not>
+<Not><Var>z239</Var></Not>
+<Not><Var>z2</Var></Not>
+<Not><Var>z3</Var></Not>
+</And>
+
+    </Or>
+	    </X>
+	</And>
+    </Or>>
+	    </X>
+	</And>
+    </Or>>
+	    </X>
+	</And>
+    </Or>>
+	    </X>
+	</And>
+    </Or>>
+	    </X>
+	</And>
+    </Or>>
+	    </X>
+	</And>
+    </Or>>
+	    </X>
+	</And>
+    </Or>>
+	    </X>
+	</And>
+    </Or>>
+	    </X>
+	</And>
+    </Or>>
+</LTL>
+
+
+<LTL>
+    
+    <Or>
+	<Not>
+	    <And>
+    <Var>e11</Var>
+<Not><Var>e12</Var></Not>
+<Not><Var>e2</Var></Not>
+<Not><Var>e3</Var></Not>
+<Not><Var>e4</Var></Not>
+
+</And>
+	</Not>
+	<And>
+	    
+<And>
+    
+<Var>z1</Var>
+<Not><Var>z239</Var></Not>
+<Not><Var>z2</Var></Not>
+<Not><Var>z3</Var></Not>
+</And>
+
+	    <X>
+		
+    <Or>
+	<Not>
+	    <And>
+    <Var>e4</Var>
+<Not><Var>e11</Var></Not>
+<Not><Var>e12</Var></Not>
+<Not><Var>e2</Var></Not>
+<Not><Var>e3</Var></Not>
+
+</And>
+	</Not>
+	
+<And>
+    
+<Var>z3</Var>
+<Not><Var>z239</Var></Not>
+<Not><Var>z1</Var></Not>
+<Not><Var>z2</Var></Not>
+</And>
+
+    </Or>
+	    </X>
+	</And>
+    </Or>>
+</LTL>
+
+
+<LTL>
+    
+    <Or>
+	<Not>
+	    <And>
+    <Var>e11</Var>
+<Not><Var>e12</Var></Not>
+<Not><Var>e2</Var></Not>
+<Not><Var>e3</Var></Not>
+<Not><Var>e4</Var></Not>
+
+</And>
+	</Not>
+	<And>
+	    
+<And>
+    
+<Var>z1</Var>
+<Not><Var>z239</Var></Not>
+<Not><Var>z2</Var></Not>
+<Not><Var>z3</Var></Not>
+</And>
+
+	    <X>
+		
+    <Or>
+	<Not>
+	    <And>
+    <Var>e2</Var>
+<Not><Var>e11</Var></Not>
+<Not><Var>e12</Var></Not>
+<Not><Var>e3</Var></Not>
+<Not><Var>e4</Var></Not>
+
+</And>
+	</Not>
+	<And>
+	    
+<And>
+    
+<Not><Var>z1</Var></Not>
+<Not><Var>z239</Var></Not>
+<Not><Var>z2</Var></Not>
+<Not><Var>z3</Var></Not>
+</And>
+
+	    <X>
+		
+    <Or>
+	<Not>
+	    <And>
+    <Var>e12</Var>
+<Not><Var>e11</Var></Not>
+<Not><Var>e2</Var></Not>
+<Not><Var>e3</Var></Not>
+<Not><Var>e4</Var></Not>
+
+</And>
+	</Not>
+	<And>
+	    
+<And>
+    
+<Var>z2</Var>
+<Not><Var>z239</Var></Not>
+<Not><Var>z1</Var></Not>
+<Not><Var>z3</Var></Not>
+</And>
+
+	    <X>
+		
+    <Or>
+	<Not>
+	    <And>
+    <Var>e4</Var>
+<Not><Var>e11</Var></Not>
+<Not><Var>e12</Var></Not>
+<Not><Var>e2</Var></Not>
+<Not><Var>e3</Var></Not>
+
+</And>
+	</Not>
+	
+<And>
+    
+<Var>z3</Var>
+<Not><Var>z239</Var></Not>
+<Not><Var>z1</Var></Not>
+<Not><Var>z2</Var></Not>
+</And>
+
+    </Or>
+	    </X>
+	</And>
+    </Or>>
+	    </X>
+	</And>
+    </Or>>
+	    </X>
+	</And>
+    </Or>>
+</LTL>
+
+
+<LTL>
+    
+    <Or>
+	<Not>
+	    <And>
+    <Var>e11</Var>
+<Not><Var>e12</Var></Not>
+<Not><Var>e2</Var></Not>
+<Not><Var>e3</Var></Not>
+<Not><Var>e4</Var></Not>
+
+</And>
+	</Not>
+	<And>
+	    
+<And>
+    
+<Var>z1</Var>
+<Not><Var>z239</Var></Not>
+<Not><Var>z2</Var></Not>
+<Not><Var>z3</Var></Not>
+</And>
+
+	    <X>
+		
+    <Or>
+	<Not>
+	    <And>
+    <Var>e2</Var>
+<Not><Var>e11</Var></Not>
+<Not><Var>e12</Var></Not>
+<Not><Var>e3</Var></Not>
+<Not><Var>e4</Var></Not>
+
+</And>
+	</Not>
+	<And>
+	    
+<And>
+    
+<Not><Var>z1</Var></Not>
+<Not><Var>z239</Var></Not>
+<Not><Var>z2</Var></Not>
+<Not><Var>z3</Var></Not>
+</And>
+
+	    <X>
+		
+    <Or>
+	<Not>
+	    <And>
+    <Var>e12</Var>
+<Not><Var>e11</Var></Not>
+<Not><Var>e2</Var></Not>
+<Not><Var>e3</Var></Not>
+<Not><Var>e4</Var></Not>
+
+</And>
+	</Not>
+	<And>
+	    
+<And>
+    
+<Var>z2</Var>
+<Not><Var>z239</Var></Not>
+<Not><Var>z1</Var></Not>
+<Not><Var>z3</Var></Not>
+</And>
+
+	    <X>
+		
+    <Or>
+	<Not>
+	    <And>
+    <Var>e2</Var>
+<Not><Var>e11</Var></Not>
+<Not><Var>e12</Var></Not>
+<Not><Var>e3</Var></Not>
+<Not><Var>e4</Var></Not>
+
+</And>
+	</Not>
+	<And>
+	    
+<And>
+    
+<Not><Var>z1</Var></Not>
+<Not><Var>z239</Var></Not>
+<Not><Var>z2</Var></Not>
+<Not><Var>z3</Var></Not>
+</And>
+
+	    <X>
+		
+    <Or>
+	<Not>
+	    <And>
+    <Var>e11</Var>
+<Not><Var>e12</Var></Not>
+<Not><Var>e2</Var></Not>
+<Not><Var>e3</Var></Not>
+<Not><Var>e4</Var></Not>
+
+</And>
+	</Not>
+	<And>
+	    
+<And>
+    
+<Var>z1</Var>
+<Not><Var>z239</Var></Not>
+<Not><Var>z2</Var></Not>
+<Not><Var>z3</Var></Not>
+</And>
+
+	    <X>
+		
+    <Or>
+	<Not>
+	    <And>
+    <Var>e4</Var>
+<Not><Var>e11</Var></Not>
+<Not><Var>e12</Var></Not>
+<Not><Var>e2</Var></Not>
+<Not><Var>e3</Var></Not>
+
+</And>
+	</Not>
+	
+<And>
+    
+<Var>z3</Var>
+<Not><Var>z239</Var></Not>
+<Not><Var>z1</Var></Not>
+<Not><Var>z2</Var></Not>
+</And>
+
+    </Or>
+	    </X>
+	</And>
+    </Or>>
+	    </X>
+	</And>
+    </Or>>
+	    </X>
+	</And>
+    </Or>>
+	    </X>
+	</And>
+    </Or>>
+	    </X>
+	</And>
+    </Or>>
+</LTL>
+
+
+<LTL>
+    
+    <Or>
+	<Not>
+	    <And>
+    <Var>e11</Var>
+<Not><Var>e12</Var></Not>
+<Not><Var>e2</Var></Not>
+<Not><Var>e3</Var></Not>
+<Not><Var>e4</Var></Not>
+
+</And>
+	</Not>
+	<And>
+	    
+<And>
+    
+<Var>z1</Var>
+<Not><Var>z239</Var></Not>
+<Not><Var>z2</Var></Not>
+<Not><Var>z3</Var></Not>
+</And>
+
+	    <X>
+		
+    <Or>
+	<Not>
+	    <And>
+    <Var>e2</Var>
+<Not><Var>e11</Var></Not>
+<Not><Var>e12</Var></Not>
+<Not><Var>e3</Var></Not>
+<Not><Var>e4</Var></Not>
+
+</And>
+	</Not>
+	<And>
+	    
+<And>
+    
+<Not><Var>z1</Var></Not>
+<Not><Var>z239</Var></Not>
+<Not><Var>z2</Var></Not>
+<Not><Var>z3</Var></Not>
+</And>
+
+	    <X>
+		
+    <Or>
+	<Not>
+	    <And>
+    <Var>e12</Var>
+<Not><Var>e11</Var></Not>
+<Not><Var>e2</Var></Not>
+<Not><Var>e3</Var></Not>
+<Not><Var>e4</Var></Not>
+
+</And>
+	</Not>
+	<And>
+	    
+<And>
+    
+<Var>z2</Var>
+<Not><Var>z239</Var></Not>
+<Not><Var>z1</Var></Not>
+<Not><Var>z3</Var></Not>
+</And>
+
+	    <X>
+		
+    <Or>
+	<Not>
+	    <And>
+    <Var>e3</Var>
+<Not><Var>e11</Var></Not>
+<Not><Var>e12</Var></Not>
+<Not><Var>e2</Var></Not>
+<Not><Var>e4</Var></Not>
+
+</And>
+	</Not>
+	<And>
+	    
+<And>
+    
+<Var>z1</Var>
+<Not><Var>z239</Var></Not>
+<Not><Var>z2</Var></Not>
+<Not><Var>z3</Var></Not>
+</And>
+
+	    <X>
+		
+    <Or>
+	<Not>
+	    <And>
+    <Var>e4</Var>
+<Not><Var>e11</Var></Not>
+<Not><Var>e12</Var></Not>
+<Not><Var>e2</Var></Not>
+<Not><Var>e3</Var></Not>
+
+</And>
+	</Not>
+	
+<And>
+    
+<Var>z3</Var>
+<Not><Var>z239</Var></Not>
+<Not><Var>z1</Var></Not>
+<Not><Var>z2</Var></Not>
+</And>
+
+    </Or>
+	    </X>
+	</And>
+    </Or>>
+	    </X>
+	</And>
+    </Or>>
+	    </X>
+	</And>
+    </Or>>
+	    </X>
+	</And>
+    </Or>>
+</LTL><LTL>
+    <G>
+	<Or> 
+	    <Not>
+		<And>
+		    <Var>e11</Var>
+		    <Not><Var>e12</Var></Not>
+		    <Not><Var>e2</Var></Not>
+		    <Not><Var>e3</Var></Not>
+		    <Not><Var>e4</Var></Not>
+		</And>
+	    </Not>
+	    <And>
+		<Var>z1</Var>
+		<Not><Var>z2</Var></Not>
+		<Not><Var>z3</Var></Not>
+		<Not><Var>z239</Var></Not>
+	    </And>
+	</Or>
+    </G>
+</LTL>
+<LTL>
+    <G>
+        <Or>
+            <Not>
+		<And>
+	            <Var>e12</Var>
+		    <Not><Var>e11</Var></Not>
+		    <Not><Var>e2</Var></Not>
+		    <Not><Var>e3</Var></Not>
+		    <Not><Var>e4</Var></Not>
+		</And>
+            </Not>
+	    <Or>
+		<And>
+		     <Var>z2</Var>
+		     <Not><Var>z1</Var></Not>
+		     <Not><Var>z3</Var></Not>
+		     <Not><Var>z239</Var></Not>
+		</And>
+	    </Or>
+        </Or>
+    </G>
+</LTL>
+<LTL>
+    <G>
+        <Or>
+            <Not>
+		<And>
+		     <Var>z2</Var>
+		     <Not><Var>z1</Var></Not>
+		     <Not><Var>z3</Var></Not>
+		     <Not><Var>z239</Var></Not>
+		</And>
+            </Not>
+	    <And>
+		<Var>e12</Var>
+		<Not><Var>e11</Var></Not>
+		<Not><Var>e2</Var></Not>
+		<Not><Var>e3</Var></Not>
+		<Not><Var>e4</Var></Not>
+	    </And>
+        </Or>
+    </G>
+</LTL>
+<LTL>
+    <G>
+        <Or>
+            <Not>
+		<And> 
+		    <Var>e4</Var>
+		    <Not><Var>e11</Var></Not>
+		    <Not><Var>e12</Var></Not>
+		    <Not><Var>e2</Var></Not>
+		    <Not><Var>e3</Var></Not>
+		</And>
+            </Not>
+	    <Or>
+		<And>
+		     <Var>z3</Var>
+		     <Not><Var>z1</Var></Not>
+		     <Not><Var>z2</Var></Not>
+		     <Not><Var>z239</Var></Not>
+		</And>
+	    </Or>
+
+        </Or>    
+    </G>
+</LTL>
+
+<LTL>
+    <G>
+        <Or>
+            <Not>
+		<And>
+		     <Var>z3</Var>
+		     <Not><Var>z1</Var></Not>
+		     <Not><Var>z2</Var></Not>
+		     <Not><Var>z239</Var></Not>
+		</And>
+            </Not>
+	    <And> 
+		<Var>e4</Var>
+		<Not><Var>e11</Var></Not>
+		<Not><Var>e12</Var></Not>
+		<Not><Var>e2</Var></Not>
+		<Not><Var>e3</Var></Not>
+	    </And>
+        </Or>
+    </G>
+</LTL>
+<LTL>
+    <G>
+        <Or>
+	    <Not>
+		<And> 
+		    <Var>e3</Var>
+		    <Not><Var>e11</Var></Not>
+		    <Not><Var>e12</Var></Not>
+		    <Not><Var>e2</Var></Not>
+		    <Not><Var>e4</Var></Not>
+		</And>
+	    </Not>
+	    <Or>
+		<And>
+		     <Var>z1</Var>
+		     <Not><Var>z2</Var></Not>
+		     <Not><Var>z3</Var></Not>
+		     <Not><Var>z239</Var></Not>
+		</And>
+	    </Or>
+        </Or>
+    </G>
+</LTL>
+     <LTL>
+	<G>
+	    <Or>
+		<Not>
+		    <And>
+			<Var>z239</Var>
+			<Not><Var>z1</Var></Not>
+			<Not><Var>z2</Var></Not>
+			<Not><Var>z3</Var></Not>
+		    </And>
+		</Not>
+		<X>
+		    <G>
+			<And>
+			    <Var>z239</Var>
+			    <Not><Var>z1</Var></Not>
+			    <Not><Var>z2</Var></Not>
+			    <Not><Var>z3</Var></Not>
+			</And>
+		    </G>
+		</X>
+	    </Or>    
+	</G>
+    </LTL>
+ </Specification>
+</SynthesisProblem>

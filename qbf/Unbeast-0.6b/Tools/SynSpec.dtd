@@ -1,0 +1,31 @@
+<!-- DTD format file for Specification for Unbounded Bounded Synthesis -->
+<!-- (C) 2008 Ruediger Ehlers -->
+
+<!-- General Description -->
+<!ELEMENT SynthesisProblem (Title,Description,PathToLTLCompiler,GlobalInputs,GlobalOutputs,Assumptions?,Specification)>
+<!ELEMENT Title (#PCDATA)>
+<!ELEMENT Description (#PCDATA)>
+<!ELEMENT GlobalInputs (Bit)*>
+<!ELEMENT GlobalOutputs (Bit)*>
+<!ELEMENT Bit (#PCDATA)>
+<!ELEMENT PathToLTLCompiler (#PCDATA)>
+
+<!-- Specification -->
+<!ELEMENT False EMPTY>
+<!ELEMENT True EMPTY>
+<!ELEMENT Specification (LTL)*>
+<!ELEMENT Assumptions (LTL)*>
+<!ELEMENT LTL (Or|And|Not|X|Var|F|G|U|WU|Iff|False|True)>
+<!ELEMENT Or (Or|And|Not|X|Var|F|G|U|WU|Iff|False|True)+>
+<!ELEMENT And (Or|And|Not|X|Var|F|G|U|WU|Iff|False|True)+>
+<!ELEMENT Not (Or|And|Not|X|Var|F|G|U|WU|Iff|False|True)>
+<!ELEMENT Iff ((Or|And|Not|X|Var|F|G|U|WU|Iff|False|True),(Or|And|Not|X|Var|F|G|U|WU|Iff|False|True))>
+<!ELEMENT X (Or|And|Not|X|Var|F|G|U|WU|Iff|False|True)>
+<!ELEMENT G (Or|And|Not|X|Var|F|G|U|WU|Iff|False|True)>
+<!ELEMENT F (Or|And|Not|X|Var|F|G|U|WU|Iff|False|True)>
+<!ELEMENT U ((Or|And|Not|X|Var|F|G|U|WU|Iff|False|True),(Or|And|Not|X|Var|F|G|U|WU|Iff|False|True))>
+<!ELEMENT WU ((Or|And|Not|X|Var|F|G|U|WU|Iff|False|True),(Or|And|Not|X|Var|F|G|U|WU|Iff|False|True))>
+
+<!ELEMENT Var (#PCDATA)>
+
+

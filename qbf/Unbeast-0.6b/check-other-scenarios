@@ -1,0 +1,20 @@
+#!/bin/bash
+
+rootdir=$(pwd)
+
+function collect_sc {
+    start=$1
+    end=$2
+    
+    rm -rf tmp
+    for ((n=$start; n<=$end; n+=1)) ; do
+        cat $rootdir/scenarios/$n
+    done
+}
+
+for ((nltl=13; nltl<=13; nltl+=1)) ; do
+    workdir=$rootdir/runs/$nltl
+
+    cat $workdir/result | grep -P '\|r|\|c' | ./check-sc manual-sc
+   
+done

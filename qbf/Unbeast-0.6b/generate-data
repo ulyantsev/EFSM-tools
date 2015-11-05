@@ -1,0 +1,30 @@
+#!/bin/bash
+
+rootdir=$(pwd)
+
+function collect_ltl {
+    start=$1
+    end=$2
+    
+    rm -rf tmp
+    for ((n=$start; n<=$end; n+=1)) ; do
+        cat $rootdir/f/$n
+    done
+}
+
+cat scenarios/* | ./scenario-converter > scenarios.xml
+
+for ((nltl=1; nltl<=13; nltl+=1)) ; do
+    workdir=runs/$nltl
+    mkdir -p $workdir
+    if [[ $nltl -le 4 ]] ; then
+        m4 -DM4_LTL="\
+$(cat scenarios.xml)\
+$(collect_ltl 1 $nltl)" -DM4_ASS_LTL="" example-tmp.xml.tmpl > $workdir/spec.xml
+    fi
+    if [[ $nltl -gt 4 ]] ; then
+        m4 -DM4_LTL="\
+$(cat scenarios.xml)\
+$(collect_ltl 1 4)" -DM4_ASS_LTL="$(collect_ltl 5 $nltl)" example-tmp.xml.tmpl > $workdir/spec.xml
+    fi 
+done

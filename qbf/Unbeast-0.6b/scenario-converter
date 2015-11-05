@@ -1,0 +1,115 @@
+#!/usr/bin/python
+import sys
+
+events = ["e11", "e12", "e2", "e3", "e4"]
+actions = ["z1", "z2", "z3"]
+
+
+
+class ScenarioElement:
+    def __init__(self, event, action):
+        self.event = event;
+        self.action = action
+ 
+    def __str__(self):
+        return "[%s, %s]" % (self.event, self.action)
+
+    def __repr__(self):
+        return self.__str__()
+
+def genSpaces(n):
+    result = ""
+    for i in range(n*4):
+       result += " "
+
+def printEvent(e):
+    result="""<Var>%s</Var>\n""" % e
+    for event in events:
+        if not event == e: 
+            result+="<Not><Var>%s</Var></Not>\n" % event
+    return """<And>
+    %s
+</And>""" % result
+
+def printAction(a):
+    result = ""
+    if not a == "":
+        result = """
+<Var>%s</Var>
+<Not><Var>z239</Var></Not>""" % a
+	for action in actions:
+	    if not action == a:
+		result+="""
+<Not><Var>%s</Var></Not>""" % action
+    else:
+		actlist = [v for v in actions]
+		result="""
+<Not><Var>%s</Var></Not>
+<Not><Var>z239</Var></Not>""" % actlist[0]
+		if len(actions) > 1:
+			for action in actlist[1:]:
+				result+="""
+<Not><Var>%s</Var></Not>""" % action
+    return """
+<And>
+    %s
+</And>
+""" % result
+
+def printScenario(scenario):
+    return """
+<LTL>
+    %s
+</LTL>
+""" % printScenarioImpl(scenario, 0)
+
+def printScenarioImpl(scenario, i):
+    if i < len(scenario) - 1:
+        return """
+    <Or>
+	<Not>
+	    %s
+	</Not>
+	<And>
+	    %s
+	    <X>
+		%s
+	    </X>
+	</And>
+    </Or>>"""  % (printEvent(scenario[i].event), printAction(scenario[i].action), printScenarioImpl(scenario, i+1))
+
+    return """
+    <Or>
+	<Not>
+	    %s
+	</Not>
+	%s
+    </Or>""" % (printEvent(scenario[i].event), printAction(scenario[i].action))
+
+
+
+
+def main():
+    scenarios = []
+    for line in sys.stdin:
+        scenario = []
+        for s in line[:-1].split(";"):
+            event_action = s.strip().split("/")
+            if len(event_action) == 1:
+                scenario += [ScenarioElement(event_action[0], "")]
+            else:
+                scenario += [ScenarioElement(event_action[0], event_action[1])]
+        scenarios += [scenario]
+
+    #for scenario in scenarios:
+    #    for e in scenario:
+    #        events.add(e.event)
+    #        if len(e.action) > 0:
+    #            actions.add(e.action)
+
+    for i in range(len(scenarios)):
+        print printScenario(scenarios[i])
+ 
+
+if __name__ == '__main__':
+    main()

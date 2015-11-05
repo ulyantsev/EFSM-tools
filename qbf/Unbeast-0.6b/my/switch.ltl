@@ -1,0 +1,6 @@
+G(wasAction(on) || wasAction(off))
+G(!(wasAction(on) && wasAction(off)))
+G(!(wasEvent(turnon)) || wasAction(on))
+G(!(wasEvent(turnoff)) || wasAction(off))
+G(!(wasAction(on) && X(wasEvent(touch))) || X(wasAction(on)))
+G(!(wasAction(off) && X(wasEvent(touch))) || X(wasAction(off)))
