@@ -10,17 +10,24 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Deque;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.logging.Logger;
 
-import org.apache.commons.lang3.tuple.Pair;
-
+import scenario.StringActions;
 import scenario.StringScenario;
+import structures.Automaton;
+import structures.Node;
+import structures.Transition;
 import bool.MyBooleanExpression;
 import choco.kernel.common.util.tools.ArrayUtils;
+import egorov.Verifier;
 import egorov.ltl.LtlParseException;
 import egorov.ltl.LtlParser;
 import egorov.ltl.grammar.BinaryOperator;
@@ -290,7 +297,7 @@ public class UnbeastTransformer {
 				Arrays.asList("on", "off"),
 				false);
 		
-		final Problem p = pElevatorMini;
+		final Problem p = pSwitch;
 		
 		final List<LtlNode> nodes = LtlParser.loadProperties(p.ltlPath, 0);
 		final List<StringScenario> scenarios = StringScenario.loadScenarios(p.scenarioPath, -1);
@@ -328,9 +335,101 @@ public class UnbeastTransformer {
 			}
 			final Game game = new Game(inputScanner, writer, p.actions, p.events,
 					p.variables, p.incomplete);
-			game.reconstructAutomaton();
+			final Automaton a = game.reconstructAutomaton();
 			unbeast.destroy();
+			
+			if (!checkAutomaton(a, p, scenarios)) {
+				System.err.println("Compliance check failed!");
+			} else {
+				final Automaton minimizedA = minimizeAutomaton(a, p, scenarios);
+				System.out.println();
+				System.out.println(minimizedA);
+				try (PrintWriter pw = new PrintWriter(new File("unbeast-automaton.dot"))) {
+					pw.println(minimizedA);
+				}
+			}
 		}
+	}
+
+	private static Automaton minimizeAutomaton(Automaton a, Problem p, List<StringScenario> scenarios) {
+		final Set<Integer> remainingStates = new TreeSet<>();
+		for (int i = 0; i < a.statesCount(); i++) {
+			remainingStates.add(i);
+		}
+		Automaton current = a;
+		l: while (true) {
+			for (int n1 : remainingStates) {
+				for (int n2 : remainingStates) {
+					if (n1 >= n2) {
+						continue;
+					}
+					final Automaton merged = mergeNodes(n1, n2, current);
+					if (!checkAutomaton(merged, p, scenarios)) {
+						continue;
+					}
+					current = merged;
+					remainingStates.remove(n2);
+					continue l;
+				}
+			}
+			break l;
+		}
+		return current;
+	}
+	
+	/*
+	 * Removes transitions to and from node n2.
+	 */
+	private static Automaton mergeNodes(int n1, int n2, Automaton a) {
+		final Automaton result = new Automaton(a.statesCount());
+		for (int i = 0; i < a.statesCount(); i++) {
+			if (i == n2) {
+				continue;
+			}
+			for (Transition t : a.getState(i).getTransitions()) {
+				final Transition newT = new Transition(result.getState(t.getSrc().getNumber()),
+						result.getState(t.getDst().getNumber() == n2 ? n1 : t.getDst().getNumber()),
+						t.getEvent(), t.getExpr(), t.getActions());
+				result.addTransition(result.getState(i), newT);
+			}
+		}
+		return result;
+	}
+	
+	private static boolean checkAutomaton(Automaton a, Problem p, List<StringScenario> scenarios) {
+		return verify(a, p) && checkScenarioCompliance(a, p, scenarios);
+	}
+	
+	private static boolean verify(Automaton a, Problem p) {
+		final Logger logger = Logger.getLogger("Logger");
+		final Verifier v = new Verifier(logger, p.ltlPath, p.events, p.actions, p.variables.size());
+		return v.verify(a);
+	}
+	
+	private static boolean checkScenarioCompliance(Automaton a, Problem p, List<StringScenario> scenarios) {
+		// FIXME will not work in the presence of variables
+		for (StringScenario sc : scenarios) {
+			final List<String> events = new ArrayList<>();
+			final List<MyBooleanExpression> expressions = new ArrayList<>();
+			final List<StringActions> stringActions = new ArrayList<>();
+			for (int i = 0; i < sc.size(); i++) {
+				events.add(sc.getEvents(i).get(0));
+				expressions.add(MyBooleanExpression.getTautology());
+				final String[] initialActions = sc.getActions(i).getActions();
+				final List<String> finalActions = new ArrayList<>();
+				for (String action : p.actions) {
+					if (org.apache.commons.lang3.ArrayUtils.contains(initialActions, action)) {
+						finalActions.add(action);
+					}
+				}
+				stringActions.add(new StringActions(String.join(", ", finalActions)));
+			}
+			final StringScenario scReordered = new StringScenario(true, events, expressions, stringActions);
+			if (!a.isCompliantWithScenario(scReordered)) {
+				return false;
+			}
+		}
+		return true;
 	}
 	
 	static class Game {
@@ -433,7 +532,7 @@ public class UnbeastTransformer {
 			throw new AssertionError();
 		}
 		
-		private String describeActions(String actionStr) {
+		private List<String> describeActions(String actionStr) {
 			if (incomplete && actionStr.charAt(actions.size()) == '1') {
 				return null; // special output
 			}
@@ -443,10 +542,10 @@ public class UnbeastTransformer {
 					elements.add(actions.get(i));
 				}
 			}
-			return "{" + String.join(", ", elements) + "}";
+			return elements;
 		}
 		
-		void reconstructAutomaton() throws IOException {
+		Automaton reconstructAutomaton() throws IOException {
 			final List<String> firstStateData = step(0);
 			final Map<String, GameState> states = new LinkedHashMap<>();
 			final Deque<GameState> unprocessedStates = new LinkedList<>();
@@ -477,30 +576,24 @@ public class UnbeastTransformer {
 					s.transitions.add(dest);
 				}
 			}
-			final StringBuilder automaton = new StringBuilder();
-			automaton.append("digraph automaton {\n");
-			for (GameState s : states.values()) {
-				automaton.append("  " + s.number + ";\n");
-			}
+			
+			final Automaton a = new Automaton(states.size());
+			
 			for (GameState s : states.values()) {
 				for (int i = 0; i < s.transitions.size(); i++) {
 					final String input = describeEvents(s.events.get(i));
-					final int dest = s.transitions.get(i).number;
-					final String output = describeActions(s.actions.get(i));
+					final List<String> output = describeActions(s.actions.get(i));
 					if (output == null) {
 						continue;
 					}
-					automaton.append("  " + s.number + " -> "
-							+ dest + " [label=\""  + input + "/" + output + "\"];\n");
+					final StringActions actions = new StringActions(output
+							.toString().replace("[", "").replace("]", ""));
+					final Node dst = a.getState(s.transitions.get(i).number);
+					a.getState(s.number).addTransition(input, MyBooleanExpression.getTautology(),
+							actions, dst);
 				}
 			}
-			automaton.append("}\n");
-			
-			System.out.println();
-			System.out.println(automaton);
-			try (PrintWriter pw = new PrintWriter(new File("unbeast-automaton.dot"))) {
-				pw.println(automaton);
-			}
+			return a;
 		}
 	}
 }
