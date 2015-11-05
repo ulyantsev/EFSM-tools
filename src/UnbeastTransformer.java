@@ -10,7 +10,6 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Deque;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -222,7 +221,8 @@ public class UnbeastTransformer {
 		sb.append("<SynthesisProblem>\n");
 		sb.append("<Title>Generated problem</Title>\n");
 		sb.append("<Description>Generated description</Description>\n");
-		sb.append("<PathToLTLCompiler>ltl2ba-1.1/ltl2ba -f</PathToLTLCompiler>\n");
+		//sb.append("<PathToLTLCompiler>ltl2ba-1.1/ltl2ba -f</PathToLTLCompiler>\n");
+		sb.append("<PathToLTLCompiler>./ltl2tgba-wrapper</PathToLTLCompiler>\n");
 		sb.append("<GlobalInputs>\n");
 		events.forEach(e -> sb.append("  <Bit>" + e + "</Bit>\n"));
 		variables.forEach(v -> sb.append("  <Bit>" + v + "</Bit>\n"));
@@ -266,22 +266,12 @@ public class UnbeastTransformer {
 	public static void main(String[] args) throws IOException, ParseException, LtlParseException {
 		final String outputPath = "generated-problem.xml";
 		
-		/*
-		final String ltlPath = "qbf/testing-daniil/50n/nstates=5/30/formulae";
-		final String scenarioPath = "qbf/testing-daniil/50n/nstates=5/30/plain-scenarios";
-		final List<String> events = Arrays.asList("A", "B");
-		final List<String> variables = Arrays.asList("x0", "x1");
-		final List<String> actions = Arrays.asList("z0", "z1");
-		final boolean incomplete = true;
-		*/
-		/*
-		final String ltlPath = "qbf/Unbeast-0.6b/my/elevator.ltl";
-		final String scenarioPath = "qbf/Unbeast-0.6b/my/elevator-mini.sc";
-		final List<String> events = Arrays.asList("e11", "e2", "e12", "e3", "e4");
-		final List<String> variables = Arrays.asList();
-		final List<String> actions = Arrays.asList("z1", "z2", "z3");
-		final boolean incomplete = true;
-		*/
+		final Problem pElevator = new Problem("qbf/Unbeast-0.6b/my/elevator.ltl",
+				"qbf/Unbeast-0.6b/my/elevator.sc",
+				Arrays.asList("e11", "e2", "e12", "e3", "e4"),
+				Arrays.asList(),
+				Arrays.asList("z1", "z2", "z3"),
+				true);
 		
 		final Problem pElevatorMini = new Problem("qbf/Unbeast-0.6b/my/elevator.ltl",
 				"qbf/Unbeast-0.6b/my/elevator-mini.sc",
@@ -297,7 +287,7 @@ public class UnbeastTransformer {
 				Arrays.asList("on", "off"),
 				false);
 		
-		final Problem p = pSwitch;
+		final Problem p = pElevator;
 		
 		final List<LtlNode> nodes = LtlParser.loadProperties(p.ltlPath, 0);
 		final List<StringScenario> scenarios = StringScenario.loadScenarios(p.scenarioPath, -1);
