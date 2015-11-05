@@ -1,3 +1,3 @@
 #!/bin/bash
-ltl2tgba -s "$@" | sed 's/(\(v[0-9]\+\))/\1/g' | sed 's/(\(!v[0-9]\+\))/\1/g' | sed 's/(safe)/safe/g' | sed 's/(!safe)/!safe/g' | sed 's/(true)/true/g' 
+LD_LIBRARY_PATH=/usr/local/lib ltl2tgba -s "$@" | sed 's/(\(v[0-9]\+\))/\1/g' | sed 's/(\(!v[0-9]\+\))/\1/g' | sed 's/(safe)/safe/g' | sed 's/(!safe)/!safe/g' | sed 's/(true)/true/g' 
 #| sed 's/(true)/true/g'

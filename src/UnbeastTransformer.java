@@ -264,6 +264,7 @@ public class UnbeastTransformer {
 	}
 	
 	public static void main(String[] args) throws IOException, ParseException, LtlParseException {
+		final long startTime = System.currentTimeMillis();
 		final String outputPath = "generated-problem.xml";
 		
 		final Problem pElevator = new Problem("qbf/Unbeast-0.6b/my/elevator.ltl",
@@ -337,6 +338,7 @@ public class UnbeastTransformer {
 				try (PrintWriter pw = new PrintWriter(new File("unbeast-automaton.dot"))) {
 					pw.println(minimizedA);
 				}
+				System.out.println("Execution time: " + (System.currentTimeMillis() - startTime) + " ms");
 			}
 		}
 	}
