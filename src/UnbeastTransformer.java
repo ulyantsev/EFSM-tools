@@ -17,7 +17,9 @@ import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.logging.FileHandler;
 import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
 
 import scenario.StringActions;
 import scenario.StringScenario;
@@ -37,6 +39,162 @@ import egorov.ltl.grammar.Predicate;
 import egorov.ltl.grammar.UnaryOperator;
 
 public class UnbeastTransformer {
+	public static void main(String[] args) throws IOException, ParseException, LtlParseException {
+		final List<String> events = Arrays.asList("A", "B", "C", "D");
+		final List<String> actions = Arrays.asList("z0", "z1", "z2", "z3");
+		final String prefix = "qbf/testing/incomplete/fsm-3-";
+		for (int i = 0; i < 50; i++) {
+			final Problem p = new Problem(prefix + i + "-true.ltl",
+				prefix + i + ".sc", events, Arrays.asList(), actions, true);
+			runUnbeast(p, "unbeast-automaton-" + i, "unbeast-log-" + i, true);
+		}
+	}
+	
+	public static void runUnbeast(Problem p, String automatonPath, String logPath,
+			boolean reconstructAutomaton) throws IOException, ParseException, LtlParseException {
+		final long startTime = System.currentTimeMillis();
+		final String outputPath = "generated-problem.xml";
+		
+		final List<LtlNode> nodes = LtlParser.loadProperties(p.ltlPath, 0);
+		final List<StringScenario> scenarios = StringScenario.loadScenarios(p.scenarioPath, -1);
+		final Logger logger = Logger.getLogger("Logger" + System.currentTimeMillis());
+		final FileHandler fh = new FileHandler(logPath, false);
+		logger.addHandler(fh);
+		final SimpleFormatter formatter = new SimpleFormatter();
+		fh.setFormatter(formatter);
+		
+		final Verifier v = new Verifier(logger, p.ltlPath, p.events, p.actions, p.variables.size());
+		final List<String> specification = new ArrayList<>();
+		specification.addAll(Generator.ltlSpecification(nodes, p.incomplete));
+		specification.addAll(Generator.scenarioSpecification(scenarios, p.actions, p.incomplete));
+		final String problem = Generator.problemDescription(p.events, p.variables, p.actions, specification, p.incomplete);
+		logger.info(problem);
+		try (PrintWriter pw = new PrintWriter(new File(outputPath))) {
+			pw.println(problem);
+		}
+		
+		final long unbeastStartTime = System.currentTimeMillis();
+		final Process unbeast = Runtime.getRuntime().exec(
+				new String[] { "./unbeast", "../../" + outputPath, "--runSimulator" },
+				new String[0], new File("./qbf/Unbeast-0.6b"));
+		try (
+				final Scanner inputScanner = new Scanner(unbeast.getInputStream());
+				final PrintWriter writer = new PrintWriter(unbeast.getOutputStream(), true);
+		) {
+			while (true) {
+				final String line = inputScanner.nextLine();
+				logger.info(line);
+				if (line.equals("Do you want the game position to be printed? (y/n)")) {
+					writer.println("y");
+					break;
+				}
+			}
+			logger.info("Unbeast execution time: " + (System.currentTimeMillis() - unbeastStartTime) + " ms");
+			if (!reconstructAutomaton) {
+				unbeast.destroy();
+				return;
+			}
+			while (true) {
+				final String line = inputScanner.nextLine();
+				if (line.startsWith("+-+")) {
+					break;
+				}
+			}
+			final Game game = new Game(inputScanner, writer, p.actions, p.events,
+					p.incomplete);
+			final Automaton a = game.reconstructAutomaton(logger);
+			unbeast.destroy();
+			
+			if (!checkAutomaton(a, p, v, scenarios)) {
+				logger.severe("Compliance check failed!");
+			} else {
+				final Automaton minimizedA = minimizeAutomaton(a, p, v, scenarios, logger);
+				logger.info(minimizedA.toString());
+				try (PrintWriter pw = new PrintWriter(new File(automatonPath))) {
+					pw.println(minimizedA);
+				}
+				logger.info("Total execution time: " + (System.currentTimeMillis() - startTime) + " ms");
+			}
+		}
+	}
+
+	private static Automaton minimizeAutomaton(Automaton a, Problem p, Verifier v,
+			List<StringScenario> scenarios, Logger logger) {
+		final Set<Integer> remainingStates = new TreeSet<>();
+		for (int i = 0; i < a.statesCount(); i++) {
+			remainingStates.add(i);
+		}
+		Automaton current = a;
+		l: while (true) {
+			for (int n1 : remainingStates) {
+				for (int n2 : remainingStates) {
+					if (n1 >= n2) {
+						continue;
+					}
+					final Automaton merged = mergeNodes(n1, n2, current);
+					if (!checkAutomaton(merged, p, v, scenarios)) {
+						continue;
+					}
+					current = merged;
+					remainingStates.remove(n2);
+					logger.info("Destroyed state, #=" + remainingStates.size());
+					continue l;
+				}
+			}
+			break l;
+		}
+		return current;
+	}
+	
+	/*
+	 * Removes transitions to and from node n2.
+	 */
+	private static Automaton mergeNodes(int n1, int n2, Automaton a) {
+		final Automaton result = new Automaton(a.statesCount());
+		for (int i = 0; i < a.statesCount(); i++) {
+			if (i == n2) {
+				continue;
+			}
+			for (Transition t : a.getState(i).getTransitions()) {
+				final Transition newT = new Transition(result.getState(t.getSrc().getNumber()),
+						result.getState(t.getDst().getNumber() == n2 ? n1 : t.getDst().getNumber()),
+						t.getEvent(), t.getExpr(), t.getActions());
+				result.addTransition(result.getState(i), newT);
+			}
+		}
+		return result;
+	}
+	
+	private static boolean checkAutomaton(Automaton a, Problem p, Verifier v, List<StringScenario> scenarios) {
+		return v.verify(a) && checkScenarioCompliance(a, p, scenarios);
+	}
+	
+	// will not work in the presence of variables
+	private static boolean checkScenarioCompliance(Automaton a, Problem p, List<StringScenario> scenarios) {
+		for (StringScenario sc : scenarios) {
+			final List<String> events = new ArrayList<>();
+			final List<MyBooleanExpression> expressions = new ArrayList<>();
+			final List<StringActions> stringActions = new ArrayList<>();
+			for (int i = 0; i < sc.size(); i++) {
+				events.add(sc.getEvents(i).get(0));
+				expressions.add(MyBooleanExpression.getTautology());
+				final String[] initialActions = sc.getActions(i).getActions();
+				final List<String> finalActions = new ArrayList<>();
+				for (String action : p.actions) {
+					if (org.apache.commons.lang3.ArrayUtils.contains(initialActions, action)) {
+						finalActions.add(action);
+					}
+				}
+				stringActions.add(new StringActions(String.join(", ", finalActions)));
+			}
+			final StringScenario scReordered = new StringScenario(true, events, expressions, stringActions);
+			if (!a.isCompliantWithScenario(scReordered)) {
+				return false;
+			}
+		}
+		return true;
+	}
+	
 	private static class Visitor implements INodeVisitor<Void, StringBuilder> {
 		private Void visitUnary(String name, UnaryOperator op, StringBuilder sb) {
 			sb.append("<" + name + ">");
@@ -115,132 +273,134 @@ public class UnbeastTransformer {
 		return "<" + tag + ">" + text + "</" + tag + ">";
 	}
 	
-	private static List<String> ltlSpecification(List<LtlNode> nodes, boolean incomplete) {
-		final List<String> ltlStrings = new ArrayList<>();
-		for (LtlNode node : nodes) {
-			final StringBuilder xmlBuilder = new StringBuilder();
-			node.accept(new Visitor(), xmlBuilder);
-			String ltlString = xmlBuilder.toString();
-			if (incomplete) {
-				ltlString = tag("Or", tag("F", tag("Var", "Invalid")) + ltlString);
-			}
-			ltlStrings.add(ltlString);
-		}
-		return ltlStrings;
-	}
-	
-	private static String varFormula(String str) {
-		boolean negation = str.contains("~");
-		if (negation) {
-			str = str.replaceAll("~", "");
-		}
-		String ans = negation ? tag("Not", str) : str;
-		ans = tag("Var", ans);
-		return ans;
-	}
-	
-	private static String inputFormula(StringScenario sc, int index) {
-		final String event = sc.getEvents(index).get(0);
-		final MyBooleanExpression expr = sc.getExpr(index);
-		String ans = tag("Var", event);
-		if (!expr.toString().equals("1")) {
-			String exprStr = expr.toString();
-			if (exprStr.contains("&")) {
-				final String[] tokens = exprStr.split("&");
-				if (tokens.length != 2) {
-					throw new RuntimeException("Only 2 variables are supported.");
+	static class Generator {
+		static List<String> ltlSpecification(List<LtlNode> nodes, boolean incomplete) {
+			final List<String> ltlStrings = new ArrayList<>();
+			for (LtlNode node : nodes) {
+				final StringBuilder xmlBuilder = new StringBuilder();
+				node.accept(new Visitor(), xmlBuilder);
+				String ltlString = xmlBuilder.toString();
+				if (incomplete) {
+					ltlString = tag("Or", tag("F", tag("Var", "Invalid")) + ltlString);
 				}
-				exprStr = tag("And", varFormula(tokens[0]) + varFormula(tokens[1]));
-			} else {
-				exprStr = varFormula(exprStr);
+				ltlStrings.add(ltlString);
 			}
-			ans = tag("And", ans + exprStr);
-		}		
-		return ans;
-	}
-	
-	private static String actionFormula(String action, boolean present) {
-		String ans = tag("Var", action);
-		if (!present) {
-			ans = tag("Not", ans);
-		}
-		return ans;
-	}
-	
-	private static String outputFormula(StringScenario sc, int index, List<String> actions,
-			boolean incomplete) {
-		final String[] thisActions = sc.getActions(index).getActions();
-		String formula = actionFormula(actions.get(0), ArrayUtils.contains(thisActions, actions.get(0)));
-		for (int i = 1; i < actions.size(); i++) {
-			formula = tag("And", actionFormula(actions.get(i),
-					ArrayUtils.contains(thisActions, actions.get(i))) + formula);
-		}
-		if (incomplete) {
-			formula = tag("And", tag("Not", tag("Var", "Invalid")) + formula);
+			return ltlStrings;
 		}
 		
-		return formula;
-	}
-	
-	private static List<String> scenarioSpecification(List<StringScenario> scenarios, List<String> actions,
-			boolean incomplete) {
-		final List<String> scenarioStrings = new ArrayList<>();
-		for (StringScenario sc : scenarios) {
-			String formula = tag("Or", tag("Not", inputFormula(sc, sc.size() - 1))
-					+ outputFormula(sc, sc.size() - 1, actions, incomplete));
-			for (int i = sc.size() - 2; i >= 0; i--) {
-				formula = tag("Or", tag("Not", inputFormula(sc, i)) + tag("And", 
-						outputFormula(sc, i, actions, incomplete) + tag("X", formula)));
+		static String varFormula(String str) {
+			boolean negation = str.contains("~");
+			if (negation) {
+				str = str.replaceAll("~", "");
 			}
-			scenarioStrings.add(formula);
+			String ans = negation ? tag("Not", str) : str;
+			ans = tag("Var", ans);
+			return ans;
 		}
-		return scenarioStrings;
-	}
-	
-	private static List<String> eventAssumptions(List<String> events) {
-		final List<String> assumptions = new ArrayList<>();
-		String orAssumption = tag("Var", events.get(0));
-		for (int i = 1; i < events.size(); i++) {
-			orAssumption = tag("Or", tag("Var", events.get(i)) + orAssumption);
+		
+		static String inputFormula(StringScenario sc, int index) {
+			final String event = sc.getEvents(index).get(0);
+			final MyBooleanExpression expr = sc.getExpr(index);
+			String ans = tag("Var", event);
+			if (!expr.toString().equals("1")) {
+				String exprStr = expr.toString();
+				if (exprStr.contains("&")) {
+					final String[] tokens = exprStr.split("&");
+					if (tokens.length != 2) {
+						throw new RuntimeException("Only 2 variables are supported.");
+					}
+					exprStr = tag("And", varFormula(tokens[0]) + varFormula(tokens[1]));
+				} else {
+					exprStr = varFormula(exprStr);
+				}
+				ans = tag("And", ans + exprStr);
+			}		
+			return ans;
 		}
-		assumptions.add(tag("G", orAssumption));
-		for (int i = 0; i < events.size(); i++) {
-			for (int j = i + 1; j < events.size(); j++) {
-				assumptions.add(tag("G", tag("Not", tag("And", tag("Var", events.get(i))
-						+ tag("Var", events.get(j))))));
+		
+		static String actionFormula(String action, boolean present) {
+			String ans = tag("Var", action);
+			if (!present) {
+				ans = tag("Not", ans);
 			}
+			return ans;
 		}
-		return assumptions;
-	}
-	
-	private static String problemDescription(List<String> events, List<String> variables,
-			List<String> actions, List<String> specification, boolean incomplete) {
-		final StringBuilder sb = new StringBuilder();
-		sb.append("<?xml version=\"1.0\" encoding=\"ISO-8859-1\" ?>\n");
-		sb.append("<!DOCTYPE SynthesisProblem SYSTEM \"SynSpec.dtd\">\n");
-		sb.append("<SynthesisProblem>\n");
-		sb.append("<Title>Generated problem</Title>\n");
-		sb.append("<Description>Generated description</Description>\n");
-		//sb.append("<PathToLTLCompiler>ltl2ba-1.1/ltl2ba -f</PathToLTLCompiler>\n");
-		sb.append("<PathToLTLCompiler>./ltl2tgba-wrapper</PathToLTLCompiler>\n");
-		sb.append("<GlobalInputs>\n");
-		events.forEach(e -> sb.append("  <Bit>" + e + "</Bit>\n"));
-		variables.forEach(v -> sb.append("  <Bit>" + v + "</Bit>\n"));
-		sb.append("</GlobalInputs>\n");
-		sb.append("<GlobalOutputs>\n");
-		actions.forEach(a -> sb.append("  <Bit>" + a + "</Bit>\n"));
-		if (incomplete) {
-			sb.append("  <Bit>Invalid</Bit>\n");
+		
+		static String outputFormula(StringScenario sc, int index, List<String> actions,
+				boolean incomplete) {
+			final String[] thisActions = sc.getActions(index).getActions();
+			String formula = actionFormula(actions.get(0), ArrayUtils.contains(thisActions, actions.get(0)));
+			for (int i = 1; i < actions.size(); i++) {
+				formula = tag("And", actionFormula(actions.get(i),
+						ArrayUtils.contains(thisActions, actions.get(i))) + formula);
+			}
+			if (incomplete) {
+				formula = tag("And", tag("Not", tag("Var", "Invalid")) + formula);
+			}
+			
+			return formula;
 		}
-		sb.append("</GlobalOutputs>\n");
-		sb.append("<Assumptions>\n");
-		eventAssumptions(events).forEach(a -> sb.append("  <LTL>" + a + "</LTL>\n"));
-		sb.append("</Assumptions>\n");
-		sb.append("<Specification>\n");
-		specification.forEach(s -> sb.append("  <LTL>" + s + "</LTL>\n"));
-		sb.append("</Specification>\n");
-		sb.append("</SynthesisProblem>\n");
-		return sb.toString();
+		
+		static List<String> scenarioSpecification(List<StringScenario> scenarios, List<String> actions,
+				boolean incomplete) {
+			final List<String> scenarioStrings = new ArrayList<>();
+			for (StringScenario sc : scenarios) {
+				String formula = tag("Or", tag("Not", inputFormula(sc, sc.size() - 1))
+						+ outputFormula(sc, sc.size() - 1, actions, incomplete));
+				for (int i = sc.size() - 2; i >= 0; i--) {
+					formula = tag("Or", tag("Not", inputFormula(sc, i)) + tag("And", 
+							outputFormula(sc, i, actions, incomplete) + tag("X", formula)));
+				}
+				scenarioStrings.add(formula);
+			}
+			return scenarioStrings;
+		}
+		
+		static List<String> eventAssumptions(List<String> events) {
+			final List<String> assumptions = new ArrayList<>();
+			String orAssumption = tag("Var", events.get(0));
+			for (int i = 1; i < events.size(); i++) {
+				orAssumption = tag("Or", tag("Var", events.get(i)) + orAssumption);
+			}
+			assumptions.add(tag("G", orAssumption));
+			for (int i = 0; i < events.size(); i++) {
+				for (int j = i + 1; j < events.size(); j++) {
+					assumptions.add(tag("G", tag("Not", tag("And", tag("Var", events.get(i))
+							+ tag("Var", events.get(j))))));
+				}
+			}
+			return assumptions;
+		}
+		
+		static String problemDescription(List<String> events, List<String> variables,
+				List<String> actions, List<String> specification, boolean incomplete) {
+			final StringBuilder sb = new StringBuilder();
+			sb.append("<?xml version=\"1.0\" encoding=\"ISO-8859-1\" ?>\n");
+			sb.append("<!DOCTYPE SynthesisProblem SYSTEM \"SynSpec.dtd\">\n");
+			sb.append("<SynthesisProblem>\n");
+			sb.append("<Title>Generated problem</Title>\n");
+			sb.append("<Description>Generated description</Description>\n");
+			//sb.append("<PathToLTLCompiler>ltl2ba-1.1/ltl2ba -f</PathToLTLCompiler>\n");
+			sb.append("<PathToLTLCompiler>./ltl2tgba-wrapper</PathToLTLCompiler>\n");
+			sb.append("<GlobalInputs>\n");
+			events.forEach(e -> sb.append("  <Bit>" + e + "</Bit>\n"));
+			variables.forEach(v -> sb.append("  <Bit>" + v + "</Bit>\n"));
+			sb.append("</GlobalInputs>\n");
+			sb.append("<GlobalOutputs>\n");
+			actions.forEach(a -> sb.append("  <Bit>" + a + "</Bit>\n"));
+			if (incomplete) {
+				sb.append("  <Bit>Invalid</Bit>\n");
+			}
+			sb.append("</GlobalOutputs>\n");
+			sb.append("<Assumptions>\n");
+			eventAssumptions(events).forEach(a -> sb.append("  <LTL>" + a + "</LTL>\n"));
+			sb.append("</Assumptions>\n");
+			sb.append("<Specification>\n");
+			specification.forEach(s -> sb.append("  <LTL>" + s + "</LTL>\n"));
+			sb.append("</Specification>\n");
+			sb.append("</SynthesisProblem>\n");
+			return sb.toString();
+		}
 	}
 	
 	private static class Problem {
@@ -263,22 +423,8 @@ public class UnbeastTransformer {
 		}
 	}
 	
-	static final Problem pRandom = new Problem("qbf/testing/incomplete/fsm-4-1-true.ltl",
-			"qbf/testing/incomplete/fsm-4-1.sc",
-			Arrays.asList("A", "B", "C", "D"),
-			Arrays.asList(),
-			Arrays.asList("z0", "z1", "z2", "z3"),
-			true);
-	
 	static final Problem pElevator = new Problem("qbf/Unbeast-0.6b/my/elevator.ltl",
 			"qbf/Unbeast-0.6b/my/elevator.sc",
-			Arrays.asList("e11", "e2", "e12", "e3", "e4"),
-			Arrays.asList(),
-			Arrays.asList("z1", "z2", "z3"),
-			true);
-	
-	static final Problem pElevatorMini = new Problem("qbf/Unbeast-0.6b/my/elevator.ltl",
-			"qbf/Unbeast-0.6b/my/elevator-mini.sc",
 			Arrays.asList("e11", "e2", "e12", "e3", "e4"),
 			Arrays.asList(),
 			Arrays.asList("z1", "z2", "z3"),
@@ -290,145 +436,6 @@ public class UnbeastTransformer {
 			Arrays.asList(),
 			Arrays.asList("on", "off"),
 			false);
-	
-	public static void main(String[] args) throws IOException, ParseException, LtlParseException {
-		final long startTime = System.currentTimeMillis();
-		final String outputPath = "generated-problem.xml";
-		
-		final Problem p = pRandom;
-		
-		final List<LtlNode> nodes = LtlParser.loadProperties(p.ltlPath, 0);
-		final List<StringScenario> scenarios = StringScenario.loadScenarios(p.scenarioPath, -1);
-		final Logger logger = Logger.getLogger("Logger");
-		final Verifier v = new Verifier(logger, p.ltlPath, p.events, p.actions, p.variables.size());
-		final List<String> specification = new ArrayList<>();
-		specification.addAll(ltlSpecification(nodes, p.incomplete));
-		specification.addAll(scenarioSpecification(scenarios, p.actions, p.incomplete));
-		final String problem = problemDescription(p.events, p.variables, p.actions, specification, p.incomplete);
-		System.out.println(problem);
-		try (PrintWriter pw = new PrintWriter(new File(outputPath))) {
-			pw.println(problem);
-		}
-		
-		final long unbeastStartTime = System.currentTimeMillis();
-		final Process unbeast = Runtime.getRuntime().exec(
-				new String[] { "./unbeast", "../../" + outputPath, "--runSimulator" },
-				new String[0], new File("./qbf/Unbeast-0.6b"));
-		try (
-				final Scanner inputScanner = new Scanner(unbeast.getInputStream());
-				final Scanner errorScanner = new Scanner(unbeast.getErrorStream());
-				final PrintWriter writer = new PrintWriter(unbeast.getOutputStream(), true);
-		) {
-			while (true) {
-				final String line = inputScanner.nextLine();
-				System.out.println(line);
-				if (line.equals("Do you want the game position to be printed? (y/n)")) {
-					writer.println("y");
-					break;
-				}
-			}
-			System.out.println("Unbeast execution time: " + (System.currentTimeMillis() - unbeastStartTime) + " ms");
-			while (true) {
-				final String line = inputScanner.nextLine();
-				//System.out.println(line);
-				if (line.startsWith("+-+")) {
-					break;
-				}
-			}
-			final Game game = new Game(inputScanner, writer, p.actions, p.events,
-					p.incomplete);
-			final Automaton a = game.reconstructAutomaton();
-			unbeast.destroy();
-			
-			if (!checkAutomaton(a, p, v, scenarios)) {
-				System.err.println("Compliance check failed!");
-			} else {
-				final Automaton minimizedA = minimizeAutomaton(a, p, v, scenarios);
-				System.out.println();
-				System.out.println(minimizedA);
-				try (PrintWriter pw = new PrintWriter(new File("unbeast-automaton.dot"))) {
-					pw.println(minimizedA);
-				}
-				System.out.println("Total execution time: " + (System.currentTimeMillis() - startTime) + " ms");
-			}
-		}
-	}
-
-	private static Automaton minimizeAutomaton(Automaton a, Problem p, Verifier v, List<StringScenario> scenarios) {
-		final Set<Integer> remainingStates = new TreeSet<>();
-		for (int i = 0; i < a.statesCount(); i++) {
-			remainingStates.add(i);
-		}
-		Automaton current = a;
-		l: while (true) {
-			for (int n1 : remainingStates) {
-				for (int n2 : remainingStates) {
-					if (n1 >= n2) {
-						continue;
-					}
-					final Automaton merged = mergeNodes(n1, n2, current);
-					if (!checkAutomaton(merged, p, v, scenarios)) {
-						continue;
-					}
-					current = merged;
-					remainingStates.remove(n2);
-					System.out.println("Destroyed state, #=" + remainingStates.size());
-					continue l;
-				}
-			}
-			break l;
-		}
-		return current;
-	}
-	
-	/*
-	 * Removes transitions to and from node n2.
-	 */
-	private static Automaton mergeNodes(int n1, int n2, Automaton a) {
-		final Automaton result = new Automaton(a.statesCount());
-		for (int i = 0; i < a.statesCount(); i++) {
-			if (i == n2) {
-				continue;
-			}
-			for (Transition t : a.getState(i).getTransitions()) {
-				final Transition newT = new Transition(result.getState(t.getSrc().getNumber()),
-						result.getState(t.getDst().getNumber() == n2 ? n1 : t.getDst().getNumber()),
-						t.getEvent(), t.getExpr(), t.getActions());
-				result.addTransition(result.getState(i), newT);
-			}
-		}
-		return result;
-	}
-	
-	private static boolean checkAutomaton(Automaton a, Problem p, Verifier v, List<StringScenario> scenarios) {
-		return v.verify(a) && checkScenarioCompliance(a, p, scenarios);
-	}
-	
-	private static boolean checkScenarioCompliance(Automaton a, Problem p, List<StringScenario> scenarios) {
-		// FIXME will not work in the presence of variables
-		for (StringScenario sc : scenarios) {
-			final List<String> events = new ArrayList<>();
-			final List<MyBooleanExpression> expressions = new ArrayList<>();
-			final List<StringActions> stringActions = new ArrayList<>();
-			for (int i = 0; i < sc.size(); i++) {
-				events.add(sc.getEvents(i).get(0));
-				expressions.add(MyBooleanExpression.getTautology());
-				final String[] initialActions = sc.getActions(i).getActions();
-				final List<String> finalActions = new ArrayList<>();
-				for (String action : p.actions) {
-					if (org.apache.commons.lang3.ArrayUtils.contains(initialActions, action)) {
-						finalActions.add(action);
-					}
-				}
-				stringActions.add(new StringActions(String.join(", ", finalActions)));
-			}
-			final StringScenario scReordered = new StringScenario(true, events, expressions, stringActions);
-			if (!a.isCompliantWithScenario(scReordered)) {
-				return false;
-			}
-		}
-		return true;
-	}
 	
 	static class Game {
 		private final Scanner input;
@@ -540,7 +547,7 @@ public class UnbeastTransformer {
 			return elements;
 		}
 		
-		Automaton reconstructAutomaton() throws IOException {
+		Automaton reconstructAutomaton(Logger logger) throws IOException {
 			final List<String> firstStateData = step(0);
 			final Map<String, GameState> states = new LinkedHashMap<>();
 			final Deque<GameState> unprocessedStates = new LinkedList<>();
@@ -565,7 +572,7 @@ public class UnbeastTransformer {
 						dest = new GameState(statesNum++, newDescription, newPath);
 						states.put(newDescription, dest);
 						unprocessedStates.add(dest);
-						System.out.println("New state, current #=" + states.size());
+						logger.info("New state, current #=" + states.size());
 					}
 					s.events.add(input);
 					s.actions.add(output);
