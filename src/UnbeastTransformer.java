@@ -263,35 +263,44 @@ public class UnbeastTransformer {
 		}
 	}
 	
+	static final Problem pRandom = new Problem("qbf/testing/incomplete/fsm-4-1-true.ltl",
+			"qbf/testing/incomplete/fsm-4-1.sc",
+			Arrays.asList("A", "B", "C", "D"),
+			Arrays.asList(),
+			Arrays.asList("z0", "z1", "z2", "z3"),
+			true);
+	
+	static final Problem pElevator = new Problem("qbf/Unbeast-0.6b/my/elevator.ltl",
+			"qbf/Unbeast-0.6b/my/elevator.sc",
+			Arrays.asList("e11", "e2", "e12", "e3", "e4"),
+			Arrays.asList(),
+			Arrays.asList("z1", "z2", "z3"),
+			true);
+	
+	static final Problem pElevatorMini = new Problem("qbf/Unbeast-0.6b/my/elevator.ltl",
+			"qbf/Unbeast-0.6b/my/elevator-mini.sc",
+			Arrays.asList("e11", "e2", "e12", "e3", "e4"),
+			Arrays.asList(),
+			Arrays.asList("z1", "z2", "z3"),
+			true);
+	
+	static final Problem pSwitch = new Problem("qbf/Unbeast-0.6b/my/switch.ltl",
+			"qbf/Unbeast-0.6b/my/switch.sc",
+			Arrays.asList("turnon", "turnoff", "touch"),
+			Arrays.asList(),
+			Arrays.asList("on", "off"),
+			false);
+	
 	public static void main(String[] args) throws IOException, ParseException, LtlParseException {
 		final long startTime = System.currentTimeMillis();
 		final String outputPath = "generated-problem.xml";
 		
-		final Problem pElevator = new Problem("qbf/Unbeast-0.6b/my/elevator.ltl",
-				"qbf/Unbeast-0.6b/my/elevator.sc",
-				Arrays.asList("e11", "e2", "e12", "e3", "e4"),
-				Arrays.asList(),
-				Arrays.asList("z1", "z2", "z3"),
-				true);
-		
-		final Problem pElevatorMini = new Problem("qbf/Unbeast-0.6b/my/elevator.ltl",
-				"qbf/Unbeast-0.6b/my/elevator-mini.sc",
-				Arrays.asList("e11", "e2", "e12", "e3", "e4"),
-				Arrays.asList(),
-				Arrays.asList("z1", "z2", "z3"),
-				true);
-		
-		final Problem pSwitch = new Problem("qbf/Unbeast-0.6b/my/switch.ltl",
-				"qbf/Unbeast-0.6b/my/switch.sc",
-				Arrays.asList("turnon", "turnoff", "touch"),
-				Arrays.asList(),
-				Arrays.asList("on", "off"),
-				false);
-		
-		final Problem p = pElevator;
+		final Problem p = pRandom;
 		
 		final List<LtlNode> nodes = LtlParser.loadProperties(p.ltlPath, 0);
 		final List<StringScenario> scenarios = StringScenario.loadScenarios(p.scenarioPath, -1);
+		final Logger logger = Logger.getLogger("Logger");
+		final Verifier v = new Verifier(logger, p.ltlPath, p.events, p.actions, p.variables.size());
 		final List<String> specification = new ArrayList<>();
 		specification.addAll(ltlSpecification(nodes, p.incomplete));
 		specification.addAll(scenarioSpecification(scenarios, p.actions, p.incomplete));
@@ -301,6 +310,7 @@ public class UnbeastTransformer {
 			pw.println(problem);
 		}
 		
+		final long unbeastStartTime = System.currentTimeMillis();
 		final Process unbeast = Runtime.getRuntime().exec(
 				new String[] { "./unbeast", "../../" + outputPath, "--runSimulator" },
 				new String[0], new File("./qbf/Unbeast-0.6b"));
@@ -317,33 +327,34 @@ public class UnbeastTransformer {
 					break;
 				}
 			}
+			System.out.println("Unbeast execution time: " + (System.currentTimeMillis() - unbeastStartTime) + " ms");
 			while (true) {
 				final String line = inputScanner.nextLine();
-				System.out.println(line);
+				//System.out.println(line);
 				if (line.startsWith("+-+")) {
 					break;
 				}
 			}
 			final Game game = new Game(inputScanner, writer, p.actions, p.events,
-					p.variables, p.incomplete);
+					p.incomplete);
 			final Automaton a = game.reconstructAutomaton();
 			unbeast.destroy();
 			
-			if (!checkAutomaton(a, p, scenarios)) {
+			if (!checkAutomaton(a, p, v, scenarios)) {
 				System.err.println("Compliance check failed!");
 			} else {
-				final Automaton minimizedA = minimizeAutomaton(a, p, scenarios);
+				final Automaton minimizedA = minimizeAutomaton(a, p, v, scenarios);
 				System.out.println();
 				System.out.println(minimizedA);
 				try (PrintWriter pw = new PrintWriter(new File("unbeast-automaton.dot"))) {
 					pw.println(minimizedA);
 				}
-				System.out.println("Execution time: " + (System.currentTimeMillis() - startTime) + " ms");
+				System.out.println("Total execution time: " + (System.currentTimeMillis() - startTime) + " ms");
 			}
 		}
 	}
 
-	private static Automaton minimizeAutomaton(Automaton a, Problem p, List<StringScenario> scenarios) {
+	private static Automaton minimizeAutomaton(Automaton a, Problem p, Verifier v, List<StringScenario> scenarios) {
 		final Set<Integer> remainingStates = new TreeSet<>();
 		for (int i = 0; i < a.statesCount(); i++) {
 			remainingStates.add(i);
@@ -356,11 +367,12 @@ public class UnbeastTransformer {
 						continue;
 					}
 					final Automaton merged = mergeNodes(n1, n2, current);
-					if (!checkAutomaton(merged, p, scenarios)) {
+					if (!checkAutomaton(merged, p, v, scenarios)) {
 						continue;
 					}
 					current = merged;
 					remainingStates.remove(n2);
+					System.out.println("Destroyed state, #=" + remainingStates.size());
 					continue l;
 				}
 			}
@@ -388,14 +400,8 @@ public class UnbeastTransformer {
 		return result;
 	}
 	
-	private static boolean checkAutomaton(Automaton a, Problem p, List<StringScenario> scenarios) {
-		return verify(a, p) && checkScenarioCompliance(a, p, scenarios);
-	}
-	
-	private static boolean verify(Automaton a, Problem p) {
-		final Logger logger = Logger.getLogger("Logger");
-		final Verifier v = new Verifier(logger, p.ltlPath, p.events, p.actions, p.variables.size());
-		return v.verify(a);
+	private static boolean checkAutomaton(Automaton a, Problem p, Verifier v, List<StringScenario> scenarios) {
+		return v.verify(a) && checkScenarioCompliance(a, p, scenarios);
 	}
 	
 	private static boolean checkScenarioCompliance(Automaton a, Problem p, List<StringScenario> scenarios) {
@@ -429,16 +435,14 @@ public class UnbeastTransformer {
 		private final PrintWriter output;
 		private final List<String> actions;
 		private final List<String> events;
-		private final List<String> variables; // FIXME add support
 		private final boolean incomplete;
 		
 		public Game(Scanner input, PrintWriter output, List<String> actions,
-				List<String> events, List<String> variables, boolean incomplete) {
+				List<String> events, boolean incomplete) {
 			this.input = input;
 			this.output = output;
 			this.actions = actions;
 			this.events = events;
-			this.variables = variables;
 			this.incomplete = incomplete;
 		}
 
@@ -470,19 +474,18 @@ public class UnbeastTransformer {
 		}
 		
 		private void command(String command) {
-			System.out.println("command : " + command);
+			//System.out.println("command : " + command);
 			output.println(command);
 		}
 		
 		private String read() {
 			final String line = input.nextLine();
-			System.out.println("response: " + line);
+			//System.out.println("response: " + line);
 			return line;
 		}
 		
 		private void reachState(GameState state) {
-			System.out.println("reaching " + state.description + "...");
-			//input.nextLine();
+			//System.out.println("reaching " + state.description + "...");
 			command("r");
 
 			for (String element : state.inputPath) {
@@ -490,7 +493,7 @@ public class UnbeastTransformer {
 				command("c");
 				read();
 			}
-			System.out.println("reached  " + state.description);
+			//System.out.println("reached  " + state.description);
 		}
 		
 		private List<String> step(int num) {
@@ -551,7 +554,7 @@ public class UnbeastTransformer {
 				for (int j = 0; j < events.size(); j++) {
 					reachState(s);
 					final List<String> reply = step(j);
-					System.out.println("transition: " + reply);
+					//System.out.println("transition: " + reply);
 					final String input = reply.get(1);
 					final String output = reply.get(2);
 					final String newDescription = reply.get(3);
@@ -562,6 +565,7 @@ public class UnbeastTransformer {
 						dest = new GameState(statesNum++, newDescription, newPath);
 						states.put(newDescription, dest);
 						unprocessedStates.add(dest);
+						System.out.println("New state, current #=" + states.size());
 					}
 					s.events.add(input);
 					s.actions.add(output);
