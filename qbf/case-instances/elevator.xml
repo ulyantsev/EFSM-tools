@@ -1,0 +1,144 @@
+<program xmlns:xsi = "http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation = "resources/program.xsd">
+
+    <!--
+        e11 - открыть двери
+        e12 - закрыть двери
+        e2 - успешное отктрытие или закрытие дверей
+        e3 - припядсвие мешает закрыть двери
+        e4 - двери сломались
+        z1/z2 запуск открытия/закрытия дверей
+        z3 - звонок в аварийную службу
+    -->
+
+    <parameters>
+        <fixedOutput>true</fixedOutput>
+        <populationSize>2000</populationSize>
+        <desiredFitness>0.0075</desiredFitness>
+        <stateNumber>6</stateNumber>
+        <partStay>0.1</partStay>
+        <timeSmallMutation>50</timeSmallMutation>
+        <timeBigMutation>50</timeBigMutation>
+        <mutationProbability>0.02</mutationProbability>
+    </parameters>
+
+    <inputSet>e11, e12, e2, e3, e4</inputSet>
+    <outputSet>z1, z2, z3</outputSet>
+
+    <group>
+        <formulas>
+            <ltl>G( !wasEvent(ep.e11) || wasAction(co.z1) )</ltl>
+            <ltl>G( (!wasEvent(ep.e12) || wasAction(co.z2)) and (!wasAction(co.z2) || wasEvent(ep.e12)) )</ltl>
+            <ltl>G( (!wasEvent(ep.e4) || wasAction(co.z3)) and (!wasAction(co.z3) || wasEvent(ep.e4)))</ltl>
+            <ltl>G( !wasEvent(ep.e3) || wasAction(co.z1) )</ltl>
+
+            <ltl>G( !wasEvent(ep.e2) || X(wasEvent(ep.e11) || wasEvent(ep.e12)) )</ltl>
+            <ltl>G( !wasEvent(ep.e11) or X(wasEvent(ep.e4) or wasEvent(ep.e2)) )</ltl>
+            <ltl>G( !wasAction(co.z1) or X(wasEvent(ep.e2) or wasEvent(ep.e4)) )</ltl>
+            <ltl>G( !wasEvent(ep.e12) or X(wasEvent(ep.e2) or wasEvent(ep.e3) or wasEvent(ep.e4)) )</ltl>
+            <ltl>G( !wasEvent(ep.e3) or X( wasEvent(ep.e2) or wasEvent(ep.e4) ) )</ltl>
+
+            <ltl>G( !X( wasEvent(ep.e11) ) or !wasEvent(ep.e4) )</ltl>
+            <ltl>G( !X( wasEvent(ep.e12) ) or !wasEvent(ep.e4) )</ltl>
+            <ltl>G( !X( wasEvent(ep.e2) ) or !wasEvent(ep.e4) )</ltl>
+            <ltl>G( !X( wasEvent(ep.e3) ) or !wasEvent(ep.e4) )</ltl>
+            <ltl>G( !X( wasEvent(ep.e4) ) or !wasEvent(ep.e4) )</ltl>
+
+            <ltl>G( !( wasEvent(ep.e11) and X(wasEvent(ep.e2)) ) or X(X(wasEvent(ep.e12))) )</ltl>
+            <ltl>G( !( wasEvent(ep.e12) and X(wasEvent(ep.e2)) ) or X(X(wasEvent(ep.e11))) )</ltl>
+            <ltl>G( !( wasEvent(ep.e12) and X(wasEvent(ep.e3)) ) or X(X(wasEvent(ep.e2) or wasEvent(ep.e4))) )</ltl>
+
+            <!--<ltl>G( !wasAction(co.z1) or X( U(!wasAction(co.z1), wasAction(co.z2) or wasEvent(ep.e4)) ) )</ltl>
+            <ltl>G( !wasAction(co.z2) or X( U(!wasAction(co.z2), wasAction(co.z1) or wasEvent(ep.e4)) ) )</ltl>
+
+            <ltl>!F(wasEvent(ep.e4) and X(F(wasEvent(ep.e11) || wasEvent(ep.e12) || wasEvent(ep.e2) || wasEvent(ep.e3))))</ltl>-->
+        </formulas>
+        <tests>
+            <test>
+                <input>e11, e2, e12, e2</input>
+                <output>z1, z2</output>
+                <ptest>e11/z1; e2; e12/z2; e2</ptest>
+            </test>
+            <test>
+                <input>e11, e2, e12, e2, e11, e2, e12, e2</input>
+                <output>z1, z2, z1, z2</output>
+                <ptest>e11/z1; e2; e12/z2; e2; e11/z1; e2; e12/z2; e2</ptest>
+            </test>
+            <test>
+                <input>e11, e2, e12, e3, e2, e12, e2</input>
+                <output>z1, z2, z1, z2</output>
+                <ptest>e11/z1; e2; e12/z2; e3/z1; e2; e12/z2; e2</ptest>
+            </test>
+            <test>
+                <input>e11, e2, e12, e2, e11, e2, e12, e3, e2, e12, e2</input>
+                <output>z1, z2, z1, z2, z1, z2</output>
+                <ptest>e11/z1; e2; e12/z2; e2; e11/z1; e2; e12/z2; e3/z1; e2; e12/z2; e2</ptest>
+            </test>
+            <test>
+                <input>e11, e2, e12, e3, e2, e12, e3, e2, e12, e2</input>
+                <output>z1, z2, z1, z2, z1, z2</output>
+                <ptest>e11/z1; e2; e12/z2; e3/z1; e2; e12/z2; e3/z1; e2; e12/z2; e2</ptest>
+            </test>
+            <test>
+                <input>e11, e4</input>
+                <output>z1, z3</output>
+                <ptest>e11/z1; e4/z3</ptest>
+            </test>
+            <test>
+                <input>e11, e2, e12, e4</input>
+                <output>z1, z2, z3</output>
+                <ptest>e11/z1; e2; e12/z2; e4/z3</ptest>
+            </test>
+            <test>
+                <input>e11, e2, e12, e2, e11, e4</input>
+                <output>z1, z2, z1, z3</output>
+                <ptest>e11/z1; e2; e12/z2; e2; e11/z1; e4/z3</ptest>
+            </test>
+            <test>
+                <input>e11, e2, e12, e3, e4</input>
+                <output>z1, z2, z1, z3</output>
+                <ptest>e11/z1; e2; e12/z2; e3/z1; e4/z3</ptest>
+            </test>
+        </tests>
+
+        <negativeTests>
+            <ntest>e12</ntest>
+            <ntest>e2</ntest>
+            <ntest>e3</ntest>
+            <ntest>e4</ntest>
+
+            <ntest>e11, e11</ntest>
+            <ntest>e11, e12</ntest>
+            <ntest>e11, e3</ntest>
+
+            <ntest>e11, e2, e11</ntest>
+            <ntest>e11, e2, e2</ntest>
+            <ntest>e11, e2, e3</ntest>
+            <ntest>e11, e2, e4</ntest>
+
+            <ntest>e11, e2, e12, e11</ntest>
+            <ntest>e11, e2, e12, e12</ntest>
+
+            <ntest>e11, e2, e12, e3, e11</ntest>
+            <ntest>e11, e2, e12, e3, e12</ntest>
+            <ntest>e11, e2, e12, e3, e3</ntest>
+
+            <ntest>e11, e2, e12, e2, e12</ntest>
+            <ntest>e11, e2, e12, e2, e2</ntest>
+            <ntest>e11, e2, e12, e2, e3</ntest>
+            <ntest>e11, e2, e12, e2, e4</ntest>
+
+            <ntest>e11, e2, e12, e4, e11</ntest>
+            <ntest>e11, e2, e12, e4, e12</ntest>
+            <ntest>e11, e2, e12, e4, e2</ntest>
+            <ntest>e11, e2, e12, e4, e3</ntest>
+            <ntest>e11, e2, e12, e4, e4</ntest>
+
+            <ntest>e11, e4, e11</ntest>
+            <ntest>e11, e4, e12</ntest>
+            <ntest>e11, e4, e2</ntest>
+            <ntest>e11, e4, e3</ntest>
+            <ntest>e11, e4, e4</ntest>
+        </negativeTests>
+    </group>
+</program>

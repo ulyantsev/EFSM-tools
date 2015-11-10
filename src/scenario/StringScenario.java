@@ -16,7 +16,7 @@ import bool.MyBooleanExpression;
 
 public class StringScenario {
 	private static String removeVariables(String input, int varNumber) throws ParseException {
-		final Pattern p = Pattern.compile("(\\w+)\\[([^\\[\\]]+)\\]");
+		final Pattern p = Pattern.compile("(\\w+)\\s+\\[([^\\[\\]]+)\\]");
 		final StringBuilder sb = new StringBuilder();
 		final Matcher m = p.matcher(input);
 		int lastPos = 0;
