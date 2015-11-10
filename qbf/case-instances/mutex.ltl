@@ -1,0 +1,3 @@
+G(!(wasAction(g0) && wasAction(g1)))
+!G(F(wasEvent(r00) || wasEvent(r01)) && F(wasEvent(r00) || wasEvent(r10))) || G(!(wasEvent(r10) || wasEvent(r11)) || F(wasAction(g0)))
+!G(F(wasEvent(r00) || wasEvent(r01)) && F(wasEvent(r00) || wasEvent(r10))) || G(!(wasEvent(r01) || wasEvent(r11)) || F(wasAction(g1)))
