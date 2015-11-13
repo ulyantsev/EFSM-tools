@@ -5,7 +5,7 @@ package sat_solving;
  */
 
 public enum QbfSolver {
-	DEPQBF("depqbf"), SKIZZO("sKizzo");
+	DEPQBF("depqbf");
 	
 	public final String command;
 

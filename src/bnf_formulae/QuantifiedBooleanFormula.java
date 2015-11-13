@@ -5,13 +5,11 @@ package bnf_formulae;
  */
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -22,12 +20,12 @@ import java.util.TreeSet;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-import bnf_formulae.BooleanFormula.DimacsConversionInfo;
 import sat_solving.Assignment;
 import sat_solving.QbfSolver;
 import sat_solving.SolverResult;
 import sat_solving.SolverResult.SolverResults;
 import algorithms.exception.TimeLimitExceededException;
+import bnf_formulae.BooleanFormula.DimacsConversionInfo;
 
 public class QuantifiedBooleanFormula {
 	private final List<BooleanVariable> existVars;
@@ -136,83 +134,14 @@ public class QuantifiedBooleanFormula {
 	}
 	
 	public boolean assignmentIsOk(List<Assignment> assignments) {
-		Set<String> properVars = existVars.stream().map(v -> v.name).collect(Collectors.toCollection(TreeSet::new));
-		Set<String> actualVars = assignments.stream().map(a -> a.var.name).collect(Collectors.toCollection(TreeSet::new));
+		final Set<String> properVars = existVars.stream().map(v -> v.name).collect(Collectors.toCollection(TreeSet::new));
+		final Set<String> actualVars = assignments.stream().map(a -> a.var.name).collect(Collectors.toCollection(TreeSet::new));
 		return properVars.equals(actualVars);
 	}
-	
-	private SolverResult skizzoSolve(Logger logger, int timeoutSeconds,
-			QdimacsConversionInfo qdimacs, String params) throws IOException {
-		long time = System.currentTimeMillis();
-		List<Assignment> list = new ArrayList<>();
-		File skizzoLog = new File(QDIMACS_FILENAME + ".sKizzo.log");
-		File certificate = new File(QDIMACS_FILENAME + ".qdc");
-		
-		String skizzoStr = "sKizzo -log text -v 0 " + params + " "
-			+ QDIMACS_FILENAME + " " + timeoutSeconds;
-		logger.info(skizzoStr);
-		Process skizzo = Runtime.getRuntime().exec(skizzoStr);
-		int code;
-		try {
-			code = skizzo.waitFor();
-		} catch (InterruptedException e) {
-			assert false;
-			return null;
-		}
-		time = System.currentTimeMillis() - time;
 
-		switch (code) {
-		case 10:
-			List<String> vars = new ArrayList<>();
-			for (BooleanVariable v : existVars) {
-				vars.add(String.valueOf(qdimacs.info.toDimacsNumber(v.number).get()));
-			}
-
-			// find the partial certificate
-			String ozziksStr = "ozziKs -var " + String.join(",", vars) + " -dump qdc " + skizzoLog.getName();
-			logger.info(ozziksStr);
-			Process ozziks = Runtime.getRuntime().exec(ozziksStr);
-			try {
-				ozziks.waitFor();
-			} catch (InterruptedException e) {
-				assert false;
-				return null;
-			}
-			if (!certificate.exists()) {
-				logger.severe("NO CERTIFICATE PRODUCED BY OZZIKS, GIVING UP");
-				return new SolverResult(SolverResults.UNKNOWN);
-			}
-			
-			try (BufferedReader input = new BufferedReader(new FileReader(certificate))) {
-				input.lines().filter(s -> s.startsWith("v")).forEach(certificateLine ->
-					Arrays.stream(certificateLine.split(" ")).skip(1).forEach(token ->
-						BooleanFormula.fromDimacsToken(token, qdimacs.info).ifPresent(list::add)
-					)
-				);
-			}
-
-			if (!assignmentIsOk(list)) {
-				logger.warning("NOT ALL VARS ARE PRESENT IN THE CERTIFICATE, GIVING UP");
-				return new SolverResult(SolverResults.UNKNOWN);
-			}
-			
-			return new SolverResult(list);
-		case 20:
-			return new SolverResult(SolverResults.UNSAT);
-		case 30:
-			return new SolverResult(SolverResults.UNKNOWN);
-		case 250:
-			logger.warning("MEMOUT");
-			return new SolverResult(SolverResults.UNKNOWN);
-		default:
-			logger.severe("Something went wrong during sKizzo execution, exit code = " + code);
-			return new SolverResult(SolverResults.UNKNOWN);
-		}
-	}
-	
 	public SolverResult solve(Logger logger, QbfSolver solver, String solverParams,
 			int timeoutSeconds) throws IOException {
-		QdimacsConversionInfo qdimacs = toQdimacs(logger);
+		final QdimacsConversionInfo qdimacs = toQdimacs(logger);
 		logger.info("DIMACS CNF: " + qdimacs.info.title());
 		
 		try (PrintWriter pw = new PrintWriter(QDIMACS_FILENAME)) {
@@ -225,11 +154,8 @@ public class QuantifiedBooleanFormula {
 		switch (solver) {
 		case DEPQBF:
 			return depqbfSolve(logger, timeoutSeconds, qdimacs, solverParams);
-		case SKIZZO:
-			return skizzoSolve(logger, timeoutSeconds, qdimacs, solverParams);
 		default:
-			assert false;
-			return null;
+			throw new AssertionError();
 		}
 	}
 	
@@ -240,7 +166,7 @@ public class QuantifiedBooleanFormula {
 	public String flatten(int statesNum, int k, Logger logger,
 			List<String> events, List<String> actions,
 			Set<String> forbiddenYs, long finishTime, int sizeLimit, boolean withExistPart) throws FormulaSizeException, TimeLimitExceededException {
-		FormulaBuffer buffer = new FormulaBuffer(finishTime, sizeLimit);
+		final FormulaBuffer buffer = new FormulaBuffer(finishTime, sizeLimit);
 		logger.info("Number of 'forall' variables: " + forallVars.size());
 		long time = System.currentTimeMillis();
 		if (withExistPart) {

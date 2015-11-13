@@ -84,9 +84,9 @@ public class QbfBuilderMain {
 			metaVar = "<file>")
 	private String negscFilePath;
 	
-	@Option(name = "--qbfSolver", aliases = { "-qs" }, usage = "QBF solver (only for the QSAT strategy): SKIZZO (default), DEPQBF",
+	@Option(name = "--qbfSolver", aliases = { "-qs" }, usage = "QBF solver (only for the QSAT strategy): DEPQBF is the only supported option",
 			metaVar = "<qbfSolver>")
-	private String qbfSolver = QbfSolver.SKIZZO.name();
+	private String qbfSolver = QbfSolver.DEPQBF.name();
 	
 	@Option(name = "--satSolver", aliases = { "-qss" }, usage = "SAT solver: LINGELING (default), CRYPTOMINISAT",
 			metaVar = "<satSolver>")

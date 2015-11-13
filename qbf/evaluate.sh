@@ -43,7 +43,7 @@ for ((size = $min_size; size <= $max_size; size++)); do
             rm -f $fsm
             java -Xms2G -Xmx4G -jar ../jars/qbf-automaton-generator.jar "$sc_name" \
                 --ltl "$ltl_name" --size $trysize --eventNumber $events --actionNumber $actions \
-                --timeout $timeout -qs SKIZZO --result "$fsm" --strategy $strategy --completenessType $compcmd \
+                --timeout $timeout --result "$fsm" --strategy $strategy --completenessType $compcmd \
                 2>&1 | cat > $ev_name/$trysize.full.log
             grep "\\(INFO\\|WARNING\\|SEVERE\\|Exception\\|OutOfMemoryError\\)" < $ev_name/$trysize.full.log > $ev_name/$trysize.log
             if [[ $(grep "\\(TIME LIMIT EXCEEDED\\|UNKNOWN\\|OutOfMemoryError\\)" < $ev_name/$trysize.log) != "" ]]; then
