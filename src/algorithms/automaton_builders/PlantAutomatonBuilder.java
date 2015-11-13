@@ -9,13 +9,17 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+
+import org.apache.commons.lang3.ArrayUtils;
 
 import sat_solving.Assignment;
 import sat_solving.ExpandableStringFormula;
@@ -25,6 +29,7 @@ import sat_solving.SolverResult.SolverResults;
 import scenario.StringActions;
 import scenario.StringScenario;
 import structures.plant.MooreNode;
+import structures.plant.MooreTransition;
 import structures.plant.NegativePlantScenarioForest;
 import structures.plant.NondetMooreAutomaton;
 import structures.plant.PositivePlantScenarioForest;
@@ -43,26 +48,28 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 	}
 		
 	private static NondetMooreAutomaton constructAutomatonFromAssignment(Logger logger, List<Assignment> ass,
-			PositivePlantScenarioForest tree, int colorSize) {
+			PositivePlantScenarioForest forest, int colorSize) {
+		final List<Boolean> isStart = Arrays.asList(ArrayUtils.toObject(new boolean[colorSize]));
 		final List<List<String>> actions = new ArrayList<>();
-		final List<Boolean> isStart = Arrays.asList(new Boolean[colorSize]);
-		for (int i = 0; i < isStart.size(); i++) {
-			isStart.set(i, false);
-		}
 		for (int i = 0; i < isStart.size(); i++) {
 			actions.add(new ArrayList<>());
 		}
+		
+		final Map<Integer, Integer> coloring = new HashMap<>();
 		
 		for (Assignment a : ass) {
 			if (a.value) {
 				final String tokens[] = a.var.name.split("_");
 				if (tokens[0].equals("x")) {
-					for (MooreNode root : tree.roots()) {
+					for (MooreNode root : forest.roots()) {
 						if (tokens[1].equals(root.number() + "")) {
 							final int state = Integer.parseInt(tokens[2]);
 							isStart.set(state, true);
 						}
 					}
+					final int node = Integer.parseInt(tokens[1]);
+					final int color = Integer.parseInt(tokens[2]);
+					coloring.put(node, color);
 				} else if (tokens[0].equals("z")) {
 					final int state = Integer.parseInt(tokens[1]);
 					final String action = tokens[2];
@@ -72,8 +79,8 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 		}
 		
 		final NondetMooreAutomaton automaton = new NondetMooreAutomaton(colorSize,
-				actions.stream().map(l -> new StringActions(String.join(",", l))).collect(Collectors.toList()),
-				isStart);
+				actions.stream().map(l -> new StringActions(String.join(",", l)))
+				.collect(Collectors.toList()), isStart);
 		
 		for (Assignment a : ass) {
 			if (a.value) {
@@ -87,6 +94,38 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 			}
 		}
 		
+		// remove unused transitions unless this does not violate completeness
+		final Set<MooreTransition> usedTransitions = new HashSet<>();
+		for (MooreNode node : forest.nodes()) {
+			final int source = coloring.get(node.number());
+			final int transitionNumber = node.transitions().size();
+			if (transitionNumber == 0) {
+				continue;
+			} else if (transitionNumber > 1) {
+				throw new AssertionError();
+			}
+			final MooreTransition scTransition = node.transitions().iterator().next();
+			final String event = scTransition.event();
+			final int dest = coloring.get(scTransition.dst().number());
+			for (MooreTransition t : automaton.state(source).transitions()) {
+				if (t.event().equals(event) && t.dst().number() == dest) {
+					usedTransitions.add(t);
+				}
+			}
+		}
+		for (int i = 0; i < colorSize; i++) {
+			final List<MooreTransition> copy = new ArrayList<>(automaton.state(i).transitions());
+			for (MooreTransition tCopy : copy) {
+				if (!usedTransitions.contains(tCopy)) {
+					automaton.state(i).removeTransition(tCopy);
+					if (!automaton.state(i).hasTransition(tCopy.event())) {
+						// return the transition
+						automaton.addTransition(automaton.state(i), tCopy);
+					}
+				}
+			}
+		}
+		
 		return automaton;
 	}
 	
@@ -96,7 +135,8 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 	 * If there is a propositional formula F over wasAction(...), then the meaning of this formula would be:
 	 *   In all states of the automaton, F holds.
 	 */
-	private static String addActionSpecification(String formula, String actionspecFilePath, int states, List<String> actions) throws FileNotFoundException {
+	private static String addActionSpecification(String formula, String actionspecFilePath, int states,
+			List<String> actions) throws FileNotFoundException {
 		if (actionspecFilePath == null) {
 			return formula;
 		}
@@ -153,7 +193,8 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 				return reportResult(logger, iteration, Optional.empty());
 			}
 			
-			final NondetMooreAutomaton automaton = constructAutomatonFromAssignment(logger, ass.list(), positiveForest, size);
+			final NondetMooreAutomaton automaton = constructAutomatonFromAssignment(logger, ass.list(),
+					positiveForest, size);
 			// verify
 			final List<Counterexample> counterexamples =
 					verifier.verifyWithCounterexamplesWithNoDeadEndRemoval(automaton);

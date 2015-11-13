@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
+import java.util.Scanner;
 
 import scenario.StringActions;
 import structures.plant.NondetMooreAutomaton;
@@ -36,12 +37,14 @@ public class WaterLevelGenerator {
 				}
 			}
 			
-			final String prefix = "qbf/plant-synthesis/water-level-" + k;
+			final String dir = "qbf/plant-synthesis/";
+			final String prefix = dir + "water-level-" + k;
 			
 			try (PrintWriter pw = new PrintWriter(new File(prefix + ".dot"))) {
 				pw.println(waterLevel);
 			}
 
+			// generate scenarios
 			try (PrintWriter traceWriter = new PrintWriter(new File(prefix + ".sc"))) {
 				for (int i = 0; i < actions.size(); i++) {
 					if (isStart.get(i)) {
@@ -100,10 +103,52 @@ public class WaterLevelGenerator {
 						traceWriter.println(String.join(";", scActions));
 					}
 				}
-				
 			}
 			
-			// use LTL properties from LIC100
+			// generate LTL properties
+			try (PrintWriter ltlWriter = new PrintWriter(new File(prefix + ".ltl"))) {
+				try (Scanner sc = new Scanner(new File(dir + "water-level-basic.ltl"))) {
+					while (sc.hasNextLine()) {
+						ltlWriter.println(sc.nextLine());
+					}
+				}
+				for (int i = 0; i < allActions.size() - 1; i++) {
+					final String firstAction = allActions.get(i);
+					final String secondAction = allActions.get(i + 1);
+					final List<String> parts = new ArrayList<>();
+					for (int j = 0; j < k; j++) {
+						parts.add(xWrap(firstAction, j, true));
+						parts.add(xWrap("closed", j + 1, false));
+					}
+					final String formula = "G(!(" + String.join(" && ", parts)
+							+ ") || " + xWrap(secondAction, k, true) + ")";
+					ltlWriter.println(formula);
+				}
+				for (int i = allActions.size() - 1; i > 0; i--) {
+					final String firstAction = allActions.get(i);
+					final String secondAction = allActions.get(i - 1);
+					final List<String> parts = new ArrayList<>();
+					for (int j = 0; j < k; j++) {
+						parts.add(xWrap(firstAction, j, true));
+						parts.add(xWrap("open", j + 1, false));
+					}
+					final String formula = "G(!(" + String.join(" && ", parts)
+							+ ") || " + xWrap(secondAction, k, true) + ")";
+					ltlWriter.println(formula);
+				}
+			}
 		}
+	}
+	
+	private static String xWrap(String str, int times, boolean wasAction) {
+		final StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < times; i++) {
+			sb.append("X(");
+		}
+		sb.append((wasAction ? "wasAction" : "wasEvent") + "(" + str + ")");
+		for (int i = 0; i < times; i++) {
+			sb.append(")");
+		}
+		return sb.toString();
 	}
 }

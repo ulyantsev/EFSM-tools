@@ -38,6 +38,10 @@ public class NondetMooreAutomaton {
         state.addTransition(transition.event(), transition.dst());
     }
     
+    public void removeTransition(MooreNode state, MooreTransition transition) {
+        state.removeTransition(transition);
+    }
+    
     @Override
     public String toString() {
     	final StringBuilder sb = new StringBuilder();
@@ -45,7 +49,8 @@ public class NondetMooreAutomaton {
         	+ "# command: dot -Tpng <filename> > filename.png\n"
         	+ "digraph Automaton {\n");
     	
-		sb.append("    init [shape = circle] [size=0.2] [label=\" \"];\n");
+		sb.append("    init [shape = circle, width=0.1, height=0.1, label=\" \"];\n");
+		sb.append("    node [fixedsize=true, width=1.7, height=1.7];\n");
     	for (int i = 0; i < states.size(); i++) {
     		final MooreNode state = states.get(i);
     		sb.append("    " + state.number() + " [label = \"" + state + "\"] [shape=circle]" + ";\n");
