@@ -44,17 +44,21 @@ public class Verifier {
 	}
 	
 	private void ensureContextSufficiency() {
-		final Pattern p1 = Pattern.compile("co\\.(\\w+)\\)");
-		final Pattern p2 = Pattern.compile("ep\\.(\\w+)\\)");
+		final Pattern p1 = Pattern.compile("action\\((\\w+)\\)");
+		final Pattern p2 = Pattern.compile("event\\((\\w+)\\)");
 		Matcher m;
 		for (String formula : ltlFormulae) {
 			m = p1.matcher(formula);
 			while (m.find()) {
-				assert allActions.contains(m.group(1));
+				if (!allActions.contains(m.group(1))) {
+					throw new RuntimeException("Unexpected action " + m.group(1));
+				}
 			}
 			m = p2.matcher(formula);
 			while (m.find()) {
-				assert allEvents.contains(m.group(1));
+				if (!allEvents.contains(m.group(1))) {
+					throw new RuntimeException("Unexpected event " + m.group(1));
+				}
 			}
 		}
 	}

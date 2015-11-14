@@ -32,12 +32,12 @@ public class PredicateFactory {
     }
     
 	@Predicate
-    public Boolean wasEvent(String e) {
+    public Boolean event(String e) {
         return wasTransition() ? e.equals(transition.event) : null;
     }
 
     @Predicate
-    public Boolean wasAction(String z) {
+    public Boolean action(String z) {
         return wasTransition() ? transition.getActions().contains(z) : null;
     }
 }

@@ -20,8 +20,16 @@ import egorov.ltl.grammar.LtlNode;
 import egorov.ltl.grammar.PredicateFactory;
 
 public class LtlParser {
+	private static String simplify(String formula) {
+		return formula.trim()
+				.replace("wasEvent", "event")
+				.replace("wasAction", "action")
+				.replace("wasVariable", "variable")
+				.replace("ep.", "").replace("co.", "");
+	}
+	
     private static String duplicateEvents(String formula, int varNumber) {
-		final Pattern p = Pattern.compile("wasEvent\\(ep\\.(\\w+)\\)");
+		final Pattern p = Pattern.compile("event\\((\\w+)\\)");
 		final Matcher m = p.matcher(formula);
 		final StringBuilder sb = new StringBuilder();
 		int lastPos = 0;
@@ -34,7 +42,7 @@ public class LtlParser {
 				for (int pos = 0; pos < varNumber; pos++) {
 					arr[pos] = ((j >> pos) & 1) == 1 ? '1' : '0';
 				}
-				expansion.add("wasEvent(ep." + event + String.valueOf(arr) + ")");
+				expansion.add("event(" + event + String.valueOf(arr) + ")");
 			}
 			lastPos = m.end();
 			String strToAppend = String.join(" || ", expansion);
@@ -48,7 +56,7 @@ public class LtlParser {
 	}
     
     private static String expandWasVariable(String formula, int varNumber, List<String> events) {
-    	final Pattern p = Pattern.compile("wasVariable\\((\\w+)\\)");
+    	final Pattern p = Pattern.compile("variable\\((\\w+)\\)");
 		final Matcher m = p.matcher(formula);
 		final StringBuilder sb = new StringBuilder();
 		int lastPos = 0;
@@ -64,7 +72,7 @@ public class LtlParser {
 						arr[pos] = ((j >> pos) & 1) == 1 ? '1' : '0';
 					}
 					if (arr[varIndex] == '1') {
-						expansion.add("wasEvent(ep." + event + String.valueOf(arr) + ")");
+						expansion.add("event(" + event + String.valueOf(arr) + ")");
 					}
 				}
 			}
@@ -88,7 +96,7 @@ public class LtlParser {
 
 		try (Scanner in = new Scanner(new File(filepath))) {
 			while (in.hasNextLine()) {
-				ans.add(expandWasVariable(duplicateEvents(in.nextLine().trim(), varNumber), varNumber, events));
+				ans.add(expandWasVariable(duplicateEvents(simplify(in.nextLine()), varNumber), varNumber, events));
 			}
 		}
 		return ans;
