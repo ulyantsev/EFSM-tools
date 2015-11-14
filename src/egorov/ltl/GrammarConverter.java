@@ -1,7 +1,7 @@
 /**
  * GrammarConverter.java, 12.03.2008
  */
-package egorov;
+package egorov.ltl;
 
 import java.lang.reflect.Method;
 import java.util.HashMap;
@@ -31,19 +31,16 @@ import egorov.ltl.grammar.exception.UnexpectedParameterException;
  *
  * @author Kirill Egorov
  */
-public class EgorovGrammarConverter {
-    private final Object predicatesObj;
+public class GrammarConverter {
+    private final PredicateFactory predicatesObj;
     private final Map<String, Method> predicates = new HashMap<>();
 
-    public EgorovGrammarConverter(PredicateFactory predicatesObj) {
-        if (predicatesObj == null) {
-            throw new IllegalArgumentException("Predicates object shouldn't be null");
-        }
+    public GrammarConverter(PredicateFactory predicatesObj) {
         this.predicatesObj = predicatesObj;
         for (Method m : predicatesObj.getClass().getMethods()) {
             if (m.isAnnotationPresent(Predicate.class)) {
                 if (!m.getReturnType().equals(boolean.class) && !m.getReturnType().equals(Boolean.class)) {
-                    throw new NotPredicateException("Predicate method should return boolean type (" + m + ")");
+                    throw new NotPredicateException("Predicate method must return boolean type (" + m + ")");
                 }
                 predicates.put(m.getName(), m);
             }
@@ -52,7 +49,7 @@ public class EgorovGrammarConverter {
 
     public LtlNode convert(Node root) {
         if (root == null) {
-            throw new IllegalArgumentException("BuchiNode shouldn't be null");
+            throw new IllegalArgumentException("BuchiNode can't be null");
         }
         if (root instanceof ASTMethod) {
         	final ASTMethod node = (ASTMethod) root;

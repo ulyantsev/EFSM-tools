@@ -43,11 +43,6 @@ public class NegativeNode extends Node {
     }
     
     @Override
-    public int getNumber() {
-        return super.getNumber();
-    }
-    
-    @Override
     public boolean hasTransition(String event, MyBooleanExpression expr) {
         throw new AssertionError();
     }
@@ -67,31 +62,31 @@ public class NegativeNode extends Node {
     }
     
     @Override
-    public Transition getTransition(String event, MyBooleanExpression expr) {
+    public Transition transition(String event, MyBooleanExpression expr) {
     	throw new AssertionError();
     }
     
     @Override
-    public Collection<Transition> getTransitions() {
+    public Collection<Transition> transitions() {
         return transitionList;
     }
     
     @Override
-    public NegativeNode getDst(String event, MyBooleanExpression expr) {
+    public NegativeNode dst(String event, MyBooleanExpression expr) {
     	throw new AssertionError();
     }
     
-    public NegativeNode getDst(String event, MyBooleanExpression expr, StringActions actions) {
+    public NegativeNode dst(String event, MyBooleanExpression expr, StringActions actions) {
     	for (Transition t : transitionList) {
-    		if (t.getEvent().equals(event) && t.getExpr().equals(expr) && t.getActions().equals(actions)) {
-    			return (NegativeNode) t.getDst();
+    		if (t.event().equals(event) && t.expr().equals(expr) && t.actions().equals(actions)) {
+    			return (NegativeNode) t.dst();
     		}
     	}
     	return null;
     }
     
     @Override
-    public int transitionsCount() {
+    public int transitionCount() {
         return transitionList.size();
     }
 }

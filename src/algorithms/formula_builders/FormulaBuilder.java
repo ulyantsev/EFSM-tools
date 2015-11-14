@@ -68,9 +68,9 @@ public abstract class FormulaBuilder {
 	
 	protected void addColorVars() {
 		// color variables x_#node_color
-		for (Node node : tree.getNodes()) {
+		for (Node node : tree.nodes()) {
 			for (int color = 0; color < colorSize; color++) {
-				existVars.add(new BooleanVariable("x", node.getNumber(), color));
+				existVars.add(new BooleanVariable("x", node.number(), color));
 			}
 		}
 	}
@@ -97,10 +97,10 @@ public abstract class FormulaBuilder {
 	 */
 	private BooleanFormula eachNodeHasColorConstraints() {
 		FormulaList constraints = new FormulaList(BinaryOperations.AND);
-		for (Node node : tree.getNodes()) {
+		for (Node node : tree.nodes()) {
 			List<BooleanFormula> terms = new ArrayList<>();
 			for (int color = 0; color < colorSize; color++) {
-				terms.add(xVar(node.getNumber(), color));
+				terms.add(xVar(node.number(), color));
 			}
 			constraints.add(BinaryOperation.or(terms));
 		}
@@ -112,11 +112,11 @@ public abstract class FormulaBuilder {
 	 */
 	private BooleanFormula eachNodeHasOnlyColorConstraints() {
 		FormulaList constraints = new FormulaList(BinaryOperations.AND);
-		for (Node node : tree.getNodes()) {
+		for (Node node : tree.nodes()) {
 			for (int color1 = 0; color1 < colorSize; color1++) {
 				for (int color2 = 0; color2 < color1; color2++) {
-					BooleanVariable v1 = xVar(node.getNumber(), color1);
-					BooleanVariable v2 = xVar(node.getNumber(), color2);					
+					BooleanVariable v1 = xVar(node.number(), color1);
+					BooleanVariable v2 = xVar(node.number(), color2);					
 					constraints.add(v1.not().or(v2.not()));
 				}
 			}
@@ -128,15 +128,15 @@ public abstract class FormulaBuilder {
 	private BooleanFormula actionScenarioConsistencyConstraints() {
 		FormulaList constraints = new FormulaList(BinaryOperations.AND);
 		
-		for (Node node : tree.getNodes()) {
+		for (Node node : tree.nodes()) {
 			FormulaList options = new FormulaList(BinaryOperations.OR);
 			for (int i = 0; i < colorSize; i++) {
 				FormulaList zConstraints = new FormulaList(BinaryOperations.AND);
-				zConstraints.add(xVar(node.getNumber(), i));
-				for (Transition t : node.getTransitions()) {
-					List<String> actionSequence = Arrays.asList(t.getActions().getActions());
+				zConstraints.add(xVar(node.number(), i));
+				for (Transition t : node.transitions()) {
+					List<String> actionSequence = Arrays.asList(t.actions().getActions());
 					for (String action : actions) {
-						BooleanFormula f = zVar(i, action, t.getEvent());
+						BooleanFormula f = zVar(i, action, t.event());
 						if (!actionSequence.contains(action)) {
 							f = f.not();
 						}
@@ -154,13 +154,13 @@ public abstract class FormulaBuilder {
 	private BooleanFormula consistencyConstraints() {
 		FormulaList constraints = new FormulaList(BinaryOperations.AND);
 		final Map<Node, Set<Node>> adjacent = AdjacencyCalculator.getAdjacent(tree);
-		for (Node node : tree.getNodes()) {
+		for (Node node : tree.nodes()) {
 			adjacent.get(node).stream()
-				.filter(other -> other.getNumber() < node.getNumber())
+				.filter(other -> other.number() < node.number())
 				.forEach(other -> {
 					for (int color = 0; color < colorSize; color++) {
-						final BooleanVariable v1 = xVar(node.getNumber(), color);
-						final BooleanVariable v2 = xVar(other.getNumber(), color);
+						final BooleanVariable v1 = xVar(node.number(), color);
+						final BooleanVariable v2 = xVar(other.number(), color);
 						constraints.add(v1.and(v2).not());
 					}
 				});
@@ -186,13 +186,13 @@ public abstract class FormulaBuilder {
 
 	private BooleanFormula transitionConstraints() {
 		FormulaList constraints = new FormulaList(BinaryOperations.AND);
-		for (Node node : tree.getNodes()) {
-			for (Transition t : node.getTransitions()) {
+		for (Node node : tree.nodes()) {
+			for (Transition t : node.transitions()) {
 				for (int nodeColor = 0; nodeColor < colorSize; nodeColor++) {
 					for (int childColor = 0; childColor < colorSize; childColor++) {
-						BooleanVariable nodeVar = xVar(node.getNumber(), nodeColor);
-						BooleanVariable childVar = xVar(t.getDst().getNumber(), childColor);
-						BooleanVariable relationVar = yVar(nodeColor, childColor, t.getEvent());
+						BooleanVariable nodeVar = xVar(node.number(), nodeColor);
+						BooleanVariable childVar = xVar(t.dst().number(), childColor);
+						BooleanVariable relationVar = yVar(nodeColor, childColor, t.event());
 						constraints.add(BinaryOperation.or(relationVar, nodeVar.not(), childVar.not()));
 						constraints.add(BinaryOperation.or(relationVar.not(), nodeVar.not(), childVar));
 					}

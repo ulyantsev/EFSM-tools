@@ -28,7 +28,6 @@ import structures.Node;
 import structures.Transition;
 import bool.MyBooleanExpression;
 import choco.kernel.common.util.tools.ArrayUtils;
-import egorov.Verifier;
 import egorov.ltl.LtlParseException;
 import egorov.ltl.LtlParser;
 import egorov.ltl.grammar.BinaryOperator;
@@ -37,6 +36,7 @@ import egorov.ltl.grammar.INodeVisitor;
 import egorov.ltl.grammar.LtlNode;
 import egorov.ltl.grammar.Predicate;
 import egorov.ltl.grammar.UnaryOperator;
+import egorov.verifier.Verifier;
 
 public class UnbeastTransformer {
 	public static void main(String[] args) throws IOException, ParseException, LtlParseException {
@@ -45,7 +45,7 @@ public class UnbeastTransformer {
 		final String prefix = "qbf/testing/incomplete/fsm-3-";
 		for (int i = 0; i < 50; i++) {
 			final Problem p = new Problem(prefix + i + "-true.ltl",
-				prefix + i + ".sc", events, Arrays.asList(), actions, true);
+				prefix + i + ".sc", events, actions, true);
 			runUnbeast(p, "unbeast-automaton-" + i, "unbeast-log-" + i, true);
 		}
 	}
@@ -55,7 +55,8 @@ public class UnbeastTransformer {
 		final long startTime = System.currentTimeMillis();
 		final String outputPath = "generated-problem.xml";
 		
-		final List<LtlNode> nodes = LtlParser.loadProperties(p.ltlPath, 0);
+		final List<String> formulae = LtlParser.load(p.ltlPath, 0, p.events);
+		final List<LtlNode> nodes = LtlParser.parse(formulae);
 		final List<StringScenario> scenarios = StringScenario.loadScenarios(p.scenarioPath, -1);
 		final Logger logger = Logger.getLogger("Logger" + System.currentTimeMillis());
 		final FileHandler fh = new FileHandler(logPath, false);
@@ -63,11 +64,11 @@ public class UnbeastTransformer {
 		final SimpleFormatter formatter = new SimpleFormatter();
 		fh.setFormatter(formatter);
 		
-		final Verifier v = new Verifier(logger, p.ltlPath, p.events, p.actions, p.variables.size());
+		final Verifier v = new Verifier(logger, formulae, p.events, p.actions, 0);
 		final List<String> specification = new ArrayList<>();
 		specification.addAll(Generator.ltlSpecification(nodes, p.incomplete));
 		specification.addAll(Generator.scenarioSpecification(scenarios, p.actions, p.incomplete));
-		final String problem = Generator.problemDescription(p.events, p.variables, p.actions, specification, p.incomplete);
+		final String problem = Generator.problemDescription(p.events, p.actions, specification, p.incomplete);
 		logger.info(problem);
 		try (PrintWriter pw = new PrintWriter(new File(outputPath))) {
 			pw.println(problem);
@@ -121,7 +122,7 @@ public class UnbeastTransformer {
 	private static Automaton minimizeAutomaton(Automaton a, Problem p, Verifier v,
 			List<StringScenario> scenarios, Logger logger) {
 		final Set<Integer> remainingStates = new TreeSet<>();
-		for (int i = 0; i < a.statesCount(); i++) {
+		for (int i = 0; i < a.stateCount(); i++) {
 			remainingStates.add(i);
 		}
 		Automaton current = a;
@@ -150,16 +151,16 @@ public class UnbeastTransformer {
 	 * Removes transitions to and from node n2.
 	 */
 	private static Automaton mergeNodes(int n1, int n2, Automaton a) {
-		final Automaton result = new Automaton(a.statesCount());
-		for (int i = 0; i < a.statesCount(); i++) {
+		final Automaton result = new Automaton(a.stateCount());
+		for (int i = 0; i < a.stateCount(); i++) {
 			if (i == n2) {
 				continue;
 			}
-			for (Transition t : a.getState(i).getTransitions()) {
-				final Transition newT = new Transition(result.getState(t.getSrc().getNumber()),
-						result.getState(t.getDst().getNumber() == n2 ? n1 : t.getDst().getNumber()),
-						t.getEvent(), t.getExpr(), t.getActions());
-				result.addTransition(result.getState(i), newT);
+			for (Transition t : a.state(i).transitions()) {
+				final Transition newT = new Transition(result.state(t.src().number()),
+						result.state(t.dst().number() == n2 ? n1 : t.dst().number()),
+						t.event(), t.expr(), t.actions());
+				result.addTransition(result.state(i), newT);
 			}
 		}
 		return result;
@@ -372,7 +373,7 @@ public class UnbeastTransformer {
 			return assumptions;
 		}
 		
-		static String problemDescription(List<String> events, List<String> variables,
+		static String problemDescription(List<String> events,
 				List<String> actions, List<String> specification, boolean incomplete) {
 			final StringBuilder sb = new StringBuilder();
 			sb.append("<?xml version=\"1.0\" encoding=\"ISO-8859-1\" ?>\n");
@@ -384,7 +385,6 @@ public class UnbeastTransformer {
 			sb.append("<PathToLTLCompiler>./ltl2tgba-wrapper</PathToLTLCompiler>\n");
 			sb.append("<GlobalInputs>\n");
 			events.forEach(e -> sb.append("  <Bit>" + e + "</Bit>\n"));
-			variables.forEach(v -> sb.append("  <Bit>" + v + "</Bit>\n"));
 			sb.append("</GlobalInputs>\n");
 			sb.append("<GlobalOutputs>\n");
 			actions.forEach(a -> sb.append("  <Bit>" + a + "</Bit>\n"));
@@ -407,17 +407,14 @@ public class UnbeastTransformer {
 		final String ltlPath;
 		final String scenarioPath;
 		final List<String> events;
-		final List<String> variables;
 		final List<String> actions;
 		final boolean incomplete;
 		
 		public Problem(String ltlPath, String scenarioPath,
-				List<String> events, List<String> variables,
-				List<String> actions, boolean incomplete) {
+				List<String> events, List<String> actions, boolean incomplete) {
 			this.ltlPath = ltlPath;
 			this.scenarioPath = scenarioPath;
 			this.events = events;
-			this.variables = variables;
 			this.actions = actions;
 			this.incomplete = incomplete;
 		}
@@ -426,14 +423,12 @@ public class UnbeastTransformer {
 	static final Problem pElevator = new Problem("qbf/Unbeast-0.6b/my/elevator.ltl",
 			"qbf/Unbeast-0.6b/my/elevator.sc",
 			Arrays.asList("e11", "e2", "e12", "e3", "e4"),
-			Arrays.asList(),
 			Arrays.asList("z1", "z2", "z3"),
 			true);
 	
 	static final Problem pSwitch = new Problem("qbf/Unbeast-0.6b/my/switch.ltl",
 			"qbf/Unbeast-0.6b/my/switch.sc",
 			Arrays.asList("turnon", "turnoff", "touch"),
-			Arrays.asList(),
 			Arrays.asList("on", "off"),
 			false);
 	
@@ -591,8 +586,8 @@ public class UnbeastTransformer {
 					}
 					final StringActions actions = new StringActions(output
 							.toString().replace("[", "").replace("]", ""));
-					final Node dst = a.getState(s.transitions.get(i).number);
-					a.getState(s.number).addTransition(input, MyBooleanExpression.getTautology(),
+					final Node dst = a.state(s.transitions.get(i).number);
+					a.state(s.number).addTransition(input, MyBooleanExpression.getTautology(),
 							actions, dst);
 				}
 			}

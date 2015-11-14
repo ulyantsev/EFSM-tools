@@ -1,4 +1,4 @@
-package egorov;
+package egorov.ltl;
 
 /**
  * (c) Igor Buzhinsky
@@ -57,11 +57,11 @@ public class LtlNormalizer {
 		if (node instanceof BooleanNode || node instanceof Predicate) {
 			return node;
 		} else if (node instanceof BinaryOperator) {
-			BinaryOperator op = (BinaryOperator) node;
+			final BinaryOperator op = (BinaryOperator) node;
 			return binary(toNegationNormalForm(op.getLeftOperand()),
 				toNegationNormalForm(op.getRightOperand()), op.getType());
 		} else if (node instanceof UnaryOperator && ((UnaryOperator) node).getType() != UnaryOperatorType.NEG) {
-			UnaryOperator op = (UnaryOperator) node;
+			final UnaryOperator op = (UnaryOperator) node;
 			return unary(toNegationNormalForm(op.getOperand()), op.getType());
 		} else if (node instanceof UnaryOperator) {
 			final LtlNode nestedNode = ((UnaryOperator) node).getOperand();
@@ -72,7 +72,7 @@ public class LtlNormalizer {
 			} else if (nestedNode instanceof Predicate) {
 				return not(nestedNode);
 			} else if (nestedNode instanceof UnaryOperator) {
-				UnaryOperator uo = (UnaryOperator) nestedNode;
+				final UnaryOperator uo = (UnaryOperator) nestedNode;
 				switch (uo.getType()) {
 				case GLOBAL:
 					return future(toNegationNormalForm(not(uo.getOperand())));
@@ -86,7 +86,7 @@ public class LtlNormalizer {
 					throw new RuntimeException("Unknown unary operator " + nestedNode.toString());
 				}
 			} else if (nestedNode instanceof BinaryOperator) {
-				BinaryOperator bo = (BinaryOperator) nestedNode;
+				final BinaryOperator bo = (BinaryOperator) nestedNode;
 				switch (bo.getType()) {
 				case OR:
 					return and(toNegationNormalForm(not(bo.getLeftOperand())),

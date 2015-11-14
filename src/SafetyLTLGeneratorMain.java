@@ -43,16 +43,16 @@ public class SafetyLTLGeneratorMain {
 
 	private static void generateX(Automaton automaton) {
 		//final Set<String> allEvents = allEvents(automaton);
-		boolean[] possibleStates = new boolean[automaton.statesCount()];
-		possibleStates[automaton.getStartState().getNumber()] = true;
-		for (int i = 0; i < automaton.statesCount(); i++) {
+		boolean[] possibleStates = new boolean[automaton.stateCount()];
+		possibleStates[automaton.startState().number()] = true;
+		for (int i = 0; i < automaton.stateCount(); i++) {
 			final Set<String> events = new TreeSet<>();
-			final boolean[] newStates = new boolean[automaton.statesCount()];
+			final boolean[] newStates = new boolean[automaton.stateCount()];
 			for (int j = 0; j < possibleStates.length; j++) {
 				if (possibleStates[j]) {
-					for (Transition t : automaton.getState(j).getTransitions()) {
-						events.add(t.getEvent());
-						newStates[t.getDst().getNumber()] = true;
+					for (Transition t : automaton.state(j).transitions()) {
+						events.add(t.event());
+						newStates[t.dst().number()] = true;
 					}
 				}
 			}
@@ -77,9 +77,9 @@ public class SafetyLTLGeneratorMain {
 	
 	private static Set<String> allEvents(Automaton automaton) {
 		final Set<String> events = new TreeSet<>();
-		for (Node node : automaton.getStates()) {
-			for (Transition t : node.getTransitions()) {
-				events.add(t.getEvent());
+		for (Node node : automaton.states()) {
+			for (Transition t : node.transitions()) {
+				events.add(t.event());
 			}
 		}
 		return events;
@@ -89,11 +89,11 @@ public class SafetyLTLGeneratorMain {
 		//final Set<String> allEvents = allEvents(automaton);
 		for (String event : allEvents(automaton)) {
 			final Set<String> nextEvents = new TreeSet<>();
-			for (Node node : automaton.getStates()) {
-				for (Transition t : node.getTransitions()) {
-					if (t.getEvent().equals(event)) {
-						for (Transition nextT : t.getDst().getTransitions()) {
-							nextEvents.add(nextT.getEvent());
+			for (Node node : automaton.states()) {
+				for (Transition t : node.transitions()) {
+					if (t.event().equals(event)) {
+						for (Transition nextT : t.dst().transitions()) {
+							nextEvents.add(nextT.event());
 						}
 					}
 				}
@@ -108,13 +108,13 @@ public class SafetyLTLGeneratorMain {
 		//final Set<String> allEvents = allEvents(automaton);
 		for (String event : allEvents(automaton)) {
 			final Set<String> prevEvents = new TreeSet<>();
-			for (Node node : automaton.getStates()) {
-				for (Transition t : node.getTransitions()) {
-					if (t.getEvent().equals(event)) {
-						for (Node prevNode : automaton.getStates()) {
-							for (Transition prevT : prevNode.getTransitions()) {
-								if (prevT.getDst() == node) {
-									prevEvents.add(prevT.getEvent());
+			for (Node node : automaton.states()) {
+				for (Transition t : node.transitions()) {
+					if (t.event().equals(event)) {
+						for (Node prevNode : automaton.states()) {
+							for (Transition prevT : prevNode.transitions()) {
+								if (prevT.dst() == node) {
+									prevEvents.add(prevT.event());
 								}
 							}
 						}

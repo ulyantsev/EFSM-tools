@@ -29,10 +29,10 @@ public class MaxCliqueFinderMain {
 			final ScenarioTree tree = new ScenarioTree();
 			tree.load(filename, varNumber);
 			final Map<Node, Set<Node>> adjacent = AdjacencyCalculator.getAdjacent(tree);
-			final Set<Node> clique = findClique(tree.getRoot(), adjacent);
+			final Set<Node> clique = findClique(tree.root(), adjacent);
 			checkClique(clique, adjacent);
 			System.out.println("MAX-CLIQUE SIZE: " + clique.size());
-			System.out.println("NODES: " + clique.stream().map(node -> node.getNumber()).sorted().collect(Collectors.toList()));
+			System.out.println("NODES: " + clique.stream().map(node -> node.number()).sorted().collect(Collectors.toList()));
 		} catch (IOException | ParseException e) {
 			e.printStackTrace();
 			return;

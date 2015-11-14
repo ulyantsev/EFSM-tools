@@ -79,7 +79,7 @@ public class NegativePlantScenarioForest extends PlantScenarioForest {
 	
 	@Override
     protected MooreNode addTransition(MooreNode src, String event, StringActions actions) {
-    	MooreNode dst = src.getScenarioDst(event, actions);
+    	MooreNode dst = src.scenarioDst(event, actions);
 		if (dst == null) {
     		dst = new MooreNode(nodes.size(), actions);
     		nodes.add(dst);

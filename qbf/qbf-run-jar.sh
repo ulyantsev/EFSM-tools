@@ -1,5 +1,5 @@
 #!/bin/bash
-states=5
+states=3
 events=4
 actions=4
 inst=0

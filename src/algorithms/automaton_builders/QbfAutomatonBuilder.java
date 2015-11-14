@@ -28,8 +28,8 @@ import bnf_formulae.BooleanFormula;
 import bnf_formulae.BooleanFormula.SolveAsSatResult;
 import bnf_formulae.QuantifiedBooleanFormula;
 import bnf_formulae.QuantifiedBooleanFormula.FormulaSizeException;
-import egorov.Verifier;
 import egorov.ltl.grammar.LtlNode;
+import egorov.verifier.Verifier;
 
 public class QbfAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {	
 	public final static String PRECOMPUTED_DIR_NAME = "qbf/bfs-prohibited-ys";
@@ -47,8 +47,7 @@ public class QbfAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 	}
 	
 	public static Optional<Automaton> build(Logger logger, ScenarioTree tree,
-			List<LtlNode> formulae, int size, String ltlFilePath,
-			QbfSolver qbfSolver, String solverParams,
+			List<LtlNode> formulae, int size, QbfSolver qbfSolver, String solverParams,
 			boolean useSat, List<String> events, List<String> actions,
 			SatSolver satSolver, Verifier verifier, long finishTime,
 			CompletenessType completenessType) throws IOException {

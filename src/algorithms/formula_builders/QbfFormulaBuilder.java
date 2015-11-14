@@ -21,7 +21,7 @@ import bnf_formulae.FalseFormula;
 import bnf_formulae.FormulaList;
 import bnf_formulae.QuantifiedBooleanFormula;
 import bnf_formulae.TrueFormula;
-import egorov.LtlNormalizer;
+import egorov.ltl.LtlNormalizer;
 import egorov.ltl.grammar.BinaryOperator;
 import egorov.ltl.grammar.BooleanNode;
 import egorov.ltl.grammar.LtlNode;

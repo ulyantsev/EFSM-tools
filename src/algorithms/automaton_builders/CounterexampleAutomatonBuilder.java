@@ -14,9 +14,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Logger;
 
-import egorov.Verifier;
 import egorov.ltl.grammar.LtlNode;
 import egorov.verifier.Counterexample;
+import egorov.verifier.Verifier;
 import sat_solving.Assignment;
 import sat_solving.ExpandableStringFormula;
 import sat_solving.SatSolver;
@@ -47,14 +47,14 @@ public class CounterexampleAutomatonBuilder extends ScenarioAndLtlAutomatonBuild
 	
 	protected static void addCounterexample(Logger logger, Automaton a,
 			Counterexample counterexample, NegativeScenariosTree negativeTree) {
-		int state = a.getStartState().getNumber();
+		int state = a.startState().number();
 		final List<MyBooleanExpression> expressions = new ArrayList<>();
 		final List<StringActions> actions = new ArrayList<>();
 		for (String event : counterexample.events()) {
-			final Transition t = a.getState(state).getTransition(event, MyBooleanExpression.getTautology());
-			expressions.add(t.getExpr());
-			actions.add(t.getActions());
-			final int newState = t.getDst().getNumber();			
+			final Transition t = a.state(state).transition(event, MyBooleanExpression.getTautology());
+			expressions.add(t.expr());
+			actions.add(t.actions());
+			final int newState = t.dst().number();			
 			state = newState;
 		}
 		logger.info("ADDING COUNTEREXAMPLE: " + counterexample);
@@ -78,9 +78,8 @@ public class CounterexampleAutomatonBuilder extends ScenarioAndLtlAutomatonBuild
 	}
 		
 	public static Optional<Automaton> build(Logger logger, ScenarioTree tree, int size, String solverParams,
-			String resultFilePath, String ltlFilePath, List<LtlNode> formulae,
-			List<String> events, List<String> actions, SatSolver satSolver,
-			Verifier verifier, long finishTime, CompletenessType completenessType,
+			String resultFilePath, List<LtlNode> formulae, List<String> events, List<String> actions,
+			SatSolver satSolver, Verifier verifier, long finishTime, CompletenessType completenessType,
 			NegativeScenariosTree negativeTree, boolean useCompletenessHeuristics) throws IOException {
 		deleteTrash();
 		

@@ -37,9 +37,9 @@ import algorithms.formula_builders.PlantFormulaBuilder;
 import bnf_formulae.BooleanFormula.SolveAsSatResult;
 import bnf_formulae.BooleanVariable;
 import bool.MyBooleanExpression;
-import egorov.Verifier;
 import egorov.ltl.grammar.LtlNode;
 import egorov.verifier.Counterexample;
+import egorov.verifier.Verifier;
 
 public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 	protected static Optional<NondetMooreAutomaton> reportResult(Logger logger, int iterations, Optional<NondetMooreAutomaton> a) {

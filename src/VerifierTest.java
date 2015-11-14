@@ -12,8 +12,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Logger;
 
-import egorov.Verifier;
+import egorov.ltl.LtlParser;
 import egorov.verifier.Counterexample;
+import egorov.verifier.Verifier;
 import scenario.StringActions;
 import structures.Automaton;
 import structures.Transition;
@@ -22,15 +23,15 @@ import bool.MyBooleanExpression;
 
 public class VerifierTest {
 	public static void test1() throws FileNotFoundException {
-		Logger logger = Logger.getLogger("Logger");
+		final Logger logger = Logger.getLogger("Logger");
 		int varNumber = 0;
 		int size = 2;
-		List<String> events = Arrays.asList("A", "B", "C");
-		List<String> actions = Arrays.asList("z");
+		final List<String> events = Arrays.asList("A", "B", "C");
+		final List<String> actions = Arrays.asList("z");
 		Automaton a = new Automaton(size);
-		a.addTransition(a.getState(0), new Transition(a.getState(0), a.getState(1), "A", MyBooleanExpression.getTautology(), new StringActions("z")));
-		a.addTransition(a.getState(1), new Transition(a.getState(1), a.getState(0), "B", MyBooleanExpression.getTautology(), new StringActions("z")));
-		a.addTransition(a.getState(1), new Transition(a.getState(1), a.getState(1), "C", MyBooleanExpression.getTautology(), new StringActions("")));
+		a.addTransition(a.state(0), new Transition(a.state(0), a.state(1), "A", MyBooleanExpression.getTautology(), new StringActions("z")));
+		a.addTransition(a.state(1), new Transition(a.state(1), a.state(0), "B", MyBooleanExpression.getTautology(), new StringActions("z")));
+		a.addTransition(a.state(1), new Transition(a.state(1), a.state(1), "C", MyBooleanExpression.getTautology(), new StringActions("")));
 		System.out.println(a);
 		String filename = "tmp.ltl";
 
@@ -45,17 +46,18 @@ public class VerifierTest {
 			try (PrintWriter pw = new PrintWriter(filename)) {
 				pw.println(ltl);
 			}
-			Verifier v = new Verifier(logger, filename, events, actions, varNumber);
+			Verifier v = new Verifier(logger, LtlParser.load(filename, varNumber, events),
+					events, actions, varNumber);
 			System.out.println(v.verifyWithCounterexamples(a));
 			new File(filename).delete();
 		}
 	}
 	
 	public static void test2() throws IOException, ParseException {
-		Logger logger = Logger.getLogger("Logger");
-		Automaton a = AutomatonGVLoader.load("qbf/jhotdraw.gv");
-		String filename = "tmp.ltl";
-		List<String> formulae = Arrays.asList(
+		final Logger logger = Logger.getLogger("Logger");
+		final Automaton a = AutomatonGVLoader.load("qbf/jhotdraw.gv");
+		final String filename = "tmp.ltl";
+		final List<String> formulae = Arrays.asList(
 				"G(!(wasEvent(ep.setpos)) || X((wasEvent(ep.edit)) || (wasEvent(ep.setdim))))",
 				"!U(!wasEvent(ep.edit), wasEvent(ep.finalise))",
 				"!U(!wasEvent(ep.setpos), wasEvent(ep.setdim))",
@@ -71,41 +73,37 @@ public class VerifierTest {
 				"F(G(wasEvent(ep.text)))", //false
 				"G(wasEvent(ep.figure) || wasEvent(ep.text) || wasEvent(ep.setpos) || wasEvent(ep.setdim))" // false
 				);
+		final List<String> events = Arrays.asList("figure", "text", "setpos", "edit", "setdim", "finalise");
 		for (String ltl : formulae) {
 			try (PrintWriter pw = new PrintWriter(filename)) {
 				pw.println(ltl);
 			}
-			Verifier v = new Verifier(logger, filename,
-					Arrays.asList("figure", "text", "setpos", "edit", "setdim", "finalise"), Arrays.asList(), 0);
+
+			Verifier v = new Verifier(logger, LtlParser.load(filename, 0, events),
+					events, Arrays.asList(), 0);
 			System.out.println(v.verifyWithCounterexamples(a));
 			new File(filename).delete();
 		}
 		
-		Verifier v = new Verifier(logger, "qbf/walkinshaw/jhotdraw.ltl",
-				Arrays.asList("figure", "text", "setpos", "edit", "setdim", "finalise"), Arrays.asList(), 0);
+		Verifier v = new Verifier(logger,  LtlParser.load("qbf/walkinshaw/jhotdraw.ltl", 0, events),
+				events, Arrays.asList(), 0);
 		System.out.println(v.verify(a));
 		new File(filename).delete();
 	}
 	
-	/*public static void test3() throws IOException, ParseException {
-		Logger logger = Logger.getLogger("Logger");
-		Automaton a = AutomatonGVLoader.load("qbf/t.gv");
-		Verifier v = new Verifier(a.statesCount(), logger, "qbf/testing-daniil/200n/nstates=5/5/formulae",
-				Arrays.asList("A00", "A01", "A10", "A11", "B00", "B01", "B10", "B11"), Arrays.asList("z0", "z1"), 2);
-		System.out.println(v.verifyWithCounterExamples(a));
-	}*/
-	
 	public static void randomTestsIgor() throws IOException, ParseException {
-		Logger logger = Logger.getLogger("Logger");
+		final Logger logger = Logger.getLogger("Logger");
 		for (int states = 3; states <= 10; states++) {
 			for (String completeness : Arrays.asList("incomplete", "complete")) {
 				for (int i = 0; i < 50; i++) {
-					Automaton a = AutomatonGVLoader.load("qbf/testing/" + completeness + "/fsm-" + states + "-" + i + ".dot");
+					final Automaton a = AutomatonGVLoader.load("qbf/testing/" + completeness + "/fsm-" + states + "-" + i + ".dot");
 					System.out.println(a);
 					for (boolean verdict : Arrays.asList(true)) {
 						System.out.println(completeness + " " + states + " " + i + " " + verdict);
-						Verifier v = new Verifier(logger, "qbf/testing/" + completeness + "/fsm-" + states + "-" + i + "-" + verdict + ".ltl",
-							Arrays.asList("A", "B", "C", "D"), Arrays.asList("z0", "z1", "z2", "z3"), 0);
+						final List<String> events = Arrays.asList("A", "B", "C", "D");
+						Verifier v = new Verifier(logger, LtlParser.load("qbf/testing/" + completeness
+								+ "/fsm-" + states + "-" + i + "-" + verdict + ".ltl", 0, events),
+							events, Arrays.asList("z0", "z1", "z2", "z3"), 0);
 						List<Counterexample> result = v.verifyWithCounterexamples(a);
 						boolean boolResult = result.stream().allMatch(Counterexample::isEmpty);
 						if (boolResult != verdict) {
@@ -121,17 +119,19 @@ public class VerifierTest {
 	}
 	
 	public static void randomTestsIgor_() throws IOException, ParseException {
-		Logger logger = Logger.getLogger("Logger");
+		final Logger logger = Logger.getLogger("Logger");
 		int states = 3;
-		String completeness = "incomplete";
+		final String completeness = "incomplete";
 		int i = 12;
-		Automaton a = AutomatonGVLoader.load("qbf/testing/" + completeness + "/fsm-" + states + "-" + i + ".dot");
+		final Automaton a = AutomatonGVLoader.load("qbf/testing/" + completeness + "/fsm-" + states + "-" + i + ".dot");
 		System.out.println(a);
 		boolean verdict = false;
 		System.out.println(completeness + " " + states + " " + i + " " + verdict);
-		Verifier v = new Verifier(logger, "qbf/testing/" + completeness + "/fsm-" + states + "-" + i + "-" + verdict + ".ltl",
-			Arrays.asList("A", "B", "C", "D"), Arrays.asList("z0", "z1", "z2", "z3"), 0);
-		List<Counterexample> result = v.verifyWithCounterexamples(a);
+		final List<String> events = Arrays.asList("A", "B", "C", "D");
+		final Verifier v = new Verifier(logger, LtlParser.load("qbf/testing/" + completeness + "/fsm-"
+				+ states + "-" + i + "-" + verdict + ".ltl", 0, events),
+				events, Arrays.asList("z0", "z1", "z2", "z3"), 0);
+		final List<Counterexample> result = v.verifyWithCounterexamples(a);
 		System.out.println(result);
 		boolean boolResult = result.stream().allMatch(Counterexample::isEmpty);
 		if (boolResult != verdict) {

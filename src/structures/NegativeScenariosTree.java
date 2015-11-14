@@ -49,16 +49,16 @@ public class NegativeScenariosTree {
     			throw new AssertionError("Node without a color!");
     		}
     	}
-    	if (colors[root.getNumber()] != 0) {
+    	if (colors[root.number()] != 0) {
     		throw new AssertionError("Invalid color of the root!");
     	}
     	for (NegativeNode node : nodes) {
-    		int nodeCol = colors[node.getNumber()];
+    		int nodeCol = colors[node.number()];
     		if (node.strongInvalid() && nodeCol != colorSize) {
     			throw new AssertionError("Invalid color of an invalid node!");
     		}
     		for (Node loop : node.loops()) {
-    			if (nodeCol == colors[loop.getNumber()] && nodeCol != colorSize) {
+    			if (nodeCol == colors[loop.number()] && nodeCol != colorSize) {
     				throw new AssertionError("Loop restriction is not satisfied!");
     			}
     		}
@@ -82,7 +82,7 @@ public class NegativeScenariosTree {
         		loopNode = node;
         	}
             addTransitions(node, scenario.getEvents(i), scenario.getExpr(i), scenario.getActions(i));
-            node = node.getDst(scenario.getEvents(i).get(0), scenario.getExpr(i), scenario.getActions(i));
+            node = node.dst(scenario.getEvents(i).get(0), scenario.getExpr(i), scenario.getActions(i));
         }
         if (loopLength == 0) {
         	loopNode = node;
@@ -104,7 +104,7 @@ public class NegativeScenariosTree {
     	assert !events.isEmpty();
     	NegativeNode dst = null;
     	for (String e : events) {
-    		if (src.getDst(e, expr, actions) == null) {
+    		if (src.dst(e, expr, actions) == null) {
     			if (dst == null) {
             		dst = new NegativeNode(nodes.size());
             		nodes.add(dst);
@@ -114,11 +114,11 @@ public class NegativeScenariosTree {
     	}
     }
 
-    public Collection<NegativeNode> getNodes() {
+    public Collection<NegativeNode> nodes() {
         return nodes;
     }
 
-    public int nodesCount() {
+    public int nodeCount() {
         return nodes.size();
     }
 
@@ -129,14 +129,14 @@ public class NegativeScenariosTree {
         sb.append("digraph ScenariosTree {\n    node [shape = circle];\n");
 
         for (NegativeNode node : nodes) {
-            for (Transition t : node.getTransitions()) {
-                sb.append("    " + t.getSrc().getNumber() + " -> " + t.getDst().getNumber());
-                sb.append(" [label = \"" + t.getEvent() + " [" + t.getExpr().toString() + "] ("
-                        + t.getActions().toString() + ") \"];\n");
+            for (Transition t : node.transitions()) {
+                sb.append("    " + t.src().number() + " -> " + t.dst().number());
+                sb.append(" [label = \"" + t.event() + " [" + t.expr().toString() + "] ("
+                        + t.actions().toString() + ") \"];\n");
             }
             if (node.weakInvalid()) {
 	            for (NegativeNode loop : node.loops()) {
-	                sb.append("    " + node.getNumber() + " -> " + loop.getNumber() + ";\n");
+	                sb.append("    " + node.number() + " -> " + loop.number() + ";\n");
 	            }
             }
         }

@@ -22,11 +22,11 @@ public abstract class PlantScenarioForest {
         return Collections.unmodifiableSet(nodes);
     }
 
-    public int rootsCount() {
+    public int rootCount() {
         return roots.size();
     }
     
-    public int nodesCount() {
+    public int nodeCount() {
         return nodes.size();
     }
     

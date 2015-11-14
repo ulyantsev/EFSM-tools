@@ -56,7 +56,7 @@ public class MooreNode {
     	return String.valueOf(number + " : " + actions);
     }
     
-    public MooreNode getScenarioDst(String event, StringActions actions) {
+    public MooreNode scenarioDst(String event, StringActions actions) {
     	for (MooreTransition t : transitions) {
     		if (t.event().equals(event) && t.dst().actions().equals(actions)) {
     			return t.dst();
@@ -65,7 +65,7 @@ public class MooreNode {
     	return null;
     }
     
-    public List<MooreNode> getAllDst(String event) {
+    public List<MooreNode> allDst(String event) {
     	final List<MooreNode> ans = new ArrayList<>();
     	for (MooreTransition t : transitions) {
     		if (t.event().equals(event)) {

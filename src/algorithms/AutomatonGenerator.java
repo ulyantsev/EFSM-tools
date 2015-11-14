@@ -62,8 +62,8 @@ public class AutomatonGenerator {
 			for (int eventNum = 0; eventNum < eventsCount; eventNum++) {
 
 				for (int i = 0; i < dst[stateNum][eventNum].length; i++) {
-					Node srcNode = ans.getState(stateNum);
-					Node dstNode = ans.getState(dst[stateNum][eventNum][i]);
+					Node srcNode = ans.state(stateNum);
+					Node dstNode = ans.state(dst[stateNum][eventNum][i]);
 					String event = events.get(eventNum);
 					MyBooleanExpression expr = null;
 					try {

@@ -4,13 +4,13 @@ import scenario.StringActions;
 import bool.MyBooleanExpression;
 
 public class Transition {
-	public static boolean isCompatibility(Transition first, Transition second) {
-		if (first.getEvent().equals(second.getEvent())) {
-			if (first.getExpr() == second.getExpr()) {
-				if (!first.getActions().equals(second.getActions())) {
+	public static boolean isCompatibile(Transition first, Transition second) {
+		if (first.event().equals(second.event())) {
+			if (first.expr() == second.expr()) {
+				if (!first.actions().equals(second.actions())) {
 					return false;
 				}
-			} else if (first.getExpr().hasSolutionWith(second.getExpr())) {
+			} else if (first.expr().hasSolutionWith(second.expr())) {
 				return false;
 			}
 		}
@@ -31,29 +31,29 @@ public class Transition {
 		this.actions = actions;
 	}
 
-	public String getEvent() {
+	public String event() {
 		return event;
 	}
 
-	public Node getSrc() {
+	public Node src() {
 		return src;
 	}
 
-	public Node getDst() {
+	public Node dst() {
 		return dst;
 	}
 
-	public StringActions getActions() {
+	public StringActions actions() {
 		return actions;
 	}
 
-	public MyBooleanExpression getExpr() {
+	public MyBooleanExpression expr() {
 		return expr;
 	}
 	
 	@Override
 	public String toString() {
-		return src.getNumber() + " -> " + dst.getNumber()
+		return src.number() + " -> " + dst.number()
 				+ "  " + event + " [" + expr.toString() + "] " + actions.toString();
 	}
 }

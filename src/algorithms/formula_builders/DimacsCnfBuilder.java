@@ -10,19 +10,19 @@ import structures.Transition;
 public class DimacsCnfBuilder {
     public static String getCnf(ScenarioTree tree, int k) {
         Map<String, Integer> vars = new HashMap<String, Integer>();
-        for (Node node : tree.getNodes()) {
+        for (Node node : tree.nodes()) {
             for (int color = 0; color < k; color++) {
-                vars.put("x_" + node.getNumber() + "_" + color, vars.size() + 1);
+                vars.put("x_" + node.number() + "_" + color, vars.size() + 1);
             }
         }
         
-        for (Node node : tree.getNodes()) {
-            for (Transition t : node.getTransitions()) {
-                String key = "y_" + t.getEvent() + "_" + t.getExpr().toString() + "_0_0";
+        for (Node node : tree.nodes()) {
+            for (Transition t : node.transitions()) {
+                String key = "y_" + t.event() + "_" + t.expr().toString() + "_0_0";
                 if (!vars.containsKey(key)) {
                     for (int nodeColor = 0; nodeColor < k; nodeColor++) {
                         for (int childColor = 0; childColor < k; childColor++) {
-                            String s = "y_" + t.getEvent() + "_" + t.getExpr() + "_" + nodeColor + "_" + childColor;
+                            String s = "y_" + t.event() + "_" + t.expr() + "_" + nodeColor + "_" + childColor;
                             vars.put(s, vars.size() + 1);
                         }
                     }
@@ -34,31 +34,31 @@ public class DimacsCnfBuilder {
         String initClause = vars.get("x_0_0") + "";
         clauses.add(initClause);
         
-        for (Node node : tree.getNodes()) {
+        for (Node node : tree.nodes()) {
             String clause = "";
             for (int color = 0; color < k; color++) {
-                clause += vars.get("x_" + node.getNumber() + "_" + color) + " "; 
+                clause += vars.get("x_" + node.number() + "_" + color) + " "; 
             }
             clauses.add(clause);
         }
         
-        for (Node node : tree.getNodes()) {
+        for (Node node : tree.nodes()) {
             for (int c1 = 0; c1 < k; c1++) {
                 for (int c2 = 0; c2 < c1; c2++) {
-                    int v1 = vars.get("x_" + node.getNumber() + "_" + c1);
-                    int v2 = vars.get("x_" + node.getNumber() + "_" + c2);
+                    int v1 = vars.get("x_" + node.number() + "_" + c1);
+                    int v2 = vars.get("x_" + node.number() + "_" + c2);
                     clauses.add(-v1 + " " + -v2);
                 }
             }
         }
         
         Map<Node, Set<Node>> adjacent = AdjacencyCalculator.getAdjacent(tree);
-        for (Node node : tree.getNodes()) {
+        for (Node node : tree.nodes()) {
             for (Node other : adjacent.get(node)) {
-                if (other.getNumber() < node.getNumber()) {
+                if (other.number() < node.number()) {
                     for (int color = 0; color < k; color++) {
-                        int v1 = vars.get("x_" + node.getNumber() + "_" + color);
-                        int v2 = vars.get("x_" + other.getNumber() + "_" + color);
+                        int v1 = vars.get("x_" + node.number() + "_" + color);
+                        int v2 = vars.get("x_" + other.number() + "_" + color);
                         clauses.add("-" + v1 + " -" + v2);                      
                     }
                 }
@@ -66,9 +66,9 @@ public class DimacsCnfBuilder {
         }
         
         Set<String> was = new HashSet<String>();
-        for (Node node : tree.getNodes()) {
-            for (Transition t : node.getTransitions()) {
-                String key = t.getEvent() + "_" + t.getExpr();
+        for (Node node : tree.nodes()) {
+            for (Transition t : node.transitions()) {
+                String key = t.event() + "_" + t.expr();
                 if (!was.contains(key)) {
                     was.add(key);
                     for (int parentColor = 0; parentColor < k; parentColor++) {
@@ -84,13 +84,13 @@ public class DimacsCnfBuilder {
             }
         }
         
-        for (Node node : tree.getNodes()) {
-            for (Transition t : node.getTransitions()) {
+        for (Node node : tree.nodes()) {
+            for (Transition t : node.transitions()) {
                 for (int nodeColor = 0; nodeColor < k; nodeColor++) {
                     for (int childColor = 0; childColor < k; childColor++) {
-                        int nodeVar = vars.get("x_" + node.getNumber() + "_" + nodeColor);
-                        int childVar = vars.get("x_" + t.getDst().getNumber() + "_" + childColor);
-                        int relationVar = vars.get("y_" + t.getEvent() + "_" + t.getExpr() + "_" + nodeColor + "_" + childColor);
+                        int nodeVar = vars.get("x_" + node.number() + "_" + nodeColor);
+                        int childVar = vars.get("x_" + t.dst().number() + "_" + childColor);
+                        int relationVar = vars.get("y_" + t.event() + "_" + t.expr() + "_" + nodeColor + "_" + childColor);
                         
                         clauses.add(relationVar + " " + -nodeVar + " " + -childVar);
                         clauses.add(-relationVar + " " + -nodeVar + " " + childVar);
@@ -102,9 +102,9 @@ public class DimacsCnfBuilder {
         // BFS order clauses
         {
             List<String> eventExprOrder = new ArrayList<String>();
-            for (Node node : tree.getNodes()) {
-                for (Transition t : node.getTransitions()) {
-                    String eventExpr = t.getEvent() + "_" + t.getExpr().toString();
+            for (Node node : tree.nodes()) {
+                for (Transition t : node.transitions()) {
+                    String eventExpr = t.event() + "_" + t.expr().toString();
                     if (!eventExprOrder.contains(eventExpr)) {
                          eventExprOrder.add(eventExpr);
                     }
@@ -252,7 +252,7 @@ public class DimacsCnfBuilder {
 
         StringBuilder sb = new StringBuilder();
 
-        String header = "c CNF for scenarios tree with " + tree.nodesCount() + " nodes, colored in " + k + " colors\n";
+        String header = "c CNF for scenarios tree with " + tree.nodeCount() + " nodes, colored in " + k + " colors\n";
         header += "p cnf " + vars.size() + " " + clauses.size() + "\n";
         sb.append(header);
 

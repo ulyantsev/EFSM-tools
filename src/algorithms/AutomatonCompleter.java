@@ -9,7 +9,7 @@ import java.util.List;
 
 import org.apache.commons.lang3.tuple.Pair;
 
-import egorov.Verifier;
+import egorov.verifier.Verifier;
 import scenario.StringActions;
 import structures.Automaton;
 import structures.Node;
@@ -39,7 +39,7 @@ public class AutomatonCompleter {
 			List<String> actions, long finishTime, CompletenessType type) {
 		this.verifier = verifier;
 		this.automaton = automaton;
-		colorSize = automaton.statesCount();
+		colorSize = automaton.stateCount();
 		this.events = events;
 		this.finishTime = finishTime;
 		this.completenessType = type;
@@ -73,13 +73,13 @@ public class AutomatonCompleter {
 	 */
 	private List<Pair<Integer, String>> missingTransitions() {
 		final List<Pair<Integer, String>> missing = new ArrayList<>();
-		for (Node s : automaton.getStates()) {
-			if (completenessType == CompletenessType.NO_DEAD_ENDS && !s.getTransitions().isEmpty()) {
+		for (Node s : automaton.states()) {
+			if (completenessType == CompletenessType.NO_DEAD_ENDS && !s.transitions().isEmpty()) {
 				continue;
 			}
 			for (String e : events) {
 				if (!s.hasTransition(e, MyBooleanExpression.getTautology())) {
-					missing.add(Pair.of(s.getNumber(), e));
+					missing.add(Pair.of(s.number(), e));
 				}
 			}
 		}
@@ -105,13 +105,13 @@ public class AutomatonCompleter {
 		final Pair<Integer, String> missing = missingTransitions.get(missingTransitions.size() - 1);
 		missingTransitions.remove(missingTransitions.size() - 1);
 		
-		final Node stateFrom = automaton.getState(missing.getLeft());
+		final Node stateFrom = automaton.state(missing.getLeft());
 		final String e = missing.getRight();
 		
 		for (StringActions actions : preparedActions) {
 			for (int dst = 0; dst < colorSize; dst++) {
 				Transition autoT = new Transition(stateFrom,
-						automaton.getState(dst), e, MyBooleanExpression.getTautology(), actions);
+						automaton.state(dst), e, MyBooleanExpression.getTautology(), actions);
 				automaton.addTransition(stateFrom, autoT);
 				ensureCompleteness(missingTransitions);
 				stateFrom.removeTransition(autoT);

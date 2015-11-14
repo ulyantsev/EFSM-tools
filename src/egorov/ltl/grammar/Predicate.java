@@ -23,16 +23,6 @@ public class Predicate extends LtlNode implements IExpression<Boolean> {
     	return arg;
     }
     
-    /*
-     * For simplified usage.
-     */
-    public Predicate(String name, String arg) {
-    	super(name);
-    	target = null;
-    	method = null;
-    	this.arg = arg;
-    }
-    
     public Predicate(Object target, Method m, String arg) {
         super(m.getName());
         

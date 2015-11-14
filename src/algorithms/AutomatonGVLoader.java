@@ -53,7 +53,7 @@ public class AutomatonGVLoader {
         
         Automaton res = new Automaton(maxNum + 1);
         for (int i = 0; i < srcList.size(); i++) {
-            Node src = res.getState(srcList.get(i)), dst = res.getState(dstList.get(i));
+            Node src = res.state(srcList.get(i)), dst = res.state(dstList.get(i));
             Transition transition = new Transition(src, dst, eventsList.get(i), guardConditionsList.get(i), actionsList.get(i));
             res.addTransition(src, transition);
         }

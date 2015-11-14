@@ -21,55 +21,55 @@ public class Automaton {
         }
     }
 
-    public Node getStartState() {
+    public Node startState() {
         return startState;
     }
 
-    public Node getState(int i) {
+    public Node state(int i) {
         return states.get(i);
     }
 
-    public List<Node> getStates() {
+    public List<Node> states() {
         return states;
     }
 
-    public int statesCount() {
+    public int stateCount() {
         return states.size();
     }
 
     public void addTransition(Node state, Transition transition) {
-        state.addTransition(transition.getEvent(), transition.getExpr(), transition.getActions(), transition.getDst());
+        state.addTransition(transition.event(), transition.expr(), transition.actions(), transition.dst());
     }
     
     public void removeTransition(Node state, Transition transition) {
         state.removeTransition(transition);
     }
     
-    private Node getNextNode(Node node, String event, MyBooleanExpression expr) {
-        for (Transition tr : node.getTransitions()) {
-            if (tr.getEvent().equals(event) && tr.getExpr() == expr) {
-                return tr.getDst();
+    private Node nextNode(Node node, String event, MyBooleanExpression expr) {
+        for (Transition tr : node.transitions()) {
+            if (tr.event().equals(event) && tr.expr() == expr) {
+                return tr.dst();
             }
         }
         return null;
     }
 
-    private StringActions getNextActions(Node node, String event, MyBooleanExpression expr) {
-        for (Transition tr : node.getTransitions()) {
-            if (tr.getEvent().equals(event) && tr.getExpr() == expr) {
-                return tr.getActions();
+    private StringActions nextActions(Node node, String event, MyBooleanExpression expr) {
+        for (Transition tr : node.transitions()) {
+            if (tr.event().equals(event) && tr.expr() == expr) {
+                return tr.actions();
             }
         }
         return null;        
     }
     
-    private Node getNext(Node node, String event, MyBooleanExpression expr, StringActions actions) {
-        for (Transition tr : node.getTransitions()) {
-            boolean eventsEq = tr.getEvent().equals(event);
-            boolean exprEq = tr.getExpr() == expr;
-            boolean actionsEq = tr.getActions().equals(actions);                                                        
+    private Node next(Node node, String event, MyBooleanExpression expr, StringActions actions) {
+        for (Transition tr : node.transitions()) {
+            boolean eventsEq = tr.event().equals(event);
+            boolean exprEq = tr.expr() == expr;
+            boolean actionsEq = tr.actions().equals(actions);                                                        
             if (eventsEq && exprEq && actionsEq) {
-                return tr.getDst();
+                return tr.dst();
             }
         }
         return null;
@@ -81,7 +81,7 @@ public class Automaton {
         	List<Node> newNodes = new ArrayList<>();
         	// multi-edge support
         	for (String e : scenario.getEvents(pos)) {
-	            Node newNode = getNext(node, e, scenario.getExpr(pos), scenario.getActions(pos));
+	            Node newNode = next(node, e, scenario.getExpr(pos), scenario.getActions(pos));
 	            if (newNode == null) {
 	                return false;
 	            }
@@ -99,8 +99,8 @@ public class Automaton {
         Node node = startState;
         int missed = 0;
         for (int pos = 0; pos < scenario.size(); pos++) {
-            StringActions nextActions = getNextActions(node, scenario.getEvents(pos).get(0), scenario.getExpr(pos));
-            node = getNextNode(node, scenario.getEvents(pos).get(0), scenario.getExpr(pos));
+            StringActions nextActions = nextActions(node, scenario.getEvents(pos).get(0), scenario.getExpr(pos));
+            node = nextNode(node, scenario.getEvents(pos).get(0), scenario.getExpr(pos));
             if (node == null) {
                 return missed + scenario.size() - pos;
             }
@@ -120,10 +120,10 @@ public class Automaton {
         	+ "    0 [style = \"bold\"];\n");
 
         for (Node state : states) {
-            for (Transition t : state.getTransitions()) {
-                sb.append("    " + t.getSrc().getNumber() + " -> " + t.getDst().getNumber());
-                sb.append(" [label = \"" + t.getEvent() + " [" + t.getExpr().toString()
-                	+ "] (" + t.getActions().toString() + ") \"];\n");
+            for (Transition t : state.transitions()) {
+                sb.append("    " + t.src().number() + " -> " + t.dst().number());
+                sb.append(" [label = \"" + t.event() + " [" + t.expr().toString()
+                	+ "] (" + t.actions().toString() + ") \"];\n");
             }
         }
 

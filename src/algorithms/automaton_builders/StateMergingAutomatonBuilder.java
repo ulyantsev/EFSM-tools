@@ -13,8 +13,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Logger;
 
-import egorov.Verifier;
 import egorov.verifier.Counterexample;
+import egorov.verifier.Verifier;
 import scenario.StringScenario;
 import structures.APTA;
 import structures.Automaton;

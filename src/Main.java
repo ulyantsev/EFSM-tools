@@ -89,7 +89,7 @@ public class Main {
             try {
                 tree.load(filePath);
                 logger.info("Loaded scenarios from " + filePath);
-                logger.info("  Total scenarios tree size: " + tree.nodesCount());
+                logger.info("  Total scenarios tree size: " + tree.nodeCount());
             } catch (Exception e) {
                 logger.warning("Can't load scenarios from file " + filePath);
                 return;

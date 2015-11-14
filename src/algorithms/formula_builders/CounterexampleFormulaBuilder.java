@@ -47,18 +47,18 @@ public class CounterexampleFormulaBuilder extends FormulaBuilder {
 	}
 
 	public void addNegativeScenarioVars() {
-		for (Node node : negativeTree.getNodes()) {
+		for (Node node : negativeTree.nodes()) {
 			for (int color = 0; color <= colorSize; color++) {
-				if (!BooleanVariable.byName("xx", node.getNumber(), color).isPresent()) {
-					existVars.add(new BooleanVariable("xx", node.getNumber(), color));
+				if (!BooleanVariable.byName("xx", node.number(), color).isPresent()) {
+					existVars.add(new BooleanVariable("xx", node.number(), color));
 				}
 			}
 		}
 	}
 	
 	private void eachNegativeNodeHasOneColorConstraints(List<BooleanFormula> constraints) {
-		for (NegativeNode node : negativeTree.getNodes()) {
-			final int num = node.getNumber();
+		for (NegativeNode node : negativeTree.nodes()) {
+			final int num = node.number();
 			
 			if (node == negativeTree.getRoot()) {
 				// the root has color 0
@@ -76,7 +76,7 @@ public class CounterexampleFormulaBuilder extends FormulaBuilder {
 				for (NegativeNode loop : node.loops()) {
 					FormulaList options = new FormulaList(BinaryOperations.OR);
 					options.add(invalid(node));
-					final int loopNum = loop.getNumber();
+					final int loopNum = loop.number();
 					for (int i = 0; i < colorSize; i++) {
 						options.add(xxVar(num, i).equivalent(xxVar(loopNum, i)).not());
 					}
@@ -102,14 +102,14 @@ public class CounterexampleFormulaBuilder extends FormulaBuilder {
 	}
 
 	private void properTransitionYConstraints(List<BooleanFormula> constraints) {
-		for (NegativeNode node : negativeTree.getNodes()) {
-			for (Transition t : node.getTransitions()) {
-				NegativeNode child = (NegativeNode) t.getDst();
+		for (NegativeNode node : negativeTree.nodes()) {
+			for (Transition t : node.transitions()) {
+				NegativeNode child = (NegativeNode) t.dst();
 				for (int nodeColor = 0; nodeColor < colorSize; nodeColor++) {
-					BooleanVariable nodeVar = xxVar(node.getNumber(), nodeColor);
+					BooleanVariable nodeVar = xxVar(node.number(), nodeColor);
 					for (int childColor = 0; childColor < colorSize; childColor++) {
-						BooleanVariable childVar = xxVar(child.getNumber(), childColor);
-						BooleanVariable relationVar = yVar(nodeColor, childColor, t.getEvent());
+						BooleanVariable childVar = xxVar(child.number(), childColor);
+						BooleanVariable relationVar = yVar(nodeColor, childColor, t.event());
 						constraints.add(BinaryOperation.or(relationVar, nodeVar.not(), childVar.not()));
 						constraints.add(BinaryOperation.or(relationVar.not(), nodeVar.not(), childVar, invalid(child)));
 					}
@@ -119,22 +119,22 @@ public class CounterexampleFormulaBuilder extends FormulaBuilder {
 	}
 	
 	private void properTransitionZConstraints(List<BooleanFormula> constraints) {
-		for (NegativeNode node : negativeTree.getNodes()) {
+		for (NegativeNode node : negativeTree.nodes()) {
 			FormulaList options = new FormulaList(BinaryOperations.OR);
 			for (int i = 0; i < colorSize; i++) {
 				FormulaList zConstraints = new FormulaList(BinaryOperations.AND);
-				zConstraints.add(xxVar(node.getNumber(), i));
-				for (Transition t : node.getTransitions()) {
+				zConstraints.add(xxVar(node.number(), i));
+				for (Transition t : node.transitions()) {
 					FormulaList innerConstraints = new FormulaList(BinaryOperations.AND);
-					List<String> actionSequence = Arrays.asList(t.getActions().getActions());
+					List<String> actionSequence = Arrays.asList(t.actions().getActions());
 					for (String action : actions) {
-						BooleanFormula f = zVar(i, action, t.getEvent());
+						BooleanFormula f = zVar(i, action, t.event());
 						if (!actionSequence.contains(action)) {
 							f = f.not();
 						}
 						innerConstraints.add(f);
 					}
-					zConstraints.add(invalid(t.getDst()).or(innerConstraints.assemble()));
+					zConstraints.add(invalid(t.dst()).or(innerConstraints.assemble()));
 				}
 				options.add(zConstraints.assemble());
 			}
@@ -143,10 +143,10 @@ public class CounterexampleFormulaBuilder extends FormulaBuilder {
 	}
 	
 	private void invalidDefinitionConstraints(List<BooleanFormula> constraints) {
-		for (NegativeNode parent : negativeTree.getNodes()) {
-			for (Transition t : parent.getTransitions()) {
-				Node child = t.getDst();
-				String event = t.getEvent();
+		for (NegativeNode parent : negativeTree.nodes()) {
+			for (Transition t : parent.transitions()) {
+				Node child = t.dst();
+				String event = t.event();
 				FormulaList options = new FormulaList(BinaryOperations.OR);
 				options.add(invalid(parent));
 				for (int colorParent = 0; colorParent < colorSize; colorParent++) {
@@ -162,13 +162,13 @@ public class CounterexampleFormulaBuilder extends FormulaBuilder {
 					FormulaList innerZConstraints = new FormulaList(BinaryOperations.OR);
 					for (String action : actions) {
 						BooleanFormula v = zVar(colorParent, action, event);
-						if (ArrayUtils.contains(t.getActions().getActions(), action)) {
+						if (ArrayUtils.contains(t.actions().getActions(), action)) {
 							v = v.not();
 						}
 						innerZConstraints.add(v);
 					}
 					
-					options.add(xxVar(parent.getNumber(), colorParent)
+					options.add(xxVar(parent.number(), colorParent)
 							.and(innerZConstraints.assemble().or(yFormula)));
 				}
 				constraints.add(invalid(child).equivalent(options.assemble()));
@@ -177,7 +177,7 @@ public class CounterexampleFormulaBuilder extends FormulaBuilder {
 	}
 	
 	private BooleanVariable invalid(Node n) {
-		return xxVar(n.getNumber(), colorSize);
+		return xxVar(n.number(), colorSize);
 	}
 	
 	// for the completeness heuristics

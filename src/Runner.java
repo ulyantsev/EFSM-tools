@@ -1,7 +1,7 @@
 
 public class Runner {
 	public static void main(String[] args) {
-		QbfBuilderMain.main(new String[] {
+		/*QbfBuilderMain.main(new String[] {
 				"qbf/testing-daniil/50n/nstates=5/10/plain-scenarios",
 				"--size", "5",
 				"--eventNumber", "2",
@@ -13,6 +13,7 @@ public class Runner {
 				"--result", "qbf/generated-fsm.gv",
 				"--strategy", "BACKTRACKING",
 				"--backtrackingErrorNumber", "0"
-		});
+		});*/
+		QbfBuilderMain.main("qbf/case-instances/clock.sc --ltl qbf/case-instances/clock.ltl --size 3 --eventNumber 4 --eventNames A,T,H,M --actionNumber 7 --actionNames z1,z2,z3,z4,z5,z6,z7 --varNumber 2 --timeout 200000 --result generated-fsm.gv --strategy COUNTEREXAMPLE --completenessType NORMAL --satSolver LINGELING".split(" "));
 	}
 }

@@ -30,7 +30,7 @@ public class NondetMooreAutomaton {
         return states;
     }
 
-    public int statesCount() {
+    public int stateCount() {
         return states.size();
     }
 
@@ -121,7 +121,7 @@ public class NondetMooreAutomaton {
     			boolean[] newStates = new boolean[states.size()];
     			for (int j = 0; j < states.size(); j++) {
     				if (curStates[j]) {
-    					for (MooreNode dst : states.get(j).getAllDst(event)) {
+    					for (MooreNode dst : states.get(j).allDst(event)) {
     						if (dst.actions().setEquals(actions)) {
     							newStates[dst.number()] = true;
     						}

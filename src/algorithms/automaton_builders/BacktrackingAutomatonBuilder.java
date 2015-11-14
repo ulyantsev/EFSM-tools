@@ -28,8 +28,8 @@ import algorithms.AutomatonCompleter.CompletenessType;
 import algorithms.exception.AutomatonFoundException;
 import algorithms.exception.TimeLimitExceededException;
 import bool.MyBooleanExpression;
-import egorov.Verifier;
 import egorov.ltl.grammar.LtlNode;
+import egorov.verifier.Verifier;
 
 public class BacktrackingAutomatonBuilder {
 	private static abstract class TraverseState {
@@ -78,9 +78,9 @@ public class BacktrackingAutomatonBuilder {
 		
 		public OrdinaryTraverseState(ScenarioTree tree, Verifier verifier, int colorSize, long finishTime,
 				List<String> events, List<String> actions, CompletenessType completenessType) {
-			super(colorSize, events, actions, finishTime, new int[tree.nodesCount()],
+			super(colorSize, events, actions, finishTime, new int[tree.nodeCount()],
 					verifier, completenessType);
-			frontier = new ArrayList<>(tree.getRoot().getTransitions());
+			frontier = new ArrayList<>(tree.root().transitions());
 		}
 		
 		/*
@@ -93,14 +93,14 @@ public class BacktrackingAutomatonBuilder {
 			while (!currentFrontier.isEmpty()) {
 				final Transition t = currentFrontier.get(currentFrontier.size() - 1);
 				currentFrontier.remove(currentFrontier.size() - 1);
-				final int stateFrom = coloring[t.getSrc().getNumber()];
-				final Transition autoT = automaton.getState(stateFrom)
-						.getTransition(t.getEvent(), t.getExpr());
+				final int stateFrom = coloring[t.src().number()];
+				final Transition autoT = automaton.state(stateFrom)
+						.transition(t.event(), t.expr());
 				if (autoT == null) {
 					finalFrontier.add(t);
-				} else if (autoT.getActions().equals(t.getActions())) {
-					currentFrontier.addAll(t.getDst().getTransitions());
-					coloring[t.getDst().getNumber()] = autoT.getDst().getNumber();
+				} else if (autoT.actions().equals(t.actions())) {
+					currentFrontier.addAll(t.dst().transitions());
+					coloring[t.dst().number()] = autoT.dst().number();
 				} else {
 					return false;
 				}
@@ -115,11 +115,11 @@ public class BacktrackingAutomatonBuilder {
 			
 			Transition t = frontier.get(0);
 			// further edges should be added from this state:
-			final Node stateFrom = automaton.getState(coloring[t.getSrc().getNumber()]);
-			final String event = t.getEvent();
-			final MyBooleanExpression expression = t.getExpr();
-			final StringActions stringActions = t.getActions();
-			assert stateFrom.getTransition(event, expression) == null;
+			final Node stateFrom = automaton.state(coloring[t.src().number()]);
+			final String event = t.event();
+			final MyBooleanExpression expression = t.expr();
+			final StringActions stringActions = t.actions();
+			assert stateFrom.transition(event, expression) == null;
 			for (int dst = 0; dst < colorSize; dst++) {
 				if (dst > 1 && incomingTransitionNumbers[dst - 1] == 0) {
 					break;
@@ -127,7 +127,7 @@ public class BacktrackingAutomatonBuilder {
 				}
 				
 				Transition autoT = new Transition(stateFrom,
-						automaton.getState(dst), event, expression, stringActions);
+						automaton.state(dst), event, expression, stringActions);
 				automaton.addTransition(stateFrom, autoT);
 				incomingTransitionNumbers[dst]++;
 				final List<Transition> frontierBackup = frontier;
@@ -153,9 +153,9 @@ public class BacktrackingAutomatonBuilder {
 
 		public TraverseStateWithMultiEdges(ScenarioTree tree, Verifier verifier, int colorSize, long finishTime,
 				List<String> events, List<String> actions, CompletenessType completenessType) {
-			super(colorSize, events, actions, finishTime, new int[tree.nodesCount()],
+			super(colorSize, events, actions, finishTime, new int[tree.nodeCount()],
 					verifier, completenessType);
-			frontier = new ArrayList<>(groupByDst(tree.getRoot().getTransitions()));
+			frontier = new ArrayList<>(groupByDst(tree.root().transitions()));
 		}
 		
 		/*
@@ -168,14 +168,14 @@ public class BacktrackingAutomatonBuilder {
 			while (!currentFrontier.isEmpty()) {
 				final List<Transition> tList = currentFrontier.get(currentFrontier.size() - 1);
 				currentFrontier.remove(currentFrontier.size() - 1);
-				final int stateFrom = coloring[tList.get(0).getSrc().getNumber()];
+				final int stateFrom = coloring[tList.get(0).src().number()];
 				final List<Transition> transitions = new ArrayList<>();
 				boolean wasNull = false;
 				boolean wasProper = false;
 				for (Transition t : tList) {
-					final Transition autoT = automaton.getState(stateFrom)
-							.getTransition(t.getEvent(), tautology());
-					if (autoT != null && !autoT.getActions().equals(t.getActions())) {
+					final Transition autoT = automaton.state(stateFrom)
+							.transition(t.event(), tautology());
+					if (autoT != null && !autoT.actions().equals(t.actions())) {
 						return false;
 					}
 					wasNull |= autoT == null;
@@ -185,13 +185,13 @@ public class BacktrackingAutomatonBuilder {
 				if (wasNull && wasProper) {
 					return false;
 				} else if (wasProper) {
-					final int autoDst = transitions.get(0).getDst().getNumber();
-					if (!transitions.stream().allMatch(t -> t.getDst().getNumber() == autoDst)) {
+					final int autoDst = transitions.get(0).dst().number();
+					if (!transitions.stream().allMatch(t -> t.dst().number() == autoDst)) {
 						return false;
 					}
-					final Node scDst = tList.get(0).getDst();
-					currentFrontier.addAll(groupByDst(scDst.getTransitions()));
-					coloring[scDst.getNumber()] = autoDst;
+					final Node scDst = tList.get(0).dst();
+					currentFrontier.addAll(groupByDst(scDst.transitions()));
+					coloring[scDst.number()] = autoDst;
 				} else {
 					finalFrontier.add(tList);
 				}
@@ -206,8 +206,8 @@ public class BacktrackingAutomatonBuilder {
 			
 			final List<Transition> tList = frontier.get(0);
 			// further edges should be added from this state:
-			final Node stateFrom = automaton.getState(coloring[tList.get(0).getSrc().getNumber()]);
-			final StringActions stringActions = tList.get(0).getActions();
+			final Node stateFrom = automaton.state(coloring[tList.get(0).src().number()]);
+			final StringActions stringActions = tList.get(0).actions();
 			for (int dst = 0; dst < colorSize; dst++) {
 				if (dst > 1 && incomingTransitionNumbers[dst - 1] == 0) {
 					break;
@@ -217,9 +217,9 @@ public class BacktrackingAutomatonBuilder {
 				final List<Transition> addedTransitions = new ArrayList<>();
 				for (Transition t : tList) {
 					Transition autoT = new Transition(stateFrom,
-							automaton.getState(dst), t.getEvent(), tautology(), stringActions);
+							automaton.state(dst), t.event(), tautology(), stringActions);
 					addedTransitions.add(autoT);
-					if (automaton.getState(stateFrom.getNumber()).hasTransition(t.getEvent(), tautology())) {
+					if (automaton.state(stateFrom.number()).hasTransition(t.event(), tautology())) {
 						throw new AssertionError();
 					}
 					automaton.addTransition(stateFrom, autoT);
@@ -251,8 +251,8 @@ public class BacktrackingAutomatonBuilder {
 
 		public TraverseStateWithCoverageAndWeakCompleteness(ScenarioTree tree, int colorSize, long finishTime,
 				List<String> events, List<String> eventNames, int variables) {
-			super(colorSize, events, null, finishTime, new int[tree.nodesCount()], null, null);
-			frontier = new ArrayList<>(groupByDst(tree.getRoot().getTransitions()));
+			super(colorSize, events, null, finishTime, new int[tree.nodeCount()], null, null);
+			frontier = new ArrayList<>(groupByDst(tree.root().transitions()));
 			this.eventNames = eventNames;
 			this.eventExtensions = eventExtensions(events, eventNames, variables);
 		}
@@ -267,14 +267,14 @@ public class BacktrackingAutomatonBuilder {
 			while (!currentFrontier.isEmpty()) {
 				final List<Transition> tList = currentFrontier.get(currentFrontier.size() - 1);
 				currentFrontier.remove(currentFrontier.size() - 1);
-				final int stateFrom = coloring[tList.get(0).getSrc().getNumber()];
+				final int stateFrom = coloring[tList.get(0).src().number()];
 				final List<Transition> transitions = new ArrayList<>();
 				boolean wasNull = false;
 				boolean wasProper = false;
 				for (Transition t : tList) {
-					final Transition autoT = automaton.getState(stateFrom)
-							.getTransition(t.getEvent(), tautology());
-					if (autoT != null && !autoT.getActions().equals(t.getActions())) {
+					final Transition autoT = automaton.state(stateFrom)
+							.transition(t.event(), tautology());
+					if (autoT != null && !autoT.actions().equals(t.actions())) {
 						return false;
 					}
 					wasNull |= autoT == null;
@@ -284,13 +284,13 @@ public class BacktrackingAutomatonBuilder {
 				if (wasNull && wasProper) {
 					return false;
 				} else if (wasProper) {
-					final int autoDst = transitions.get(0).getDst().getNumber();
-					if (!transitions.stream().allMatch(t -> t.getDst().getNumber() == autoDst)) {
+					final int autoDst = transitions.get(0).dst().number();
+					if (!transitions.stream().allMatch(t -> t.dst().number() == autoDst)) {
 						return false;
 					}
-					final Node scDst = tList.get(0).getDst();
-					currentFrontier.addAll(groupByDst(scDst.getTransitions()));
-					coloring[scDst.getNumber()] = autoDst;
+					final Node scDst = tList.get(0).dst();
+					currentFrontier.addAll(groupByDst(scDst.transitions()));
+					coloring[scDst.number()] = autoDst;
 				} else {
 					finalFrontier.add(tList);
 				}
@@ -305,8 +305,8 @@ public class BacktrackingAutomatonBuilder {
 			
 			final List<Transition> tList = frontier.get(0);
 			// further edges should be added from this state:
-			final Node stateFrom = automaton.getState(coloring[tList.get(0).getSrc().getNumber()]);
-			final StringActions stringActions = tList.get(0).getActions();
+			final Node stateFrom = automaton.state(coloring[tList.get(0).src().number()]);
+			final StringActions stringActions = tList.get(0).actions();
 			for (int dst = 0; dst < colorSize; dst++) {
 				if (dst > 1 && incomingTransitionNumbers[dst - 1] == 0) {
 					break;
@@ -316,7 +316,7 @@ public class BacktrackingAutomatonBuilder {
 				final List<Transition> addedTransitions = new ArrayList<>();
 				for (Transition t : tList) {
 					Transition autoT = new Transition(stateFrom,
-							automaton.getState(dst), t.getEvent(),
+							automaton.state(dst), t.event(),
 							tautology(), stringActions);
 					addedTransitions.add(autoT);
 					automaton.addTransition(stateFrom, autoT);
@@ -417,8 +417,8 @@ public class BacktrackingAutomatonBuilder {
 					boolean wasNull = false;
 					boolean wasProper = false;
 					for (String event : cur.events()) {
-						final Transition autoT = automaton.getState(stateFrom)
-								.getTransition(event, tautology());
+						final Transition autoT = automaton.state(stateFrom)
+								.transition(event, tautology());
 						wasNull |= autoT == null;
 						wasProper |= autoT != null;
 						transitions.add(autoT);
@@ -426,8 +426,8 @@ public class BacktrackingAutomatonBuilder {
 					if (wasNull && wasProper) {
 						return false;
 					} else if (wasProper) {
-						final int autoDst = transitions.get(0).getDst().getNumber();
-						if (!transitions.stream().allMatch(t -> t.getDst().getNumber() == autoDst)) {
+						final int autoDst = transitions.get(0).dst().number();
+						if (!transitions.stream().allMatch(t -> t.dst().number() == autoDst)) {
 							return false;
 						}
 						final FrontierElement newElem = cur.advance();
@@ -479,30 +479,30 @@ public class BacktrackingAutomatonBuilder {
 		private boolean label() {
 			final Map<Transition, List<StringActions>> actionOccurrencies = new HashMap<>();
 			for (int i = 0; i < colorSize; i++) {
-				for (Transition t : automaton.getState(i).getTransitions()) {
+				for (Transition t : automaton.state(i).transitions()) {
 					actionOccurrencies.put(t, new ArrayList<>());
 				}
 			}
 			for (StringScenario sc : scenarios) {
-				Node state = automaton.getStartState();
+				Node state = automaton.startState();
 				for (int i = 0; i < sc.size(); i++) {
-					final Transition t = state.getTransition(sc.getEvents(i).get(0), tautology());
+					final Transition t = state.transition(sc.getEvents(i).get(0), tautology());
 					if (t == null) {
 						break;
 					}
 					for (String e : sc.getEvents(i)) {
-						actionOccurrencies.get(state.getTransition(e, tautology())).add(sc.getActions(i));
+						actionOccurrencies.get(state.transition(e, tautology())).add(sc.getActions(i));
 					}
-					state = t.getDst();
+					state = t.dst();
 				}
 			}
 			int madeErrors = 0;
 			for (int i = 0; i < colorSize; i++) {
-				for (Transition t : new ArrayList<>(automaton.getState(i).getTransitions())) {
+				for (Transition t : new ArrayList<>(automaton.state(i).transitions())) {
 					final List<StringActions> actions = actionOccurrencies.get(t);
 					final StringActions mode = mode(actions);
-					automaton.getState(i).removeTransition(t);
-					automaton.getState(i).addTransition(t.getEvent(), t.getExpr(), mode, t.getDst());
+					automaton.state(i).removeTransition(t);
+					automaton.state(i).addTransition(t.event(), t.expr(), mode, t.dst());
 					for (StringActions a : actions) {
 						if (!a.equals(mode)) {
 							madeErrors++;
@@ -518,7 +518,7 @@ public class BacktrackingAutomatonBuilder {
 			checkTimeLimit();
 			
 			final FrontierElement elem = frontier.get(0);
-			final Node stateFrom = automaton.getState(elem.coloring());
+			final Node stateFrom = automaton.state(elem.coloring());
 			for (int dst = 0; dst < colorSize; dst++) {
 				if (dst > 1 && incomingTransitionNumbers[dst - 1] == 0) {
 					break;
@@ -527,7 +527,7 @@ public class BacktrackingAutomatonBuilder {
 				
 				final List<Transition> addedTransitions = new ArrayList<>();
 				for (String event : elem.events()) {
-					final Transition autoT = new Transition(stateFrom, automaton.getState(dst),
+					final Transition autoT = new Transition(stateFrom, automaton.state(dst),
 							event, tautology(), new StringActions(""));
 					addedTransitions.add(autoT);
 					automaton.addTransition(stateFrom, autoT);
@@ -568,13 +568,13 @@ public class BacktrackingAutomatonBuilder {
 	}
 	
 	private static boolean isWeakComplete(Automaton automaton, List<String> eventNames, Map<String, List<String>> eventExtensions) {
-		for (int i = 0; i < automaton.statesCount(); i++) {
+		for (int i = 0; i < automaton.stateCount(); i++) {
 			for (String initialEvent : eventNames) {
 				// is there at least one transition with this initialEvent from this state?
 				boolean hasTransition = false;
 				boolean allTransitions = true;
 				for (String e : eventExtensions.get(initialEvent)) {
-					if (automaton.getState(i).hasTransition(e, MyBooleanExpression.getTautology())) {
+					if (automaton.state(i).hasTransition(e, MyBooleanExpression.getTautology())) {
 						hasTransition = true;
 					} else {
 						allTransitions = false;
@@ -594,7 +594,7 @@ public class BacktrackingAutomatonBuilder {
 	private static Collection<List<Transition>> groupByDst(Collection<Transition> transitions) {
 		final Map<Integer, List<Transition>> transitionGroups = new TreeMap<>();
 		for (Transition t : transitions) {
-			final int num = t.getDst().getNumber();
+			final int num = t.dst().number();
 			if (!transitionGroups.containsKey(num)) {
 				transitionGroups.put(num, new ArrayList<>());
 			}
@@ -605,8 +605,7 @@ public class BacktrackingAutomatonBuilder {
 	}
 	
 	public static Optional<Automaton> build(Logger logger, ScenarioTree tree, int size,
-			String resultFilePath, String ltlFilePath, List<LtlNode> formulae,
-			List<String> events, List<String> actions, Verifier verifier,
+			List<LtlNode> formulae, List<String> events, List<String> actions, Verifier verifier,
 			long finishTime, CompletenessType completenessType, int variables,
 			boolean ensureCoverageAndWeakCompleteness, List<String> eventNames,
 			int errorNumber, List<StringScenario> scenarios) throws IOException {

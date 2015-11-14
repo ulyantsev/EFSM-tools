@@ -53,9 +53,9 @@ public class CryptominisatAutomatonBuilder {
 		tmpFile.delete();
 
 		if (ansLine != null) {
-			int[] nodesColors = new int[tree.nodesCount()];
+			int[] nodesColors = new int[tree.nodeCount()];
 			String[] sp = ansLine.split(" ");
-			for (int nodeNum = 0; nodeNum < tree.nodesCount(); nodeNum++) {
+			for (int nodeNum = 0; nodeNum < tree.nodeCount(); nodeNum++) {
 				for (int color = 0; color < k; color++) {
 					if (sp[1 + nodeNum * k + color].charAt(0) != '-') {
 						nodesColors[nodeNum] = color;
@@ -64,13 +64,13 @@ public class CryptominisatAutomatonBuilder {
 			}
 
 			Automaton ans = new Automaton(k);
-			for (int i = 0; i < tree.nodesCount(); i++) {
+			for (int i = 0; i < tree.nodeCount(); i++) {
 				int color = nodesColors[i];
-				Node state = ans.getState(color);
-				for (Transition t : tree.getNodes().get(i).getTransitions()) {
-					if (!state.hasTransition(t.getEvent(), t.getExpr())) {
-						int childColor = nodesColors[t.getDst().getNumber()];
-						state.addTransition(t.getEvent(), t.getExpr(), t.getActions(), ans.getState(childColor));
+				Node state = ans.state(color);
+				for (Transition t : tree.nodes().get(i).transitions()) {
+					if (!state.hasTransition(t.event(), t.expr())) {
+						int childColor = nodesColors[t.dst().number()];
+						state.addTransition(t.event(), t.expr(), t.actions(), ans.state(childColor));
 					}
 				}
 			}

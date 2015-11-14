@@ -18,7 +18,7 @@ public class ScenarioTree {
         this.nodes.add(root);
     }
 
-    public Node getRoot() {
+    public Node root() {
         return root;
     }
 
@@ -39,7 +39,7 @@ public class ScenarioTree {
         Node node = root;
         for (int i = 0; i < scenario.size(); i++) {
             addTransitions(node, scenario.getEvents(i), scenario.getExpr(i), scenario.getActions(i));
-            node = node.getDst(scenario.getEvents(i).get(0), scenario.getExpr(i));
+            node = node.dst(scenario.getEvents(i).get(0), scenario.getExpr(i));
         }
     }
 
@@ -52,10 +52,10 @@ public class ScenarioTree {
     	Node dst = null;
     	for (String e : events) {
 	        if (src.hasTransition(e, expr)) {
-	            Transition t = src.getTransition(e, expr);
-	            if (!t.getActions().equals(actions)) {
+	            Transition t = src.transition(e, expr);
+	            if (!t.actions().equals(actions)) {
 	                throw new ParseException("bad transition add in node "
-	                		+ src.getNumber() + ": " + t.getActions()
+	                		+ src.number() + ": " + t.actions()
 	                        + " != " + actions, 0);
 	            }
 	        } else {
@@ -68,29 +68,29 @@ public class ScenarioTree {
     	}
     }
 
-    public List<Node> getNodes() {
+    public List<Node> nodes() {
         return nodes;
     }
 
-    public int nodesCount() {
+    public int nodeCount() {
         return nodes.size();
     }
 
-    public String[] getEvents() {
+    public String[] events() {
         Set<String> events = new HashSet<>();
         for (Node node : nodes) {
-            for (Transition transition : node.getTransitions()) {
-                events.add(transition.getEvent());
+            for (Transition transition : node.transitions()) {
+                events.add(transition.event());
             }
         }
         return events.toArray(new String[events.size()]);
     }
     
-    public List<String> getActions() {
+    public List<String> actions() {
         Set<String> actions = new TreeSet<>();
         for (Node node : nodes) {
-            for (Transition transition : node.getTransitions()) {
-            	for (String action : transition.getActions().getActions()) {
+            for (Transition transition : node.transitions()) {
+            	for (String action : transition.actions().getActions()) {
             		actions.add(action);
             	}
             }
@@ -98,31 +98,31 @@ public class ScenarioTree {
         return new ArrayList<>(actions);
     }
     
-    public int getEventsCount() {
-        return getEvents().length;
+    public int eventCount() {
+        return events().length;
     }
         
-    public String[] getVariables() {
+    public String[] variables() {
         Set<String> variables = new HashSet<>();
         for (Node node : nodes) {
-            for (Transition transition : node.getTransitions()) {
-                String[] transitionVars = transition.getExpr().getVariables();
+            for (Transition transition : node.transitions()) {
+                String[] transitionVars = transition.expr().getVariables();
                 variables.addAll(Arrays.asList(transitionVars));
             }
         }
         return variables.toArray(new String[variables.size()]);
     }
 
-    public int getVariablesCount() {
-        return getVariables().length;
+    public int variableCount() {
+        return variables().length;
     }
     
-    public Map<String, List<MyBooleanExpression>> getPairsEventExpression() {
+    public Map<String, List<MyBooleanExpression>> pairsEventExpression() {
         Map<String, List<MyBooleanExpression>> ans = new HashMap<>();
         for (Node node : nodes) {
-            for (Transition transition : node.getTransitions()) {
-                String event = transition.getEvent();
-                MyBooleanExpression expr = transition.getExpr();
+            for (Transition transition : node.transitions()) {
+                String event = transition.event();
+                MyBooleanExpression expr = transition.expr();
                 if (ans.containsKey(event)) {
                     if (!ans.get(event).contains(expr)) {
                         ans.get(event).add(expr);
@@ -138,12 +138,12 @@ public class ScenarioTree {
         return ans;
     }
     
-    public Collection<MyBooleanExpression> getExpressions() {
+    public Collection<MyBooleanExpression> expressions() {
         List<MyBooleanExpression> ans = new ArrayList<>();
         for (Node node : this.nodes) {
-            for (Transition t : node.getTransitions()) {
-                if (!ans.contains(t.getExpr())) {
-                    ans.add(t.getExpr());
+            for (Transition t : node.transitions()) {
+                if (!ans.contains(t.expr())) {
+                    ans.add(t.expr());
                 }
             }
         }
@@ -157,10 +157,10 @@ public class ScenarioTree {
         sb.append("digraph ScenariosTree {\n    node [shape = circle];\n");
 
         for (Node node : nodes) {
-            for (Transition t : node.getTransitions()) {
-                sb.append("    " + t.getSrc().getNumber() + " -> " + t.getDst().getNumber());
-                sb.append(" [label = \"" + t.getEvent() + " [" + t.getExpr().toString() + "] ("
-                        + t.getActions().toString() + ") \"];\n");
+            for (Transition t : node.transitions()) {
+                sb.append("    " + t.src().number() + " -> " + t.dst().number());
+                sb.append(" [label = \"" + t.event() + " [" + t.expr().toString() + "] ("
+                        + t.actions().toString() + ") \"];\n");
             }
         }
 

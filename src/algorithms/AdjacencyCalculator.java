@@ -12,7 +12,7 @@ import structures.Transition;
 public class AdjacencyCalculator {
     public static Map<Node, Set<Node>> getAdjacent(ScenarioTree tree) {
         Map<Node, Set<Node>> ans = new HashMap<>();
-        calcNode(tree, tree.getRoot(), ans);
+        calcNode(tree, tree.root(), ans);
         return ans;
     }
     
@@ -20,23 +20,23 @@ public class AdjacencyCalculator {
         if (!ans.containsKey(node)) {
             Set<Node> adjacentSet = new LinkedHashSet<>();
             ans.put(node, adjacentSet);
-            if (node.transitionsCount() == 0) {
+            if (node.transitionCount() == 0) {
                 return;
             }
 
-            for (Transition t1 : node.getTransitions()) {
+            for (Transition t1 : node.transitions()) {
                 // calculating for children
-                calcNode(tree, t1.getDst(), ans);
-                for (Node other : tree.getNodes()) {
+                calcNode(tree, t1.dst(), ans);
+                for (Node other : tree.nodes()) {
                     if (other != node) {
-                        for (Transition t2 : other.getTransitions()) {
-                            if (t1.getEvent().equals(t2.getEvent())) {
-                                if (t1.getExpr() == t2.getExpr()) {
-                                    if (!t1.getActions().equals(t2.getActions())
-                                            || ans.get(t1.getDst()).contains(t2.getDst())) {
+                        for (Transition t2 : other.transitions()) {
+                            if (t1.event().equals(t2.event())) {
+                                if (t1.expr() == t2.expr()) {
+                                    if (!t1.actions().equals(t2.actions())
+                                            || ans.get(t1.dst()).contains(t2.dst())) {
                                         adjacentSet.add(other);
                                     }
-                                } else if (t1.getExpr().hasSolutionWith(t2.getExpr())) {
+                                } else if (t1.expr().hasSolutionWith(t2.expr())) {
                                     adjacentSet.add(other);
                                 }
                             }

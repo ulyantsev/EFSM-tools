@@ -10,32 +10,32 @@ import structures.Transition;
 
 public class AutomatonIsomorphismChecker {
 	private static boolean transitionsEquals(Transition first, Transition second) {
-		return first.getEvent().equals(second.getEvent()) && first.getExpr() == second.getExpr()
-				&& first.getActions().equals(second.getActions());
+		return first.event().equals(second.event()) && first.expr() == second.expr()
+				&& first.actions().equals(second.actions());
 	}
 
 	public static boolean isIsomorphic(Automaton first, Automaton second) {
-		int[] firstToSecond = new int[first.statesCount()];
+		int[] firstToSecond = new int[first.stateCount()];
 		Arrays.fill(firstToSecond, -1);
-		firstToSecond[first.getStartState().getNumber()] = second.getStartState().getNumber();
+		firstToSecond[first.startState().number()] = second.startState().number();
 		
 		List<Node> order = new ArrayList<Node>();
-		order.add(first.getStartState());
-		for (int i = 0; i < first.statesCount(); i++) {
+		order.add(first.startState());
+		for (int i = 0; i < first.stateCount(); i++) {
 			if (i >= order.size()) {
 				break;
 			}
 			Node firstNode = order.get(i);
-			int secondNodeNumber = firstToSecond[firstNode.getNumber()];
-			Node secondNode = second.getState(secondNodeNumber);
-			if (firstNode.transitionsCount() != secondNode.transitionsCount()) {
+			int secondNodeNumber = firstToSecond[firstNode.number()];
+			Node secondNode = second.state(secondNodeNumber);
+			if (firstNode.transitionCount() != secondNode.transitionCount()) {
 				return false;
 			}
 			
-			for (Transition firstTransition : firstNode.getTransitions()) {
-				Node firstDst = firstTransition.getDst();
+			for (Transition firstTransition : firstNode.transitions()) {
+				Node firstDst = firstTransition.dst();
 				Transition secondTransition = null;
-				for (Transition t : secondNode.getTransitions()) {
+				for (Transition t : secondNode.transitions()) {
 					if (transitionsEquals(firstTransition, t)) {
 						secondTransition = t;
 					}
@@ -44,12 +44,12 @@ public class AutomatonIsomorphismChecker {
 					return false;
 				}
 				
-				if (firstToSecond[firstDst.getNumber()] > -1) {
-					if (firstToSecond[firstDst.getNumber()] != secondTransition.getDst().getNumber()) {
+				if (firstToSecond[firstDst.number()] > -1) {
+					if (firstToSecond[firstDst.number()] != secondTransition.dst().number()) {
 						return false;
 					}
 				} else {
-					firstToSecond[firstDst.getNumber()] = secondTransition.getDst().getNumber();
+					firstToSecond[firstDst.number()] = secondTransition.dst().number();
 				}
 				
 				if (!order.contains(firstDst)) {

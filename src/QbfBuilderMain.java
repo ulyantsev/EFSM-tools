@@ -6,7 +6,6 @@ import java.text.ParseException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Deque;
 import java.util.List;
 import java.util.Locale;
@@ -22,10 +21,6 @@ import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 import org.kohsuke.args4j.spi.BooleanOptionHandler;
 
-import egorov.Verifier;
-import egorov.ltl.LtlParseException;
-import egorov.ltl.LtlParser;
-import egorov.ltl.grammar.LtlNode;
 import sat_solving.QbfSolver;
 import sat_solving.SatSolver;
 import sat_solving.SolvingStrategy;
@@ -41,6 +36,10 @@ import algorithms.automaton_builders.CounterexampleAutomatonBuilder;
 import algorithms.automaton_builders.QbfAutomatonBuilder;
 import algorithms.automaton_builders.StateMergingAutomatonBuilder;
 import bool.MyBooleanExpression;
+import egorov.ltl.LtlParseException;
+import egorov.ltl.LtlParser;
+import egorov.ltl.grammar.LtlNode;
+import egorov.verifier.Verifier;
 
 public class QbfBuilderMain {
 	@Argument(usage = "paths to files with scenarios", metaVar = "files", required = true)
@@ -135,7 +134,7 @@ public class QbfBuilderMain {
 			return;
 		}
 		
-		Logger logger = Logger.getLogger("Logger");
+		final Logger logger = Logger.getLogger("Logger");
 		if (logFilePath != null) {
 			try {
 				FileHandler fh = new FileHandler(logFilePath, false);
@@ -151,12 +150,12 @@ public class QbfBuilderMain {
 			}
 		}
 
-		ScenarioTree tree = new ScenarioTree();
+		final ScenarioTree tree = new ScenarioTree();
 		for (String filePath : arguments) {
 			try {
 				tree.load(filePath, varNumber);
 				logger.info("Loaded scenarios from " + filePath);
-				logger.info("  Total scenarios tree size: " + tree.nodesCount());
+				logger.info("  Total scenarios tree size: " + tree.nodeCount());
 			} catch (IOException | ParseException e) {
 				logger.warning("Can't load scenarios from file " + filePath);
 				e.printStackTrace();
@@ -173,96 +172,82 @@ public class QbfBuilderMain {
 			}
 		}
 		
+		SolvingStrategy ss;
 		try {
-			final List<LtlNode> formulae = ltlFilePath == null
-					? Collections.emptyList()
-					: LtlParser.loadProperties(ltlFilePath, varNumber);
-			logger.info("LTL formula from " + ltlFilePath);
-			
-			long startTime = System.currentTimeMillis();
-			logger.info("Start building automaton");
-			
-			SolvingStrategy ss;
-			try {
-				ss = SolvingStrategy.valueOf(strategy);
-			} catch (IllegalArgumentException e) {
-				logger.warning(strategy + " is not a valid solving strategy.");
+			ss = SolvingStrategy.valueOf(strategy);
+		} catch (IllegalArgumentException e) {
+			logger.warning(strategy + " is not a valid solving strategy.");
+			return;
+		}
+		
+		QbfSolver qbfsolver;
+		try {
+			qbfsolver = QbfSolver.valueOf(qbfSolver);
+		} catch (IllegalArgumentException e) {
+			logger.warning(qbfSolver + " is not a valid QBF solver.");
+			return;
+		}
+		
+		SatSolver satsolver;
+		try {
+			satsolver = SatSolver.valueOf(satSolver);
+		} catch (IllegalArgumentException e) {
+			logger.warning(satSolver + " is not a valid SAT solver.");
+			return;
+		}
+		
+		CompletenessType completenesstype;
+		try {
+			completenesstype = CompletenessType.valueOf(completenessType);
+		} catch (IllegalArgumentException e) {
+			logger.warning(completenessType + " is not a valid completeness type.");
+			return;
+		}
+		
+		List<String> eventnames;
+		if (eventNames != null) {
+			eventnames = Arrays.asList(eventNames.split(","));
+			if (eventnames.size() != eventNumber) {
+				logger.warning("The number of events in <eventNames> does not correspond to <eventNumber>!");
 				return;
 			}
-			
-			QbfSolver qbfsolver;
-			try {
-				qbfsolver = QbfSolver.valueOf(qbfSolver);
-			} catch (IllegalArgumentException e) {
-				logger.warning(qbfSolver + " is not a valid QBF solver.");
-				return;
-			}
-			
-			if (ss == SolvingStrategy.QSAT) {
-				try {
-					Runtime.getRuntime().exec(QbfSolver.valueOf(qbfSolver).command);
-				} catch (IOException e) {
-					System.err.println("ERROR: Problems with solver execution (" + qbfSolver + ")");
-					e.printStackTrace();
-					return;
-				}
-			}
-			
-			SatSolver satsolver;
-			try {
-				satsolver = SatSolver.valueOf(satSolver);
-			} catch (IllegalArgumentException e) {
-				logger.warning(satSolver + " is not a valid SAT solver.");
-				return;
-			}
-			
-			CompletenessType completenesstype;
-			try {
-				completenesstype = CompletenessType.valueOf(completenessType);
-			} catch (IllegalArgumentException e) {
-				logger.warning(completenessType + " is not a valid completeness type.");
-				return;
-			}
-			
-			List<String> eventnames;
-			if (eventNames != null) {
-				eventnames = Arrays.asList(eventNames.split(","));
-				if (eventnames.size() != eventNumber) {
-					logger.warning("The number of events in <eventNames> does not correspond to <eventNumber>!");
-					return;
-				}
-			} else {
-				eventnames = new ArrayList<>();
-				for (int i = 0; i < eventNumber; i++) {
-					eventnames.add(String.valueOf((char) ('A' +  i)));
-				}
-			}
-			
-			final List<String> events = new ArrayList<>();
+		} else {
+			eventnames = new ArrayList<>();
 			for (int i = 0; i < eventNumber; i++) {
-				final String event = eventnames.get(i);
-				for (int j = 0; j < 1 << varNumber; j++) {
-					StringBuilder sb = new StringBuilder(event);
-					for (int pos = 0; pos < varNumber; pos++) {
-						sb.append(((j >> pos) & 1) == 1 ? 1 : 0);
-					}
-					events.add(sb.toString());
-				}
+				eventnames.add(String.valueOf((char) ('A' +  i)));
 			}
-			
-			List<String> actions;
-			if (actionNames != null) {
-				actions = Arrays.asList(actionNames.split(","));
-				if (actions.size() != actionNumber) {
-					logger.warning("The number of actions in <actionNames> does not correspond to <actionNumber>!");
-					return;
+		}
+		
+		final List<String> events = new ArrayList<>();
+		for (int i = 0; i < eventNumber; i++) {
+			final String event = eventnames.get(i);
+			for (int j = 0; j < 1 << varNumber; j++) {
+				final StringBuilder sb = new StringBuilder(event);
+				for (int pos = 0; pos < varNumber; pos++) {
+					sb.append(((j >> pos) & 1) == 1 ? 1 : 0);
 				}
-			} else {
-				actions = new ArrayList<>();
-				for (int i = 0; i < actionNumber; i++) {
-					actions.add("z" + i);
-				}
+				events.add(sb.toString());
 			}
+		}
+		
+		List<String> actions;
+		if (actionNames != null) {
+			actions = Arrays.asList(actionNames.split(","));
+			if (actions.size() != actionNumber) {
+				logger.warning("The number of actions in <actionNames> does not correspond to <actionNumber>!");
+				return;
+			}
+		} else {
+			actions = new ArrayList<>();
+			for (int i = 0; i < actionNumber; i++) {
+				actions.add("z" + i);
+			}
+		}
+		
+		try {
+			final List<String> strFormulae = LtlParser.load(ltlFilePath, varNumber, eventnames);
+			final List<LtlNode> formulae = LtlParser.parse(strFormulae);
+			logger.info("LTL formulae from " + ltlFilePath);
 			
 			final List<StringScenario> scenarios = new ArrayList<>();
 			for (String scenarioPath : arguments) {
@@ -274,18 +259,21 @@ public class QbfBuilderMain {
 				negativeTree.load(negscFilePath, varNumber);
 			}
 			
+			long startTime = System.currentTimeMillis();
+			logger.info("Start building automaton");
+			
 			Optional<Automaton> resultAutomaton = null;
-			final Verifier verifier = new Verifier(logger, ltlFilePath, events, actions, varNumber);
+			final Verifier verifier = new Verifier(logger, strFormulae, events, actions, varNumber);
 			final long finishTime = System.currentTimeMillis() + timeout * 1000;
 			switch (ss) {
 			case QSAT: case EXP_SAT:
-				resultAutomaton = QbfAutomatonBuilder.build(logger, tree, formulae, size, ltlFilePath,
+				resultAutomaton = QbfAutomatonBuilder.build(logger, tree, formulae, size,
 						qbfsolver, solverParams, ss == SolvingStrategy.EXP_SAT,
 						events, actions, satsolver, verifier, finishTime, completenesstype);
 				break;
 			case COUNTEREXAMPLE:
 				resultAutomaton = CounterexampleAutomatonBuilder.build(logger, tree, size, solverParams,
-						resultFilePath, ltlFilePath, formulae, events, actions, satsolver, verifier, finishTime,
+						resultFilePath, formulae, events, actions, satsolver, verifier, finishTime,
 						completenesstype, negativeTree, !noCompletenessHeuristics);
 				break;
 			case STATE_MERGING:
@@ -294,7 +282,7 @@ public class QbfBuilderMain {
 				break;
 			case BACKTRACKING:
 				resultAutomaton = BacktrackingAutomatonBuilder.build(logger, tree, size,
-						resultFilePath, ltlFilePath, formulae, events, actions, verifier, finishTime,
+						formulae, events, actions, verifier, finishTime,
 						completenesstype, varNumber, ensureCoverageAndWeakCompleteness, eventnames,
 						backtrackingErrorNumber, scenarios);
 				break;
@@ -343,15 +331,15 @@ public class QbfBuilderMain {
 				boolean complete = true;
 				switch (completenesstype) {
 				case NORMAL:
-					for (Node s : resultAutomaton.get().getStates()) {
-						if (s.transitionsCount() != events.size()) {
+					for (Node s : resultAutomaton.get().states()) {
+						if (s.transitionCount() != events.size()) {
 							complete = false;
 						}
 					}
 					break;
 				case NO_DEAD_ENDS:
-					for (Node s : resultAutomaton.get().getStates()) {
-						if (s.transitionsCount() == 0) {
+					for (Node s : resultAutomaton.get().states()) {
+						if (s.transitionCount() == 0) {
 							complete = false;
 						}
 					}
@@ -363,25 +351,28 @@ public class QbfBuilderMain {
 					logger.severe("INCOMPLETE");
 				}
 			}
-		} catch (ParseException | LtlParseException e) {
+		} catch (LtlParseException e) {
 			logger.warning("Can't get LTL formula from " + treeFilePath);
+			throw new RuntimeException(e);
+		} catch (ParseException e) {
+			logger.warning("ParseException");
 			throw new RuntimeException(e);
 		}
 	}
 
 	private boolean checkBfs(Automaton a, List<String> events, Logger logger) {
 		final Deque<Integer> queue = new ArrayDeque<>();
-		final boolean[] visited = new boolean[a.statesCount()];
-		visited[a.getStartState().getNumber()] = true;
-		queue.add(a.getStartState().getNumber());
+		final boolean[] visited = new boolean[a.stateCount()];
+		visited[a.startState().number()] = true;
+		queue.add(a.startState().number());
 		final List<Integer> dequedStates = new ArrayList<>();
 		while (!queue.isEmpty()) {
 			final int stateNum = queue.pollFirst();
 			dequedStates.add(stateNum);
 			for (String e : events) {
-				Transition t = a.getState(stateNum).getTransition(e, MyBooleanExpression.getTautology());
+				Transition t = a.state(stateNum).transition(e, MyBooleanExpression.getTautology());
 				if (t != null) {
-					final int dst = t.getDst().getNumber();
+					final int dst = t.dst().number();
 					if (!visited[dst]) {
 						queue.add(dst);
 					}

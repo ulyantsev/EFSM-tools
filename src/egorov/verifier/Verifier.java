@@ -1,15 +1,10 @@
-package egorov;
+package egorov.verifier;
 
 /**
  * (c) Igor Buzhinsky
  */
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Scanner;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.logging.Logger;
@@ -20,21 +15,16 @@ import structures.Automaton;
 import structures.Transition;
 import structures.plant.NondetMooreAutomaton;
 import egorov.ltl.LtlParseException;
-import egorov.ltl.LtlParser;
 import egorov.ltl.buchi.translator.TranslationException;
-import egorov.verifier.Counterexample;
-import egorov.verifier.VerifierFactory;
 
 public class Verifier {
-	private final Logger logger;
 	private final List<String> ltlFormulae;
-	private final VerifierFactory verifier;
 	private final Set<String> allEvents;
 	private final Set<String> allActions;
+	private final VerifierFactory verifier;
 	
-	public Verifier(Logger logger, String ltlPath, List<String> events, List<String> actions, int varNumber) {
-		this.logger = logger;
-		ltlFormulae = ltlPath == null ? Collections.emptyList() : loadFormulae(ltlPath, varNumber);
+	public Verifier(Logger logger, List<String> ltlFormulae, List<String> events, List<String> actions, int varNumber) {
+		this.ltlFormulae = ltlFormulae;
 		logger.info(ltlFormulae.toString());
 
 		allEvents = new TreeSet<>(events);
@@ -43,30 +33,14 @@ public class Verifier {
 		verifier = new VerifierFactory();
 
 		try {
-			while (true) {
-				try {
-					verifier.prepareFormulas(ltlFormulae);
-					break;
-				} catch (TranslationException e) {
-					logger.warning("Caught TranslationException: " + e.getMessage());
-				}
-			}
+			verifier.prepareFormulas(ltlFormulae);
+		} catch (TranslationException e) {
+			logger.warning("Caught TranslationException: " + e.getMessage());
+			e.printStackTrace();
 		} catch (LtlParseException e) {
 			logger.warning("Failed to parse formulae: " + ltlFormulae + " ");
 			e.printStackTrace();
 		}
-	}
-	
-	private List<String> loadFormulae(String path, int varNumber) {
-		final List<String> formulae = new ArrayList<>();
-		try (Scanner in = new Scanner(new File(path))) {
-			while (in.hasNext()) {
-				formulae.add(LtlParser.duplicateEvents(in.nextLine(), varNumber));
-			}
-		} catch (FileNotFoundException e) {
-			logger.warning("File " + path + " not found: " + e.getMessage());
-		}
-		return formulae;
 	}
 	
 	private void ensureContextSufficiency() {
@@ -89,19 +63,19 @@ public class Verifier {
 		Automaton currentA = automaton;
 		while (true) {
 			boolean changed = false;
-			Automaton newA = new Automaton(automaton.statesCount());
-			boolean[] deadEnd = new boolean[automaton.statesCount()];
-			for (int i = 0; i < automaton.statesCount(); i++) {
-				if (currentA.getState(i).getTransitions().isEmpty()) {
+			Automaton newA = new Automaton(automaton.stateCount());
+			boolean[] deadEnd = new boolean[automaton.stateCount()];
+			for (int i = 0; i < automaton.stateCount(); i++) {
+				if (currentA.state(i).transitions().isEmpty()) {
 					deadEnd[i] = true;
 				}
 			}
-			for (int i = 0; i < automaton.statesCount(); i++) {
-				for (Transition t : currentA.getState(i).getTransitions()) {
-					if (!deadEnd[t.getDst().getNumber()]) {
-						newA.addTransition(newA.getState(i), new Transition(newA.getState(i),
-								newA.getState(t.getDst().getNumber()), t.getEvent(),
-								t.getExpr(), t.getActions()));
+			for (int i = 0; i < automaton.stateCount(); i++) {
+				for (Transition t : currentA.state(i).transitions()) {
+					if (!deadEnd[t.dst().number()]) {
+						newA.addTransition(newA.state(i), new Transition(newA.state(i),
+								newA.state(t.dst().number()), t.event(),
+								t.expr(), t.actions()));
 					} else {
 						changed = true;
 					}

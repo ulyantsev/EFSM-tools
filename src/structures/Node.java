@@ -16,7 +16,7 @@ public class Node {
         transitions = new TreeMap<>();
     }
     
-    public int getNumber() {
+    public int number() {
         return number;
     }
     
@@ -34,22 +34,22 @@ public class Node {
     }
     
     public void removeTransition(Transition transition) {
-        transitions.remove(transition.getEvent() + "[" + transition.getExpr().toString() + "]");
+        transitions.remove(transition.event() + "[" + transition.expr().toString() + "]");
     }
     
-    public Transition getTransition(String event, MyBooleanExpression expr) {
+    public Transition transition(String event, MyBooleanExpression expr) {
         return transitions.get(event + "[" + expr.toString() + "]");
     }
     
-    public Collection<Transition> getTransitions() {
+    public Collection<Transition> transitions() {
         return transitions.values();
     }
     
-    public Node getDst(String event, MyBooleanExpression expr) {
-        return transitions.get(event + "[" + expr.toString() + "]").getDst();
+    public Node dst(String event, MyBooleanExpression expr) {
+        return transitions.get(event + "[" + expr.toString() + "]").dst();
     }
     
-    public int transitionsCount() {
+    public int transitionCount() {
         return transitions.size();
     }
     

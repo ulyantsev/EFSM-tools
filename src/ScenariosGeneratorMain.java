@@ -93,7 +93,7 @@ public class ScenariosGeneratorMain {
 			}
 			
 			if (maxLength == 0) {
-				maxLength = automaton.statesCount();
+				maxLength = automaton.stateCount();
 			}
 
 			if (sumLength == 0) {

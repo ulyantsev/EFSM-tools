@@ -16,26 +16,26 @@ public class ScenarioGenerator {
     static public ArrayList<ArrayList<Transition>> getBFSPaths(Automaton automaton) {
     	ArrayList<ArrayList<Transition>> ans = new ArrayList<>();
     	
-    	int size = automaton.statesCount();
+    	int size = automaton.stateCount();
     	@SuppressWarnings("unchecked")
 		ArrayList<Transition>[] shortestPaths = new ArrayList[size];
     	
     	ArrayList<Node> order = new ArrayList<>();
-    	order.add(automaton.getStartState());
-    	shortestPaths[automaton.getStartState().getNumber()] = new ArrayList<>();
+    	order.add(automaton.startState());
+    	shortestPaths[automaton.startState().number()] = new ArrayList<>();
     	
     	for (int i = 0; i < size; i++) {
     		Node current = order.get(i);
-    		ArrayList<Transition> path = shortestPaths[current.getNumber()];
+    		ArrayList<Transition> path = shortestPaths[current.number()];
     		
-    		for (Transition t : current.getTransitions()) {
+    		for (Transition t : current.transitions()) {
     			ArrayList<Transition> newPath = new ArrayList<>(path);
     			newPath.add(t);
     			ans.add(newPath);
     			
-    			if (shortestPaths[t.getDst().getNumber()] == null) {
-    				order.add(t.getDst());
-    				shortestPaths[t.getDst().getNumber()] = newPath;
+    			if (shortestPaths[t.dst().number()] == null) {
+    				order.add(t.dst());
+    				shortestPaths[t.dst().number()] = newPath;
     			}
     		}
     	}
@@ -49,9 +49,9 @@ public class ScenarioGenerator {
     	ArrayList<StringActions> actions = new ArrayList<>();
     	
     	for (Transition t : path) {
-    		events.add(t.getEvent());
-    		expressions.add(t.getExpr());
-    		actions.add(t.getActions());
+    		events.add(t.event());
+    		expressions.add(t.expr());
+    		actions.add(t.actions());
     	}
     	return new StringScenario(true, events, expressions, actions).toString();
     }
@@ -80,9 +80,9 @@ public class ScenarioGenerator {
 			int randomPathNum = random.nextInt(paths.size());
 			ArrayList<Transition> randomPath = paths.get(randomPathNum);
 			
-			Node lastNode = randomPath.get(randomPath.size() - 1).getDst();
-			int randomTransitionNumber = random.nextInt(lastNode.transitionsCount());
-			Transition randomTransition = lastNode.getTransitions().toArray(new Transition[0])[randomTransitionNumber];
+			Node lastNode = randomPath.get(randomPath.size() - 1).dst();
+			int randomTransitionNumber = random.nextInt(lastNode.transitionCount());
+			Transition randomTransition = lastNode.transitions().toArray(new Transition[0])[randomTransitionNumber];
 			randomPath.add(randomTransition);
 		}
 		
@@ -102,7 +102,7 @@ public class ScenarioGenerator {
     	int[] length = getRandomLength(scenariosCount, minLength, maxLength, sumLength, random);
 
     	List<Collection<Transition>> visitedTransitions = new ArrayList<>(); 
-    	for (int i = 0; i < automaton.getStates().size(); i++) {
+    	for (int i = 0; i < automaton.states().size(); i++) {
     		visitedTransitions.add(new ArrayList<>());
     	}
     	
@@ -120,24 +120,24 @@ public class ScenarioGenerator {
     static private String generateScenario(Automaton automaton, int length, List<Collection<Transition>> visitedTransitions, Random random) {
         String events = "", actions = "";
 
-        Node curNode = automaton.getStartState();
+        Node curNode = automaton.startState();
         for (int i = 0; i < length; i++) {
             if (i > 0) {
                 events += "; ";
                 actions += "; ";
             }
 
-            if (curNode.getTransitions().isEmpty()) {
-                throw new RuntimeException("There is no outcoming transitions from node number " + curNode.getNumber());
+            if (curNode.transitions().isEmpty()) {
+                throw new RuntimeException("There is no outcoming transitions from node number " + curNode.number());
             }
                         
             Transition transition = null;
-            Collection<Transition> currentVisited = visitedTransitions.get(curNode.getNumber());
-            if (currentVisited.size() == curNode.getTransitions().size()) {
-            	int transitionNum = random.nextInt(curNode.getTransitions().size());
-            	transition = curNode.getTransitions().toArray(new Transition[0])[transitionNum];
+            Collection<Transition> currentVisited = visitedTransitions.get(curNode.number());
+            if (currentVisited.size() == curNode.transitions().size()) {
+            	int transitionNum = random.nextInt(curNode.transitions().size());
+            	transition = curNode.transitions().toArray(new Transition[0])[transitionNum];
             } else {
-            	for (Transition unvisited : curNode.getTransitions()) {
+            	for (Transition unvisited : curNode.transitions()) {
             		boolean was = false;
             		for (Transition visited : currentVisited) {
             			if (unvisited == visited) {
@@ -152,10 +152,10 @@ public class ScenarioGenerator {
             	currentVisited.add(transition);
             }
             
-            events += transition.getEvent() + "[" + transition.getExpr() + "]";
-            actions += transition.getActions();
+            events += transition.event() + "[" + transition.expr() + "]";
+            actions += transition.actions();
 
-            curNode = transition.getDst();
+            curNode = transition.dst();
         }
 
         return events + "\n" + actions + "\n";

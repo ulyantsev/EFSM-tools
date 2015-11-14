@@ -5,7 +5,6 @@ import java.io.PrintWriter;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
@@ -25,11 +24,11 @@ import structures.plant.NegativePlantScenarioForest;
 import structures.plant.NondetMooreAutomaton;
 import structures.plant.PositivePlantScenarioForest;
 import algorithms.automaton_builders.PlantAutomatonBuilder;
-import egorov.Verifier;
 import egorov.ltl.LtlParseException;
 import egorov.ltl.LtlParser;
 import egorov.ltl.grammar.LtlNode;
 import egorov.verifier.Counterexample;
+import egorov.verifier.Verifier;
 
 public class PlantBuilderMain {
 	@Argument(usage = "paths to files with scenarios", metaVar = "files", required = true)
@@ -123,7 +122,7 @@ public class PlantBuilderMain {
 			try {
 				positiveForest.load(filePath, varNumber);
 				logger.info("Loaded scenarios from " + filePath);
-				logger.info("  Total scenarios tree size: " + positiveForest.nodesCount());
+				logger.info("  Total scenarios tree size: " + positiveForest.nodeCount());
 			} catch (IOException | ParseException e) {
 				logger.warning("Can't load scenarios from file " + filePath);
 				e.printStackTrace();
@@ -142,62 +141,58 @@ public class PlantBuilderMain {
 			}
 		}
 		
+		SatSolver satsolver;
 		try {
-			final List<LtlNode> formulae = ltlFilePath == null
-					? Collections.emptyList()
-					: LtlParser.loadProperties(ltlFilePath, varNumber);
-			logger.info("LTL formula from " + ltlFilePath);
-			
-			long startTime = System.currentTimeMillis();
-			logger.info("Start building automaton");
-
-			SatSolver satsolver;
-			try {
-				satsolver = SatSolver.valueOf(satSolver);
-			} catch (IllegalArgumentException e) {
-				logger.warning(satSolver + " is not a valid SAT solver.");
+			satsolver = SatSolver.valueOf(satSolver);
+		} catch (IllegalArgumentException e) {
+			logger.warning(satSolver + " is not a valid SAT solver.");
+			return;
+		}
+		
+		List<String> eventnames;
+		if (eventNames != null) {
+			eventnames = Arrays.asList(eventNames.split(","));
+			if (eventnames.size() != eventNumber) {
+				logger.warning("The number of events in <eventNames> does not correspond to <eventNumber>!");
 				return;
 			}
-			
-			List<String> eventnames;
-			if (eventNames != null) {
-				eventnames = Arrays.asList(eventNames.split(","));
-				if (eventnames.size() != eventNumber) {
-					logger.warning("The number of events in <eventNames> does not correspond to <eventNumber>!");
-					return;
-				}
-			} else {
-				eventnames = new ArrayList<>();
-				for (int i = 0; i < eventNumber; i++) {
-					eventnames.add(String.valueOf((char) ('A' +  i)));
-				}
-			}
-			
-			final List<String> events = new ArrayList<>();
+		} else {
+			eventnames = new ArrayList<>();
 			for (int i = 0; i < eventNumber; i++) {
-				final String event = eventnames.get(i);
-				for (int j = 0; j < 1 << varNumber; j++) {
-					StringBuilder sb = new StringBuilder(event);
-					for (int pos = 0; pos < varNumber; pos++) {
-						sb.append(((j >> pos) & 1) == 1 ? 1 : 0);
-					}
-					events.add(sb.toString());
-				}
+				eventnames.add(String.valueOf((char) ('A' +  i)));
 			}
-			
-			List<String> actions;
-			if (actionNames != null) {
-				actions = Arrays.asList(actionNames.split(","));
-				if (actions.size() != actionNumber) {
-					logger.warning("The number of actions in <actionNames> does not correspond to <actionNumber>!");
-					return;
+		}
+		
+		final List<String> events = new ArrayList<>();
+		for (int i = 0; i < eventNumber; i++) {
+			final String event = eventnames.get(i);
+			for (int j = 0; j < 1 << varNumber; j++) {
+				StringBuilder sb = new StringBuilder(event);
+				for (int pos = 0; pos < varNumber; pos++) {
+					sb.append(((j >> pos) & 1) == 1 ? 1 : 0);
 				}
-			} else {
-				actions = new ArrayList<>();
-				for (int i = 0; i < actionNumber; i++) {
-					actions.add("z" + i);
-				}
+				events.add(sb.toString());
 			}
+		}
+		
+		List<String> actions;
+		if (actionNames != null) {
+			actions = Arrays.asList(actionNames.split(","));
+			if (actions.size() != actionNumber) {
+				logger.warning("The number of actions in <actionNames> does not correspond to <actionNumber>!");
+				return;
+			}
+		} else {
+			actions = new ArrayList<>();
+			for (int i = 0; i < actionNumber; i++) {
+				actions.add("z" + i);
+			}
+		}
+		
+		try {
+			final List<String> strFormulae = LtlParser.load(ltlFilePath, varNumber, eventnames);
+			final List<LtlNode> formulae = LtlParser.parse(strFormulae);
+			logger.info("LTL formula from " + ltlFilePath);
 			
 			final List<StringScenario> scenarios = new ArrayList<>();
 			for (String scenarioPath : arguments) {
@@ -210,9 +205,12 @@ public class PlantBuilderMain {
 				negativeScenarios.addAll(StringScenario.loadScenarios(negscFilePath, varNumber));
 				negativeForest.load(negscFilePath, varNumber);
 			}
+
+			long startTime = System.currentTimeMillis();
+			logger.info("Start building automaton");
 			
 			Optional<NondetMooreAutomaton> resultAutomaton = null;
-			final Verifier verifier = new Verifier(logger, ltlFilePath, events, actions, varNumber);
+			final Verifier verifier = new Verifier(logger, strFormulae, events, actions, varNumber);
 			final long finishTime = System.currentTimeMillis() + timeout * 1000;
 			resultAutomaton = PlantAutomatonBuilder.build(logger, positiveForest, negativeForest, size, solverParams,
 					resultFilePath, ltlFilePath, actionspecFilePath, formulae, events, actions, satsolver, verifier, finishTime);

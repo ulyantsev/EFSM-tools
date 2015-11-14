@@ -14,20 +14,20 @@ import structures.Transition;
 
 public class AutomatonCompletenessChecker {
 	public static String checkCompleteness(Automaton automaton) {
-		for (Node node : automaton.getStates()) {
+		for (Node node : automaton.states()) {
 			Map<String, Set<String>> eventVars = new TreeMap<>();
-			for (Transition t : node.getTransitions()) {
-				String event = t.getEvent();
+			for (Transition t : node.transitions()) {
+				String event = t.event();
 				if (!eventVars.containsKey(event)) {
 					eventVars.put(event, new TreeSet<>());
 				}
-				eventVars.get(event).addAll(Arrays.asList(t.getExpr().getVariables()));				
+				eventVars.get(event).addAll(Arrays.asList(t.expr().getVariables()));				
 			}
 
 			Map<String, Integer> eventSetsCount = new TreeMap<>();
-			for (Transition t : node.getTransitions()) {
-				String event = t.getEvent();
-				MyBooleanExpression expr = t.getExpr();
+			for (Transition t : node.transitions()) {
+				String event = t.event();
+				MyBooleanExpression expr = t.expr();
 				if (!eventSetsCount.containsKey(event)) {
 					eventSetsCount.put(event, 0);
 				}
@@ -40,7 +40,7 @@ public class AutomatonCompletenessChecker {
 			
 			for (String event : eventSetsCount.keySet()) {
 				if (1 << eventVars.get(event).size() != eventSetsCount.get(event)) {
-					return "INCOMPLETE\nNode " + node.getNumber() + "\nEvent " + event;
+					return "INCOMPLETE\nNode " + node.number() + "\nEvent " + event;
 				}
 			}
 		}
