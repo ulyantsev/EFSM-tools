@@ -207,7 +207,7 @@ public class PlantFormulaBuilder {
 			for (int nodeColor = 0; nodeColor < colorSize; nodeColor++) {
 				constraints.add(xxVar(root.number(), nodeColor, true));
 			}
-		}	
+		}
 		return constraints.assemble("global negative scenario basis");
 	}
 	
@@ -251,9 +251,6 @@ public class PlantFormulaBuilder {
 							.implies(yVar(color1, color2, loop.event).not()));
 				}
 			}
-		}
-		if (isGlobal) {
-			System.out.println(constraints.assemble());
 		}
 		return constraints.assemble("negative scenario loop prevention");
 	}

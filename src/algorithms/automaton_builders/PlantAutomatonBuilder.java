@@ -57,7 +57,6 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 		}
 		
 		final Map<Integer, Integer> coloring = new HashMap<>();
-		
 		for (Assignment a : ass) {
 			if (a.value) {
 				final String tokens[] = a.var.name.split("_");
@@ -152,7 +151,7 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 				for (int i = 0; i < states; i++) {
 					String constraint = transformed;
 					for (String action : actions) {
-						constraint = constraint.replaceAll("wasAction\\(" + action + "\\)",
+						constraint = constraint.replaceAll("action\\(" + action + "\\)",
 								BooleanVariable.byName("z", i, action).get().toLimbooleString());
 					}
 					additionalFormulae.add(constraint);
