@@ -19,6 +19,8 @@ public class SimpleState {
     public SimpleState(String name, boolean isInitial) {
         this.name = name;
         this.isInitial = isInitial;
+        
+        // TODO seems that this line can be removed:
         outTransitions.add(new StateTransition(null, this));
     }
 

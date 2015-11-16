@@ -74,7 +74,7 @@ public class JLtl2baTranslator {
             bNodes = new HashMap<>();
             acceptNodes = new HashSet<>();
 
-            for (ITransition t: transitions) {
+            for (ITransition t : transitions) {
                 IState source = t.getSourceState();
                 IState target = t.getTargetState();
 
@@ -136,7 +136,7 @@ public class JLtl2baTranslator {
          * If accept node has not transitions, add transition to it
          */
         private void checkAcceptStates() {
-            for (BuchiNode n: acceptNodes) {
+            for (BuchiNode n : acceptNodes) {
                 if (n.getTransitions().isEmpty()) {
                     TransitionCondition cond = new TransitionCondition();
                     cond.addExpression(BooleanNode.TRUE);

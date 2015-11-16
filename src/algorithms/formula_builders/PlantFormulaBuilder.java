@@ -31,15 +31,22 @@ public class PlantFormulaBuilder {
 	protected final PositivePlantScenarioForest positiveForest;
 	protected final NegativePlantScenarioForest negativeForest;
 	
+	/**
+	 * Special forest (actually, tree) for G(...) specifications, which are processed separately
+	 */
+	protected final NegativePlantScenarioForest globalNegativeForest;
+	
 	protected final List<BooleanVariable> vars = new ArrayList<>();
 	
 	public PlantFormulaBuilder(int colorSize, PositivePlantScenarioForest positiveForest,
-			NegativePlantScenarioForest negativeForest, List<String> events, List<String> actions) {
+			NegativePlantScenarioForest negativeForest, NegativePlantScenarioForest globalNegativeForest,
+			List<String> events, List<String> actions) {
 		this.colorSize = colorSize;
 		this.events = events;
 		this.actions = actions;
 		this.positiveForest = positiveForest;
 		this.negativeForest = negativeForest;
+		this.globalNegativeForest = globalNegativeForest;
 	}
 	
 	public static BooleanVariable xVar(int node, int color) {
@@ -54,8 +61,8 @@ public class PlantFormulaBuilder {
 		return BooleanVariable.byName("z", state, action).get();
 	}
 	
-	public static BooleanVariable xxVar(int node, int color) {
-		return BooleanVariable.byName("xx", node, color).get();
+	public static BooleanVariable xxVar(int node, int color, boolean isGlobal) {
+		return BooleanVariable.byName(isGlobal ? "xxg" : "xx", node, color).get();
 	}
 	
 	protected void addColorVars() {
@@ -91,6 +98,11 @@ public class PlantFormulaBuilder {
 		for (MooreNode node : negativeForest.nodes()) {
 			for (int color = 0; color < colorSize; color++) {
 				vars.add(new BooleanVariable("xx", node.number(), color));
+			}
+		}
+		for (MooreNode node : globalNegativeForest.nodes()) {
+			for (int color = 0; color < colorSize; color++) {
+				vars.add(new BooleanVariable("xxg", node.number(), color));
 			}
 		}
 	}
@@ -179,25 +191,39 @@ public class PlantFormulaBuilder {
 		final FormulaList constraints = new FormulaList(BinaryOperations.AND);
 		for (MooreNode root : negativeForest.roots()) {
 			for (int nodeColor = 0; nodeColor < colorSize; nodeColor++) {
-				constraints.add(actionEquality(nodeColor, root.actions()).implies(xxVar(root.number(), nodeColor)));
+				constraints.add(actionEquality(nodeColor, root.actions()).implies(xxVar(root.number(), nodeColor, false)));
 			}
 		}
 		return constraints.assemble("negative scenario basis");
 	}
 	
-	private BooleanFormula negativeScenarioPropagation() {
+	private BooleanFormula globalNegativeScenarioBasis() {
 		final FormulaList constraints = new FormulaList(BinaryOperations.AND);
-		for (MooreNode node : negativeForest.nodes()) {
+		if (globalNegativeForest.roots().size() > 1) {
+			throw new AssertionError();
+		}
+		for (MooreNode root : globalNegativeForest.roots()) {
+			// the global negative node is colored in all colors
+			for (int nodeColor = 0; nodeColor < colorSize; nodeColor++) {
+				constraints.add(xxVar(root.number(), nodeColor, true));
+			}
+		}	
+		return constraints.assemble("global negative scenario basis");
+	}
+	
+	private BooleanFormula negativeScenarioPropagation(boolean isGlobal) {
+		final FormulaList constraints = new FormulaList(BinaryOperations.AND);
+		for (MooreNode node : (isGlobal ? globalNegativeForest : negativeForest).nodes()) {
 			for (MooreTransition edge : node.transitions()) {
 				final MooreNode childNode = edge.dst();
 				final String event = edge.event();
 				for (int color1 = 0; color1 < colorSize; color1++) {
 					for (int color2 = 0; color2 < colorSize; color2++) {
 						constraints.add(BinaryOperation.and(
-								xxVar(node.number(), color1),
+								xxVar(node.number(), color1, isGlobal),
 								yVar(color1, color2, event),
 								actionEquality(color2, childNode.actions())).implies(
-								xxVar(childNode.number(), color2)));
+								xxVar(childNode.number(), color2, isGlobal)));
 					}
 				}
 			}
@@ -205,26 +231,29 @@ public class PlantFormulaBuilder {
 		return constraints.assemble("negative scenario propagation");
 	}
 	
-	private BooleanFormula negativeScenarioTermination() {
+	private BooleanFormula negativeScenarioTermination(boolean isGlobal) {
 		final FormulaList constraints = new FormulaList(BinaryOperations.AND);
-		for (MooreNode node : negativeForest.terminalNodes()) {
+		for (MooreNode node : (isGlobal ? globalNegativeForest : negativeForest).terminalNodes()) {
 			for (int nodeColor = 0; nodeColor < colorSize; nodeColor++) {
-				constraints.add(xxVar(node.number(), nodeColor).not());
+				constraints.add(xxVar(node.number(), nodeColor, isGlobal).not());
 			}
 		}
 		return constraints.assemble("negative scenario termination");
 	}
 	
-	private BooleanFormula negativeScenarioLoopPrevention() {
+	private BooleanFormula negativeScenarioLoopPrevention(boolean isGlobal) {
 		final FormulaList constraints = new FormulaList(BinaryOperations.AND);
-		for (Loop loop : negativeForest.loops()) {
+		for (Loop loop : (isGlobal ? globalNegativeForest : negativeForest).loops()) {
 			for (int color1 = 0; color1 < colorSize; color1++) {
 				for (int color2 = 0; color2 < colorSize; color2++) {
-					constraints.add(xxVar(loop.source.number(), color1)
-							.and(xxVar(loop.destination.number(), color2))
+					constraints.add(xxVar(loop.source.number(), color1, isGlobal)
+							.and(xxVar(loop.destination.number(), color2, isGlobal))
 							.implies(yVar(color1, color2, loop.event).not()));
 				}
 			}
+		}
+		if (isGlobal) {
+			System.out.println(constraints.assemble());
 		}
 		return constraints.assemble("negative scenario loop prevention");
 	}
@@ -244,9 +273,12 @@ public class PlantFormulaBuilder {
 		
 		addNegativeColorVars();
 		constraints.add(negativeScenarioBasis());
-		constraints.add(negativeScenarioPropagation());
-		constraints.add(negativeScenarioTermination());
-		constraints.add(negativeScenarioLoopPrevention());
+		constraints.add(globalNegativeScenarioBasis());
+		for (boolean isGlobal : Arrays.asList(false, true)) {
+			constraints.add(negativeScenarioPropagation(isGlobal));
+			constraints.add(negativeScenarioTermination(isGlobal));
+			constraints.add(negativeScenarioLoopPrevention(isGlobal));
+		}
 		
 		return constraints;
 	}

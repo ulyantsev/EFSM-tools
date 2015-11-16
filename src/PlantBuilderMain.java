@@ -29,6 +29,7 @@ import egorov.ltl.LtlParser;
 import egorov.ltl.grammar.LtlNode;
 import egorov.verifier.Counterexample;
 import egorov.verifier.Verifier;
+import egorov.verifier.VerifierPair;
 
 public class PlantBuilderMain {
 	@Argument(usage = "paths to files with scenarios", metaVar = "files", required = true)
@@ -210,7 +211,7 @@ public class PlantBuilderMain {
 			logger.info("Start building automaton");
 			
 			Optional<NondetMooreAutomaton> resultAutomaton = null;
-			final Verifier verifier = new Verifier(logger, strFormulae, events, actions, varNumber);
+			final VerifierPair verifier = new VerifierPair(logger, strFormulae, events, actions, varNumber);
 			final long finishTime = System.currentTimeMillis() + timeout * 1000;
 			resultAutomaton = PlantAutomatonBuilder.build(logger, positiveForest, negativeForest, size, solverParams,
 					resultFilePath, ltlFilePath, actionspecFilePath, formulae, events, actions, satsolver, verifier, finishTime);
@@ -242,8 +243,9 @@ public class PlantBuilderMain {
 					logger.warning("File " + resultFilePath + " not found: " + e.getMessage());
 				}
 				
+				final Verifier usualVerifier = new Verifier(logger, strFormulae, events, actions, varNumber);
 				final List<Counterexample> counterexamples =
-						verifier.verifyWithCounterexamplesWithNoDeadEndRemoval(resultAutomaton.get());
+						usualVerifier.verifyNondetMoore(resultAutomaton.get());
 				if (counterexamples.stream().allMatch(Counterexample::isEmpty)) {
 					logger.info("VERIFIED");
 				} else {

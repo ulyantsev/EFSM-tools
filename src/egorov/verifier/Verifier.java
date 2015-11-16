@@ -24,13 +24,17 @@ public class Verifier {
 	private final VerifierFactory verifier;
 	
 	public Verifier(Logger logger, List<String> ltlFormulae, List<String> events, List<String> actions, int varNumber) {
+		this(logger, ltlFormulae, events, actions, varNumber, false);
+	}
+	
+	public Verifier(Logger logger, List<String> ltlFormulae, List<String> events, List<String> actions, int varNumber, boolean verifyFromAllStates) {
 		this.ltlFormulae = ltlFormulae;
 		logger.info(ltlFormulae.toString());
 
 		allEvents = new TreeSet<>(events);
 		allActions = new TreeSet<>(actions);
 		ensureContextSufficiency();
-		verifier = new VerifierFactory();
+		verifier = new VerifierFactory(verifyFromAllStates);
 
 		try {
 			verifier.prepareFormulas(ltlFormulae);
@@ -63,7 +67,7 @@ public class Verifier {
 		}
 	}
 	
-	private Automaton removeDeadEnds(Automaton automaton) {
+	private static Automaton removeDeadEnds(Automaton automaton) {
 		Automaton currentA = automaton;
 		while (true) {
 			boolean changed = false;
@@ -105,7 +109,7 @@ public class Verifier {
 		return verifier.verify();
 	}
 	
-	public List<Counterexample> verifyWithCounterexamplesWithNoDeadEndRemoval(NondetMooreAutomaton a) {
+	public List<Counterexample> verifyNondetMoore(NondetMooreAutomaton a) {
 		verifier.configureNondetMooreMachine(a);
 		return verifier.verify();
 	}

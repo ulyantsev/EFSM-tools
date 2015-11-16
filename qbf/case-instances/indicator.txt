@@ -1,0 +1,29 @@
+## When the daily production reaches 500, the target completed indicator will be ON to remind the operator for keeping a record.
+## Press the Clear button to clear the history records. The counter will start counting from 0 again.
+## Here we use three variables to encode the counter c1 (c1_add1 for add 1, c1_geq500 for checking if it reaches 500, c1_reset for reset of counter)
+
+
+
+## To avoid duplicate counting, only trigger counting at raising edge
+ALWAYS ((!x0 && NEXT x0) -> NEXT (c1_add1))
+ALWAYS (!(!x0 && NEXT x0) -> !NEXT (c1_add1))
+## Here we also need to consider if initially there is an input
+x0 -> c1_add1
+!x0 -> !c1_add1
+
+ALWAYS (x1 -> c1_reset)
+ALWAYS (!x1 -> !c1_reset)
+ALWAYS (c1_geq500 -> y0)
+ALWAYS (!c1_geq500 -> !y0)
+## Specification of counter: never add 1 and reset simultaneously (it is impossible to set counter to 0 and add 1 simultaneously, due to counter theory).
+ALWAYS(!(c1_add1 && c1_reset) )
+
+## WIth such specification, then there us a conflict when x0 = true && x1 = true, reflected by the following assumption
+ASSUME [] (x0 -> !x1)
+
+
+
+
+INPUT x0, x1, c1_geq500
+OUTPUT y0, c1_add1, c1_reset
+TIMER 

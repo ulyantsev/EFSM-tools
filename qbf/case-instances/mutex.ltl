@@ -1,3 +1,3 @@
-G(!(wasAction(g0) && wasAction(g1)))
-!G(F(!wasVariable(x0)) && F(!wasVariable(x1))) || G(!wasVariable(x0) || F(wasAction(g0)))
-!G(F(!wasVariable(x0)) && F(!wasVariable(x1))) || G(!wasVariable(x1) || F(wasAction(g1)))
+G(!(action(g0) && action(g1)))
+!G(F(!variable(x0)) && F(!variable(x1))) || G(!variable(x0) || F(action(g0)))
+!G(F(!variable(x0)) && F(!variable(x1))) || G(!variable(x1) || F(action(g1)))

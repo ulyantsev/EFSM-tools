@@ -1,0 +1,1 @@
+plant-synthesis/water-level-4.sc --actionNames abovehh,aboveh,abovethreshold,abovesetpoint,belowthreshold,belowsetpoint,belowl,belowll --actionNumber 8 --eventNames open,closed --eventNumber 2 --ltl plant-synthesis/water-level-4.ltl --actionspec plant-synthesis/lic100.actionspec --size 32 --varNumber 0 --tree tree.gv
