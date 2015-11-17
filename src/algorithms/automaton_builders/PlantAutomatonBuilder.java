@@ -201,12 +201,18 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 			// verify
 			final Pair<List<Counterexample>, List<Counterexample>> counterexamples =
 					verifier.verifyNondetMoore(automaton);
-			if (counterexamples.getLeft().stream().allMatch(Counterexample::isEmpty)
-					&& counterexamples.getRight().stream().allMatch(Counterexample::isEmpty)) {
+			final List<Counterexample> mixedCE = new ArrayList<>(counterexamples.getLeft());
+			mixedCE.addAll(counterexamples.getRight());
+			if (mixedCE.stream().allMatch(Counterexample::isEmpty)) {
 				return reportResult(logger, iteration, Optional.of(automaton));
 			} else {
-				addCounterexamples(logger, counterexamples.getLeft(), negativeForest);
-				addCounterexamples(logger, counterexamples.getRight(), globalNegativeForest);
+				final List<Integer> loopLengths = mixedCE.stream()
+						.filter(ce -> !ce.isEmpty())
+						.map(ce -> ce.loopLength)
+						.collect(Collectors.toList());
+				final int allowedLoopLength = loopLengths.stream().mapToInt(l -> l).min().getAsInt();
+				addCounterexamples(logger, counterexamples.getLeft(), negativeForest, allowedLoopLength);
+				addCounterexamples(logger, counterexamples.getRight(), globalNegativeForest, allowedLoopLength);
 			}
 		}
 		logger.info("TOTAL TIME LIMIT EXCEEDED, ANSWER IS UNKNOWN");
@@ -214,11 +220,13 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 	}
 	
 	private static void addCounterexamples(Logger logger, List<Counterexample> counterexamples,
-			NegativePlantScenarioForest forest) {
+			NegativePlantScenarioForest forest, int allowedLoopLength) {
 		final Set<String> unique = new HashSet<>();
 		for (Counterexample counterexample : counterexamples) {
 			if (!counterexample.isEmpty()) {
-				if (!unique.contains(counterexample.toString())) {
+				if (counterexample.loopLength > allowedLoopLength) {
+					logger.info("NOT ADDING COUNTEREXAMPLE: LOOP IS TOO LARGE");
+				} else if (!unique.contains(counterexample.toString())) {
 					unique.add(counterexample.toString());
 					addCounterexample(logger, counterexample, forest);
 				} else {

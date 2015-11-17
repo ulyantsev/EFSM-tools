@@ -22,7 +22,6 @@ public class NegativePlantScenarioForest extends PlantScenarioForest {
 		public final MooreNode source;
 		public final List<MooreNode> nodes = new ArrayList<>();
 		public final List<String> events = new ArrayList<>();
-		public final List<StringActions> actions = new ArrayList<>();
 		
 		public Loop(MooreNode source) {
 			this.source = source;
@@ -32,10 +31,14 @@ public class NegativePlantScenarioForest extends PlantScenarioForest {
 			return nodes.size();
 		}
 		
-		void add(String event, StringActions action, MooreNode node) {
+		void add(String event, MooreNode node) {
 			events.add(event);
-			actions.add(action);
 			nodes.add(node);
+		}
+		
+		@Override
+		public String toString() {
+			return "[" + source + "]" + nodes;
 		}
 	}
 	
@@ -58,12 +61,8 @@ public class NegativePlantScenarioForest extends PlantScenarioForest {
     	}
     	
     	MooreNode node = properRoot;
-    	Loop loop = null;
 		final int loopStart = scenario.size() - loopLength - 1;
-		if (loopLength > 0 && loopStart == 0) {
-			loop = new Loop(node);
-		}
-    	
+    	Loop loop = loopLength > 0 && loopStart == 0 ? new Loop(node) : null;
         for (int i = 1; i < scenario.size(); i++) {
         	final String event = scenario.getEvents(i).get(0);
         	node = addTransition(node, event, scenario.getActions(i));
@@ -71,7 +70,7 @@ public class NegativePlantScenarioForest extends PlantScenarioForest {
         		if (i == loopStart) {
         			loop = new Loop(node);
         		} else if (i > loopStart) {
-        			loop.add(event,  scenario.getActions(i), node);
+        			loop.add(event, node);
         		}
         	}
         }

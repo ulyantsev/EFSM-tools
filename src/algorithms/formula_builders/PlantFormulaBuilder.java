@@ -65,8 +65,8 @@ public class PlantFormulaBuilder {
 		return BooleanVariable.byName(isGlobal ? "xxg" : "xx", node, color).get();
 	}
 	
-	public static BooleanVariable loopVar(boolean isGlobal, int nodeNumber, int sourceColor, int loopNodeColor) {
-		return BooleanVariable.byName("loop", isGlobal, nodeNumber, sourceColor, loopNodeColor).get();
+	public static BooleanVariable loopVar(boolean isGlobal, MooreNode node, int sourceColor, int loopNodeColor) {
+		return BooleanVariable.byName("loop", isGlobal, node.number(), sourceColor, loopNodeColor).get();
 	}
 	
 	
@@ -252,8 +252,8 @@ public class PlantFormulaBuilder {
 			final List<MooreNode> loopNodes = new ArrayList<>();
 			loopNodes.add(loop.source);
 			loopNodes.addAll(loop.nodes);
-			// variable creation
 			for (int sourceColor = 0; sourceColor < colorSize; sourceColor++) {
+				// variable creation
 				for (int loopNodeColor = 0; loopNodeColor < colorSize; loopNodeColor++) {
 					for (MooreNode node : loopNodes) {
 						if (!BooleanVariable.byName("loop", isGlobal, node.number(),
@@ -264,31 +264,29 @@ public class PlantFormulaBuilder {
 						}
 					}
 				}
-			}
-			// loop start
-			for (int sourceColor = 0; sourceColor < colorSize; sourceColor++) {
+				
+				// loop start
 				constraints.add(xxVar(loop.source.number(), sourceColor, isGlobal)
-						.implies(loopVar(isGlobal, loop.source.number(), sourceColor, sourceColor)));
-			}
-			// loop propagation
-			for (int sourceColor = 0; sourceColor < colorSize; sourceColor++) {
+						.implies(loopVar(isGlobal, loop.source, sourceColor, sourceColor)));
+				
+				// loop propagation
 				for (int loopNodeColor = 0; loopNodeColor < colorSize; loopNodeColor++) {
 					for (int loopNextNodeColor = 0; loopNextNodeColor < colorSize; loopNextNodeColor++) {
-						for (int i = 0; i < loopNodes.size() - 2; i++) {
-							constraints.add(BinaryOperation.and(loopVar(isGlobal, loopNodes.get(i).number(),
-									sourceColor, loopNodeColor),
+						for (int i = 0; i < loopNodes.size() - 1; i++) {
+							constraints.add(BinaryOperation.and(
+									loopVar(isGlobal, loopNodes.get(i), sourceColor, loopNodeColor),
 									yVar(loopNodeColor, loopNextNodeColor, loop.events.get(i)),
-									actionEquality(loopNextNodeColor, loop.actions.get(i))).implies(
-									loopVar(isGlobal, loopNodes.get(i + 1).number(),
-													sourceColor, loopNextNodeColor)));
+									actionEquality(loopNextNodeColor, loop.nodes.get(i).actions())
+									).implies(
+									loopVar(isGlobal, loopNodes.get(i + 1), sourceColor, loopNextNodeColor)
+							));
 						}
 					}
 				}
-			}
-			// loop end prohibition
-			for (int endColor = 0; endColor < colorSize; endColor++) {
-				constraints.add(loopVar(isGlobal, loop.nodes.get(loop.nodes.size() - 1).number(),
-						endColor, endColor).not());
+				
+				// loop end prohibition
+				constraints.add(loopVar(isGlobal, loopNodes.get(loopNodes.size() - 1),
+						sourceColor, sourceColor).not());
 			}
 		}
 		//System.out.println(constraints);
