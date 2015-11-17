@@ -1,6 +1,6 @@
+G(!(G(event(open))) || F(G(action(abovehh))))
+G(!(G(event(closed))) || F(G(action(belowll))))
 wasAction(abovesetpoint ) || wasAction(belowsetpoint )
-G(X(!(G(wasEvent(open  ))) || F(G(wasAction(abovehh       )))))
-G(X(!(G(wasEvent(closed))) || F(G(wasAction(belowll       )))))
 G(!(wasAction(abovehh       ) && X(wasEvent(closed))) || X(wasAction(abovehh       ) || wasAction(aboveh        )))
 G(!(wasAction(aboveh        ) && X(wasEvent(closed))) || X(wasAction(aboveh        ) || wasAction(abovethreshold)))
 G(!(wasAction(abovethreshold) && X(wasEvent(closed))) || X(wasAction(abovethreshold) || wasAction(abovesetpoint )))

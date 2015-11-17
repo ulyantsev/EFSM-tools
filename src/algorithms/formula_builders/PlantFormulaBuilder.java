@@ -65,6 +65,11 @@ public class PlantFormulaBuilder {
 		return BooleanVariable.byName(isGlobal ? "xxg" : "xx", node, color).get();
 	}
 	
+	public static BooleanVariable loopVar(boolean isGlobal, int nodeNumber, int sourceColor, int loopNodeColor) {
+		return BooleanVariable.byName("loop", isGlobal, nodeNumber, sourceColor, loopNodeColor).get();
+	}
+	
+	
 	protected void addColorVars() {
 		for (MooreNode node : positiveForest.nodes()) {
 			for (int color = 0; color < colorSize; color++) {
@@ -244,14 +249,49 @@ public class PlantFormulaBuilder {
 	private BooleanFormula negativeScenarioLoopPrevention(boolean isGlobal) {
 		final FormulaList constraints = new FormulaList(BinaryOperations.AND);
 		for (Loop loop : (isGlobal ? globalNegativeForest : negativeForest).loops()) {
-			for (int color1 = 0; color1 < colorSize; color1++) {
-				for (int color2 = 0; color2 < colorSize; color2++) {
-					constraints.add(xxVar(loop.source.number(), color1, isGlobal)
-							.and(xxVar(loop.destination.number(), color2, isGlobal))
-							.implies(yVar(color1, color2, loop.event).not()));
+			final List<MooreNode> loopNodes = new ArrayList<>();
+			loopNodes.add(loop.source);
+			loopNodes.addAll(loop.nodes);
+			// variable creation
+			for (int sourceColor = 0; sourceColor < colorSize; sourceColor++) {
+				for (int loopNodeColor = 0; loopNodeColor < colorSize; loopNodeColor++) {
+					for (MooreNode node : loopNodes) {
+						if (!BooleanVariable.byName("loop", isGlobal, node.number(),
+								sourceColor, loopNodeColor).isPresent()) {
+							final BooleanVariable loopVar = new BooleanVariable("loop",
+									isGlobal, node.number(), sourceColor, loopNodeColor);
+							vars.add(loopVar);
+						}
+					}
 				}
 			}
+			// loop start
+			for (int sourceColor = 0; sourceColor < colorSize; sourceColor++) {
+				constraints.add(xxVar(loop.source.number(), sourceColor, isGlobal)
+						.implies(loopVar(isGlobal, loop.source.number(), sourceColor, sourceColor)));
+			}
+			// loop propagation
+			for (int sourceColor = 0; sourceColor < colorSize; sourceColor++) {
+				for (int loopNodeColor = 0; loopNodeColor < colorSize; loopNodeColor++) {
+					for (int loopNextNodeColor = 0; loopNextNodeColor < colorSize; loopNextNodeColor++) {
+						for (int i = 0; i < loopNodes.size() - 2; i++) {
+							constraints.add(BinaryOperation.and(loopVar(isGlobal, loopNodes.get(i).number(),
+									sourceColor, loopNodeColor),
+									yVar(loopNodeColor, loopNextNodeColor, loop.events.get(i)),
+									actionEquality(loopNextNodeColor, loop.actions.get(i))).implies(
+									loopVar(isGlobal, loopNodes.get(i + 1).number(),
+													sourceColor, loopNextNodeColor)));
+						}
+					}
+				}
+			}
+			// loop end prohibition
+			for (int endColor = 0; endColor < colorSize; endColor++) {
+				constraints.add(loopVar(isGlobal, loop.nodes.get(loop.nodes.size() - 1).number(),
+						endColor, endColor).not());
+			}
 		}
+		//System.out.println(constraints);
 		return constraints.assemble("negative scenario loop prevention");
 	}
 	

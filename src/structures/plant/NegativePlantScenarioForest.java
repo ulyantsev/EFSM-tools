@@ -20,15 +20,22 @@ public class NegativePlantScenarioForest extends PlantScenarioForest {
 	
 	public static class Loop {
 		public final MooreNode source;
-		public final MooreNode destination;
-		public final int length;
-		public final String event;
+		public final List<MooreNode> nodes = new ArrayList<>();
+		public final List<String> events = new ArrayList<>();
+		public final List<StringActions> actions = new ArrayList<>();
 		
-		public Loop(MooreNode source, MooreNode destination, int length, String event) {
+		public Loop(MooreNode source) {
 			this.source = source;
-			this.destination = destination;
-			this.length = length;
-			this.event = event;
+		}
+		
+		public int length() {
+			return nodes.size();
+		}
+		
+		void add(String event, StringActions action, MooreNode node) {
+			events.add(event);
+			actions.add(action);
+			nodes.add(node);
 		}
 	}
 	
@@ -51,21 +58,28 @@ public class NegativePlantScenarioForest extends PlantScenarioForest {
     	}
     	
     	MooreNode node = properRoot;
-    	MooreNode loopDestination = null;
-    	String loopEvent = null;
+    	Loop loop = null;
+		final int loopStart = scenario.size() - loopLength - 1;
+		if (loopLength > 0 && loopStart == 0) {
+			loop = new Loop(node);
+		}
+    	
         for (int i = 1; i < scenario.size(); i++) {
         	final String event = scenario.getEvents(i).get(0);
         	node = addTransition(node, event, scenario.getActions(i));
-        	if (loopLength > 0 && i == scenario.size() - loopLength) {
-    			loopDestination = node;
-    			loopEvent = event;
+        	if (loopLength > 0) {
+        		if (i == loopStart) {
+        			loop = new Loop(node);
+        		} else if (i > loopStart) {
+        			loop.add(event,  scenario.getActions(i), node);
+        		}
         	}
         }
         
         if (loopLength == 0) {
         	terminalNodes.add(node);
         } else {
-        	loops.add(new Loop(node, loopDestination, loopLength, loopEvent));
+        	loops.add(loop);
         }
     }
 
