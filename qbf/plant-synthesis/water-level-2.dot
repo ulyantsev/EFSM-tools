@@ -1,27 +1,28 @@
 # generated file
 # command: dot -Tpng <filename> > filename.png
 digraph Automaton {
-    init [shape = circle] [size=0.2] [label=" "];
-    0 [label = "0 : abovehh"] [shape=circle];
-    1 [label = "1 : abovehh"] [shape=circle];
-    2 [label = "2 : aboveh"] [shape=circle];
-    3 [label = "3 : aboveh"] [shape=circle];
-    4 [label = "4 : abovethreshold"] [shape=circle];
-    5 [label = "5 : abovethreshold"] [shape=circle];
-    6 [label = "6 : abovesetpoint"] [shape=circle];
+    init [shape = circle, width=0.1, height=0.1, label=" "];
+    node [fixedsize=true, width=1.7, height=1.7];
+    0 [label = "0 : abovehh, sensorwet"] [shape=circle];
+    1 [label = "1 : abovehh, sensorwet"] [shape=circle];
+    2 [label = "2 : aboveh, sensorwet"] [shape=circle];
+    3 [label = "3 : aboveh, sensorwet"] [shape=circle];
+    4 [label = "4 : aboveth, sensordry"] [shape=circle];
+    5 [label = "5 : aboveth, sensordry"] [shape=circle];
+    6 [label = "6 : abovesp, sensordry"] [shape=circle];
     init -> 6;
-    7 [label = "7 : abovesetpoint"] [shape=circle];
+    7 [label = "7 : abovesp, sensordry"] [shape=circle];
     init -> 7;
-    8 [label = "8 : belowsetpoint"] [shape=circle];
+    8 [label = "8 : belowsp, sensordry"] [shape=circle];
     init -> 8;
-    9 [label = "9 : belowsetpoint"] [shape=circle];
+    9 [label = "9 : belowsp, sensordry"] [shape=circle];
     init -> 9;
-    10 [label = "10 : belowthreshold"] [shape=circle];
-    11 [label = "11 : belowthreshold"] [shape=circle];
-    12 [label = "12 : belowl"] [shape=circle];
-    13 [label = "13 : belowl"] [shape=circle];
-    14 [label = "14 : belowll"] [shape=circle];
-    15 [label = "15 : belowll"] [shape=circle];
+    10 [label = "10 : belowth, sensordry"] [shape=circle];
+    11 [label = "11 : belowth, sensordry"] [shape=circle];
+    12 [label = "12 : belowl, sensordry"] [shape=circle];
+    13 [label = "13 : belowl, sensordry"] [shape=circle];
+    14 [label = "14 : belowll, sensordry"] [shape=circle];
+    15 [label = "15 : belowll, sensordry"] [shape=circle];
     0 -> 1 [label = "closed"];
     0 -> 2 [label = "closed"];
     1 -> 0 [label = "open"];

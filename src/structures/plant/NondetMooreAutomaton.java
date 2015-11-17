@@ -50,7 +50,7 @@ public class NondetMooreAutomaton {
         	+ "digraph Automaton {\n");
     	
 		sb.append("    init [shape = circle, width=0.1, height=0.1, label=\" \"];\n");
-		sb.append("    node [fixedsize=true, width=1.7, height=1.7];\n");
+		sb.append("    node [fixedsize=true, width=1.8, height=1.8];\n");
     	for (int i = 0; i < states.size(); i++) {
     		final MooreNode state = states.get(i);
     		sb.append("    " + state.number() + " [label = \"" + state + "\"] [shape=circle]" + ";\n");

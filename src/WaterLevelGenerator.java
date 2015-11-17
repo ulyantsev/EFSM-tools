@@ -11,19 +11,23 @@ import scenario.StringActions;
 import structures.plant.NondetMooreAutomaton;
 
 public class WaterLevelGenerator {
+	private static StringActions toStringActions(String action) {
+		return new StringActions(action + (action.equals("aboveh") || action.equals("abovehh") ? ",sensorwet" : ",sensordry"));
+	}
+	
 	public static void main(String[] args) throws FileNotFoundException {
-		final List<String> allActions = Arrays.asList("abovehh", "aboveh", "abovethreshold",
-				"abovesetpoint", "belowsetpoint", "belowthreshold", "belowl", "belowll");
+		final List<String> allActions = Arrays.asList("abovehh", "aboveh", "aboveth",
+				"abovesp", "belowsp", "belowth", "belowl", "belowll");
 		final Random rnd = new Random();
-		for (int k = 1; k <= 4; k++) {
+		for (int k = 1; k <= 5; k++) {
 			// generate the model
 			final List<StringActions> actions = new ArrayList<>();
 			final List<Boolean> isStart = new ArrayList<>();
 			for (int i = 0; i < allActions.size(); i++) {
 				final String action = allActions.get(i);
 				for (int j = 0; j < k; j++) {
-					actions.add(new StringActions(action));
-					isStart.add(action.contains("setpoint"));
+					actions.add(toStringActions(action));
+					isStart.add(action.contains("sp"));
 				}
 			}
 			final NondetMooreAutomaton waterLevel = new NondetMooreAutomaton(8 * k, actions, isStart);
@@ -74,8 +78,8 @@ public class WaterLevelGenerator {
 							scActions.add(actions.get(currentState).toString());
 						}
 						
-						traceWriter.println(String.join(";", scEvents));
-						traceWriter.println(String.join(";", scActions));
+						traceWriter.println(String.join("; ", scEvents));
+						traceWriter.println(String.join("; ", scActions));
 						
 						// down & up trace
 						scEvents = new ArrayList<>();
@@ -99,8 +103,8 @@ public class WaterLevelGenerator {
 							scActions.add(actions.get(currentState).toString());
 						}
 						
-						traceWriter.println(String.join(";", scEvents));
-						traceWriter.println(String.join(";", scActions));
+						traceWriter.println(String.join("; ", scEvents));
+						traceWriter.println(String.join("; ", scActions));
 					}
 				}
 			}
@@ -145,7 +149,7 @@ public class WaterLevelGenerator {
 		for (int i = 0; i < times; i++) {
 			sb.append("X(");
 		}
-		sb.append((wasAction ? "wasAction" : "wasEvent") + "(" + str + ")");
+		sb.append((wasAction ? "action" : "event") + "(" + str + ")");
 		for (int i = 0; i < times; i++) {
 			sb.append(")");
 		}

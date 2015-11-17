@@ -1,17 +1,18 @@
 # generated file
 # command: dot -Tpng <filename> > filename.png
 digraph Automaton {
-    init [shape = circle] [size=0.2] [label=" "];
-    0 [label = "0 : abovehh"] [shape=circle];
-    1 [label = "1 : aboveh"] [shape=circle];
-    2 [label = "2 : abovethreshold"] [shape=circle];
-    3 [label = "3 : abovesetpoint"] [shape=circle];
+    init [shape = circle, width=0.1, height=0.1, label=" "];
+    node [fixedsize=true, width=1.7, height=1.7];
+    0 [label = "0 : abovehh, sensorwet"] [shape=circle];
+    1 [label = "1 : aboveh, sensorwet"] [shape=circle];
+    2 [label = "2 : aboveth, sensordry"] [shape=circle];
+    3 [label = "3 : abovesp, sensordry"] [shape=circle];
     init -> 3;
-    4 [label = "4 : belowsetpoint"] [shape=circle];
+    4 [label = "4 : belowsp, sensordry"] [shape=circle];
     init -> 4;
-    5 [label = "5 : belowthreshold"] [shape=circle];
-    6 [label = "6 : belowl"] [shape=circle];
-    7 [label = "7 : belowll"] [shape=circle];
+    5 [label = "5 : belowth, sensordry"] [shape=circle];
+    6 [label = "6 : belowl, sensordry"] [shape=circle];
+    7 [label = "7 : belowll, sensordry"] [shape=circle];
     0 -> 1 [label = "closed"];
     1 -> 0 [label = "open"];
     1 -> 2 [label = "closed"];
