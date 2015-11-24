@@ -1,4 +1,0 @@
-U((!action(y0) && action(y2)), variable(x0)) || G(!variable(x0)) 
-G(!variable(x0) || (U((action(y0) && action(y1)), variable(x1)) || G (!variable(x1))))
-G(!variable(x1) || (U((!action(y0) && action(y2)), variable(x0)) || G (!variable(x0))))
-G(!(action(y1) && action(y2)))

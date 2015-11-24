@@ -1,7 +1,0 @@
-!G(F(event(x1))) || (!(!event(x0) && X(event(x0))) || X(action(c1add1)))
-!G(F(event(x1))) || G((!event(x0) && X(event(x0))) || !X(action(c1add1)))
-!G(F(event(x1))) || G(!variable(x0) || U(action(y0), event(x1)))
-!G(F(event(x1))) || G(!(!event(x1) && X(event(x1))) || X(action(c1reset)))
-!G(F(event(x1))) || G(!X(action(c1reset)) || (!event(x1) && X(event(x1))))
-!G(F(event(x1))) || G(!(!event(x1) && X(event(x1))) || X(U(!action(y0), variable(x0)) || (G(!variable(x0)))))
-G(!(action(c1reset) && action(c1add1)))
