@@ -40,6 +40,50 @@ import egorov.verifier.Verifier;
 
 public class UnbeastTransformer {
 	public static void main(String[] args) throws IOException, ParseException, LtlParseException {
+		//randomInstances();
+		//elevator();
+		//cashDispenser();
+		//textEditor();
+		jhotdraw();
+	}
+	
+	private static void jhotdraw() throws IOException, ParseException, LtlParseException {
+		final List<String> events = Arrays.asList("figure,text,setpos,edit,setdim,finalise".split(","));
+		final List<String> actions = Arrays.asList("dummy");
+		final String prefix = "qbf/walkinshaw/jhotdraw.";
+		final boolean incomplete = true;
+		final Problem p = new Problem(prefix + "ltl", prefix + "sc", events, actions, incomplete);
+		runUnbeast(p, "unbeast-automaton-jhotdraw", "unbeast-log-jhotdraw", true);
+	}
+	
+	private static void textEditor() throws IOException, ParseException, LtlParseException {
+		final List<String> events = Arrays.asList("load,save,close,exit,edit".split(","));
+		final List<String> actions = Arrays.asList("dummy");
+		final String prefix = "qbf/walkinshaw/editor.";
+		final boolean incomplete = true;
+		final Problem p = new Problem(prefix + "ltl", prefix + "sc", events, actions, incomplete);
+		runUnbeast(p, "unbeast-automaton-editor", "unbeast-log-editor", true);
+	}
+	
+	private static void cashDispenser() throws IOException, ParseException, LtlParseException {
+		final List<String> events = Arrays.asList("IC,EC,A,AE,AS,C,CR,CP,M,MR,MS,ME,MP,CNL".split(","));
+		final List<String> actions = Arrays.asList("z1,z2,z3,z4,z5,z6,z7,z8,z9,z10,z11,z12,z13".split(","));
+		final String prefix = "qbf/case-instances/cash-dispenser.";
+		final boolean incomplete = true;
+		final Problem p = new Problem(prefix + "ltl", prefix + "sc", events, actions, incomplete);
+		runUnbeast(p, "unbeast-automaton-cash-dispenser", "unbeast-log-cash-dispenser", true);
+	}
+	
+	private static void elevator() throws IOException, ParseException, LtlParseException {
+		final List<String> events = Arrays.asList("e11,e12,e2,e3,e4".split(","));
+		final List<String> actions = Arrays.asList("z1,z2,z3".split(","));
+		final String prefix = "qbf/case-instances/elevator.";
+		final boolean incomplete = true;
+		final Problem p = new Problem(prefix + "ltl", prefix + "sc", events, actions, incomplete);
+		runUnbeast(p, "unbeast-automaton-elevator", "unbeast-log-elevator", true);
+	}
+	
+	private static void randomInstances() throws IOException, ParseException, LtlParseException {
 		final List<String> events = Arrays.asList("A", "B", "C", "D");
 		final List<String> actions = Arrays.asList("z0", "z1", "z2", "z3");
 		final String prefix = "qbf/testing/incomplete/fsm-3-";
