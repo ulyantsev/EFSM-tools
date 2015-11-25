@@ -621,7 +621,6 @@ public class BacktrackingAutomatonBuilder {
 			} else if (variables == 0) {
 				new OrdinaryTraverseState(tree, verifier, size, finishTime, events, actions,
 						completenessType).backtracking();
-				System.err.println("ORD " + actions + " " + events);
 			} else {
 				// for Daniil's instances
 				new TraverseStateWithMultiEdges(tree, verifier, size, finishTime, events, actions,

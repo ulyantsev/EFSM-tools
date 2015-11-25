@@ -9,7 +9,6 @@ import java.util.List;
 
 import org.apache.commons.lang3.tuple.Pair;
 
-import egorov.verifier.Verifier;
 import scenario.StringActions;
 import structures.Automaton;
 import structures.Node;
@@ -17,6 +16,7 @@ import structures.Transition;
 import algorithms.exception.AutomatonFoundException;
 import algorithms.exception.TimeLimitExceededException;
 import bool.MyBooleanExpression;
+import egorov.verifier.Verifier;
 
 public class AutomatonCompleter {
 	private final Verifier verifier;
@@ -103,10 +103,24 @@ public class AutomatonCompleter {
 		}
 		
 		final Pair<Integer, String> missing = missingTransitions.get(missingTransitions.size() - 1);
-		missingTransitions.remove(missingTransitions.size() - 1);
 		
 		final Node stateFrom = automaton.state(missing.getLeft());
 		final String e = missing.getRight();
+		
+		final List<Pair<Integer, String>> removedFromMissing = new ArrayList<>();
+		
+		if (completenessType == CompletenessType.NORMAL) {
+			removedFromMissing.add(missing);
+			missingTransitions.remove(missingTransitions.size() - 1);
+		} else {
+			// all transitions from this state stop being missing
+			for (Pair<Integer, String> t : missingTransitions) {
+				if (t.getLeft() == missing.getLeft()) {
+					removedFromMissing.add(t);
+				}
+			}
+			missingTransitions.removeAll(removedFromMissing);
+		}
 		
 		for (StringActions actions : preparedActions) {
 			for (int dst = 0; dst < colorSize; dst++) {
@@ -118,6 +132,6 @@ public class AutomatonCompleter {
 			}
 		}
 		
-		missingTransitions.add(missing);
+		missingTransitions.addAll(removedFromMissing);
 	}
 }
