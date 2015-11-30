@@ -3,13 +3,13 @@
     <property name="bin.dir" value="jar-classes"/>
     <property name="jars.dir" value="jars"/>
 
-    <property name="isomorphism.main" value="IsomorphismCheckerMain"/>
+    <property name="isomorphism.main" value="main/IsomorphismCheckerMain"/>
     <property name="isomorphism.jar" value="isomorphism-checker.jar"/>
 
-    <property name="consistency.main" value="ConsistencyCheckerMain"/>
+    <property name="consistency.main" value="main/ConsistencyCheckerMain"/>
     <property name="consistency.jar" value="consistency-checker.jar"/>
 
-    <property name="completeness.main" value="CompletenessCheckerMain"/>
+    <property name="completeness.main" value="main/CompletenessCheckerMain"/>
     <property name="completeness.jar" value="completeness-checker.jar"/>
     
     <property name="builder.main" value="Main"/>
@@ -21,28 +21,28 @@
     <property name="ltl2ba.path" value="lib/ltl2ba4j.jar"/>
     <property name="ognl.path" value="lib/ognl-3.1.jar"/>
 
-    <property name="sat-builder.main" value="SatBuilderMain"/>
+    <property name="sat-builder.main" value="main/SatBuilderMain"/>
     <property name="sat-builder.jar" value="sat-builder.jar"/>
 
-    <property name="automaton.generator.main" value="AutomatonGeneratorMain"/>
+    <property name="automaton.generator.main" value="main/AutomatonGeneratorMain"/>
     <property name="automaton.generator.jar" value="automaton-generator.jar"/>
 
-    <property name="scenarios.generator.main" value="ScenariosGeneratorMain"/>
+    <property name="scenarios.generator.main" value="main/ScenariosGeneratorMain"/>
     <property name="scenarios.generator.jar" value="scenarios-generator.jar"/>
 
-    <property name="minizinc.generator.main" value="MiniZincDataGeneratorMain"/>
+    <property name="minizinc.generator.main" value="main/MiniZincDataGeneratorMain"/>
     <property name="minizinc.generator.jar" value="minizinc-generator.jar"/>
 
-    <property name="qbf.automaton.generator.main" value="QbfBuilderMain"/>
+    <property name="qbf.automaton.generator.main" value="main/QbfBuilderMain"/>
     <property name="qbf.automaton.generator.jar" value="qbf-automaton-generator.jar"/>
 
-    <property name="plant.automaton.generator.main" value="PlantBuilderMain"/>
+    <property name="plant.automaton.generator.main" value="main/plant/PlantBuilderMain"/>
     <property name="plant.automaton.generator.jar" value="plant-automaton-generator.jar"/>
 
-    <property name="safety.ltl.generator.main" value="SafetyLTLGeneratorMain"/>
+    <property name="safety.ltl.generator.main" value="main/misc/SafetyLTLGeneratorMain"/>
     <property name="safety.ltl.generator.jar" value="safety-ltl-generator.jar"/>
 
-    <property name="max.clique.finder.main" value="MaxCliqueFinderMain"/>
+    <property name="max.clique.finder.main" value="main/misc/MaxCliqueFinderMain"/>
     <property name="max.clique.finder.jar" value="max-clique-finder.jar"/>
 
     <target name="all" 

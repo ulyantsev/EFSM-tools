@@ -1,0 +1,17 @@
+#!/bin/bash
+#Extract propositional variables from EFSM
+
+events=$(cat $1 | grep -o -P "\".+\"" | sed "s/\"//g" | grep -P "^[A-Z].+" | awk '{print $1}' | sort | uniq)
+actions=$(cat $1  | grep -o -P "\".+\"" | sed "s/\"//g" | grep -P "^[A-Z].+" | grep -o -P '\(.+\)' | grep -o -P 'z[0-9]+' | sort | uniq)
+
+PROP=
+
+for e in $events ; do
+   PROP="$PROP wasEvent(ep.$e)"
+done
+
+for a in $actions ; do
+   PROP="$PROP wasAction(co.$a)"
+done
+
+echo $PROP
