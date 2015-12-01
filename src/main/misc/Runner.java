@@ -1,5 +1,9 @@
 package main.misc;
 
+/**
+ * (c) Igor Buzhinsky
+ */
+
 import main.QbfBuilderMain;
 
 public class Runner {

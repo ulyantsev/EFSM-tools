@@ -44,7 +44,7 @@ public class ScenarioGenerator {
     }
 	
     static public String pathToScenario(ArrayList<Transition> path) {
-    	ArrayList<String> events = new ArrayList<String>();
+    	ArrayList<String> events = new ArrayList<>();
     	ArrayList<MyBooleanExpression> expressions = new ArrayList<>();
     	ArrayList<StringActions> actions = new ArrayList<>();
     	
@@ -162,7 +162,6 @@ public class ScenarioGenerator {
     }
 
     static private int[] getRandomLength(int scenariosCount, int minLength, int maxLength, int sumLength, Random random) {
-
         assert 0 < minLength && minLength <= maxLength;
         assert minLength * scenariosCount <= sumLength;
         assert sumLength <= maxLength * scenariosCount;

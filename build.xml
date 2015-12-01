@@ -45,6 +45,15 @@
     <property name="max.clique.finder.main" value="main/misc/MaxCliqueFinderMain"/>
     <property name="max.clique.finder.jar" value="max-clique-finder.jar"/>
 
+    <property name="plant.generator.main" value="main/plant/PlantAutomatonGeneratorMain"/>
+    <property name="plant.generator.jar" value="plant-generator.jar"/>
+
+    <property name="verifier.main" value="main/VerifierMain"/>
+    <property name="verifier.jar" value="verifier.jar"/>
+
+    <property name="plant.scenario.generator.main" value="main/plant/PlantScenarioGeneratorMain"/>
+    <property name="plant.scenario.generator.jar" value="plant-scenario-generator.jar"/>
+
     <target name="all" 
             depends="consistency-jar, 
                      isomorphism-jar, 
@@ -57,7 +66,10 @@
                      qbf-automaton-generator-jar,
                      plant-automaton-generator-jar,
                      safety-ltl-generator-jar,
-                     max-clique-finder-jar">
+                     max-clique-finder-jar,
+                     plant-generator-jar,
+                     verifier-jar,
+                     plant-scenario-generator-jar">
     </target>
 
     <target name="minizinc-generator-jar">
@@ -325,6 +337,74 @@
             <manifest>
                 <attribute name="Main-Class" value="${max.clique.finder.main}"/>
             </manifest>
+        </jar>
+
+        <delete dir="${bin.dir}"/>
+    </target>
+
+    <target name="plant-generator-jar">
+        <mkdir dir="${bin.dir}"/>
+    
+        <javac srcdir="${src.dir}"
+               destdir="${bin.dir}"
+               classpath="${args4j.path}:${commons.lang3.path}"
+               includeantruntime="false">
+            <include name="${plant.generator.main}.java"/>
+        </javac>
+
+        <jar destfile="${jars.dir}/${plant.generator.jar}"
+             basedir="${bin.dir}">
+            <manifest>
+                <attribute name="Main-Class" value="${plant.generator.main}"/>
+            </manifest>
+            <zipfileset src="${args4j.path}" excludes="META-INF/*.SF"/>
+            <zipfileset src="${commons.lang3.path}" excludes="META-INF/*.SF"/>
+        </jar>
+
+        <delete dir="${bin.dir}"/>
+    </target>
+
+    <target name="verifier-jar">
+        <mkdir dir="${bin.dir}"/>
+    
+        <javac srcdir="${src.dir}"
+               destdir="${bin.dir}"
+               classpath="${args4j.path}:${commons.lang3.path}:${ognl.path}:${ltl2ba.path}"
+               includeantruntime="false">
+            <include name="${verifier.main}.java"/>
+        </javac>
+
+        <jar destfile="${jars.dir}/${verifier.jar}"
+             basedir="${bin.dir}">
+            <manifest>
+                <attribute name="Main-Class" value="${verifier.main}"/>
+            </manifest>
+            <zipfileset src="${args4j.path}" excludes="META-INF/*.SF"/>
+            <zipfileset src="${commons.lang3.path}" excludes="META-INF/*.SF"/>
+            <zipfileset src="${ognl.path}" excludes="META-INF/*.SF"/>
+            <zipfileset src="${ltl2ba.path}" excludes="META-INF/*.SF"/>
+        </jar>
+
+        <delete dir="${bin.dir}"/>
+    </target>
+
+    <target name="plant-scenario-generator-jar">
+        <mkdir dir="${bin.dir}"/>
+    
+        <javac srcdir="${src.dir}"
+               destdir="${bin.dir}"
+               classpath="${args4j.path}:${commons.lang3.path}"
+               includeantruntime="false">
+            <include name="${plant.scenario.generator.main}.java"/>
+        </javac>
+
+        <jar destfile="${jars.dir}/${plant.scenario.generator.jar}"
+             basedir="${bin.dir}">
+            <manifest>
+                <attribute name="Main-Class" value="${plant.scenario.generator.main}"/>
+            </manifest>
+            <zipfileset src="${args4j.path}" excludes="META-INF/*.SF"/>
+            <zipfileset src="${commons.lang3.path}" excludes="META-INF/*.SF"/>
         </jar>
 
         <delete dir="${bin.dir}"/>

@@ -53,7 +53,7 @@ public class VerifierMain {
 		try {
 			parser.parseArgument(args);
 		} catch (CmdLineException e) {
-			System.out.println("Interface to the built-in automaton verifier.");
+			System.out.println("Interface to the built-in automaton verifier");
 			System.out.println("Authors: Igor Buzhinsky (igor.buzhinsky@gmail.com)\n");
 			System.out.print("Usage: ");
 			parser.printSingleLineUsage(System.out);
@@ -111,7 +111,7 @@ public class VerifierMain {
 			final NondetMooreAutomaton a = NondetMooreAutomaton.readGV(automatonPath);
 			counterexamples = verifier.verifyNondetMoore(a);
 		} else {
-			final Automaton a = AutomatonGVLoader.load(args[0]);
+			final Automaton a = AutomatonGVLoader.load(automatonPath);
 			counterexamples = verifier.verifyWithCounterexamplesWithNoDeadEndRemoval(a);
 		}
 		for (Counterexample ce : counterexamples) {

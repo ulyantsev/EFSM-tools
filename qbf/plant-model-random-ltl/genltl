@@ -18,4 +18,4 @@ done
 
 
 seed=$(date +%N)
-LD_LIBRARY_PATH=/usr/local/lib/ randltl -n $NLTL --tree-size=$TREE_SIZE --seed $seed -p -s $($SCRIPT_DIR/getprop $FSM) --ltl-priorities="$LTLPRIORITIES" | sed -r 's/\[\]/G/g' | sed 's/<>/F/g' | sed 's/V/R/g'
+LD_LIBRARY_PATH=/usr/local/lib/ randltl -n $NLTL --tree-size=$TREE_SIZE --seed $seed -p -s $($SCRIPT_DIR/getprop $FSM) --ltl-priorities="xor=0, implies=0, equiv=0, false=0, true=0" | sed -r 's/\[\]/G/g; s/<>/F/g; s/V/R/g'

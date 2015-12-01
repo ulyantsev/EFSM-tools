@@ -106,10 +106,8 @@ public class ScenariosGeneratorMain {
 		}
 		
 		if (scenariosFilepath != null) {
-			try {
-				PrintWriter pw = new PrintWriter(new File(scenariosFilepath));
+			try (PrintWriter pw = new PrintWriter(new File(scenariosFilepath))) {
 				pw.println(scenarios);
-				pw.close();
 			} catch (IOException e) {
 				System.err.println("ERROR: Problems with writing to file " + scenariosFilepath);
 				e.printStackTrace();
@@ -130,6 +128,5 @@ public class ScenariosGeneratorMain {
 
 	public static void main(String[] args) {
 		new ScenariosGeneratorMain().run(args);
-
 	}
 }

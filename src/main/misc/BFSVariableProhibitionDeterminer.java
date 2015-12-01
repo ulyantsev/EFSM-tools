@@ -1,4 +1,5 @@
 package main.misc;
+
 /**
  * (c) Igor Buzhinsky
  */

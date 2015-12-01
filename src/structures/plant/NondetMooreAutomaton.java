@@ -91,6 +91,16 @@ public class NondetMooreAutomaton {
     public boolean isStartState(int index) {
         return isStart.get(index);
     }
+    
+    public List<Integer> startStates() {
+    	final List<Integer> result = new ArrayList<>();
+    	for (int i = 0; i < states.size(); i++) {
+    		if (isStartState(i)) {
+    			result.add(i);
+    		}
+    	}
+        return result;
+    }
 
     public MooreNode state(int i) {
         return states.get(i);

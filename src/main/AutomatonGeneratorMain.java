@@ -9,11 +9,9 @@ import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 
 import algorithms.AutomatonGenerator;
-
 import structures.Automaton;
 
 public class AutomatonGeneratorMain {
-
 	@Option(name = "--size", aliases = { "-s" }, usage = "EFSM size", metaVar = "<size>", required = true)
 	private int size;
 
@@ -67,10 +65,8 @@ public class AutomatonGeneratorMain {
 				maxActionsCount, varsCount, transitionsPersent / 100., random);
 
 		if (filepath != null) {
-			try {
-				PrintWriter pw = new PrintWriter(new File(filepath));
+			try (PrintWriter pw = new PrintWriter(new File(filepath))) {
 				pw.println(automaton);
-				pw.close();
 			} catch (IOException e) {
 				System.err.println("ERROR: Problems with writing to file " + filepath);
 				e.printStackTrace();
