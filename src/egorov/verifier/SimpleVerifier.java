@@ -86,7 +86,9 @@ public class SimpleVerifier {
 	        	element.dest.resetIterator();
 	        	IntersectionTransition trans;
 	        	while ((trans = element.dest.next()) != null) {
-	        		queue.addLast(new QueueElement(trans, element));
+	        		if (trans.transition.event != null) {
+	        			queue.addLast(new QueueElement(trans, element));
+	        		}
 	        	}
         	}
         }
@@ -147,7 +149,9 @@ public class SimpleVerifier {
 	        	element.dest.resetIterator();
 	        	
 	        	while ((trans = element.dest.next()) != null) {
-        			queue.addLast(new QueueElement(trans, element));
+	        		if (trans.transition.event != null) {
+	        			queue.addLast(new QueueElement(trans, element));
+	        		}
 	        	}
         	}
         }

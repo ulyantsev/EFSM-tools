@@ -19,6 +19,7 @@ public class SimpleState {
     public SimpleState(String name, boolean isInitial) {
         this.name = name;
         this.isInitial = isInitial;
+        outTransitions.add(new StateTransition(null, this));
     }
 
     public List<StateTransition> outgoingTransitions() {

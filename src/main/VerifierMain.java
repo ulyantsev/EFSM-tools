@@ -37,10 +37,10 @@ public class VerifierMain {
 	@Option(name = "--varNumber", aliases = { "-vn" }, usage = "number of variables (x0, x1, ...)", metaVar = "<varNumber>")
 	private int varNumber = 0;
 	
-	@Option(name = "--ltl", aliases = { "-lt" }, usage = "file with LTL properties (optional)", metaVar = "<file>")
+	@Option(name = "--ltl", aliases = { "-lt" }, usage = "file with LTL properties", metaVar = "<file>", required = true)
 	private String ltlFilePath;
 
-	@Option(name = "--automaton", aliases = { "-au" }, usage = "automaton to verify", metaVar = "<file>")
+	@Option(name = "--automaton", aliases = { "-au" }, usage = "automaton to verify", metaVar = "<file>", required = true)
 	private String automatonPath;
 	
 	@Option(name = "--plantModel", aliases = { "-pm" }, handler = BooleanOptionHandler.class, usage = "the supplied automaton is a plant model")

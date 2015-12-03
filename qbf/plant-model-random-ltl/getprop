@@ -2,9 +2,12 @@
 #Extract propositional variables from EFSM
 
 events=$(cat $1 | grep "^    " | grep "\\-> .* \\[label" | sed 's/.*= "//g; s/"];//g' | sort | uniq)
-actions=$(cat plants/plant-5-0.dot | grep "^    " | grep -v "\\->" | grep -v "    init" | grep -v "    node" | sed 's/^.* : //g; s/".*$//g; s/, /\n/g' | sort | uniq)
+actions=$(cat $1 | grep "^    " | grep -v "\\->" | grep -v "    init" | grep -v "    node" | sed 's/^.* : //g; s/".*$//g; s/, /\n/g' | sort | uniq)
 
 PROP=
+
+events="A B C D E"
+actions="z0 z1 z2 z3 z4"
 
 for e in $events ; do
    PROP="$PROP event($e)"
