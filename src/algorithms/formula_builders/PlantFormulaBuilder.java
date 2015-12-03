@@ -69,7 +69,6 @@ public class PlantFormulaBuilder {
 		return BooleanVariable.byName("loop", isGlobal, node.number(), sourceColor, loopNodeColor).get();
 	}
 	
-	
 	protected void addColorVars() {
 		for (MooreNode node : positiveForest.nodes()) {
 			for (int color = 0; color < colorSize; color++) {
@@ -197,7 +196,7 @@ public class PlantFormulaBuilder {
 		for (int nodeColor = 0; nodeColor < colorSize; nodeColor++) {
 			final FormulaList premise = new FormulaList(BinaryOperations.OR);
 			// if there exists a positive root colored in this color (i.e. this is a start state)
-			for (MooreNode root : negativeForest.roots()) {
+			for (MooreNode root : positiveForest.roots()) {
 				premise.add(xVar(root.number(), nodeColor));
 			}
 			final FormulaList consequence = new FormulaList(BinaryOperations.AND);
@@ -206,6 +205,7 @@ public class PlantFormulaBuilder {
 				consequence.add(xxVar(root.number(), nodeColor, false));
 			}
 			constraints.add(premise.assemble().implies(consequence.assemble()));
+			//System.out.println(premise.assemble().implies(consequence.assemble()));
 		}
 		return constraints.assemble("negative scenario basis");
 	}

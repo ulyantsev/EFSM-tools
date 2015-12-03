@@ -174,6 +174,9 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 		
 		final NegativePlantScenarioForest globalNegativeForest = new NegativePlantScenarioForest();
 		
+		final Set<String> allNormalCounterexamples = new HashSet<>();
+		final Set<String> allGlobalCounterexamples = new HashSet<>();
+		
 		for (int iteration = 0; System.currentTimeMillis() < finishTime; iteration++) {
 			final PlantFormulaBuilder builder = new PlantFormulaBuilder(size, positiveForest,
 					negativeForest, globalNegativeForest, events, actions);
@@ -198,9 +201,11 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 			
 			final NondetMooreAutomaton automaton = constructAutomatonFromAssignment(logger, ass.list(),
 					positiveForest, size);
+			//System.out.println(automaton);
 			// verify
 			final Pair<List<Counterexample>, List<Counterexample>> counterexamples =
 					verifier.verifyNondetMoore(automaton);
+			
 			final List<Counterexample> mixedCE = new ArrayList<>(counterexamples.getLeft());
 			mixedCE.addAll(counterexamples.getRight());
 			if (mixedCE.stream().allMatch(Counterexample::isEmpty)) {
@@ -211,6 +216,25 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 						.map(ce -> ce.loopLength)
 						.collect(Collectors.toList());
 				final int allowedLoopLength = loopLengths.stream().mapToInt(l -> l).min().getAsInt();
+				
+				
+				for (Counterexample ce : counterexamples.getLeft()) {
+					if (allNormalCounterexamples.contains(ce.toString())) {
+						throw new AssertionError("Duplicate normal counterexample " + ce);
+					}
+				}
+				for (Counterexample ce : counterexamples.getRight()) {
+					if (allGlobalCounterexamples.contains(ce.toString())) {
+						throw new AssertionError("Duplicate global counterexample " + ce);
+					}
+				}
+				allNormalCounterexamples.addAll(counterexamples.getLeft().stream()
+						.filter(c -> c.loopLength <= allowedLoopLength && !c.isEmpty())
+						.map(Object::toString).collect(Collectors.toList()));
+				allGlobalCounterexamples.addAll(counterexamples.getRight().stream()
+						.filter(c -> c.loopLength <= allowedLoopLength && !c.isEmpty())
+						.map(Object::toString).collect(Collectors.toList()));
+				
 				addCounterexamples(logger, counterexamples.getLeft(), negativeForest, allowedLoopLength);
 				addCounterexamples(logger, counterexamples.getRight(), globalNegativeForest, allowedLoopLength);
 			}
