@@ -194,12 +194,19 @@ public class PlantFormulaBuilder {
 	
 	private BooleanFormula negativeScenarioBasis() {
 		final FormulaList constraints = new FormulaList(BinaryOperations.AND);
-		for (MooreNode root : negativeForest.roots()) {
-			for (int nodeColor = 0; nodeColor < colorSize; nodeColor++) {
-				constraints.add(actionEquality(nodeColor, root.actions()).implies(xxVar(root.number(), nodeColor, false)));
+		for (int nodeColor = 0; nodeColor < colorSize; nodeColor++) {
+			final FormulaList premise = new FormulaList(BinaryOperations.OR);
+			// if there exists a positive root colored in this color (i.e. this is a start state)
+			for (MooreNode root : negativeForest.roots()) {
+				premise.add(xVar(root.number(), nodeColor));
 			}
+			final FormulaList consequence = new FormulaList(BinaryOperations.AND);
+			// then all negative roots are colored in this color
+			for (MooreNode root : negativeForest.roots()) {
+				consequence.add(xxVar(root.number(), nodeColor, false));
+			}
+			constraints.add(premise.assemble().implies(consequence.assemble()));
 		}
-		System.out.println(constraints);
 		return constraints.assemble("negative scenario basis");
 	}
 	
@@ -209,7 +216,7 @@ public class PlantFormulaBuilder {
 			throw new AssertionError();
 		}
 		for (MooreNode root : globalNegativeForest.roots()) {
-			// the global negative node is colored in all colors
+			// the global negative root is colored in all colors
 			for (int nodeColor = 0; nodeColor < colorSize; nodeColor++) {
 				constraints.add(xxVar(root.number(), nodeColor, true));
 			}
@@ -234,7 +241,6 @@ public class PlantFormulaBuilder {
 				}
 			}
 		}
-		System.out.println(constraints);
 		return constraints.assemble("negative scenario propagation");
 	}
 	
@@ -245,7 +251,6 @@ public class PlantFormulaBuilder {
 				constraints.add(xxVar(node.number(), nodeColor, isGlobal).not());
 			}
 		}
-		System.out.println(constraints);
 		return constraints.assemble("negative scenario termination");
 	}
 	

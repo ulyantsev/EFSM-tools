@@ -198,7 +198,6 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 			
 			final NondetMooreAutomaton automaton = constructAutomatonFromAssignment(logger, ass.list(),
 					positiveForest, size);
-			System.out.println(automaton);
 			// verify
 			final Pair<List<Counterexample>, List<Counterexample>> counterexamples =
 					verifier.verifyNondetMoore(automaton);
