@@ -20,11 +20,13 @@ public class NegativePlantScenarioForest extends PlantScenarioForest {
 	
 	public static class Loop {
 		public final MooreNode source;
+		public final int index;
 		public final List<MooreNode> nodes = new ArrayList<>();
 		public final List<String> events = new ArrayList<>();
 		
-		public Loop(MooreNode source) {
+		public Loop(MooreNode source, int index) {
 			this.source = source;
+			this.index = index;
 		}
 		
 		public int length() {
@@ -62,13 +64,13 @@ public class NegativePlantScenarioForest extends PlantScenarioForest {
     	
     	MooreNode node = properRoot;
 		final int loopStart = scenario.size() - loopLength - 1;
-    	Loop loop = loopLength > 0 && loopStart == 0 ? new Loop(node) : null;
+    	Loop loop = loopLength > 0 && loopStart == 0 ? new Loop(node, loops.size()) : null;
         for (int i = 1; i < scenario.size(); i++) {
         	final String event = scenario.getEvents(i).get(0);
         	node = addTransition(node, event, scenario.getActions(i));
         	if (loopLength > 0) {
         		if (i == loopStart) {
-        			loop = new Loop(node);
+        			loop = new Loop(node, loops.size());
         		} else if (i > loopStart) {
         			loop.add(event, node);
         		}
