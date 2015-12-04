@@ -194,18 +194,14 @@ public class PlantFormulaBuilder {
 	private BooleanFormula negativeScenarioBasis() {
 		final FormulaList constraints = new FormulaList(BinaryOperations.AND);
 		for (int nodeColor = 0; nodeColor < colorSize; nodeColor++) {
-			final FormulaList premise = new FormulaList(BinaryOperations.OR);
-			// if there exists a positive root colored in this color (i.e. this is a start state)
 			for (MooreNode root : positiveForest.roots()) {
-				premise.add(xVar(root.number(), nodeColor));
+				for (MooreNode negRoot : negativeForest.roots()) {
+					if (root.actions().equals(negRoot.actions())) {
+						constraints.add(xVar(root.number(), nodeColor)
+								.implies(xxVar(negRoot.number(), nodeColor, false)));
+					}
+				}
 			}
-			final FormulaList consequence = new FormulaList(BinaryOperations.AND);
-			// then all negative roots are colored in this color
-			for (MooreNode root : negativeForest.roots()) {
-				consequence.add(xxVar(root.number(), nodeColor, false));
-			}
-			constraints.add(premise.assemble().implies(consequence.assemble()));
-			//System.out.println(premise.assemble().implies(consequence.assemble()));
 		}
 		return constraints.assemble("negative scenario basis");
 	}

@@ -2,8 +2,8 @@
 
 events=5
 actions=5
-minstates=10
-maxstates=10
+minstates=15
+maxstates=15
 instances=50
 
 echo "Generating plants and scenarios..."

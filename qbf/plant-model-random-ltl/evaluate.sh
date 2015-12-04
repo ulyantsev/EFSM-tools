@@ -3,7 +3,7 @@
 timeout=600
 min_size=10
 max_size=10
-instances=20
+instances=50
 events=5
 actions=5
 

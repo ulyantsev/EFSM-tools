@@ -237,6 +237,8 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 				
 				addCounterexamples(logger, counterexamples.getLeft(), negativeForest, allowedLoopLength);
 				addCounterexamples(logger, counterexamples.getRight(), globalNegativeForest, allowedLoopLength);
+				//System.out.println(negativeForest);
+				//System.out.println(globalNegativeForest);
 			}
 		}
 		logger.info("TOTAL TIME LIMIT EXCEEDED, ANSWER IS UNKNOWN");
