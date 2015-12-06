@@ -53,6 +53,13 @@ public class SimpleVerifier {
 		}
     }
     
+    public enum Criterion { MIN_LENGTH, MIN_LOOP };
+    private static Criterion CRITERION = Criterion.MIN_LENGTH;
+    
+    public static void setCriterion(Criterion criterion) {
+    	CRITERION = criterion;
+    }
+    
     private Pair<List<IntersectionTransition>, Integer> bfs(IntersectionNode initialNode,
     		Set<BuchiNode> finiteCounterexampleNodes) {
     	final Deque<QueueElement> queue = new LinkedList<>();
@@ -99,14 +106,21 @@ public class SimpleVerifier {
         	return Pair.of(new ArrayList<>(), 0);
         } else {
         	int minIndex = 0;
-        	// the counterexample of the minimum length
+        	// the counterexample of the minimum length OR minimum loop length
         	// if the lengths are equal, then with the minimum loop size
         	for (int i = 1; i < counterexamples.size(); i++) {
         		final int currentSize = counterexamples.get(i).getLeft().size();
         		final int bestSize = counterexamples.get(minIndex).getLeft().size();
         		final int currentLoopSize = counterexamples.get(i).getRight();
         		final int bestLoopSize = counterexamples.get(minIndex).getRight();
-        		if (currentSize < bestSize || currentSize == bestSize && currentLoopSize < bestLoopSize) {
+        		
+        		boolean condition = CRITERION == Criterion.MIN_LENGTH
+        				? (currentSize < bestSize
+        					|| currentSize == bestSize && currentLoopSize < bestLoopSize)
+        				: (currentLoopSize < bestLoopSize
+        					|| currentLoopSize == bestLoopSize && currentSize < bestSize);
+        		
+        		if (condition) {
         			minIndex = i;
         		}
         	}

@@ -316,7 +316,7 @@ public class PlantFormulaBuilder {
 		for (boolean isGlobal : Arrays.asList(false, true)) {
 			constraints.add(negativeScenarioPropagation(isGlobal));
 			constraints.add(negativeScenarioTermination(isGlobal));
-			constraints.add(negativeScenarioLoopPrevention(isGlobal));
+			//constraints.add(negativeScenarioLoopPrevention(isGlobal));
 		}
 		
 		return constraints;

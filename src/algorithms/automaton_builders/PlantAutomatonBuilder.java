@@ -40,6 +40,8 @@ import bnf_formulae.BooleanVariable;
 import bool.MyBooleanExpression;
 import egorov.ltl.grammar.LtlNode;
 import egorov.verifier.Counterexample;
+import egorov.verifier.SimpleVerifier;
+import egorov.verifier.SimpleVerifier.Criterion;
 import egorov.verifier.VerifierPair;
 
 public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
@@ -171,6 +173,7 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 			List<String> events, List<String> actions, SatSolver satSolver,
 			VerifierPair verifier, long finishTime) throws IOException {
 		deleteTrash();
+		SimpleVerifier.setCriterion(Criterion.MIN_LOOP);
 		
 		final NegativePlantScenarioForest globalNegativeForest = new NegativePlantScenarioForest();
 		
@@ -235,8 +238,8 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 						.filter(c -> c.loopLength <= allowedLoopLength && !c.isEmpty())
 						.map(Object::toString).collect(Collectors.toList()));
 				
-				addCounterexamples(logger, counterexamples.getLeft(), negativeForest, allowedLoopLength);
-				addCounterexamples(logger, counterexamples.getRight(), globalNegativeForest, allowedLoopLength);
+				addCounterexamples(logger, size, counterexamples.getLeft(), negativeForest, allowedLoopLength);
+				addCounterexamples(logger, size, counterexamples.getRight(), globalNegativeForest, allowedLoopLength);
 				//System.out.println(negativeForest);
 				//System.out.println(globalNegativeForest);
 			}
@@ -245,7 +248,21 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 		return Optional.empty();
 	}
 	
-	private static void addCounterexamples(Logger logger, List<Counterexample> counterexamples,
+	private static Counterexample collapseLoop(Counterexample ce, int size) {
+		final List<String> events = new ArrayList<>();
+		final List<List<String>> actions = new ArrayList<>();
+		final int length = ce.events().size();
+		final int loopStart = length - ce.loopLength;
+		events.addAll(ce.events().subList(0, loopStart));
+		actions.addAll(ce.actions().subList(0, loopStart));
+		for (int i = 0; i < size; i++) {
+			events.addAll(ce.events().subList(loopStart, length));
+			actions.addAll(ce.actions().subList(loopStart, length));
+		}
+		return new Counterexample(events, actions, 0);
+	}
+	
+	private static void addCounterexamples(Logger logger, int size, List<Counterexample> counterexamples,
 			NegativePlantScenarioForest forest, int allowedLoopLength) {
 		final Set<String> unique = new HashSet<>();
 		for (Counterexample counterexample : counterexamples) {
@@ -254,7 +271,7 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 					logger.info("NOT ADDING COUNTEREXAMPLE: LOOP IS TOO LARGE");
 				} else if (!unique.contains(counterexample.toString())) {
 					unique.add(counterexample.toString());
-					addCounterexample(logger, counterexample, forest);
+					addCounterexample(logger, size, counterexample, forest);
 				} else {
 					logger.info("DUPLICATE COUNTEREXAMPLES ON THE SAME ITERATION");
 				}
@@ -264,8 +281,9 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 		}
 	}
 	
-	protected static void addCounterexample(Logger logger,
+	protected static void addCounterexample(Logger logger, int size,
 			Counterexample counterexample, NegativePlantScenarioForest negativeForest) {
+		counterexample = collapseLoop(counterexample, size);
 		final List<MyBooleanExpression> expr = new ArrayList<>();
 		for (int i = 0; i < counterexample.events().size(); i++) {
 			expr.add(MyBooleanExpression.getTautology());

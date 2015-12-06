@@ -1,8 +1,7 @@
 #!/bin/bash
 
-timeout=600
-min_size=10
-max_size=10
+timeout=3600
+sizes="10 15"
 instances=50
 events=5
 actions=5
@@ -16,7 +15,7 @@ fsm="generated-plant.gv"
 
 mkdir -p evaluation
 
-for ((size = $min_size; size <= $max_size; size++)); do
+for size in $sizes; do
     for ((instance = 0; instance < $instances; instance++)); do
         ev_name=evaluation/$size-$instance
         if [ -f $ev_name/done ]; then
@@ -34,7 +33,7 @@ for ((size = $min_size; size <= $max_size; size++)); do
             rm -f $fsm
             java -Xms2G -Xmx4G -jar ../../jars/plant-automaton-generator.jar "$sc_name" \
                 --ltl "$ltl_name" --size $trysize --eventNumber $events --actionNumber $actions \
-                --timeout $timeout --result "$fsm" 2>&1 | cat > $ev_name/$trysize.full.log
+                --timeout $timeout --result "$fsm" --actionspec actionspec.actionspec 2>&1 | cat > $ev_name/$trysize.full.log
             grep "\\(INFO\\|WARNING\\|SEVERE\\|Exception\\|OutOfMemoryError\\)" < $ev_name/$trysize.full.log > $ev_name/$trysize.log
             if [[ $(grep "\\(TIME LIMIT EXCEEDED\\|UNKNOWN\\|OutOfMemoryError\\)" < $ev_name/$trysize.log) != "" ]]; then
                 # unknown
