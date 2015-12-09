@@ -1,0 +1,1 @@
+plant-synthesis/vver.sc --actionNames pressurelivestream0,pressurelivestream1,pressurelivestream2,pressurelowerplenum0,pressurelowerplenum1,pressurelowerplenum2,voltage0,waterlevel0,waterlevel1 --actionNumber 9 --eventNumber 1 --ltl plant-synthesis/vver.ltl --actionspec plant-synthesis/vver.actionspec --size 5 --varNumber 0 --tree tree.gv
