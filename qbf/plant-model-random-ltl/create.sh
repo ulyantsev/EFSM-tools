@@ -47,7 +47,6 @@ for ((size = $minstates; size <= $maxstates; size++)); do
                         (( passed++ ))
                     fi
                 done
-                echo $passed
                 if (( passed <= 0 )); then
                     cat formula >> "$ltl"
                     echo generated
