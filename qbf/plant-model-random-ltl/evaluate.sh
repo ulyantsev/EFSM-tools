@@ -1,7 +1,7 @@
 #!/bin/bash
 
 timeout=3600
-sizes="10 15"
+sizes="10 15 20 25 30"
 instances=50
 events=5
 actions=5

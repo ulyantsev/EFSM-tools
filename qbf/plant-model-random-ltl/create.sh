@@ -2,8 +2,8 @@
 
 events=5
 actions=5
-minstates=20
-maxstates=20
+minstates=30
+maxstates=30
 instances=50
 
 echo "Generating plants and scenarios..."
@@ -47,7 +47,6 @@ for ((size = $minstates; size <= $maxstates; size++)); do
                         (( passed++ ))
                     fi
                 done
-                echo $passed
                 if (( passed <= 0 )); then
                     cat formula >> "$ltl"
                     echo generated

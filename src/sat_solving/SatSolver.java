@@ -5,7 +5,7 @@ package sat_solving;
  */
 
 public enum SatSolver {
-	CRYPTOMINISAT("cryptominisat --maxtime="),
+	CRYPTOMINISAT("cryptominisat4 --maxtime="),
 	LINGELING("lingeling -t ");
 	
 	public final String command;

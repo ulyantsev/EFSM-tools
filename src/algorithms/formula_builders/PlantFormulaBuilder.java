@@ -188,7 +188,7 @@ public class PlantFormulaBuilder {
 				constraints.add(options.assemble());
 			}
 		}
-		return constraints.assemble("induce a complete FSM");
+		return constraints.assemble("induce a complete automaton");
 	}
 	
 	private BooleanFormula negativeScenarioBasis() {
