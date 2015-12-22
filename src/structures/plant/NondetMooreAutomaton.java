@@ -10,7 +10,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
+import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
 import scenario.StringActions;
@@ -148,6 +150,46 @@ public class NondetMooreAutomaton {
 
         sb.append("}");
         return sb.toString();
+    }
+    
+    public String toNuSMVString(List<String> events, List<String> actions) {
+    	events = events.stream().map(s -> "input_" + s).collect(Collectors.toList());
+    	final StringBuilder sb = new StringBuilder();
+    	sb.append("MODULE main\n");
+    	sb.append("VAR\n");
+    	sb.append("    state: 0.." + (stateCount() - 1) + ";\n");
+    	sb.append("    input: { initial_input, " + String.join(", ", events) + " };\n");
+    	sb.append("ASSIGN\n");
+    	sb.append("    init(input) := initial_input;\n");
+    	sb.append("    next(input) := { " + events.toString().replace("[", "").replace("]", "") + " };\n");
+    	sb.append("    init(state) := { " + startStates().toString().replace("[", "").replace("]", "") + " };\n");
+    	sb.append("    next(state) := case\n");
+    	for (int i = 0; i < stateCount(); i++) {
+    		for (String event : events) {
+    			final List<Integer> destinations = new ArrayList<>();
+    			for (MooreTransition t : states.get(i).transitions()) {
+        			if (("input_" + t.event()).equals(event)) {
+        				destinations.add(t.dst().number());
+        			}
+        		}
+    			sb.append("        state = " + i + " & next(input) = "
+    					+ event + ": { " +  destinations.toString().replace("[", "").replace("]", "") + " };\n");
+    		}
+    		
+    	}
+    	sb.append("        TRUE: 0;\n");
+    	sb.append("    esac;\n");
+    	sb.append("DEFINE\n");
+    	for (String action : actions) {
+    		final List<String> properStates = new ArrayList<>();
+    		for (int i = 0; i < stateCount(); i++) {
+    			if (ArrayUtils.contains(states.get(i).actions().getActions(), action)) {
+    				properStates.add("state = " + i);
+    			}
+    		}
+    		sb.append("    output_" + action + " := " + String.join(" | ", properStates) + ";\n");
+    	}
+    	return sb.toString();
     }
     
     private boolean recursiveScenarioCompliance(MooreNode scenarioNode, MooreNode automatonNode) {

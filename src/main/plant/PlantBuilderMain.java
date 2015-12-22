@@ -92,6 +92,9 @@ public class PlantBuilderMain {
 	@Option(name = "--timeout", aliases = { "-to" }, usage = "solver timeout (sec)", metaVar = "<timeout>")
 	private int timeout = 60 * 60 * 24;
 
+	@Option(name = "--nusmv", aliases = { "-nusmv" }, usage = "file for NuSMV output (optional)", metaVar = "<file>")
+	private String nusmvFilePath;
+	
 	private void launcher(String[] args) throws IOException {
 		Locale.setDefault(Locale.US);
 
@@ -137,11 +140,9 @@ public class PlantBuilderMain {
 			}
 		}
 		
-		
-
 		if (treeFilePath != null) {
-			try (PrintWriter treePrintWriter = new PrintWriter(new File(treeFilePath))) {
-				treePrintWriter.println(positiveForest);
+			try (PrintWriter pw = new PrintWriter(new File(treeFilePath))) {
+				pw.println(positiveForest);
 				logger.info("Scenarios tree saved to " + treeFilePath);
 			} catch (Exception e) {
 				logger.warning("Can't save scenarios tree to " + treeFilePath);
@@ -243,10 +244,18 @@ public class PlantBuilderMain {
 				}
 
 				// writing to a file
-				try (PrintWriter resultPrintWriter = new PrintWriter(new File(resultFilePath))) {
-					resultPrintWriter.println(resultAutomaton.get());
+				try (PrintWriter pw = new PrintWriter(new File(resultFilePath))) {
+					pw.println(resultAutomaton.get());
 				} catch (FileNotFoundException e) {
 					logger.warning("File " + resultFilePath + " not found: " + e.getMessage());
+				}
+				
+				if (nusmvFilePath != null) {
+					try (PrintWriter pw = new PrintWriter(new File(nusmvFilePath))) {
+						pw.println(resultAutomaton.get().toNuSMVString(events, actions));
+					} catch (FileNotFoundException e) {
+						logger.warning("File " + nusmvFilePath + " not found: " + e.getMessage());
+					}
 				}
 				
 				final Verifier usualVerifier = new Verifier(logger, strFormulae, events, actions, varNumber);
