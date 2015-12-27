@@ -23,7 +23,6 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
 import sat_solving.Assignment;
-import sat_solving.ExpandableStringFormula;
 import sat_solving.SatSolver;
 import sat_solving.SolverResult;
 import sat_solving.SolverResult.SolverResults;
@@ -35,6 +34,7 @@ import structures.plant.NegativePlantScenarioForest;
 import structures.plant.NondetMooreAutomaton;
 import structures.plant.PositivePlantScenarioForest;
 import algorithms.formula_builders.PlantFormulaBuilder;
+import bnf_formulae.BooleanFormula;
 import bnf_formulae.BooleanFormula.SolveAsSatResult;
 import bnf_formulae.BooleanVariable;
 import bool.MyBooleanExpression;
@@ -132,15 +132,15 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 	}
 	
 	/*
-	 * If the filename is not null, appends additional action specification into the formula.
+	 * If the filename is not null, returns additional action specification.
 	 * The specification is given as in LTL, but without temporal operators.
-	 * If there is a propositional formula F over wasAction(...), then the meaning of this formula would be:
+	 * If there is a propositional formula F over action(...), then the meaning of this formula would be:
 	 *   In all states of the automaton, F holds.
 	 */
-	private static String addActionSpecification(String formula, String actionspecFilePath, int states,
+	private static String actionSpecification(String actionspecFilePath, int states,
 			List<String> actions) throws FileNotFoundException {
 		if (actionspecFilePath == null) {
-			return formula;
+			return null;
 		}
 		final List<String> additionalFormulae = new ArrayList<>();
 		try (final Scanner sc = new Scanner(new File(actionspecFilePath))) {
@@ -161,9 +161,9 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 			}
 		}
 		if (additionalFormulae.isEmpty()) {
-			return formula;
+			return null;
 		} else {
-			return "(" + formula + ")&(" + String.join(")&(", additionalFormulae) + ")";
+			return "(" + String.join(")&(", additionalFormulae) + ")";
 		}
 	}
 	
@@ -180,17 +180,24 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 		final Set<String> allNormalCounterexamples = new HashSet<>();
 		final Set<String> allGlobalCounterexamples = new HashSet<>();
 		
+		String actionSpec = null;
+		BooleanFormula positiveConstraints = null;
+		
 		for (int iteration = 0; System.currentTimeMillis() < finishTime; iteration++) {
 			final PlantFormulaBuilder builder = new PlantFormulaBuilder(size, positiveForest,
 					negativeForest, globalNegativeForest, events, actions);
-			final String formula = builder.scenarioConstraints().assemble().simplify().toLimbooleString();
-			final String formulaWithActionSpec = addActionSpecification(formula, actionspecFilePath, size, actions);
-			final ExpandableStringFormula expandableFormula = new ExpandableStringFormula(formulaWithActionSpec, logger,
-					satSolver, solverParams);
-			
+			builder.createVars();
+			if (iteration == 0) {
+				positiveConstraints = builder.positiveConstraints().assemble();
+				actionSpec = actionSpecification(actionspecFilePath, size, actions);
+			}
+			final BooleanFormula formula = positiveConstraints.and(builder.negativeConstraints().assemble());
+
 			// SAT-solve
 			final int secondsLeft = timeLeftForSolver(finishTime);
-			final SolveAsSatResult solution = expandableFormula.solve(secondsLeft);
+
+			final SolveAsSatResult solution = formula.solveAsSat_plant(
+					logger, solverParams, secondsLeft, satSolver, actionSpec);
 			final List<Assignment> list = solution.list();
 			final long time = solution.time;
 			
@@ -291,8 +298,7 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 		final List<StringActions> actions = counterexample.actions().stream().map(
 				action -> new StringActions(String.join(",", action))
 		).collect(Collectors.toList());
-		negativeForest.addScenario(new StringScenario(true, counterexample.events(), expr, actions),
-				counterexample.loopLength);
+		negativeForest.addScenario(new StringScenario(true, counterexample.events(), expr, actions));
 		logger.info("ADDING COUNTEREXAMPLE: " + counterexample);
 	}
 	

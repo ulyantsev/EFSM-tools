@@ -12,8 +12,12 @@ import java.util.stream.Collectors;
 
 public class BinaryOperation extends BooleanFormula {
 	private final List<BooleanFormula> children;
-	private final BinaryOperations type;
+	public final BinaryOperations type;
 	private final String comment;
+	
+	public List<BooleanFormula> copyChildren() {
+		return new ArrayList<>(children);
+	}
 	
 	private BinaryOperation(BooleanFormula left, BooleanFormula right, BinaryOperations type) {
 		this(Arrays.asList(left, right), type, null);
@@ -110,7 +114,7 @@ public class BinaryOperation extends BooleanFormula {
 			return comment(children.get(0).toString());
 		}
 		
-		List<String> strChildren = children.stream().map(f -> f.toString()).collect(Collectors.toList());
+		final List<String> strChildren = children.stream().map(f -> f.toString()).collect(Collectors.toList());
 		return "(" + comment(String.join(" " + type + " ", strChildren)) + ")";
 	}
 
@@ -175,7 +179,67 @@ public class BinaryOperation extends BooleanFormula {
 			}
 			return new BinaryOperation(childrenSimpl, BinaryOperations.IMPLIES);
 		}
-		assert false;
-		return null;
+		throw new AssertionError();
+	}
+
+	@Override
+	public BooleanFormula removeEqImpl() {
+		if (type == BinaryOperations.EQ) {
+			final BooleanFormula left = children.get(0).removeEqImpl();
+			final BooleanFormula right = children.get(1).removeEqImpl();
+			return BinaryOperation.or(left.and(right), left.not().and(right.not()));
+		} else if (type == BinaryOperations.IMPLIES) {
+			final BooleanFormula left = children.get(0).removeEqImpl();
+			final BooleanFormula right = children.get(1).removeEqImpl();
+			return left.not().or(right);
+		} else {
+			final List<BooleanFormula> newChildren = children.stream()
+					.map(f -> f.removeEqImpl()).collect(Collectors.toList());
+			return new BinaryOperation(newChildren, type, comment);
+		}
+	}
+	
+	@Override
+	public BooleanFormula propagateNot() {
+		final List<BooleanFormula> newChildren = children.stream()
+				.map(f -> f.propagateNot()).collect(Collectors.toList());
+		return new BinaryOperation(newChildren, type, comment);
+	}
+	
+	public void separateAnd(List<BooleanFormula> constraints) {
+		if (type != BinaryOperations.AND) {
+			throw new AssertionError();
+		}
+		for (BooleanFormula child : children) {
+			if (child instanceof BinaryOperation) {
+				final BinaryOperation binChild = (BinaryOperation) child;
+				if (binChild.type == BinaryOperations.AND) {
+					binChild.separateAnd(constraints);
+				} else {
+					constraints.add(child);
+				}
+			} else {
+				constraints.add(child);
+			}
+		}
+	}
+	
+	@Override
+	public boolean separateOr(List<BooleanFormula> terms) {
+		if (type != BinaryOperations.OR) {
+			return false;
+		}
+		for (BooleanFormula child : children) {
+			if (child instanceof BinaryOperation) {
+				final BinaryOperation binChild = (BinaryOperation) child;
+				if (!binChild.separateOr(terms)) {
+					return false;
+				}
+			} else {
+				// must be either var or not(var)
+				terms.add(child);
+			}
+		}
+		return true;
 	}
 }

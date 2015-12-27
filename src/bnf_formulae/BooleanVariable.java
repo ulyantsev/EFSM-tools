@@ -57,6 +57,11 @@ public class BooleanVariable extends BooleanFormula implements Comparable<Boolea
 		return Optional.ofNullable(VARS_BY_NAME.get(createName(prefix, indices)));
 	}
 	
+	public static BooleanVariable getOrCreate(String prefix, Object... indices) {
+		final Optional<BooleanVariable> v = byName(prefix, indices);
+		return v.isPresent() ? v.get() : new BooleanVariable(prefix, indices);
+	}
+	
 	@Override
 	public String toString() {
 		return name;
@@ -81,5 +86,21 @@ public class BooleanVariable extends BooleanFormula implements Comparable<Boolea
 	@Override
 	public BooleanFormula simplify() {
 		return this;
+	}
+
+	@Override
+	public BooleanFormula removeEqImpl() {
+		return this;
+	}
+
+	@Override
+	public BooleanFormula propagateNot() {
+		return this;
+	}
+
+	@Override
+	public boolean separateOr(List<BooleanFormula> terms) {
+		terms.add(this);
+		return true;
 	}
 }

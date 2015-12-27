@@ -35,11 +35,11 @@ public abstract class PlantScenarioForest {
      */
     public void load(String filepath, int varNumber) throws FileNotFoundException, ParseException {
         for (StringScenario scenario : StringScenario.loadScenarios(filepath, varNumber)) {
-            addScenario(scenario, 0);
+            addScenario(scenario);
         }
     }
     
-    protected abstract void addScenario(StringScenario scenarion, int loopLength);
+    protected abstract void addScenario(StringScenario scenarion);
     protected abstract MooreNode addTransition(MooreNode src, String event, StringActions actions);
     
     protected void checkScenario(StringScenario scenario) {

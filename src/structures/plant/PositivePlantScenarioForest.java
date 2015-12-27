@@ -9,7 +9,7 @@ import scenario.StringScenario;
 
 public class PositivePlantScenarioForest extends PlantScenarioForest {
 	@Override
-	public void addScenario(StringScenario scenario, int loopLength) {
+	public void addScenario(StringScenario scenario) {
     	checkScenario(scenario);
     	final StringActions firstActions = scenario.getActions(0);
     	MooreNode node = new MooreNode(nodes.size(), firstActions);
@@ -31,9 +31,8 @@ public class PositivePlantScenarioForest extends PlantScenarioForest {
 	@Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();
-        sb.append("# generated file\n");
-        sb.append("# command: dot -Tpng <filename> > filename.png\n");
-        sb.append("digraph ScenariosTree {\n    node [shape = circle];\n");
+        sb.append("# generated file; view: dot -Tpng <filename> > filename.png\n");
+        sb.append("digraph ScenarioForest {\n    node [shape = circle];\n");
 
         for (MooreNode node : nodes) {
     		sb.append("    " + node.number() + " [label = \"" + node + "\"];\n");

@@ -101,7 +101,6 @@ public abstract class BooleanFormula {
 			String tmpDimacsFilename, DimacsConversionInfo oldInfo) throws IOException {
 		final List<String> result = new ArrayList<>();
 		try (DimacsConversionInfo newInfo = toDimacs(limbooleFormula, logger, tmpDimacsFilename)) {
-					
 			final List<String> newDimacsLines = new ArrayList<>();
 			try (BufferedReader input = new BufferedReader(new InputStreamReader(new FileInputStream(tmpDimacsFilename)))) {
 				input.lines().forEach(newDimacsLines::add);
@@ -193,10 +192,78 @@ public abstract class BooleanFormula {
 	public static SolveAsSatResult solveAsSat(String formula, Logger logger, String solverParams,
 			int timeoutSeconds, SatSolver solver) throws IOException {
 		logger.info("Final SAT formula length: " + formula.length());
-		DimacsConversionInfo info = BooleanFormula.toDimacs(formula, logger, DIMACS_FILENAME);
+		final DimacsConversionInfo info = BooleanFormula.toDimacs(formula, logger, DIMACS_FILENAME);
 		info.close();
 		logger.info("CREATED DIMACS FILE");
 		return solveDimacs(logger, timeoutSeconds, solver, solverParams, info);
+	}
+	
+	public SolveAsSatResult solveAsSat_plant(Logger logger, String solverParams,
+			int timeoutSeconds, SatSolver solver, String actionSpec) throws IOException {
+		final DimacsConversionInfo info = toDimacs_plant(logger, DIMACS_FILENAME, actionSpec);
+		info.close();
+		logger.info("CREATED COMBINED DIMACS FILE");
+		return solveDimacs(logger, timeoutSeconds, solver, solverParams, info);
+	}
+	
+	public DimacsConversionInfo toDimacs_plant(Logger logger, String dimacsFilename,
+			String actionSpec) throws IOException {
+		//System.out.println("<<<");
+		final BooleanFormula preprocessed = simplify().removeEqImpl().propagateNot();
+		if (!(preprocessed instanceof BinaryOperation)) {
+			throw new AssertionError();
+		}
+		final List<BooleanFormula> constraints = new ArrayList<>();
+		((BinaryOperation) preprocessed).separateAnd(constraints);
+		final FormulaList limbooleConstraints = new FormulaList(BinaryOperations.AND);
+		final List<List<BooleanFormula>> cnfConstraints = new ArrayList<>();
+		for (BooleanFormula constraint : constraints) {
+			final List<BooleanFormula> terms = new ArrayList<>();
+			boolean isDisjunction = constraint.separateOr(terms);
+			if (isDisjunction) {
+				cnfConstraints.add(terms);
+			} else {
+				limbooleConstraints.add(constraint);
+			}
+		}
+		String limbooleString = limbooleConstraints.assemble().toLimbooleString();
+		if (limbooleConstraints.isEmpty()) {
+			limbooleString = BooleanVariable.getVarByNumber(1).or(BooleanVariable.getVarByNumber(1).not()).toLimbooleString();
+		}
+		if (actionSpec != null) {
+			limbooleString = "(" + limbooleString + ")&(" + actionSpec + ")";
+		}
+		final DimacsConversionInfo info = toDimacs(limbooleString, logger, dimacsFilename);
+		final List<String> dimacsLines = new ArrayList<>();
+		for (List<BooleanFormula> constraint : cnfConstraints) {
+			final List<String> dimacsVars = new ArrayList<>();
+			for (BooleanFormula f : constraint) {
+				final BooleanVariable v;
+				final String prefix;
+				if (f instanceof BooleanVariable) {
+					v = (BooleanVariable) f;
+					prefix = "";
+				} else if (f instanceof NotOperation) {
+					v = (BooleanVariable) (((NotOperation) f).inside);
+					prefix = "-";
+				} else {
+					throw new AssertionError();
+				}
+				
+				if (!info.limbooleNumberToDimacs.containsKey(v.number)) {
+					info.varNumber++;
+					info.limbooleNumberToDimacs.put(v.number, info.varNumber);
+					info.dimacsNumberToLimboole.put(info.varNumber, v.number);
+				}
+				dimacsVars.add(prefix + info.limbooleNumberToDimacs.get(v.number));
+			}
+			dimacsVars.add("0");
+			final String dimacsLine = String.join(" ", dimacsVars);
+			dimacsLines.add(dimacsLine);
+		}
+		BooleanFormula.appendConstraintsToDimacs(logger, dimacsLines, info);
+		//System.out.println(">>>");
+		return info;
 	}
 	
 	public static class DimacsConversionInfo implements AutoCloseable {
@@ -314,6 +381,12 @@ public abstract class BooleanFormula {
 	 * Removes TRUE and FALSE.
 	 */
 	public abstract BooleanFormula simplify();
+	
+	public abstract BooleanFormula removeEqImpl();
+	
+	public abstract BooleanFormula propagateNot();
+	
+	public abstract boolean separateOr(List<BooleanFormula> terms);
 	
 	public static BooleanFormula fromBoolean(boolean value) {
 		return value ? TrueFormula.INSTANCE : FalseFormula.INSTANCE;

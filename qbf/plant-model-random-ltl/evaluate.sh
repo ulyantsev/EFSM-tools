@@ -31,7 +31,7 @@ for size in $sizes; do
         for ((trysize = $size; trysize <= $size; trysize++)); do
             echo ">>> $instance_description: $trysize"
             rm -f $fsm
-            java -Xms2G -Xmx4G -jar ../../jars/plant-automaton-generator.jar "$sc_name" \
+            java -jar ../../jars/plant-automaton-generator.jar "$sc_name" \
                 --ltl "$ltl_name" --size $trysize --eventNumber $events --actionNumber $actions \
                 --timeout $timeout --result "$fsm" --actionspec actionspec.actionspec 2>&1 | cat > $ev_name/$trysize.full.log
             grep "\\(INFO\\|WARNING\\|SEVERE\\|Exception\\|OutOfMemoryError\\)" < $ev_name/$trysize.full.log > $ev_name/$trysize.log

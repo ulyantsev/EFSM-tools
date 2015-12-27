@@ -35,7 +35,9 @@ public class ExpandableStringFormula {
 	 * Should be called after 'solve' was called at least once.
 	 */
 	public void addConstraints(List<String> constraints) throws IOException {
-		assert info != null;
+		if (info == null) {
+			throw new AssertionError();
+		}
 		BooleanFormula.appendConstraintsToDimacs(logger, constraints, info);
 	}
 	
