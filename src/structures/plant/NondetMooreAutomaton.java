@@ -127,24 +127,25 @@ public class NondetMooreAutomaton {
     @Override
     public String toString() {
     	final StringBuilder sb = new StringBuilder();
-    	sb.append("# generated file\n"
-        	+ "# command: dot -Tpng <filename> > filename.png\n"
+    	sb.append("# generated file; view: dot -Tpng <filename> > filename.png\n"
         	+ "digraph Automaton {\n");
     	
-		sb.append("    init [shape = circle, width=0.1, height=0.1, label=\" \"];\n");
-		sb.append("    node [fixedsize=true, width=1.8, height=1.8];\n");
+    	final String initNodes = String.join(", ", startStates().stream().map(s -> "init" + s).collect(Collectors.toList()));
+    	
+		sb.append("    " + initNodes + " [shape=point, width=0.01, height=0.01, label=\"\", color=white];\n");
+		sb.append("    node [shape=circle, fixedsize=true, width=1.5, height=1.5];\n");
     	for (int i = 0; i < states.size(); i++) {
     		final MooreNode state = states.get(i);
-    		sb.append("    " + state.number() + " [label = \"" + state + "\"] [shape=circle]" + ";\n");
+    		sb.append("    " + state.number() + " [label=\"" + state + "\"]" + ";\n");
     		if (isStart.get(i)) {
-    			sb.append("    init -> " + state.number() + ";\n");
+    			sb.append("    init" + state.number() + " -> " + state.number() + ";\n");
     		}
     	}
     	
         for (MooreNode state : states) {
             for (MooreTransition t : state.transitions()) {
                 sb.append("    " + t.src().number() + " -> " + t.dst().number()
-                		+ " [label = \"" + t.event() + "\"];\n");
+                		+ " [label=\" " + t.event() + " \"];\n");
             }
         }
 

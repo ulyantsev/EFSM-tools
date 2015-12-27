@@ -1,9 +1,11 @@
 package structures.plant;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import scenario.StringActions;
 
@@ -53,7 +55,9 @@ public class MooreNode {
     
     @Override
     public String toString() {
-    	return String.valueOf(number + " : " + actions);
+    	return String.valueOf(number + "\\n{" + String.join(",\\n",
+    			Arrays.stream(actions.getActions()).map(Object::toString)
+    			.collect(Collectors.toList())) + "}");
     }
     
     public MooreNode scenarioDst(String event, StringActions actions) {
