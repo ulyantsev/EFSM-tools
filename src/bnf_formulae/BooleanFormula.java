@@ -22,7 +22,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Random;
 import java.util.logging.Logger;
 
 import sat_solving.Assignment;
@@ -155,7 +154,6 @@ public abstract class BooleanFormula {
 		return result;
 	}
 	
-	
 	private static int SOLVER_SEED = 0;
 	
 	public static SolveAsSatResult solveDimacs(Logger logger, int timeoutSeconds, SatSolver solver,
@@ -201,7 +199,7 @@ public abstract class BooleanFormula {
 	
 	public SolveAsSatResult solveAsSat_plant(Logger logger, String solverParams,
 			int timeoutSeconds, SatSolver solver, String actionSpec) throws IOException {
-		final DimacsConversionInfo info = toDimacs_plant(logger, DIMACS_FILENAME, actionSpec);
+		final DimacsConversionInfo info = toDimacs_plant(logger, DIMACS_FILENAME, actionSpec, null, null);
 		info.close();
 		logger.info("CREATED COMBINED DIMACS FILE");
 		long t = System.currentTimeMillis();
@@ -209,11 +207,9 @@ public abstract class BooleanFormula {
 		logger.info("GC EXECUTION TIME: " + (System.currentTimeMillis() - t) + " MS");
 		return solveDimacs(logger, timeoutSeconds, solver, solverParams, info);
 	}
-	
-	private static final Random CNF_SHUFFLER = new Random(124562);
-	
+		
 	public DimacsConversionInfo toDimacs_plant(Logger logger, String dimacsFilename,
-			String actionSpec) throws IOException {
+			String actionSpec, DimacsConversionInfo existingInfo, PrintWriter constraintWriter) throws IOException {
 		// CNF constraints with old variable numbers:
 		final List<String> cnfConstraints = new ArrayList<>();
 		final List<String> limbooleConstraints = new ArrayList<>();
@@ -222,14 +218,18 @@ public abstract class BooleanFormula {
 		if (actionSpec != null) {
 			limbooleConstraints.add(actionSpec);
 		}
+		if (existingInfo != null && !limbooleConstraints.isEmpty()) {
+			throw new AssertionError("Additional constraints must be in the CNF form.");
+		}
 		final String limbooleString = limbooleConstraints.isEmpty()
 				? TrueFormula.INSTANCE.removeEqImplConst().toLimbooleString()
 				: String.join("&", limbooleConstraints); 
-		final DimacsConversionInfo info = toDimacs(limbooleString, logger, dimacsFilename);
-
-		// instance randomization:
-		Collections.shuffle(cnfConstraints, CNF_SHUFFLER);
+		final DimacsConversionInfo info = existingInfo == null
+				? toDimacs(limbooleString, logger, dimacsFilename)
+				: existingInfo;
 		
+		final int initialVarNumber = info.varNumber();
+				
 		for (int i = 0; i < cnfConstraints.size(); i++) {
 			final String[] tokens = cnfConstraints.get(i).split(" ");
 			for (int j = 0; j < tokens.length; j++) {
@@ -246,7 +246,17 @@ public abstract class BooleanFormula {
 			cnfConstraints.set(i, String.join(" ", tokens) + " 0");
 		}
 		
-		BooleanFormula.appendConstraintsToDimacs(logger, cnfConstraints, info);
+		if (existingInfo == null) {
+			BooleanFormula.appendConstraintsToDimacs(logger, cnfConstraints, info);
+		} else {
+			int newVars = info.varNumber() - initialVarNumber;
+			if (newVars > 0) {
+				constraintWriter.println("new_vars " + newVars);
+			}
+			for (String constraint : cnfConstraints) {
+				constraintWriter.println(constraint);
+			}
+		}
 		return info;
 	}
 	

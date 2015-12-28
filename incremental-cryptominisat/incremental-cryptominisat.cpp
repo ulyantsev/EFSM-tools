@@ -2,6 +2,8 @@
 #include <cryptominisat4/solvertypesmini.h>
 #include <vector>
 #include <sstream>
+#include <stdlib.h>
+#include <string.h>
 
 using namespace CMSat;
 
@@ -13,9 +15,7 @@ int main(int argc, const char* argv[]) {
     
     int var_number = atoi(argv[1]);
     int time_limit = atoi(argv[2]);
-    SolverConf conf;
-    conf.maxTime = time_limit;
-    SATSolver solver (conf, NULL);
+    SATSolver solver (NULL, NULL);
     solver.new_vars(var_number);
 
     while (true) {
@@ -36,6 +36,13 @@ int main(int argc, const char* argv[]) {
             } else {
                 std::cout << "UNKNOWN" << std::endl;
             }
+        } else if (strncmp(line.c_str(), "new_vars", 8) == 0) {
+            std::istringstream iss(line);
+            std::string sub;
+            iss >> sub;
+            iss >> sub;
+            int num = atoi(sub.c_str());
+            solver.new_vars(num);
         } else if (line == "halt") {
             break;
         } else {

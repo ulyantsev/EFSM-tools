@@ -23,7 +23,6 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
 import sat_solving.Assignment;
-import sat_solving.IncrementalInterface;
 import sat_solving.SatSolver;
 import sat_solving.SolverResult;
 import sat_solving.SolverResult.SolverResults;
@@ -35,6 +34,7 @@ import structures.plant.NegativePlantScenarioForest;
 import structures.plant.NondetMooreAutomaton;
 import structures.plant.PositivePlantScenarioForest;
 import algorithms.formula_builders.PlantFormulaBuilder;
+import bnf_formulae.BinaryOperation;
 import bnf_formulae.BooleanFormula;
 import bnf_formulae.BooleanFormula.SolveAsSatResult;
 import bnf_formulae.BooleanVariable;
@@ -45,7 +45,7 @@ import egorov.verifier.SimpleVerifier;
 import egorov.verifier.SimpleVerifier.Criterion;
 import egorov.verifier.VerifierPair;
 
-public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
+public class PlantAutomatonBuilder_orig extends ScenarioAndLtlAutomatonBuilder {
 	protected static Optional<NondetMooreAutomaton> reportResult(Logger logger, int iterations, Optional<NondetMooreAutomaton> a) {
 		logger.info("ITERATIONS: " + (iterations + 1));
 		return a;
@@ -183,21 +183,24 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 		
 		String actionSpec = null;
 		BooleanFormula positiveConstraints = null;
-		IncrementalInterface incr = null;
 		
 		for (int iteration = 0; System.currentTimeMillis() < finishTime; iteration++) {
 			final PlantFormulaBuilder builder = new PlantFormulaBuilder(size, positiveForest,
 					negativeForest, globalNegativeForest, events, actions);
 			builder.createVars();
-			final int secondsLeft = timeLeftForSolver(finishTime);
 			if (iteration == 0) {
-				// create
 				positiveConstraints = builder.positiveConstraints().assemble();
 				actionSpec = actionSpecification(actionspecFilePath, size, actions);
-				incr = new IncrementalInterface(positiveConstraints, actionSpec, logger, satSolver, solverParams);
 			}
+			final List<BooleanFormula> negativeConstraints = builder.negativeConstraints();
+			final BooleanFormula formula = positiveConstraints.and(BinaryOperation.and(negativeConstraints
+					.toArray(new BooleanFormula[negativeConstraints.size()])));
+
 			// SAT-solve
-			final SolveAsSatResult solution = incr.solve(builder.negativeConstraints(), secondsLeft);
+			final int secondsLeft = timeLeftForSolver(finishTime);
+
+			final SolveAsSatResult solution = formula.solveAsSat_plant(
+					logger, solverParams, secondsLeft, satSolver, actionSpec);
 			final List<Assignment> list = solution.list();
 			final long time = solution.time;
 			
@@ -219,7 +222,6 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 			final List<Counterexample> mixedCE = new ArrayList<>(counterexamples.getLeft());
 			mixedCE.addAll(counterexamples.getRight());
 			if (mixedCE.stream().allMatch(Counterexample::isEmpty)) {
-				incr.halt();
 				return reportResult(logger, iteration, Optional.of(automaton));
 			} else {
 				final List<Integer> loopLengths = mixedCE.stream()

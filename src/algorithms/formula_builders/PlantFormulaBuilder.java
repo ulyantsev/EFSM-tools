@@ -177,7 +177,7 @@ public class PlantFormulaBuilder {
 		//return constraints.assemble("induce a complete automaton");
 	}
 	
-	private void negativeScenarioBasis(FormulaList constraints) {
+	private void negativeScenarioBasis(List<BooleanFormula> constraints) {
 		for (int nodeColor = 0; nodeColor < colorSize; nodeColor++) {
 			for (MooreNode root : positiveForest.roots()) {
 				for (MooreNode negRoot : negativeForest.roots()) {
@@ -191,7 +191,7 @@ public class PlantFormulaBuilder {
 		//return constraints.assemble("negative scenario basis");
 	}
 	
-	private void globalNegativeScenarioBasis(FormulaList constraints) {
+	private void globalNegativeScenarioBasis(List<BooleanFormula> constraints) {
 		if (globalNegativeForest.roots().size() > 1) {
 			throw new AssertionError();
 		}
@@ -204,7 +204,7 @@ public class PlantFormulaBuilder {
 		//return constraints.assemble("global negative scenario basis");
 	}
 	
-	private void negativeScenarioPropagation(FormulaList constraints, boolean isGlobal) {
+	private void negativeScenarioPropagation(List<BooleanFormula> constraints, boolean isGlobal) {
 		for (MooreNode node : (isGlobal ? globalNegativeForest : negativeForest).nodes()) {
 			final BooleanFormula[] xxParent = new BooleanFormula[colorSize];
 			for (int color = 0; color < colorSize; color++) {
@@ -235,7 +235,7 @@ public class PlantFormulaBuilder {
 		//return constraints.assemble("negative scenario propagation");
 	}
 	
-	private void negativeScenarioTermination(FormulaList constraints, boolean isGlobal) {
+	private void negativeScenarioTermination(List<BooleanFormula> constraints, boolean isGlobal) {
 		for (MooreNode node : (isGlobal ? globalNegativeForest : negativeForest).terminalNodes()) {
 			for (int nodeColor = 0; nodeColor < colorSize; nodeColor++) {
 				constraints.add(xxVar(node.number(), nodeColor, isGlobal).not());
@@ -261,8 +261,8 @@ public class PlantFormulaBuilder {
 		return constraints;
 	}
 	
-	public FormulaList negativeConstraints() {
-		final FormulaList constraints = new FormulaList(BinaryOperations.AND);
+	public List<BooleanFormula> negativeConstraints() {
+		final List<BooleanFormula> constraints = new ArrayList<>();
 		negativeScenarioBasis(constraints);
 		globalNegativeScenarioBasis(constraints);
 		for (boolean isGlobal : Arrays.asList(false, true)) {

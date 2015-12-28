@@ -3,9 +3,7 @@
 dir=evaluation
 
 for size in 10 15 20 25 30; do
-    echo "***size: $size"
-    echo "Found: "$(cat $dir/$size-*/*.full.log | grep "WAS FOUND" | wc -l)
-    echo "Not Found: "$(cat $dir/$size-*/*.full.log | grep "NOT FOUND" | wc -l)
+    echo "***size: $size;" "Found: "$(cat $dir/$size-*/*.full.log | grep "WAS FOUND" | wc -l)";" "Not Found: "$(cat $dir/$size-*/*.full.log | grep "NOT FOUND" | wc -l)";" "Exception: "$(cat $dir/$size-*/*.full.log | grep "Exception" | wc -l)";" "Severe: "$(cat $dir/$size-*/*.full.log | grep "SEVERE" | wc -l)
     str=$(echo $(grep -nr "execution time" $dir/$size-*/*.full.log | sed -e "s/^.*time: //g" | sort -n))
     IFS=' ' read -a arr <<< "$str"
     len=${#arr[@]}
