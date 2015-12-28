@@ -22,6 +22,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Random;
 import java.util.logging.Logger;
 
 import sat_solving.Assignment;
@@ -203,66 +204,49 @@ public abstract class BooleanFormula {
 		final DimacsConversionInfo info = toDimacs_plant(logger, DIMACS_FILENAME, actionSpec);
 		info.close();
 		logger.info("CREATED COMBINED DIMACS FILE");
+		long t = System.currentTimeMillis();
+		System.gc(); // !!!
+		logger.info("GC EXECUTION TIME: " + (System.currentTimeMillis() - t) + " MS");
 		return solveDimacs(logger, timeoutSeconds, solver, solverParams, info);
 	}
 	
+	private static final Random CNF_SHUFFLER = new Random(124562);
+	
 	public DimacsConversionInfo toDimacs_plant(Logger logger, String dimacsFilename,
 			String actionSpec) throws IOException {
-		//System.out.println("<<<");
-		final BooleanFormula preprocessed = removeEqImplConst().propagateNot();
-		if (!(preprocessed instanceof BinaryOperation)) {
-			throw new AssertionError();
-		}
-		final List<BooleanFormula> constraints = new ArrayList<>();
-		((BinaryOperation) preprocessed).separateAnd(constraints);
-		final FormulaList limbooleConstraints = new FormulaList(BinaryOperations.AND);
-		final List<List<BooleanFormula>> cnfConstraints = new ArrayList<>();
-		for (BooleanFormula constraint : constraints) {
-			final List<BooleanFormula> terms = new ArrayList<>();
-			boolean isDisjunction = constraint.separateOr(terms);
-			if (isDisjunction) {
-				cnfConstraints.add(terms);
-			} else {
-				limbooleConstraints.add(constraint);
-			}
-		}
-		String limbooleString = limbooleConstraints.assemble().toLimbooleString();
-		if (limbooleConstraints.isEmpty()) {
-			limbooleString = TrueFormula.INSTANCE.removeEqImplConst().toLimbooleString();
-		}
+		// CNF constraints with old variable numbers:
+		final List<String> cnfConstraints = new ArrayList<>();
+		final List<String> limbooleConstraints = new ArrayList<>();
+		((BinaryOperation) removeEqImplConst().propagateNot())
+			.separateAnd(cnfConstraints, limbooleConstraints);
 		if (actionSpec != null) {
-			limbooleString = "(" + limbooleString + ")&(" + actionSpec + ")";
+			limbooleConstraints.add(actionSpec);
 		}
+		final String limbooleString = limbooleConstraints.isEmpty()
+				? TrueFormula.INSTANCE.removeEqImplConst().toLimbooleString()
+				: String.join("&", limbooleConstraints); 
 		final DimacsConversionInfo info = toDimacs(limbooleString, logger, dimacsFilename);
-		final List<String> dimacsLines = new ArrayList<>();
-		for (List<BooleanFormula> constraint : cnfConstraints) {
-			final List<String> dimacsVars = new ArrayList<>();
-			for (BooleanFormula f : constraint) {
-				final BooleanVariable v;
-				final String prefix;
-				if (f instanceof BooleanVariable) {
-					v = (BooleanVariable) f;
-					prefix = "";
-				} else if (f instanceof NotOperation) {
-					v = (BooleanVariable) (((NotOperation) f).inside);
-					prefix = "-";
-				} else {
-					throw new AssertionError();
-				}
-				
-				if (!info.limbooleNumberToDimacs.containsKey(v.number)) {
+
+		// instance randomization:
+		Collections.shuffle(cnfConstraints, CNF_SHUFFLER);
+		
+		for (int i = 0; i < cnfConstraints.size(); i++) {
+			final String[] tokens = cnfConstraints.get(i).split(" ");
+			for (int j = 0; j < tokens.length; j++) {
+				final String token = tokens[j];
+				final int num = Integer.parseInt(token.replace("-", ""));
+				if (!info.limbooleNumberToDimacs.containsKey(num)) {
 					info.varNumber++;
-					info.limbooleNumberToDimacs.put(v.number, info.varNumber);
-					info.dimacsNumberToLimboole.put(info.varNumber, v.number);
+					info.limbooleNumberToDimacs.put(num, info.varNumber);
+					info.dimacsNumberToLimboole.put(info.varNumber, num);
 				}
-				dimacsVars.add(prefix + info.limbooleNumberToDimacs.get(v.number));
+				tokens[j] = (token.charAt(0) == '-' ? "-" : "")
+						+ info.limbooleNumberToDimacs.get(num);
 			}
-			dimacsVars.add("0");
-			final String dimacsLine = String.join(" ", dimacsVars);
-			dimacsLines.add(dimacsLine);
+			cnfConstraints.set(i, String.join(" ", tokens) + " 0");
 		}
-		BooleanFormula.appendConstraintsToDimacs(logger, dimacsLines, info);
-		//System.out.println(">>>");
+		
+		BooleanFormula.appendConstraintsToDimacs(logger, cnfConstraints, info);
 		return info;
 	}
 	

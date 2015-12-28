@@ -227,7 +227,6 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 						.collect(Collectors.toList());
 				final int allowedLoopLength = loopLengths.stream().mapToInt(l -> l).min().getAsInt();
 				
-				
 				for (Counterexample ce : counterexamples.getLeft()) {
 					if (allNormalCounterexamples.contains(ce.toString())) {
 						throw new AssertionError("Duplicate normal counterexample " + ce);

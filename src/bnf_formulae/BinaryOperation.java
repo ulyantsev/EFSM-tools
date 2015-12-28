@@ -206,20 +206,49 @@ public class BinaryOperation extends BooleanFormula {
 		return new BinaryOperation(newChildren, type, comment);
 	}
 	
-	public void separateAnd(List<BooleanFormula> constraints) {
+	// without variable number conversion and the zero in the end
+	private static String simplifiedToDimacs(List<BooleanFormula> terms) {
+		final List<String> dimacsVars = new ArrayList<>();
+		for (BooleanFormula f : terms) {
+			final BooleanVariable v;
+			final String prefix;
+			if (f instanceof BooleanVariable) {
+				v = (BooleanVariable) f;
+				prefix = "";
+			} else if (f instanceof NotOperation) {
+				v = (BooleanVariable) (((NotOperation) f).inside);
+				prefix = "-";
+			} else {
+				throw new AssertionError();
+			}
+			dimacsVars.add(prefix + v.number);
+		}
+		return String.join(" ", dimacsVars);
+	}
+	
+	public void separateAnd(List<String> cnfConstraints, List<String> limbooleConstraints) {
 		if (type != BinaryOperations.AND) {
 			throw new AssertionError();
 		}
 		for (BooleanFormula child : children) {
+			boolean add = false;
 			if (child instanceof BinaryOperation) {
 				final BinaryOperation binChild = (BinaryOperation) child;
 				if (binChild.type == BinaryOperations.AND) {
-					binChild.separateAnd(constraints);
+					binChild.separateAnd(cnfConstraints, limbooleConstraints);
 				} else {
-					constraints.add(child);
+					add = true;
 				}
 			} else {
-				constraints.add(child);
+				add = true;
+			}
+			if (add) {
+				final List<BooleanFormula> terms = new ArrayList<>();
+				if (child.separateOr(terms)) {
+					cnfConstraints.add(simplifiedToDimacs(terms));
+				} else {
+					limbooleConstraints.add(child.toLimbooleString());
+				}
 			}
 		}
 	}
