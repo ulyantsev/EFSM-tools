@@ -34,8 +34,9 @@ public class FalseFormula extends BooleanFormula {
 	}
 
 	@Override
-	public BooleanFormula removeEqImpl() {
-		return this;
+	public BooleanFormula removeEqImplConst() {
+		final BooleanVariable v = BooleanVariable.getVarByNumber(1);
+		return v.and(v.not());
 	}
 
 	@Override

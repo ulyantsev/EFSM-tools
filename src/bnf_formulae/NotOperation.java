@@ -38,8 +38,8 @@ public class NotOperation extends BooleanFormula {
 	}
 
 	@Override
-	public BooleanFormula removeEqImpl() {
-		return inside.removeEqImpl().not();
+	public BooleanFormula removeEqImplConst() {
+		return inside.removeEqImplConst().not();
 	}
 
 	@Override

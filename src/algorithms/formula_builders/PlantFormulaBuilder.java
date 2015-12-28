@@ -127,8 +127,8 @@ public class PlantFormulaBuilder {
 		for (MooreNode node : positiveForest.nodes()) {
 			for (MooreTransition t : node.transitions()) {
 				for (int nodeColor = 0; nodeColor < colorSize; nodeColor++) {
+					final BooleanVariable nodeVar = xVar(node.number(), nodeColor);
 					for (int childColor = 0; childColor < colorSize; childColor++) {
-						final BooleanVariable nodeVar = xVar(node.number(), nodeColor);
 						final BooleanVariable childVar = xVar(t.dst().number(), childColor);
 						final BooleanVariable relationVar = yVar(nodeColor, childColor, t.event());
 						constraints.add(BinaryOperation.or(relationVar, nodeVar.not(), childVar.not()));
@@ -167,7 +167,7 @@ public class PlantFormulaBuilder {
 	private void eventCompletenessConstraints(FormulaList constraints) {
 		for (int i1 = 0; i1 < colorSize; i1++) {
 			for (String e : events) {
-				FormulaList options = new FormulaList(BinaryOperations.OR);
+				final FormulaList options = new FormulaList(BinaryOperations.OR);
 				for (int i2 = 0; i2 < colorSize; i2++) {
 					options.add(yVar(i1, i2, e));
 				}

@@ -89,7 +89,7 @@ public class BooleanVariable extends BooleanFormula implements Comparable<Boolea
 	}
 
 	@Override
-	public BooleanFormula removeEqImpl() {
+	public BooleanFormula removeEqImplConst() {
 		return this;
 	}
 

@@ -183,18 +183,18 @@ public class BinaryOperation extends BooleanFormula {
 	}
 
 	@Override
-	public BooleanFormula removeEqImpl() {
+	public BooleanFormula removeEqImplConst() {
 		if (type == BinaryOperations.EQ) {
-			final BooleanFormula left = children.get(0).removeEqImpl();
-			final BooleanFormula right = children.get(1).removeEqImpl();
+			final BooleanFormula left = children.get(0).removeEqImplConst();
+			final BooleanFormula right = children.get(1).removeEqImplConst();
 			return BinaryOperation.or(left.and(right), left.not().and(right.not()));
 		} else if (type == BinaryOperations.IMPLIES) {
-			final BooleanFormula left = children.get(0).removeEqImpl();
-			final BooleanFormula right = children.get(1).removeEqImpl();
+			final BooleanFormula left = children.get(0).removeEqImplConst();
+			final BooleanFormula right = children.get(1).removeEqImplConst();
 			return left.not().or(right);
 		} else {
 			final List<BooleanFormula> newChildren = children.stream()
-					.map(f -> f.removeEqImpl()).collect(Collectors.toList());
+					.map(f -> f.removeEqImplConst()).collect(Collectors.toList());
 			return new BinaryOperation(newChildren, type, comment);
 		}
 	}

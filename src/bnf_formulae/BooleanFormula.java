@@ -209,7 +209,7 @@ public abstract class BooleanFormula {
 	public DimacsConversionInfo toDimacs_plant(Logger logger, String dimacsFilename,
 			String actionSpec) throws IOException {
 		//System.out.println("<<<");
-		final BooleanFormula preprocessed = simplify().removeEqImpl().propagateNot();
+		final BooleanFormula preprocessed = removeEqImplConst().propagateNot();
 		if (!(preprocessed instanceof BinaryOperation)) {
 			throw new AssertionError();
 		}
@@ -228,7 +228,7 @@ public abstract class BooleanFormula {
 		}
 		String limbooleString = limbooleConstraints.assemble().toLimbooleString();
 		if (limbooleConstraints.isEmpty()) {
-			limbooleString = BooleanVariable.getVarByNumber(1).or(BooleanVariable.getVarByNumber(1).not()).toLimbooleString();
+			limbooleString = TrueFormula.INSTANCE.removeEqImplConst().toLimbooleString();
 		}
 		if (actionSpec != null) {
 			limbooleString = "(" + limbooleString + ")&(" + actionSpec + ")";
@@ -382,7 +382,7 @@ public abstract class BooleanFormula {
 	 */
 	public abstract BooleanFormula simplify();
 	
-	public abstract BooleanFormula removeEqImpl();
+	public abstract BooleanFormula removeEqImplConst();
 	
 	public abstract BooleanFormula propagateNot();
 	
