@@ -42,7 +42,6 @@ import bool.MyBooleanExpression;
 import egorov.ltl.grammar.LtlNode;
 import egorov.verifier.Counterexample;
 import egorov.verifier.SimpleVerifier;
-import egorov.verifier.SimpleVerifier.Criterion;
 import egorov.verifier.VerifierPair;
 
 public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
@@ -161,12 +160,12 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 				}
 			}
 		}
-		if (additionalFormulae.isEmpty()) {
-			return null;
-		} else {
-			return "(" + String.join(")&(", additionalFormulae) + ")";
-		}
+		return additionalFormulae.isEmpty()
+				? null
+				: ("(" + String.join(")&(", additionalFormulae) + ")");
 	}
+	
+	private final static boolean FEWER_COUNTEREXAMPLES = true;
 	
 	public static Optional<NondetMooreAutomaton> build(Logger logger, PositivePlantScenarioForest positiveForest,
 			NegativePlantScenarioForest negativeForest, int size, String solverParams,
@@ -174,15 +173,10 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 			List<String> events, List<String> actions, SatSolver satSolver,
 			VerifierPair verifier, long finishTime) throws IOException {
 		deleteTrash();
-		SimpleVerifier.setCriterion(Criterion.MIN_LOOP);
+		SimpleVerifier.setLoopWeight(size);
 		
 		final NegativePlantScenarioForest globalNegativeForest = new NegativePlantScenarioForest();
 		
-		final Set<String> allNormalCounterexamples = new HashSet<>();
-		final Set<String> allGlobalCounterexamples = new HashSet<>();
-		
-		String actionSpec = null;
-		BooleanFormula positiveConstraints = null;
 		IncrementalInterface incr = null;
 		
 		for (int iteration = 0; System.currentTimeMillis() < finishTime; iteration++) {
@@ -192,9 +186,9 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 			final int secondsLeft = timeLeftForSolver(finishTime);
 			if (iteration == 0) {
 				// create
-				positiveConstraints = builder.positiveConstraints().assemble();
-				actionSpec = actionSpecification(actionspecFilePath, size, actions);
-				incr = new IncrementalInterface(positiveConstraints, actionSpec, logger, satSolver, solverParams);
+				final BooleanFormula positiveConstraints = builder.positiveConstraints().assemble();
+				final String actionSpec = actionSpecification(actionspecFilePath, size, actions);
+				incr = new IncrementalInterface(positiveConstraints, actionSpec, logger);
 			}
 			// SAT-solve
 			final SolveAsSatResult solution = incr.solve(builder.negativeConstraints(), secondsLeft);
@@ -211,7 +205,7 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 			
 			final NondetMooreAutomaton automaton = constructAutomatonFromAssignment(logger, ass.list(),
 					positiveForest, size);
-			//System.out.println(automaton);
+
 			// verify
 			final Pair<List<Counterexample>, List<Counterexample>> counterexamples =
 					verifier.verifyNondetMoore(automaton);
@@ -222,35 +216,64 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 				incr.halt();
 				return reportResult(logger, iteration, Optional.of(automaton));
 			} else {
-				final List<Integer> loopLengths = mixedCE.stream()
+				// find minimum CEs of both types
+				final List<Counterexample> normalCEs = counterexamples.getLeft().stream()
 						.filter(ce -> !ce.isEmpty())
-						.map(ce -> ce.loopLength)
+						.map(ce -> collapseLoop(ce, size))
+						.distinct()
 						.collect(Collectors.toList());
-				final int allowedLoopLength = loopLengths.stream().mapToInt(l -> l).min().getAsInt();
-				
-				for (Counterexample ce : counterexamples.getLeft()) {
-					if (allNormalCounterexamples.contains(ce.toString())) {
-						throw new AssertionError("Duplicate normal counterexample " + ce);
+				final List<Counterexample> globalCEs = counterexamples.getRight().stream()
+						.filter(ce -> !ce.isEmpty())
+						.map(ce -> collapseLoop(ce, size))
+						.distinct()
+						.collect(Collectors.toList());
+				if (FEWER_COUNTEREXAMPLES) {
+					int normalMinIndex = -1;
+					for (int i = 0; i < normalCEs.size(); i++) {
+						final int prevLength = normalMinIndex == -1
+								? Integer.MAX_VALUE : normalCEs.get(normalMinIndex).events().size();
+						final int curLength = normalCEs.get(i).events().size();
+						if (curLength < prevLength) {
+							normalMinIndex = i;
+						}
+					}
+					int globalMinIndex = -1;
+					for (int i = 0; i < globalCEs.size(); i++) {
+						final int prevLength = globalMinIndex == -1
+								? Integer.MAX_VALUE : globalCEs.get(globalMinIndex).events().size();
+						final int curLength = globalCEs.get(i).events().size();
+						if (curLength < prevLength) {
+							globalMinIndex = i;
+						}
+					}
+					if (normalMinIndex == -1 && globalMinIndex != -1) {
+						// add global CE
+						addCounterexample(logger, size, globalCEs.get(globalMinIndex), globalNegativeForest);
+					} else if (normalMinIndex != -1 && globalMinIndex == -1) {
+						// add normal CE
+						addCounterexample(logger, size, normalCEs.get(normalMinIndex), negativeForest);
+					} else {
+						final int normalLength = normalCEs.get(normalMinIndex).events().size();
+						final int globalLength = globalCEs.get(globalMinIndex).events().size();
+						// always add global
+						addCounterexample(logger, size, globalCEs.get(globalMinIndex), globalNegativeForest);
+						// add normal if it is not longer
+						if (normalLength <= globalLength) {
+							addCounterexample(logger, size, normalCEs.get(normalMinIndex), negativeForest);
+						}
+					}
+				} else {
+					// add everything
+					for (Counterexample ce : normalCEs) {
+						addCounterexample(logger, size, ce, negativeForest);
+					}
+					for (Counterexample ce : globalCEs) {
+						addCounterexample(logger, size, ce, globalNegativeForest);
 					}
 				}
-				for (Counterexample ce : counterexamples.getRight()) {
-					if (allGlobalCounterexamples.contains(ce.toString())) {
-						throw new AssertionError("Duplicate global counterexample " + ce);
-					}
-				}
-				allNormalCounterexamples.addAll(counterexamples.getLeft().stream()
-						.filter(c -> c.loopLength <= allowedLoopLength && !c.isEmpty())
-						.map(Object::toString).collect(Collectors.toList()));
-				allGlobalCounterexamples.addAll(counterexamples.getRight().stream()
-						.filter(c -> c.loopLength <= allowedLoopLength && !c.isEmpty())
-						.map(Object::toString).collect(Collectors.toList()));
-				
-				addCounterexamples(logger, size, counterexamples.getLeft(), negativeForest, allowedLoopLength);
-				addCounterexamples(logger, size, counterexamples.getRight(), globalNegativeForest, allowedLoopLength);
-				//System.out.println(negativeForest);
-				//System.out.println(globalNegativeForest);
 			}
 		}
+		incr.halt();
 		logger.info("TOTAL TIME LIMIT EXCEEDED, ANSWER IS UNKNOWN");
 		return Optional.empty();
 	}
@@ -269,28 +292,8 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 		return new Counterexample(events, actions, 0);
 	}
 	
-	private static void addCounterexamples(Logger logger, int size, List<Counterexample> counterexamples,
-			NegativePlantScenarioForest forest, int allowedLoopLength) {
-		final Set<String> unique = new HashSet<>();
-		for (Counterexample counterexample : counterexamples) {
-			if (!counterexample.isEmpty()) {
-				if (counterexample.loopLength > allowedLoopLength) {
-					logger.info("NOT ADDING COUNTEREXAMPLE: LOOP IS TOO LARGE");
-				} else if (!unique.contains(counterexample.toString())) {
-					unique.add(counterexample.toString());
-					addCounterexample(logger, size, counterexample, forest);
-				} else {
-					logger.info("DUPLICATE COUNTEREXAMPLES ON THE SAME ITERATION");
-				}
-			} else {
-				logger.info("NOT ADDING COUNTEREXAMPLE");
-			}
-		}
-	}
-	
 	protected static void addCounterexample(Logger logger, int size,
 			Counterexample counterexample, NegativePlantScenarioForest negativeForest) {
-		counterexample = collapseLoop(counterexample, size);
 		final List<MyBooleanExpression> expr = new ArrayList<>();
 		for (int i = 0; i < counterexample.events().size(); i++) {
 			expr.add(MyBooleanExpression.getTautology());

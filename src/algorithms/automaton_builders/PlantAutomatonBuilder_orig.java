@@ -42,7 +42,6 @@ import bool.MyBooleanExpression;
 import egorov.ltl.grammar.LtlNode;
 import egorov.verifier.Counterexample;
 import egorov.verifier.SimpleVerifier;
-import egorov.verifier.SimpleVerifier.Criterion;
 import egorov.verifier.VerifierPair;
 
 public class PlantAutomatonBuilder_orig extends ScenarioAndLtlAutomatonBuilder {
@@ -174,7 +173,7 @@ public class PlantAutomatonBuilder_orig extends ScenarioAndLtlAutomatonBuilder {
 			List<String> events, List<String> actions, SatSolver satSolver,
 			VerifierPair verifier, long finishTime) throws IOException {
 		deleteTrash();
-		SimpleVerifier.setCriterion(Criterion.MIN_LOOP);
+		SimpleVerifier.setLoopWeight(size);
 		
 		final NegativePlantScenarioForest globalNegativeForest = new NegativePlantScenarioForest();
 		

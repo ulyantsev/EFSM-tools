@@ -35,4 +35,40 @@ public class Counterexample {
 		}
 		return "[" + String.join(", ", elements) + ", loop " + loopLength + "]";
 	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((actions == null) ? 0 : actions.hashCode());
+		result = prime * result + ((events == null) ? 0 : events.hashCode());
+		result = prime * result + loopLength;
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Counterexample other = (Counterexample) obj;
+		if (actions == null) {
+			if (other.actions != null)
+				return false;
+		} else if (!actions.equals(other.actions))
+			return false;
+		if (events == null) {
+			if (other.events != null)
+				return false;
+		} else if (!events.equals(other.events))
+			return false;
+		if (loopLength != other.loopLength)
+			return false;
+		return true;
+	}
+	
+	
 }

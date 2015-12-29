@@ -53,11 +53,10 @@ public class SimpleVerifier {
 		}
     }
     
-    public enum Criterion { MIN_LENGTH, MIN_LOOP };
-    private static Criterion CRITERION = Criterion.MIN_LENGTH;
+    private static int LOOP_WEIGHT = 1;
     
-    public static void setCriterion(Criterion criterion) {
-    	CRITERION = criterion;
+    public static void setLoopWeight(int weight) {
+    	LOOP_WEIGHT = weight;
     }
     
     private Pair<List<IntersectionTransition>, Integer> bfs(IntersectionNode initialNode,
@@ -106,7 +105,8 @@ public class SimpleVerifier {
         	return Pair.of(new ArrayList<>(), 0);
         } else {
         	int minIndex = 0;
-        	// the counterexample of the minimum length OR minimum loop length
+        	// the counterexample of the minimum effective length
+        	// (looping parts can be more expensive)
         	// if the lengths are equal, then with the minimum loop size
         	for (int i = 1; i < counterexamples.size(); i++) {
         		final int currentSize = counterexamples.get(i).getLeft().size();
@@ -114,13 +114,11 @@ public class SimpleVerifier {
         		final int currentLoopSize = counterexamples.get(i).getRight();
         		final int bestLoopSize = counterexamples.get(minIndex).getRight();
         		
-        		boolean condition = CRITERION == Criterion.MIN_LENGTH
-        				? (currentSize < bestSize
-        					|| currentSize == bestSize && currentLoopSize < bestLoopSize)
-        				: (currentLoopSize < bestLoopSize
-        					|| currentLoopSize == bestLoopSize && currentSize < bestSize);
-        		
-        		if (condition) {
+        		final int currentEffSize = currentSize + currentLoopSize * (LOOP_WEIGHT - 1);
+        		final int bestEffSize = bestSize + bestLoopSize * (LOOP_WEIGHT - 1);
+
+        		if (currentEffSize < bestEffSize
+    					|| currentEffSize == bestEffSize && currentLoopSize < bestLoopSize) {
         			minIndex = i;
         		}
         	}

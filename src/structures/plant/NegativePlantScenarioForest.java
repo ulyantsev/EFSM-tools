@@ -6,6 +6,7 @@ package structures.plant;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -15,6 +16,22 @@ import scenario.StringScenario;
 public class NegativePlantScenarioForest extends PlantScenarioForest {
 	private final Set<MooreNode> terminalNodes = new LinkedHashSet<>();
 
+	private final Set<MooreNode> unprocessedRoots = new HashSet<>();
+	private final Set<MooreNode> unprocessedTerminalNodes = new HashSet<>();
+	private final Set<MooreNode> unprocessedChildren = new HashSet<>();
+	
+	public boolean processRoot(MooreNode node) {
+		return unprocessedRoots.remove(node);
+	}
+	
+	public boolean processTerminalNode(MooreNode node) {
+		return unprocessedTerminalNodes.remove(node);
+	}
+	
+	public boolean processChild(MooreNode node) {
+		return unprocessedChildren.remove(node);
+	}
+	
 	@Override
 	public void addScenario(StringScenario scenario) {
     	checkScenario(scenario);
@@ -31,6 +48,7 @@ public class NegativePlantScenarioForest extends PlantScenarioForest {
     		properRoot = new MooreNode(nodes.size(), firstActions);
     		nodes.add(properRoot);
     		roots.add(properRoot);
+    		unprocessedRoots.add(properRoot);
     	}
     	
     	MooreNode node = properRoot;
@@ -39,7 +57,10 @@ public class NegativePlantScenarioForest extends PlantScenarioForest {
         	node = addTransition(node, event, scenario.getActions(i));
         }
         
-        terminalNodes.add(node);
+        if (!terminalNodes.add(node)) {
+        	throw new AssertionError("Duplicate counterexample!");
+        }
+        unprocessedTerminalNodes.add(node);
     }
 
 	public Collection<MooreNode> terminalNodes() {
@@ -52,6 +73,7 @@ public class NegativePlantScenarioForest extends PlantScenarioForest {
 		if (dst == null) {
     		dst = new MooreNode(nodes.size(), actions);
     		nodes.add(dst);
+    		unprocessedChildren.add(dst);
             src.addTransition(event, dst);
 		}
 		return dst;
@@ -60,9 +82,8 @@ public class NegativePlantScenarioForest extends PlantScenarioForest {
 	@Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();
-        sb.append("# generated file\n");
-        sb.append("# command: dot -Tpng <filename> > filename.png\n");
-        sb.append("digraph ScenariosTree {\n    node [shape = circle];\n");
+        sb.append("# generated file; view: dot -Tpng <filename> > filename.png\n");
+        sb.append("digraph ScenarioForest {\n    node [shape = circle];\n");
 
         for (MooreNode node : nodes) {
     		sb.append("    " + node.number() + " [label = \"" + node + "\"];\n");

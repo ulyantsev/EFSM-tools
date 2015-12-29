@@ -178,9 +178,12 @@ public class PlantFormulaBuilder {
 	}
 	
 	private void negativeScenarioBasis(List<BooleanFormula> constraints) {
-		for (int nodeColor = 0; nodeColor < colorSize; nodeColor++) {
+		for (MooreNode negRoot : negativeForest.roots()) {
+			if (!negativeForest.processRoot(negRoot)) {
+				continue;
+			}
 			for (MooreNode root : positiveForest.roots()) {
-				for (MooreNode negRoot : negativeForest.roots()) {
+				for (int nodeColor = 0; nodeColor < colorSize; nodeColor++) {
 					if (root.actions().equals(negRoot.actions())) {
 						constraints.add(xVar(root.number(), nodeColor)
 								.implies(xxVar(negRoot.number(), nodeColor, false)));
@@ -196,6 +199,9 @@ public class PlantFormulaBuilder {
 			throw new AssertionError();
 		}
 		for (MooreNode root : globalNegativeForest.roots()) {
+			if (!globalNegativeForest.processRoot(root)) {
+				continue;
+			}
 			// the global negative root is colored in all colors
 			for (int nodeColor = 0; nodeColor < colorSize; nodeColor++) {
 				constraints.add(xxVar(root.number(), nodeColor, true));
@@ -205,13 +211,17 @@ public class PlantFormulaBuilder {
 	}
 	
 	private void negativeScenarioPropagation(List<BooleanFormula> constraints, boolean isGlobal) {
-		for (MooreNode node : (isGlobal ? globalNegativeForest : negativeForest).nodes()) {
+		final NegativePlantScenarioForest forest = isGlobal ? globalNegativeForest : negativeForest;
+		for (MooreNode node : forest.nodes()) {
 			final BooleanFormula[] xxParent = new BooleanFormula[colorSize];
 			for (int color = 0; color < colorSize; color++) {
 				xxParent[color] = xxVar(node.number(), color, isGlobal);
 			}
 			for (MooreTransition edge : node.transitions()) {
 				final MooreNode childNode = edge.dst();
+				if (!forest.processChild(childNode)) {
+					continue;
+				}
 				final String event = edge.event();
 				final BooleanFormula[] actionEq = new BooleanFormula[colorSize];
 				for (int color = 0; color < colorSize; color++) {
@@ -236,7 +246,11 @@ public class PlantFormulaBuilder {
 	}
 	
 	private void negativeScenarioTermination(List<BooleanFormula> constraints, boolean isGlobal) {
-		for (MooreNode node : (isGlobal ? globalNegativeForest : negativeForest).terminalNodes()) {
+		final NegativePlantScenarioForest forest = isGlobal ? globalNegativeForest : negativeForest;
+		for (MooreNode node : forest.terminalNodes()) {
+			if (!forest.processTerminalNode(node)) {
+				continue;
+			}
 			for (int nodeColor = 0; nodeColor < colorSize; nodeColor++) {
 				constraints.add(xxVar(node.number(), nodeColor, isGlobal).not());
 			}
