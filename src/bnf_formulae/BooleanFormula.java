@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import sat_solving.Assignment;
 import sat_solving.SatSolver;
@@ -197,67 +198,96 @@ public abstract class BooleanFormula {
 		return solveDimacs(logger, timeoutSeconds, solver, solverParams, info);
 	}
 	
-	public SolveAsSatResult solveAsSat_plant(Logger logger, String solverParams,
-			int timeoutSeconds, SatSolver solver, String actionSpec) throws IOException {
-		final DimacsConversionInfo info = toDimacs_plant(logger, DIMACS_FILENAME, actionSpec, null, null);
-		info.close();
-		logger.info("CREATED COMBINED DIMACS FILE");
-		long t = System.currentTimeMillis();
-		System.gc(); // !!!
-		logger.info("GC EXECUTION TIME: " + (System.currentTimeMillis() - t) + " MS");
-		return solveDimacs(logger, timeoutSeconds, solver, solverParams, info);
-	}
-		
 	public DimacsConversionInfo toDimacs_plant(Logger logger, String dimacsFilename,
-			String actionSpec, DimacsConversionInfo existingInfo, PrintWriter constraintWriter) throws IOException {
+			String actionSpec) throws IOException {
 		// CNF constraints with old variable numbers:
-		final List<String> cnfConstraints = new ArrayList<>();
+		final List<int[]> cnfConstraints = new ArrayList<>();
 		final List<String> limbooleConstraints = new ArrayList<>();
 		((BinaryOperation) removeEqImplConst().propagateNot())
 			.separateAnd(cnfConstraints, limbooleConstraints);
 		if (actionSpec != null) {
 			limbooleConstraints.add(actionSpec);
 		}
-		if (existingInfo != null && !limbooleConstraints.isEmpty()) {
-			throw new AssertionError("Additional constraints must be in the CNF form.");
-		}
 		final String limbooleString = limbooleConstraints.isEmpty()
 				? TrueFormula.INSTANCE.removeEqImplConst().toLimbooleString()
 				: String.join("&", limbooleConstraints); 
-		final DimacsConversionInfo info = existingInfo == null
-				? toDimacs(limbooleString, logger, dimacsFilename)
-				: existingInfo;
+		final DimacsConversionInfo info = toDimacs(limbooleString, logger, dimacsFilename);
 		
-		final int initialVarNumber = info.varNumber();
-				
 		for (int i = 0; i < cnfConstraints.size(); i++) {
-			final String[] tokens = cnfConstraints.get(i).split(" ");
-			for (int j = 0; j < tokens.length; j++) {
-				final String token = tokens[j];
-				final int num = Integer.parseInt(token.replace("-", ""));
-				if (!info.limbooleNumberToDimacs.containsKey(num)) {
+			final int[] terms = cnfConstraints.get(i);
+			for (int j = 0; j < terms.length - 1; j++) {
+				final int term = terms[j];
+				final int var = Math.abs(term);
+				
+				Integer transformedNum = info.limbooleNumberToDimacs.get(var);
+				if (transformedNum == null) {
 					info.varNumber++;
-					info.limbooleNumberToDimacs.put(num, info.varNumber);
-					info.dimacsNumberToLimboole.put(info.varNumber, num);
+					info.limbooleNumberToDimacs.put(var, info.varNumber);
+					info.dimacsNumberToLimboole.put(info.varNumber, var);
+					transformedNum = info.varNumber;
 				}
-				tokens[j] = (token.charAt(0) == '-' ? "-" : "")
-						+ info.limbooleNumberToDimacs.get(num);
+				terms[j] = (term < 0 ? -1 : 1) * transformedNum;
 			}
-			cnfConstraints.set(i, String.join(" ", tokens) + " 0");
 		}
 		
-		if (existingInfo == null) {
-			BooleanFormula.appendConstraintsToDimacs(logger, cnfConstraints, info);
-		} else {
-			int newVars = info.varNumber() - initialVarNumber;
-			if (newVars > 0) {
-				constraintWriter.println("new_vars " + newVars);
-			}
-			for (String constraint : cnfConstraints) {
-				constraintWriter.println(constraint);
+		BooleanFormula.appendConstraintsToDimacs(logger,
+				cnfConstraints.stream()
+				.map(BooleanFormula::arrToString)
+				.collect(Collectors.toList()), info);
+		return info;
+	}
+	
+	public void toDimacs_plant(DimacsConversionInfo info, PrintWriter constraintWriter) throws IOException {
+		// CNF constraints with old variable numbers:
+		final List<int[]> cnfConstraints = new ArrayList<>();
+		final List<String> limbooleConstraints = new ArrayList<>();
+		//long tP = System.currentTimeMillis();
+		((BinaryOperation) removeEqImplConst().propagateNot())
+			.separateAnd(cnfConstraints, limbooleConstraints);
+		//System.out.println("@FormulaPreproc: " + (System.currentTimeMillis() - tP));
+		if (!limbooleConstraints.isEmpty()) {
+			throw new AssertionError("Additional constraints must be in the CNF form.");
+		}
+		final int initialVarNumber = info.varNumber();
+		
+		//long tT = System.currentTimeMillis();
+		for (int i = 0; i < cnfConstraints.size(); i++) {
+			final int[] terms = cnfConstraints.get(i);
+			for (int j = 0; j < terms.length - 1; j++) {
+				final int term = terms[j];
+				final int var = Math.abs(term);
+				
+				Integer transformedNum = info.limbooleNumberToDimacs.get(var);
+				if (transformedNum == null) {
+					info.varNumber++;
+					info.limbooleNumberToDimacs.put(var, info.varNumber);
+					info.dimacsNumberToLimboole.put(info.varNumber, var);
+					transformedNum = info.varNumber;
+				}
+				terms[j] = (term < 0 ? -1 : 1) * transformedNum;
 			}
 		}
-		return info;
+		//System.out.println("@Transformation: " + (System.currentTimeMillis() - tT));
+		
+		//long tW = System.currentTimeMillis();
+		int newVars = info.varNumber() - initialVarNumber;
+		if (newVars > 0) {
+			constraintWriter.println("new_vars " + newVars);
+		}
+		for (int[] constraint : cnfConstraints) {
+			for (int i : constraint) {
+				constraintWriter.print(i);
+				constraintWriter.print(' ');
+			}
+			constraintWriter.println();
+		}
+		//System.out.println("@Writing: " + (System.currentTimeMillis() - tW));
+	}
+	
+	private static String arrToString(int[] arr) {
+		final String str = Arrays.toString(arr);
+		final String res = str.substring(1, str.length() - 1).replace(",", "");
+		return res;
 	}
 	
 	public static class DimacsConversionInfo implements AutoCloseable {

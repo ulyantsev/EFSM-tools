@@ -5,8 +5,10 @@ package sat_solving;
  */
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -20,22 +22,18 @@ import bnf_formulae.BooleanFormula.DimacsConversionInfo;
 import bnf_formulae.BooleanFormula.SolveAsSatResult;
 
 public class IncrementalInterface {
-	private final Logger logger;
-	private DimacsConversionInfo info;
-	
+	private final DimacsConversionInfo info;
 	private final Process solver;
 	private final PrintWriter pw;
 	private final Scanner sc;
 	
-	public IncrementalInterface(BooleanFormula positiveConstraints, String actionspec, Logger logger) throws IOException {
-		this.logger = logger;
-		
-		info = positiveConstraints.toDimacs_plant(logger, BooleanFormula.DIMACS_FILENAME, actionspec, null, null);
+	public IncrementalInterface(BooleanFormula positiveConstraints, String actionspec, Logger logger) throws IOException {	
+		info = positiveConstraints.toDimacs_plant(logger, BooleanFormula.DIMACS_FILENAME, actionspec);
 		info.close();
 
 		// FIXME time limits
 		solver = Runtime.getRuntime().exec("incremental-cryptominisat " + info.varNumber() + " 1");
-		pw = new PrintWriter(solver.getOutputStream());
+		pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(solver.getOutputStream())));
 		sc = new Scanner(solver.getInputStream());
 		
 		try (BufferedReader input = new BufferedReader(new FileReader(BooleanFormula.DIMACS_FILENAME))) {
@@ -51,8 +49,11 @@ public class IncrementalInterface {
 	}
 	
 	public SolveAsSatResult solve(List<BooleanFormula> newConstraints, int timeLeftForSolver) throws IOException {
-		info = BinaryOperation.and(newConstraints.toArray(new BooleanFormula[newConstraints.size()]))
-				.toDimacs_plant(logger, null, null, info, pw);
+		long tDim = System.currentTimeMillis();
+		BinaryOperation.and(newConstraints.toArray(new BooleanFormula[newConstraints.size()]))
+				.toDimacs_plant(info, pw);
+		System.out.println("@ToDimacs: " + (System.currentTimeMillis() - tDim));
+		
 		long time = System.currentTimeMillis();
 		pw.println("solve");
 		pw.flush();

@@ -207,26 +207,27 @@ public class BinaryOperation extends BooleanFormula {
 	}
 	
 	// without variable number conversion and the zero in the end
-	private static String simplifiedToDimacs(List<BooleanFormula> terms) {
-		final List<String> dimacsVars = new ArrayList<>();
-		for (BooleanFormula f : terms) {
+	private static int[] simplifiedToDimacs(List<BooleanFormula> terms) {
+		final int[] dimacsVars = new int[terms.size() + 1];
+		for (int i = 0; i < terms.size(); i++) {
+			final BooleanFormula f = terms.get(i);
 			final BooleanVariable v;
-			final String prefix;
+			final int sign;
 			if (f instanceof BooleanVariable) {
 				v = (BooleanVariable) f;
-				prefix = "";
+				sign = 1;
 			} else if (f instanceof NotOperation) {
 				v = (BooleanVariable) (((NotOperation) f).inside);
-				prefix = "-";
+				sign = -1;
 			} else {
 				throw new AssertionError();
 			}
-			dimacsVars.add(prefix + v.number);
+			dimacsVars[i] = v.number * sign;
 		}
-		return String.join(" ", dimacsVars);
+		return dimacsVars;
 	}
 	
-	public void separateAnd(List<String> cnfConstraints, List<String> limbooleConstraints) {
+	public void separateAnd(List<int[]> cnfConstraints, List<String> limbooleConstraints) {
 		if (type != BinaryOperations.AND) {
 			throw new AssertionError();
 		}

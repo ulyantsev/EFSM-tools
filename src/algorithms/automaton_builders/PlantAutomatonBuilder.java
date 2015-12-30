@@ -192,6 +192,7 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 			}
 			// SAT-solve
 			final SolveAsSatResult solution = incr.solve(builder.negativeConstraints(), secondsLeft);
+
 			final List<Assignment> list = solution.list();
 			final long time = solution.time;
 			
@@ -202,7 +203,7 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 			if (ass.type() != SolverResults.SAT) {
 				return reportResult(logger, iteration, Optional.empty());
 			}
-			
+
 			final NondetMooreAutomaton automaton = constructAutomatonFromAssignment(logger, ass.list(),
 					positiveForest, size);
 
