@@ -212,7 +212,7 @@ public abstract class BooleanFormula {
 		//long tT = System.currentTimeMillis();
 		for (int i = 0; i < cnfConstraints.size(); i++) {
 			final int[] terms = cnfConstraints.get(i);
-			for (int j = 0; j < terms.length - 1; j++) {
+			for (int j = 0; j < terms.length; j++) {
 				final int term = terms[j];
 				final int var = Math.abs(term);
 				
@@ -238,7 +238,7 @@ public abstract class BooleanFormula {
 				constraintWriter.print(i);
 				constraintWriter.print(' ');
 			}
-			constraintWriter.println();
+			constraintWriter.println('0');
 		}
 		//System.out.println("@Writing: " + (System.currentTimeMillis() - tW));
 	}

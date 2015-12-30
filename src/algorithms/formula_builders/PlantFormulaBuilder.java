@@ -96,7 +96,7 @@ public class PlantFormulaBuilder {
 	 */
 	private void eachNodeHasColorConstraints(List<int[]> constraints) {
 		for (MooreNode node : positiveForest.nodes()) {
-			final int[] constraint = new int[colorSize + 1];
+			final int[] constraint = new int[colorSize];
 			for (int color = 0; color < colorSize; color++) {
 				constraint[color] = xVar(node.number(), color).number;
 			}
@@ -113,8 +113,7 @@ public class PlantFormulaBuilder {
 					final BooleanVariable v2 = xVar(node.number(), color2);					
 					constraints.add(new int[] {
 							-v1.number,
-							-v2.number,
-							0
+							-v2.number
 					});
 				}
 			}
@@ -133,8 +132,7 @@ public class PlantFormulaBuilder {
 						constraints.add(new int[] {
 								relationVar.number,
 								-nodeVar.number,
-								-childVar.number,
-								0
+								-childVar.number
 						});
 					}
 				}
@@ -151,8 +149,7 @@ public class PlantFormulaBuilder {
 					constraints.add(new int[] {
 							-xVar(node.number(), nodeColor).number,
 							(actionSequence.contains(action) ? 1 : -1)
-								* zVar(nodeColor, action).number,
-							0
+								* zVar(nodeColor, action).number
 					});
 				}
 			}
@@ -163,7 +160,7 @@ public class PlantFormulaBuilder {
 	private void eventCompletenessConstraints(List<int[]> constraints) {
 		for (int i1 = 0; i1 < colorSize; i1++) {
 			for (String e : events) {
-				final int[] constraint = new int[colorSize + 1];
+				final int[] constraint = new int[colorSize];
 				for (int i2 = 0; i2 < colorSize; i2++) {
 					constraint[i2] = yVar(i1, i2, e).number;
 				}
@@ -183,8 +180,7 @@ public class PlantFormulaBuilder {
 					if (root.actions().equals(negRoot.actions())) {
 						constraints.add(new int[] {
 								-xVar(root.number(), nodeColor).number,
-								xxVar(negRoot.number(), nodeColor, false).number,
-								0
+								xxVar(negRoot.number(), nodeColor, false).number
 						});
 					}
 				}
@@ -204,8 +200,7 @@ public class PlantFormulaBuilder {
 			// the global negative root is colored in all colors
 			for (int nodeColor = 0; nodeColor < colorSize; nodeColor++) {
 				constraints.add(new int[] {
-						xxVar(root.number(), nodeColor, true).number,
-						0
+						xxVar(root.number(), nodeColor, true).number
 				});
 			}
 		}
@@ -215,18 +210,24 @@ public class PlantFormulaBuilder {
 	private void negativeScenarioPropagation(List<int[]> constraints, boolean isGlobal) {
 		final NegativePlantScenarioForest forest =
 				isGlobal ? globalNegativeForest : negativeForest;
+		final int[] xxParent = new int[colorSize];
+		final int[][] actionEq = new int[colorSize][actions.size()];
+		final int[] xxChild = new int[colorSize];
+
 		for (MooreNode node : forest.nodes()) {
-			final int[] xxParent = new int[colorSize];
-			for (int color = 0; color < colorSize; color++) {
-				xxParent[color] = xxVar(node.number(), color, isGlobal).number;
-			}
+			boolean xxParentFilled = false;
 			for (MooreTransition edge : node.transitions()) {
 				final MooreNode childNode = edge.dst();
 				if (!forest.processChild(childNode)) {
 					continue;
 				}
+				if (!xxParentFilled) {
+					for (int color = 0; color < colorSize; color++) {
+						xxParent[color] = xxVar(node.number(), color, isGlobal).number;
+					}
+					xxParentFilled = true;
+				}
 				final String event = edge.event();
-				final int[][] actionEq = new int[colorSize][actions.size()];
 				final List<String> actionList = Arrays.asList(childNode.actions().getActions());
 				for (int color = 0; color < colorSize; color++) {
 					for (int i = 0; i < actions.size(); i++) {
@@ -236,13 +237,12 @@ public class PlantFormulaBuilder {
 						actionEq[color][i] = -sign * zVar(color, action).number;
 					}
 				}
-				final int[] xxChild = new int[colorSize];
 				for (int color = 0; color < colorSize; color++) {
 					xxChild[color] = xxVar(childNode.number(), color, isGlobal).number;
 				}
 				for (int color1 = 0; color1 < colorSize; color1++) {
 					for (int color2 = 0; color2 < colorSize; color2++) {
-						final int[] constraint = new int[actions.size() + 4];
+						final int[] constraint = new int[actions.size() + 3];
 						System.arraycopy(actionEq[color2], 0, constraint, 0, actions.size());
 						constraint[actions.size() + 0] = -xxParent[color1];
 						constraint[actions.size() + 1] = -yVar(color1, color2, event).number;
@@ -263,8 +263,7 @@ public class PlantFormulaBuilder {
 			}
 			for (int nodeColor = 0; nodeColor < colorSize; nodeColor++) {
 				constraints.add(new int[] {
-						-xxVar(node.number(), nodeColor, isGlobal).number,
-						0
+						-xxVar(node.number(), nodeColor, isGlobal).number
 				});
 			}
 		}
@@ -279,7 +278,7 @@ public class PlantFormulaBuilder {
 	public List<int[]> positiveConstraints() {
 		final List<int[]> constraints = new ArrayList<>();
 		// first node is always an initial state (but probably there are more)
-		constraints.add(new int[] { xVar(0, 0).number, 0 });
+		constraints.add(new int[] { xVar(0, 0).number });
 		transitionConstraints(constraints);
 		eventCompletenessConstraints(constraints);
 		eachNodeHasColorConstraints(constraints);

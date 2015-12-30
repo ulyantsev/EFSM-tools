@@ -31,15 +31,15 @@ public class IncrementalInterface {
 		info.close();
 
 		// FIXME time limits
-		solver = Runtime.getRuntime().exec("incremental-cryptominisat " + info.varNumber() + " 1");
+		solver = Runtime.getRuntime().exec("incremental-cryptominisat " + info.varNumber() + " 0");
 		pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(solver.getOutputStream())));
 		sc = new Scanner(solver.getInputStream());
-		
-		BooleanFormula.appendConstraints(positiveConstraints, info, pw);
 		
 		try (BufferedReader input = new BufferedReader(new FileReader(BooleanFormula.DIMACS_FILENAME))) {
 			input.lines().skip(1).forEach(pw::println);
 		}
+		
+		BooleanFormula.appendConstraints(positiveConstraints, info, pw);
 	}
 	
 	public void halt() {

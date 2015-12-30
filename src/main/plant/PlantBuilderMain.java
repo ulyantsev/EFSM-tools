@@ -64,11 +64,11 @@ public class PlantBuilderMain {
 	private String logFilePath;
 
 	@Option(name = "--result", aliases = { "-r" }, usage = "write the obtained automaton in the GV format to this file",
-			metaVar = "<GV file>")
+			metaVar = "<file>")
 	private String resultFilePath = "automaton.gv";
 
 	@Option(name = "--tree", aliases = { "-t" }, usage = "write the obtained scenario tree in the GV format to this file",
-			metaVar = "<GV file>")
+			metaVar = "<file>")
 	private String treeFilePath;
 
 	@Option(name = "--ltl", aliases = { "-lt" }, usage = "file with LTL properties (optional)", metaVar = "<file>")
