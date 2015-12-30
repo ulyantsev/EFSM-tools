@@ -24,7 +24,6 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import sat_solving.Assignment;
 import sat_solving.IncrementalInterface;
-import sat_solving.SatSolver;
 import sat_solving.SolverResult;
 import sat_solving.SolverResult.SolverResults;
 import scenario.StringActions;
@@ -35,7 +34,6 @@ import structures.plant.NegativePlantScenarioForest;
 import structures.plant.NondetMooreAutomaton;
 import structures.plant.PositivePlantScenarioForest;
 import algorithms.formula_builders.PlantFormulaBuilder;
-import bnf_formulae.BooleanFormula;
 import bnf_formulae.BooleanFormula.SolveAsSatResult;
 import bnf_formulae.BooleanVariable;
 import bool.MyBooleanExpression;
@@ -168,10 +166,9 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 	private final static boolean FEWER_COUNTEREXAMPLES = true;
 	
 	public static Optional<NondetMooreAutomaton> build(Logger logger, PositivePlantScenarioForest positiveForest,
-			NegativePlantScenarioForest negativeForest, int size, String solverParams,
-			String resultFilePath, String ltlFilePath, String actionspecFilePath, List<LtlNode> formulae,
-			List<String> events, List<String> actions, SatSolver satSolver,
-			VerifierPair verifier, long finishTime) throws IOException {
+			NegativePlantScenarioForest negativeForest, int size, String resultFilePath,
+			String ltlFilePath, String actionspecFilePath, List<LtlNode> formulae,
+			List<String> events, List<String> actions, VerifierPair verifier, long finishTime) throws IOException {
 		deleteTrash();
 		SimpleVerifier.setLoopWeight(size);
 		
@@ -186,7 +183,7 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 			final int secondsLeft = timeLeftForSolver(finishTime);
 			if (iteration == 0) {
 				// create
-				final BooleanFormula positiveConstraints = builder.positiveConstraints().assemble();
+				final List<int[]> positiveConstraints = builder.positiveConstraints();
 				final String actionSpec = actionSpecification(actionspecFilePath, size, actions);
 				incr = new IncrementalInterface(positiveConstraints, actionSpec, logger);
 			}

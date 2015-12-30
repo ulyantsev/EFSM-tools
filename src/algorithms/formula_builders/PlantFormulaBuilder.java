@@ -8,16 +8,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import scenario.StringActions;
 import structures.plant.MooreNode;
 import structures.plant.MooreTransition;
 import structures.plant.NegativePlantScenarioForest;
 import structures.plant.PositivePlantScenarioForest;
-import bnf_formulae.BinaryOperation;
-import bnf_formulae.BinaryOperations;
-import bnf_formulae.BooleanFormula;
 import bnf_formulae.BooleanVariable;
-import bnf_formulae.FormulaList;
 
 /**
  * (c) Igor Buzhinsky
@@ -99,31 +94,35 @@ public class PlantFormulaBuilder {
 	/*
 	 * Each node has at least one color
 	 */
-	private void eachNodeHasColorConstraints(FormulaList constraints) {
+	private void eachNodeHasColorConstraints(List<int[]> constraints) {
 		for (MooreNode node : positiveForest.nodes()) {
-			final FormulaList terms = new FormulaList(BinaryOperations.OR);
+			final int[] constraint = new int[colorSize + 1];
 			for (int color = 0; color < colorSize; color++) {
-				terms.add(xVar(node.number(), color));
+				constraint[color] = xVar(node.number(), color).number;
 			}
-			constraints.add(terms.assemble());
+			constraints.add(constraint);
 		}
 		// return constraints.assemble("scenario constraints: each tree node has a color");
 	}
 
-	private void eachNodeHasOnlyColorConstraints(FormulaList constraints) {
+	private void eachNodeHasOnlyColorConstraints(List<int[]> constraints) {
 		for (MooreNode node : positiveForest.nodes()) {
 			for (int color1 = 0; color1 < colorSize; color1++) {
+				final BooleanVariable v1 = xVar(node.number(), color1);
 				for (int color2 = 0; color2 < color1; color2++) {
-					final BooleanVariable v1 = xVar(node.number(), color1);
 					final BooleanVariable v2 = xVar(node.number(), color2);					
-					constraints.add(v1.not().or(v2.not()));
+					constraints.add(new int[] {
+							-v1.number,
+							-v2.number,
+							0
+					});
 				}
 			}
 		}
 		//return constraints.assemble("scenario constraints: each tree node has at most one color");
 	}
 	
-	private void transitionConstraints(FormulaList constraints) {
+	private void transitionConstraints(List<int[]> constraints) {
 		for (MooreNode node : positiveForest.nodes()) {
 			for (MooreTransition t : node.transitions()) {
 				for (int nodeColor = 0; nodeColor < colorSize; nodeColor++) {
@@ -131,7 +130,12 @@ public class PlantFormulaBuilder {
 					for (int childColor = 0; childColor < colorSize; childColor++) {
 						final BooleanVariable childVar = xVar(t.dst().number(), childColor);
 						final BooleanVariable relationVar = yVar(nodeColor, childColor, t.event());
-						constraints.add(BinaryOperation.or(relationVar, nodeVar.not(), childVar.not()));
+						constraints.add(new int[] {
+								relationVar.number,
+								-nodeVar.number,
+								-childVar.number,
+								0
+						});
 					}
 				}
 			}
@@ -139,45 +143,37 @@ public class PlantFormulaBuilder {
 		//return constraints.assemble("scenario constraints: connection between x's and y's");
 	}
 	
-	private BooleanFormula actionEquality(int state, StringActions a) {
-		final FormulaList constraints = new FormulaList(BinaryOperations.AND);
-		final List<String> actionSequence = Arrays.asList(a.getActions());
-		for (String action : actions) {
-			final BooleanVariable var = zVar(state, action);
-			constraints.add(actionSequence.contains(action) ? var : var.not());
-		}
-		return constraints.assemble();
-	}
-	
-	private void scenarioActionConstraints(FormulaList constraints) {
+	private void scenarioActionConstraints(List<int[]> constraints) {
 		for (MooreNode node : positiveForest.nodes()) {
 			final List<String> actionSequence = Arrays.asList(node.actions().getActions());
 			for (int nodeColor = 0; nodeColor < colorSize; nodeColor++) {
-				// actionEquality was inlined to produce CNF constraints
 				for (String action : actions) {
-					final BooleanVariable var = zVar(nodeColor, action);
-					final BooleanFormula term = actionSequence.contains(action) ? var : var.not();
-					constraints.add(xVar(node.number(), nodeColor).implies(term));
+					constraints.add(new int[] {
+							-xVar(node.number(), nodeColor).number,
+							(actionSequence.contains(action) ? 1 : -1)
+								* zVar(nodeColor, action).number,
+							0
+					});
 				}
 			}
 		}
 		//return constraints.assemble("scenario action constraints");
 	}
 	
-	private void eventCompletenessConstraints(FormulaList constraints) {
+	private void eventCompletenessConstraints(List<int[]> constraints) {
 		for (int i1 = 0; i1 < colorSize; i1++) {
 			for (String e : events) {
-				final FormulaList options = new FormulaList(BinaryOperations.OR);
+				final int[] constraint = new int[colorSize + 1];
 				for (int i2 = 0; i2 < colorSize; i2++) {
-					options.add(yVar(i1, i2, e));
+					constraint[i2] = yVar(i1, i2, e).number;
 				}
-				constraints.add(options.assemble());
+				constraints.add(constraint);
 			}
 		}
 		//return constraints.assemble("induce a complete automaton");
 	}
 	
-	private void negativeScenarioBasis(List<BooleanFormula> constraints) {
+	private void negativeScenarioBasis(List<int[]> constraints) {
 		for (MooreNode negRoot : negativeForest.roots()) {
 			if (!negativeForest.processRoot(negRoot)) {
 				continue;
@@ -185,8 +181,11 @@ public class PlantFormulaBuilder {
 			for (MooreNode root : positiveForest.roots()) {
 				for (int nodeColor = 0; nodeColor < colorSize; nodeColor++) {
 					if (root.actions().equals(negRoot.actions())) {
-						constraints.add(xVar(root.number(), nodeColor)
-								.implies(xxVar(negRoot.number(), nodeColor, false)));
+						constraints.add(new int[] {
+								-xVar(root.number(), nodeColor).number,
+								xxVar(negRoot.number(), nodeColor, false).number,
+								0
+						});
 					}
 				}
 			}
@@ -194,7 +193,7 @@ public class PlantFormulaBuilder {
 		//return constraints.assemble("negative scenario basis");
 	}
 	
-	private void globalNegativeScenarioBasis(List<BooleanFormula> constraints) {
+	private void globalNegativeScenarioBasis(List<int[]> constraints) {
 		if (globalNegativeForest.roots().size() > 1) {
 			throw new AssertionError();
 		}
@@ -204,18 +203,22 @@ public class PlantFormulaBuilder {
 			}
 			// the global negative root is colored in all colors
 			for (int nodeColor = 0; nodeColor < colorSize; nodeColor++) {
-				constraints.add(xxVar(root.number(), nodeColor, true));
+				constraints.add(new int[] {
+						xxVar(root.number(), nodeColor, true).number,
+						0
+				});
 			}
 		}
 		//return constraints.assemble("global negative scenario basis");
 	}
 	
-	private void negativeScenarioPropagation(List<BooleanFormula> constraints, boolean isGlobal) {
-		final NegativePlantScenarioForest forest = isGlobal ? globalNegativeForest : negativeForest;
+	private void negativeScenarioPropagation(List<int[]> constraints, boolean isGlobal) {
+		final NegativePlantScenarioForest forest =
+				isGlobal ? globalNegativeForest : negativeForest;
 		for (MooreNode node : forest.nodes()) {
-			final BooleanFormula[] xxParent = new BooleanFormula[colorSize];
+			final int[] xxParent = new int[colorSize];
 			for (int color = 0; color < colorSize; color++) {
-				xxParent[color] = xxVar(node.number(), color, isGlobal);
+				xxParent[color] = xxVar(node.number(), color, isGlobal).number;
 			}
 			for (MooreTransition edge : node.transitions()) {
 				final MooreNode childNode = edge.dst();
@@ -223,21 +226,28 @@ public class PlantFormulaBuilder {
 					continue;
 				}
 				final String event = edge.event();
-				final BooleanFormula[] actionEq = new BooleanFormula[colorSize];
+				final int[][] actionEq = new int[colorSize][actions.size()];
+				final List<String> actionList = Arrays.asList(childNode.actions().getActions());
 				for (int color = 0; color < colorSize; color++) {
-					actionEq[color] = actionEquality(color, childNode.actions());
+					for (int i = 0; i < actions.size(); i++) {
+						final String action = actions.get(i);
+						final int sign = actionList.contains(action) ? 1 : -1;
+						// we actually need the negation, this -sign:
+						actionEq[color][i] = -sign * zVar(color, action).number;
+					}
 				}
-				final BooleanFormula[] xxChild = new BooleanFormula[colorSize];
+				final int[] xxChild = new int[colorSize];
 				for (int color = 0; color < colorSize; color++) {
-					xxChild[color] = xxVar(childNode.number(), color, isGlobal);
+					xxChild[color] = xxVar(childNode.number(), color, isGlobal).number;
 				}
 				for (int color1 = 0; color1 < colorSize; color1++) {
 					for (int color2 = 0; color2 < colorSize; color2++) {
-						constraints.add(BinaryOperation.and(
-								xxParent[color1],
-								yVar(color1, color2, event),
-								actionEq[color2]).implies(
-								xxChild[color2]));
+						final int[] constraint = new int[actions.size() + 4];
+						System.arraycopy(actionEq[color2], 0, constraint, 0, actions.size());
+						constraint[actions.size() + 0] = -xxParent[color1];
+						constraint[actions.size() + 1] = -yVar(color1, color2, event).number;
+						constraint[actions.size() + 2] = xxChild[color2];
+						constraints.add(constraint);
 					}
 				}
 			}
@@ -245,14 +255,17 @@ public class PlantFormulaBuilder {
 		//return constraints.assemble("negative scenario propagation");
 	}
 	
-	private void negativeScenarioTermination(List<BooleanFormula> constraints, boolean isGlobal) {
+	private void negativeScenarioTermination(List<int[]> constraints, boolean isGlobal) {
 		final NegativePlantScenarioForest forest = isGlobal ? globalNegativeForest : negativeForest;
 		for (MooreNode node : forest.terminalNodes()) {
 			if (!forest.processTerminalNode(node)) {
 				continue;
 			}
 			for (int nodeColor = 0; nodeColor < colorSize; nodeColor++) {
-				constraints.add(xxVar(node.number(), nodeColor, isGlobal).not());
+				constraints.add(new int[] {
+						-xxVar(node.number(), nodeColor, isGlobal).number,
+						0
+				});
 			}
 		}
 		//return constraints.assemble("negative scenario termination");
@@ -263,10 +276,10 @@ public class PlantFormulaBuilder {
 		addNegativeVars();
 	}
 	
-	public FormulaList positiveConstraints() {
-		final FormulaList constraints = new FormulaList(BinaryOperations.AND);
+	public List<int[]> positiveConstraints() {
+		final List<int[]> constraints = new ArrayList<>();
 		// first node is always an initial state (but probably there are more)
-		constraints.add(xVar(0, 0));
+		constraints.add(new int[] { xVar(0, 0).number, 0 });
 		transitionConstraints(constraints);
 		eventCompletenessConstraints(constraints);
 		eachNodeHasColorConstraints(constraints);
@@ -275,8 +288,8 @@ public class PlantFormulaBuilder {
 		return constraints;
 	}
 	
-	public List<BooleanFormula> negativeConstraints() {
-		final List<BooleanFormula> constraints = new ArrayList<>();
+	public List<int[]> negativeConstraints() {
+		final List<int[]> constraints = new ArrayList<>();
 		negativeScenarioBasis(constraints);
 		globalNegativeScenarioBasis(constraints);
 		for (boolean isGlobal : Arrays.asList(false, true)) {

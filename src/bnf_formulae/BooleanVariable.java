@@ -87,20 +87,4 @@ public class BooleanVariable extends BooleanFormula implements Comparable<Boolea
 	public BooleanFormula simplify() {
 		return this;
 	}
-
-	@Override
-	public BooleanFormula removeEqImplConst() {
-		return this;
-	}
-
-	@Override
-	public BooleanFormula propagateNot() {
-		return this;
-	}
-
-	@Override
-	public boolean separateOr(List<BooleanFormula> terms) {
-		terms.add(this);
-		return true;
-	}
 }

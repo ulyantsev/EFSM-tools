@@ -1,6 +1,5 @@
 package bnf_formulae;
 
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -31,21 +30,5 @@ public class TrueFormula extends BooleanFormula {
 	@Override
 	public BooleanFormula simplify() {
 		return this;
-	}
-
-	@Override
-	public BooleanFormula removeEqImplConst() {
-		final BooleanVariable v = BooleanVariable.getVarByNumber(1);
-		return v.or(v.not());
-	}
-
-	@Override
-	public BooleanFormula propagateNot() {
-		return this;
-	}
-	
-	@Override
-	public boolean separateOr(List<BooleanFormula> terms) {
-		throw new AssertionError("Get rid of this formula type before applying!");
 	}
 }

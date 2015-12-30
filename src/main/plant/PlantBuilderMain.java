@@ -23,7 +23,6 @@ import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 
-import sat_solving.SatSolver;
 import scenario.StringScenario;
 import structures.plant.MooreNode;
 import structures.plant.NegativePlantScenarioForest;
@@ -81,13 +80,6 @@ public class PlantBuilderMain {
 	@Option(name = "--negsc", aliases = { "-ns" }, usage = "file with negative scenarios (optional)",
 			metaVar = "<file>")
 	private String negscFilePath;
-	
-	@Option(name = "--satSolver", aliases = { "-qss" }, usage = "SAT solver: LINGELING (default), CRYPTOMINISAT",
-			metaVar = "<satSolver>")
-	private String satSolver = SatSolver.LINGELING.name();
-	
-	@Option(name = "--solverParams", aliases = { "-sp" }, usage = "additional solver parameters", metaVar = "<solverParams>")
-	private String solverParams = "";
 	
 	@Option(name = "--timeout", aliases = { "-to" }, usage = "solver timeout (sec)", metaVar = "<timeout>")
 	private int timeout = 60 * 60 * 24;
@@ -147,14 +139,6 @@ public class PlantBuilderMain {
 			} catch (Exception e) {
 				logger.warning("Can't save scenarios tree to " + treeFilePath);
 			}
-		}
-		
-		SatSolver satsolver;
-		try {
-			satsolver = SatSolver.valueOf(satSolver);
-		} catch (IllegalArgumentException e) {
-			logger.warning(satSolver + " is not a valid SAT solver.");
-			return;
 		}
 		
 		List<String> eventnames;
@@ -220,8 +204,8 @@ public class PlantBuilderMain {
 			Optional<NondetMooreAutomaton> resultAutomaton = null;
 			final VerifierPair verifier = new VerifierPair(logger, strFormulae, events, actions, varNumber);
 			final long finishTime = System.currentTimeMillis() + timeout * 1000;
-			resultAutomaton = PlantAutomatonBuilder.build(logger, positiveForest, negativeForest, size, solverParams,
-					resultFilePath, ltlFilePath, actionspecFilePath, formulae, events, actions, satsolver, verifier, finishTime);
+			resultAutomaton = PlantAutomatonBuilder.build(logger, positiveForest, negativeForest, size,
+					resultFilePath, ltlFilePath, actionspecFilePath, formulae, events, actions, verifier, finishTime);
 			final double executionTime = (System.currentTimeMillis() - startTime) / 1000.;
 			
 			if (!resultAutomaton.isPresent()) {
