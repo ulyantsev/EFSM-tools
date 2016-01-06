@@ -25,7 +25,7 @@ public class WaterLevelGenerator {
 		final List<String> allActions = Arrays.asList("abovehh", "aboveh", "aboveth",
 				"abovesp", "belowsp", "belowth", "belowl", "belowll");
 		final Random rnd = new Random();
-		for (int k = 1; k <= 5; k++) {
+		for (int k = 1; k <= 10; k++) {
 			// generate the model
 			final List<StringActions> actions = new ArrayList<>();
 			final List<Boolean> isStart = new ArrayList<>();

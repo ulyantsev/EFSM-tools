@@ -2,14 +2,14 @@
 
 events=5
 actions=5
-minstates=30
-maxstates=30
+minstates=35
+maxstates=35
 instances=50
 
 echo "Generating plants and scenarios..."
 mkdir -p plants
 for ((size = $minstates; size <= $maxstates; size++)); do
-    for ((instance = 0; instance < $instances; instance++)); do
+    for ((instance = 50; instance < $instances; instance++)); do
         name="plants/plant-$size-$instance"
         echo $name : creating FSM
         java -jar ../../jars/plant-generator.jar -an $actions -mina 1 -maxa 1 -en $events -ip 25 -o "$name.dot" -s $size -mint 1 -maxt 2
@@ -22,7 +22,7 @@ done
 
 echo "Generating LTL properties..."
 for ((size = $minstates; size <= $maxstates; size++)); do
-    for ((instance = 0; instance < $instances; instance++)); do
+    for ((instance = 50; instance < $instances; instance++)); do
         name="plants/plant-$size-$instance"
         ltl="$name.ltl"
         echo $name : creating formulae
