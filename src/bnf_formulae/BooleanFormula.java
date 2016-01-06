@@ -5,6 +5,7 @@ package bnf_formulae;
  */
 
 import java.io.BufferedReader;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -206,7 +207,7 @@ public abstract class BooleanFormula {
 		return toDimacs(limbooleString, logger, dimacsFilename);
 	}
 	
-	public static void appendConstraints(List<int[]> cnfConstraints, DimacsConversionInfo info, PrintWriter constraintWriter) throws IOException {
+	public static void appendConstraints(List<int[]> cnfConstraints, DimacsConversionInfo info, DataOutputStream constraintWriter) throws IOException {
 		final int initialVarNumber = info.varNumber;
 		
 		//long tT = System.currentTimeMillis();
@@ -231,14 +232,15 @@ public abstract class BooleanFormula {
 		//long tW = System.currentTimeMillis();
 		int newVars = info.varNumber - initialVarNumber;
 		if (newVars > 0) {
-			constraintWriter.println("new_vars " + newVars);
+			constraintWriter.writeInt(1);
+			constraintWriter.writeInt(newVars);
 		}
 		for (int[] constraint : cnfConstraints) {
+			constraintWriter.writeInt(0);
 			for (int i : constraint) {
-				constraintWriter.print(i);
-				constraintWriter.print(' ');
+				constraintWriter.writeInt(i);
 			}
-			constraintWriter.println('0');
+			constraintWriter.writeInt(0);
 		}
 		//System.out.println("@Writing: " + (System.currentTimeMillis() - tW));
 	}

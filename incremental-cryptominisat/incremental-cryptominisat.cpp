@@ -10,6 +10,7 @@ using namespace CMSat;
 int main(int argc, const char* argv[]) {
     if (argc < 2) {
         std::cout << "Run: incremental-cryptominisat <varNumber> <timeLimit in seconds>" << std::endl;
+        std::cout << "Time limit is currently not supported." << std::endl;
         return 1;
     }
     
