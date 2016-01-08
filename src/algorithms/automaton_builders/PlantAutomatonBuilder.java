@@ -34,7 +34,6 @@ import structures.plant.NegativePlantScenarioForest;
 import structures.plant.NondetMooreAutomaton;
 import structures.plant.PositivePlantScenarioForest;
 import algorithms.formula_builders.PlantFormulaBuilder;
-import bnf_formulae.BooleanFormula.SolveAsSatResult;
 import bnf_formulae.BooleanVariable;
 import bool.MyBooleanExpression;
 import egorov.ltl.grammar.LtlNode;
@@ -187,15 +186,9 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 				final String actionSpec = actionSpecification(actionspecFilePath, size, actions);
 				incr = new IncrementalInterface(positiveConstraints, actionSpec, logger);
 			}
-			// SAT-solve
-			final SolveAsSatResult solution = incr.solve(builder.negativeConstraints(), secondsLeft);
-
-			final List<Assignment> list = solution.list();
-			final long time = solution.time;
 			
-			final SolverResult ass = list.isEmpty()
-				? new SolverResult(time >= secondsLeft * 1000 ? SolverResults.UNKNOWN : SolverResults.UNSAT)
-				: new SolverResult(list);
+			// SAT-solve
+			final SolverResult ass = incr.solve(builder.negativeConstraints(), secondsLeft);
 			logger.info(ass.type().toString());
 			if (ass.type() != SolverResults.SAT) {
 				return reportResult(logger, iteration, Optional.empty());

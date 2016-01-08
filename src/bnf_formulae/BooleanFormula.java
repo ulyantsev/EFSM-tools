@@ -210,7 +210,6 @@ public abstract class BooleanFormula {
 	public static void appendConstraints(List<int[]> cnfConstraints, DimacsConversionInfo info, DataOutputStream constraintWriter) throws IOException {
 		final int initialVarNumber = info.varNumber;
 		
-		//long tT = System.currentTimeMillis();
 		for (int i = 0; i < cnfConstraints.size(); i++) {
 			final int[] terms = cnfConstraints.get(i);
 			for (int j = 0; j < terms.length; j++) {
@@ -227,9 +226,7 @@ public abstract class BooleanFormula {
 				terms[j] = (term < 0 ? -1 : 1) * transformedNum;
 			}
 		}
-		//System.out.println("@Transformation: " + (System.currentTimeMillis() - tT));
 		
-		//long tW = System.currentTimeMillis();
 		int newVars = info.varNumber - initialVarNumber;
 		if (newVars > 0) {
 			constraintWriter.writeInt(1);
@@ -242,7 +239,6 @@ public abstract class BooleanFormula {
 			}
 			constraintWriter.writeInt(0);
 		}
-		//System.out.println("@Writing: " + (System.currentTimeMillis() - tW));
 	}
 	
 	public static class DimacsConversionInfo implements AutoCloseable {

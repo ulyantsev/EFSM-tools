@@ -14,9 +14,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
+import sat_solving.SolverResult.SolverResults;
 import bnf_formulae.BooleanFormula;
 import bnf_formulae.BooleanFormula.DimacsConversionInfo;
-import bnf_formulae.BooleanFormula.SolveAsSatResult;
 import bnf_formulae.BooleanVariable;
 
 public class IncrementalInterface {
@@ -29,8 +29,7 @@ public class IncrementalInterface {
 		info = BooleanFormula.actionSpecToDimacs(logger, BooleanFormula.DIMACS_FILENAME, actionspec);
 		info.close();
 
-		// FIXME time limits
-		solver = Runtime.getRuntime().exec("incremental-cryptominisat-binary " + info.varNumber() + " 0");
+		solver = Runtime.getRuntime().exec("incremental-cryptominisat-binary " + info.varNumber());
 		writer = new DataOutputStream(new BufferedOutputStream(solver.getOutputStream()));
 		reader = new DataInputStream(solver.getInputStream());
 		
@@ -56,18 +55,15 @@ public class IncrementalInterface {
 		reader.close();
 	}
 	
-	public SolveAsSatResult solve(List<int[]> newConstraints, int timeLeftForSolver) throws IOException {
-		//long tDim = System.currentTimeMillis();
+	public SolverResult solve(List<int[]> newConstraints, int timeLeftForSolver) throws IOException {
 		BooleanFormula.appendConstraints(newConstraints, info, writer);
-		//System.out.println("@ToDimacs: " + (System.currentTimeMillis() - tDim));
-		
-		long time = System.currentTimeMillis();
-		writer.writeInt(2);
+		writer.writeInt(2); // solve
+		writer.writeInt(timeLeftForSolver); // with a time limit
 		writer.flush();
 		final int verdict = reader.readInt();
-		time = System.currentTimeMillis() - time;
-		final List<Assignment> list = new ArrayList<>();
-		if (verdict == 0 /* SAT */) {
+		switch (verdict) {
+		case 0:
+			final List<Assignment> list = new ArrayList<>();
 			while (true) {
 				final int value = reader.readInt();
 				if (value == 0) {
@@ -78,14 +74,15 @@ public class IncrementalInterface {
 					list.add(new Assignment(var, value > 0));
 				});
 			}
-			return new SolveAsSatResult(list, time, info);
-		} else if (verdict == 1 /* UNSAT */) {
+			return new SolverResult(list);
+		case 1:
 			halt();
-		} else if (verdict == 2 /* UNKNOWN */) {
+			return new SolverResult(SolverResults.UNSAT);
+		case 2:
 			halt();
-		} else {
+			return new SolverResult(SolverResults.UNKNOWN);
+		default:
 			throw new AssertionError();
 		}
-		return new SolveAsSatResult(list, time, info);
 	}
 }
