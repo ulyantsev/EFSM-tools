@@ -185,10 +185,13 @@ public class NondetMooreAutomaton {
     		final List<String> properStates = new ArrayList<>();
     		for (int i = 0; i < stateCount(); i++) {
     			if (ArrayUtils.contains(states.get(i).actions().getActions(), action)) {
-    				properStates.add("state = " + i);
+    				properStates.add(String.valueOf(i));
     			}
     		}
-    		sb.append("    output_" + action + " := " + String.join(" | ", properStates) + ";\n");
+    		final String condition = properStates.isEmpty()
+    				? "FALSE"
+    				: ("state in { " + String.join(", ", properStates) + " }");
+    		sb.append("    output_" + action + " := " + condition + ";\n");
     	}
     	return sb.toString();
     }
