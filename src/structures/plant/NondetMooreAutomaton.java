@@ -193,43 +193,7 @@ public class NondetMooreAutomaton {
     	return sb.toString();
     }
     
-    private boolean recursiveScenarioCompliance(MooreNode scenarioNode, MooreNode automatonNode) {
-    	if (!scenarioNode.actions().setEquals(automatonNode.actions())) {
-    		return false;
-    	}
-    	if (scenarioNode.transitions().isEmpty()) {
-    		return true;
-    	}
-    	final MooreTransition scenarioTransition = scenarioNode.transitions().iterator().next();
-    	final String scenarioEvent = scenarioTransition.event();
-    	final MooreNode scenarioDst = scenarioTransition.dst();
-    	for (MooreTransition automatonTransition : automatonNode.transitions()) {
-    		if (automatonTransition.event().equals(scenarioEvent)) {
-    			if (recursiveScenarioCompliance(scenarioDst, automatonTransition.dst())) {
-    				return true;
-    			}
-    		}
-    	}
-    	return false;
-    }
-    
-    public boolean isCompliantWithScenarios(PositivePlantScenarioForest forest) {
-    	for (MooreNode root : forest.roots()) {
-    		boolean complies = false;
-    		for (int i = 0; i < states.size(); i++) {
-    			if (isStartState(i) && recursiveScenarioCompliance(root, states.get(i))) {
-    				complies = true;
-    				break;
-    			}
-    		}
-    		if (!complies) {
-    			return false;
-    		}
-    	}
-		return true;
-    }
-    
-    public boolean isCompliantWithNegativeScenarios(List<StringScenario> scenarios) {
+    public boolean isCompliantWithScenarios(List<StringScenario> scenarios, boolean positive) {
     	for (StringScenario sc : scenarios) {
         	boolean[] curStates = new boolean[states.size()];
         	final StringActions firstActions = sc.getActions(0);
@@ -253,7 +217,8 @@ public class NondetMooreAutomaton {
     			}
     			curStates = newStates;
     		}
-    		if (Arrays.asList(curStates).contains(true)) {
+    		final boolean passed = ArrayUtils.contains(curStates, true);
+    		if (passed != positive) {
     			return false;
     		}
     	}

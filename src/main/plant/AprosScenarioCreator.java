@@ -11,71 +11,190 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 public class AprosScenarioCreator {
+	private final static String INPUT_DIRECTORY = "qbf/plant-synthesis/vver-traces";
+	private final static String OUTPUT_TRACE_FILENAME = "qbf/plant-synthesis/vver.sc";
+	private final static String OUTPUT_ACTIONSPEC_FILENAME = "qbf/plant-synthesis/vver.actionspec";
+	private final static String OUTPUT_LTL_FILENAME = "qbf/plant-synthesis/vver.ltl";
+	
+	private final static List<Parameter> PARAMETERS = Arrays.asList(
+			new Parameter(false, "pressure_live_stream", 3.5),
+			new Parameter(false, "pressure_lower_plenum", 3.5, 8.0, 10.0),
+			new Parameter(true, "th11_speed_setpoint", 1.0),
+			new Parameter(true, "tj11_speed_setpoint", 1.0),
+			new Parameter(true, "tq11_speed_setpoint", 1.0),
+			new Parameter(false, "voltage", 4800.0),
+			new Parameter(false, "water_level", 2.3, 2.8)
+	);
+	
+	private static class Parameter {
+		private final List<Double> cutoffs;
+		private final boolean isInput;
+		private final String name;
+		
+		public Parameter(boolean isInput, String name, Double... cutoffs) {
+			this.isInput = isInput;
+			this.name = name;
+			this.cutoffs = new ArrayList<>(Arrays.asList(cutoffs));
+			this.cutoffs.add(Double.POSITIVE_INFINITY);
+		}
+		
+		private String traceName(int index) {
+			return name.replace("_", "") + index;
+		}
+		
+		public List<String> traceNames() {
+			final List<String> res = new ArrayList<>();
+			if (isInput) {
+				return res;
+			}
+			for (int j = 0; j < cutoffs.size(); j++) {
+				res.add(traceName(j));
+			}
+			return res;
+		}
+		
+		public int traceNameIndex(double value) {
+			for (int i = 0; i < cutoffs.size(); i++) {
+				if (value < cutoffs.get(i)) {
+					return i;
+				}
+			}
+			throw new AssertionError();
+		}
+		
+		public String traceName(double value) {
+			return traceName(traceNameIndex(value));
+		}
+		
+		public List<String> actionspec() {
+			final List<String> res = new ArrayList<>();
+			if (isInput) {
+				return res;
+			}
+			final List<String> actions = new ArrayList<>();
+			for (int i = 0; i < cutoffs.size(); i++) {
+				actions.add("action(" + traceName(i) + ")");
+			}
+			res.add(String.join(" || ", actions));
+			for (int i = 0; i < actions.size(); i++) {
+				for (int j = i + 1; j < actions.size(); j++) {
+					res.add("!" + actions.get(i) + " || !" + actions.get(j));
+				}
+			}
+			return res;
+		}
+		
+		// smooth changes
+		public List<String> temporalProperties() {
+			final List<String> res = new ArrayList<>();
+			if (isInput) {
+				return res;
+			}
+			if (cutoffs.size() < 3) {
+				return res;
+			}
+			for (int i = 0; i < cutoffs.size(); i++) {
+				List<String> vicinity = new ArrayList<>();
+				vicinity.add(traceName(i));
+				if (i > 0) {
+					vicinity.add(traceName(i - 1));
+				}
+				if (i < cutoffs.size() - 1) {
+					vicinity.add(traceName(i + 1));
+				}
+				vicinity = vicinity.stream()
+						.map(s -> "action(" + s + ")")
+						.collect(Collectors.toList());
+				res.add("G(!" + vicinity.get(0) + " || X("
+						+ String.join(" || ", vicinity) + "))");
+			}
+			return res;
+		}
+	}
+	
 	public static void main(String[] args) throws FileNotFoundException {
-		final List<String> filenames = Arrays.asList(
-				"qbf/plant-synthesis/vver-trace1.txt",
-				"qbf/plant-synthesis/vver-trace2.txt",
-				"qbf/plant-synthesis/vver-trace3.txt");
-		final List<List<Double>> cutoffs = Arrays.asList(
-				Arrays.asList(4.3, 4.4, 4.5, 4.7, 4.8, Double.POSITIVE_INFINITY),
-				Arrays.asList(9., 10., 11., 12., 13., Double.POSITIVE_INFINITY),
-				Arrays.asList(6335., 6700., Double.POSITIVE_INFINITY),
-				Arrays.asList(7.75, 8.0, 8.49, Double.POSITIVE_INFINITY)
-			);
-		
-		String[] header = null;
-		
-		// scenarios
-		try (PrintWriter pw = new PrintWriter(new File("qbf/plant-synthesis/vver.sc"))) {
-			for (String filename : filenames) {
+		// traces
+		final Set<String> allEvents = new TreeSet<>();
+		try (PrintWriter pw = new PrintWriter(new File(OUTPUT_TRACE_FILENAME))) {
+			for (String filename : new File(INPUT_DIRECTORY).list()) {
+				if (!filename.endsWith(".txt")) {
+					continue;
+				}
 				final List<String> events = new ArrayList<>();
 				final List<String> actions = new ArrayList<>();
-				try (Scanner sc = new Scanner(new File(filename))) {
-					header = sc.nextLine().split("\t");
+				try (Scanner sc = new Scanner(new File(INPUT_DIRECTORY + "/" + filename))) {
+					for (int i = 0; i < 2; i++) {
+						sc.nextLine();
+					}
 					while (sc.hasNextLine()) {
 						final String line = sc.nextLine().replace(",", ".");
+						if (line.replace("\t", "").replace(" ", "").isEmpty()) {
+							continue;
+						}
 						final String[] tokens = line.split("\t");
-						events.add("A");
+						final StringBuilder event = new StringBuilder("A");
 						final List<String> thisActions = new ArrayList<>();
-						for (int i = 0; i < cutoffs.size(); i++) {
+						for (int i = 0; i < PARAMETERS.size(); i++) {
+							final Parameter p = PARAMETERS.get(i);
 							final double value = Double.parseDouble(tokens[i + 1]);
-							for (int j = 0; j < cutoffs.get(i).size(); j++) {
-								if (value < cutoffs.get(i).get(j)) {
-									thisActions.add(header[i + 1].replace("_", "") + j);
-									break;
-								}
+							if (p.isInput) {
+								event.append(p.traceNameIndex(value));
+							} else {
+								thisActions.add(p.traceName(value));
 							}
 						}
+						events.add(event.toString());
 						actions.add(String.join(", ", thisActions));
+						allEvents.add(event.toString());
 					}
 				}
-				events.set(0, "");
+				events.add(0, "");
+				events.remove(events.size() - 1);
 				pw.println(String.join("; ", events));
 				pw.println(String.join("; ", actions));
 			}
 		}
+		
 		// actionspec
-		final List<String> allActions = new ArrayList<>();
-		try (PrintWriter pw = new PrintWriter(new File("qbf/plant-synthesis/vver.actionspec"))) {
-			for (int i = 0; i < cutoffs.size(); i++) {
-				final List<String> actions = new ArrayList<>();
-				for (int j = 0; j < cutoffs.get(i).size(); j++) {
-					final String action = header[i + 1].replace("_", "") + j;
-					actions.add("action(" + action + ")");
-					allActions.add(action);
-				}
-				pw.println(String.join(" || ", actions));
-				for (int j = 0; j < actions.size(); j++) {
-					for (int k = j + 1; k < actions.size(); k++) {
-						pw.println("!" + actions.get(j) + " || !" + actions.get(k));
-					}
+		try (PrintWriter pw = new PrintWriter(new File(OUTPUT_ACTIONSPEC_FILENAME))) {
+			for (Parameter p : PARAMETERS) {
+				for (String str : p.actionspec()) {
+					pw.println(str);
 				}
 			}
 		}
+		
+		// temporal properties
+		try (PrintWriter pw = new PrintWriter(new File(OUTPUT_LTL_FILENAME))) {
+			for (Parameter p : PARAMETERS) {
+				for (String str : p.temporalProperties()) {
+					pw.println(str);
+				}
+			}
+		}
+		
 		// all actions
-		System.out.println("All actions: " + allActions.toString()
-				.replace(" ", "").replace("[", "").replace("]", ""));
+		final List<String> allActions = new ArrayList<>();
+		for (Parameter p : PARAMETERS) {
+			allActions.addAll(p.traceNames());
+		}
+		
+		// execution command
+		System.out.println("Run:");
+		System.out.println("java -jar jars/plant-automaton-generator.jar "
+				+ OUTPUT_TRACE_FILENAME + " --actionNames "
+				+ allActions.toString().replace(" ", "").replace("[", "").replace("]", "")
+				+ " --actionNumber " + allActions.size()
+				+ " --eventNames "
+				+ allEvents.toString().replace(" ", "").replace("[", "").replace("]", "")
+				+ " --eventNumber " + allEvents.size()
+				+ " --ltl " + OUTPUT_LTL_FILENAME
+				+ " --actionspec " + OUTPUT_ACTIONSPEC_FILENAME
+				+ " --size <SIZE> --varNumber 0 --tree tree.gv");
 	}
 }

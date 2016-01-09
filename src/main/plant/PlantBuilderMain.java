@@ -215,13 +215,13 @@ public class PlantBuilderMain {
 				logger.info("Automaton with " + size + " states WAS FOUND!");
 				logger.info("Automaton builder execution time: " + executionTime);
 				
-				if (resultAutomaton.get().isCompliantWithScenarios(positiveForest)) {
+				if (resultAutomaton.get().isCompliantWithScenarios(scenarios, true)) {
 					logger.info("COMPLIES WITH SCENARIOS");
 				} else {
 					logger.severe("NOT COMPLIES WITH SCENARIOS");
 				}
 				
-				if (resultAutomaton.get().isCompliantWithNegativeScenarios(negativeScenarios)) {
+				if (resultAutomaton.get().isCompliantWithScenarios(negativeScenarios, false)) {
 					logger.info("COMPLIES WITH NEGATIVE SCENARIOS");
 				} else {
 					logger.severe("NOT COMPLIES WITH NEGATIVE SCENARIOS");
