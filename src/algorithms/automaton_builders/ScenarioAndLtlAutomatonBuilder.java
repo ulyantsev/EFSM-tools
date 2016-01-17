@@ -44,8 +44,7 @@ public abstract class ScenarioAndLtlAutomatonBuilder {
 			ScenarioTree tree, int colorSize, boolean complete, CompletenessType completenessType) {
 		List<BooleanVariable> filteredYVars = new ArrayList<>();
 		int[] nodeColors = new int[tree.nodeCount()];
-
-		// color the scenario tree codes according to the assignment
+		
 		ass.stream()
 				.filter(a -> a.value && a.var.name.startsWith("x_"))
 				.forEach(a -> {
@@ -110,7 +109,7 @@ public abstract class ScenarioAndLtlAutomatonBuilder {
 						state.addTransition(event, MyBooleanExpression.getTautology(),
 							new StringActions(String.join(",",
 							properUniqueActions)), ans.state(to));
-						logger.info("ADDING TRANSITION NOT FROM SCENARIOS " + a.var + " " + properUniqueActions);
+						//logger.info("ADDING TRANSITION NOT FROM SCENARIOS " + a.var + " " + properUniqueActions);
 					}
 				} else {
 					// check
@@ -128,5 +127,12 @@ public abstract class ScenarioAndLtlAutomatonBuilder {
 		}
 		
 		return Pair.of(ans, filteredYVars);
+	}
+	
+	protected static String ltl2limboole(String formula) {
+		return formula
+				.replace("&&", "&").replace("||", "|")
+				.replace("and", "&").replace("or", "|")
+				.replace("not", "!");
 	}
 }

@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.ArrayUtils;
 
 import structures.NegativeNode;
-import structures.NegativeScenariosTree;
+import structures.NegativeScenarioTree;
 import structures.Node;
 import structures.ScenarioTree;
 import structures.Transition;
@@ -26,12 +26,12 @@ import bnf_formulae.FalseFormula;
 import bnf_formulae.FormulaList;
 
 public class CounterexampleFormulaBuilder extends FormulaBuilder {
-	private final NegativeScenariosTree negativeTree;
+	private final NegativeScenarioTree negativeTree;
 	private final List<BooleanFormula> prohibitedFsms;
 
 	public CounterexampleFormulaBuilder(ScenarioTree tree, int colorSize,
 			List<String> events, List<String> actions,
-			CompletenessType completenessType, NegativeScenariosTree negativeTree,
+			CompletenessType completenessType, NegativeScenarioTree negativeTree,
 			List<BooleanFormula> prohibitedFsms) {
 		super(colorSize, tree, completenessType, events, actions);
 		this.negativeTree = negativeTree;

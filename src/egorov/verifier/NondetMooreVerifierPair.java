@@ -9,11 +9,11 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import structures.plant.NondetMooreAutomaton;
 
-public class VerifierPair {
+public class NondetMooreVerifierPair {
 	private final Verifier ordinaryVerifier;
 	private final Verifier globalVerifier;
 	
-	public VerifierPair(Logger logger, List<String> strFormulae, List<String> events, List<String> actions, int varNumber) {
+	public NondetMooreVerifierPair(Logger logger, List<String> strFormulae, List<String> events, List<String> actions, int varNumber) {
 		final List<String> ordinaryLTL = new ArrayList<>();
 		final List<String> globalLTL = new ArrayList<>();
 		for (String formula : strFormulae) {

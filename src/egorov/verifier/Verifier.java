@@ -105,7 +105,7 @@ public class Verifier {
 	}
 	
 	public List<Counterexample> verifyWithCounterexamplesWithNoDeadEndRemoval(Automaton a) {
-		verifier.configureStateMachine(a);
+		verifier.configureDetMealyMachine(a);
 		return verifier.verify();
 	}
 	

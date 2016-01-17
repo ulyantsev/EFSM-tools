@@ -7,64 +7,37 @@ package structures;
 import java.io.FileNotFoundException;
 import java.text.ParseException;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-import sat_solving.Assignment;
 import scenario.StringActions;
 import scenario.StringScenario;
 import bool.MyBooleanExpression;
 
-public class NegativeScenariosTree {
+public class NegativeScenarioTree {
     private final NegativeNode root;
     private final Set<NegativeNode> nodes;
 
-    public NegativeScenariosTree() {
+    private final Set<NegativeNode> unprocessedChildren = new HashSet<>();
+	
+	public boolean processChild(NegativeNode node) {
+		return unprocessedChildren.remove(node);
+	}
+    
+    public NegativeScenarioTree() {
         this.root = new NegativeNode(0);
         this.nodes = new LinkedHashSet<>();
         this.nodes.add(root);
     }
 
+    // TODO processed nodes
+    
     public NegativeNode getRoot() {
         return root;
     }
 
-    public void checkColoring(List<Assignment> coloring, int colorSize) {
-    	final Integer[] colors = new Integer[nodes.size()];
-    	for (Assignment ass : coloring) {
-    		if (!ass.value || !ass.var.name.startsWith("xx_")) {
-    			continue;
-    		}
-    		final String[] tokens = ass.var.name.split("_");
-    		int nodeIndex = Integer.parseInt(tokens[1]);
-    		int nodeColor = Integer.parseInt(tokens[2]);
-    		if (colors[nodeIndex] != null) {
-    			throw new AssertionError("Duplicate color!");
-    		}
-    		colors[nodeIndex] = nodeColor;
-    	}
-    	for (Integer color : colors) {
-    		if (color == null) {
-    			throw new AssertionError("Node without a color!");
-    		}
-    	}
-    	if (colors[root.number()] != 0) {
-    		throw new AssertionError("Invalid color of the root!");
-    	}
-    	for (NegativeNode node : nodes) {
-    		int nodeCol = colors[node.number()];
-    		if (node.strongInvalid() && nodeCol != colorSize) {
-    			throw new AssertionError("Invalid color of an invalid node!");
-    		}
-    		for (Node loop : node.loops()) {
-    			if (nodeCol == colors[loop.number()] && nodeCol != colorSize) {
-    				throw new AssertionError("Loop restriction is not satisfied!");
-    			}
-    		}
-    	}
-    }
-    
     /*
      * varNumber = -1 for no variable removal
      */
@@ -108,6 +81,7 @@ public class NegativeScenariosTree {
     			if (dst == null) {
             		dst = new NegativeNode(nodes.size());
             		nodes.add(dst);
+            		unprocessedChildren.add(dst);
             	}
                 src.addTransition(e, expr, actions, dst);
     		}

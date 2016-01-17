@@ -25,7 +25,7 @@ import sat_solving.SolverResult.SolverResults;
 import scenario.StringActions;
 import scenario.StringScenario;
 import structures.Automaton;
-import structures.NegativeScenariosTree;
+import structures.NegativeScenarioTree;
 import structures.ScenarioTree;
 import structures.Transition;
 import algorithms.AutomatonCompleter;
@@ -46,7 +46,7 @@ public class CounterexampleAutomatonBuilder extends ScenarioAndLtlAutomatonBuild
 	}
 	
 	protected static void addCounterexample(Logger logger, Automaton a,
-			Counterexample counterexample, NegativeScenariosTree negativeTree) {
+			Counterexample counterexample, NegativeScenarioTree negativeTree) {
 		int state = a.startState().number();
 		final List<MyBooleanExpression> expressions = new ArrayList<>();
 		final List<StringActions> actions = new ArrayList<>();
@@ -80,7 +80,7 @@ public class CounterexampleAutomatonBuilder extends ScenarioAndLtlAutomatonBuild
 	public static Optional<Automaton> build(Logger logger, ScenarioTree tree, int size, String solverParams,
 			String resultFilePath, List<LtlNode> formulae, List<String> events, List<String> actions,
 			SatSolver satSolver, Verifier verifier, long finishTime, CompletenessType completenessType,
-			NegativeScenariosTree negativeTree, boolean useCompletenessHeuristics) throws IOException {
+			NegativeScenarioTree negativeTree, boolean useCompletenessHeuristics) throws IOException {
 		deleteTrash();
 		
 		final List<BooleanFormula> prohibited = new ArrayList<>();
@@ -131,7 +131,6 @@ public class CounterexampleAutomatonBuilder extends ScenarioAndLtlAutomatonBuild
 				: Optional.empty();
 			
 			if (automaton.isPresent()) {
-				negativeTree.checkColoring(list, size);
 				final List<Counterexample> counterexamples = verifier.verifyWithCounterexamples(automaton.get());
 				final boolean verified = counterexamples.stream().allMatch(Counterexample::isEmpty);
 				if (verified) {

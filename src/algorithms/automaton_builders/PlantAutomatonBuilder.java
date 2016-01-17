@@ -39,7 +39,7 @@ import bool.MyBooleanExpression;
 import egorov.ltl.grammar.LtlNode;
 import egorov.verifier.Counterexample;
 import egorov.verifier.SimpleVerifier;
-import egorov.verifier.VerifierPair;
+import egorov.verifier.NondetMooreVerifierPair;
 
 public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 	protected static Optional<NondetMooreAutomaton> reportResult(Logger logger, int iterations, Optional<NondetMooreAutomaton> a) {
@@ -127,7 +127,7 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 		
 		return automaton;
 	}
-	
+
 	/*
 	 * If the filename is not null, returns additional action specification.
 	 * The specification is given as in LTL, but without temporal operators.
@@ -146,7 +146,7 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 				if (line.isEmpty()) {
 					continue;
 				}
-				final String transformed = line.replace("&&", "&").replace("||", "|");
+				final String transformed = ltl2limboole(line);
 				for (int i = 0; i < states; i++) {
 					String constraint = transformed;
 					for (String action : actions) {
@@ -162,12 +162,10 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 				: ("(" + String.join(")&(", additionalFormulae) + ")");
 	}
 	
-	private final static boolean FEWER_COUNTEREXAMPLES = true;
-	
 	public static Optional<NondetMooreAutomaton> build(Logger logger, PositivePlantScenarioForest positiveForest,
 			NegativePlantScenarioForest negativeForest, int size, String resultFilePath,
 			String ltlFilePath, String actionspecFilePath, List<LtlNode> formulae,
-			List<String> events, List<String> actions, VerifierPair verifier, long finishTime) throws IOException {
+			List<String> events, List<String> actions, NondetMooreVerifierPair verifier, long finishTime) throws IOException {
 		deleteTrash();
 		SimpleVerifier.setLoopWeight(size);
 		
@@ -218,48 +216,38 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 						.map(ce -> collapseLoop(ce, size))
 						.distinct()
 						.collect(Collectors.toList());
-				if (FEWER_COUNTEREXAMPLES) {
-					int normalMinIndex = -1;
-					for (int i = 0; i < normalCEs.size(); i++) {
-						final int prevLength = normalMinIndex == -1
-								? Integer.MAX_VALUE : normalCEs.get(normalMinIndex).events().size();
-						final int curLength = normalCEs.get(i).events().size();
-						if (curLength < prevLength) {
-							normalMinIndex = i;
-						}
+				int normalMinIndex = -1;
+				for (int i = 0; i < normalCEs.size(); i++) {
+					final int prevLength = normalMinIndex == -1
+							? Integer.MAX_VALUE : normalCEs.get(normalMinIndex).events().size();
+					final int curLength = normalCEs.get(i).events().size();
+					if (curLength < prevLength) {
+						normalMinIndex = i;
 					}
-					int globalMinIndex = -1;
-					for (int i = 0; i < globalCEs.size(); i++) {
-						final int prevLength = globalMinIndex == -1
-								? Integer.MAX_VALUE : globalCEs.get(globalMinIndex).events().size();
-						final int curLength = globalCEs.get(i).events().size();
-						if (curLength < prevLength) {
-							globalMinIndex = i;
-						}
+				}
+				int globalMinIndex = -1;
+				for (int i = 0; i < globalCEs.size(); i++) {
+					final int prevLength = globalMinIndex == -1
+							? Integer.MAX_VALUE : globalCEs.get(globalMinIndex).events().size();
+					final int curLength = globalCEs.get(i).events().size();
+					if (curLength < prevLength) {
+						globalMinIndex = i;
 					}
-					if (normalMinIndex == -1 && globalMinIndex != -1) {
-						// add global CE
-						addCounterexample(logger, size, globalCEs.get(globalMinIndex), globalNegativeForest);
-					} else if (normalMinIndex != -1 && globalMinIndex == -1) {
-						// add normal CE
-						addCounterexample(logger, size, normalCEs.get(normalMinIndex), negativeForest);
-					} else {
-						final int normalLength = normalCEs.get(normalMinIndex).events().size();
-						final int globalLength = globalCEs.get(globalMinIndex).events().size();
-						// always add global
-						addCounterexample(logger, size, globalCEs.get(globalMinIndex), globalNegativeForest);
-						// add normal if it is not longer
-						if (normalLength <= globalLength) {
-							addCounterexample(logger, size, normalCEs.get(normalMinIndex), negativeForest);
-						}
-					}
+				}
+				if (normalMinIndex == -1 && globalMinIndex != -1) {
+					// add global CE
+					addCounterexample(logger, size, globalCEs.get(globalMinIndex), globalNegativeForest);
+				} else if (normalMinIndex != -1 && globalMinIndex == -1) {
+					// add normal CE
+					addCounterexample(logger, size, normalCEs.get(normalMinIndex), negativeForest);
 				} else {
-					// add everything
-					for (Counterexample ce : normalCEs) {
-						addCounterexample(logger, size, ce, negativeForest);
-					}
-					for (Counterexample ce : globalCEs) {
-						addCounterexample(logger, size, ce, globalNegativeForest);
+					final int normalLength = normalCEs.get(normalMinIndex).events().size();
+					final int globalLength = globalCEs.get(globalMinIndex).events().size();
+					// always add global
+					addCounterexample(logger, size, globalCEs.get(globalMinIndex), globalNegativeForest);
+					// add normal if it is not longer
+					if (normalLength <= globalLength) {
+						addCounterexample(logger, size, normalCEs.get(normalMinIndex), negativeForest);
 					}
 				}
 			}

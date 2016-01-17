@@ -1,4 +1,4 @@
-package main.plant;
+package main;
 
 /**
  * (c) Igor Buzhinsky
@@ -22,21 +22,20 @@ import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
+import org.kohsuke.args4j.spi.BooleanOptionHandler;
 
 import scenario.StringScenario;
-import structures.plant.MooreNode;
-import structures.plant.NegativePlantScenarioForest;
-import structures.plant.NondetMooreAutomaton;
-import structures.plant.PositivePlantScenarioForest;
-import algorithms.automaton_builders.PlantAutomatonBuilder;
+import structures.Automaton;
+import structures.NegativeScenarioTree;
+import structures.Node;
+import structures.ScenarioTree;
+import algorithms.automaton_builders.FastAutomatonBuilder;
 import egorov.ltl.LtlParseException;
 import egorov.ltl.LtlParser;
 import egorov.ltl.grammar.LtlNode;
-import egorov.verifier.Counterexample;
 import egorov.verifier.Verifier;
-import egorov.verifier.NondetMooreVerifierPair;
 
-public class PlantBuilderMain {
+public class FastAutomatonBuilderMain {
 	@Argument(usage = "paths to files with scenarios", metaVar = "files", required = true)
 	private List<String> arguments = new ArrayList<>();
 
@@ -74,9 +73,6 @@ public class PlantBuilderMain {
 	@Option(name = "--ltl", aliases = { "-lt" }, usage = "file with LTL properties (optional)", metaVar = "<file>")
 	private String ltlFilePath;
 	
-	@Option(name = "--actionspec", aliases = { "-as" }, usage = "file with action propositional formulae", metaVar = "<file>")
-	private String actionspecFilePath;
-
 	@Option(name = "--negsc", aliases = { "-ns" }, usage = "file with negative scenarios (optional)",
 			metaVar = "<file>")
 	private String negscFilePath;
@@ -84,8 +80,8 @@ public class PlantBuilderMain {
 	@Option(name = "--timeout", aliases = { "-to" }, usage = "solver timeout (sec)", metaVar = "<timeout>")
 	private int timeout = 60 * 60 * 24;
 
-	@Option(name = "--nusmv", aliases = { "-nusmv" }, usage = "file for NuSMV output (optional)", metaVar = "<file>")
-	private String nusmvFilePath;
+	@Option(name = "--complete", aliases = { "-cm" }, handler = BooleanOptionHandler.class, usage = "completeness")
+	private boolean complete;
 	
 	private void launcher(String[] args) throws IOException {
 		Locale.setDefault(Locale.US);
@@ -94,7 +90,7 @@ public class PlantBuilderMain {
 		try {
 			parser.parseArgument(args);
 		} catch (CmdLineException e) {
-			System.out.println("Plant automaton builder from scenarios and LTL formulae");
+			System.out.println("FSM builder from scenarios and LTL formulae");
 			System.out.println("Authors: Igor Buzhinsky (igor.buzhinsky@gmail.com), Vladimir Ulyantsev (ulyantsev@rain.ifmo.ru)\n");
 			System.out.print("Usage: ");
 			parser.printSingleLineUsage(System.out);
@@ -119,7 +115,7 @@ public class PlantBuilderMain {
 			}
 		}
 
-		final PositivePlantScenarioForest positiveForest = new PositivePlantScenarioForest();
+		final ScenarioTree positiveForest = new ScenarioTree();
 		for (String filePath : arguments) {
 			try {
 				positiveForest.load(filePath, varNumber);
@@ -192,7 +188,7 @@ public class PlantBuilderMain {
 			}
 			
 			final List<StringScenario> negativeScenarios = new ArrayList<>();
-			final NegativePlantScenarioForest negativeForest = new NegativePlantScenarioForest();
+			final NegativeScenarioTree negativeForest = new NegativeScenarioTree();
 			if (negscFilePath != null) {
 				negativeScenarios.addAll(StringScenario.loadScenarios(negscFilePath, varNumber));
 				negativeForest.load(negscFilePath, varNumber);
@@ -201,10 +197,10 @@ public class PlantBuilderMain {
 			long startTime = System.currentTimeMillis();
 			logger.info("Start building automaton");
 			
-			final NondetMooreVerifierPair verifier = new NondetMooreVerifierPair(logger, strFormulae, events, actions, varNumber);
+			final Verifier verifier = new Verifier(logger, strFormulae, events, actions, varNumber);
 			final long finishTime = System.currentTimeMillis() + timeout * 1000;
-			final Optional<NondetMooreAutomaton> resultAutomaton = PlantAutomatonBuilder.build(logger, positiveForest, negativeForest, size,
-					resultFilePath, ltlFilePath, actionspecFilePath, formulae, events, actions, verifier, finishTime);
+			final Optional<Automaton> resultAutomaton = FastAutomatonBuilder.build(logger, positiveForest, negativeForest, size,
+					resultFilePath, ltlFilePath, formulae, events, actions, verifier, finishTime, complete);
 			final double executionTime = (System.currentTimeMillis() - startTime) / 1000.;
 			
 			if (!resultAutomaton.isPresent()) {
@@ -214,13 +210,16 @@ public class PlantBuilderMain {
 				logger.info("Automaton with " + size + " states WAS FOUND!");
 				logger.info("Automaton builder execution time: " + executionTime);
 				
-				if (resultAutomaton.get().isCompliantWithScenarios(scenarios, true)) {
+				for (StringScenario sc : scenarios) {
+					System.out.println(resultAutomaton.get().isCompliantWithScenario(sc));
+				}
+				if (scenarios.stream().allMatch(sc -> resultAutomaton.get().isCompliantWithScenario(sc))) {
 					logger.info("COMPLIES WITH SCENARIOS");
 				} else {
 					logger.severe("NOT COMPLIES WITH SCENARIOS");
 				}
 				
-				if (resultAutomaton.get().isCompliantWithScenarios(negativeScenarios, false)) {
+				if (negativeScenarios.stream().allMatch(sc -> !resultAutomaton.get().isCompliantWithScenario(sc))) {
 					logger.info("COMPLIES WITH NEGATIVE SCENARIOS");
 				} else {
 					logger.severe("NOT COMPLIES WITH NEGATIVE SCENARIOS");
@@ -233,33 +232,29 @@ public class PlantBuilderMain {
 					logger.warning("File " + resultFilePath + " not found: " + e.getMessage());
 				}
 				
-				if (nusmvFilePath != null) {
-					try (PrintWriter pw = new PrintWriter(new File(nusmvFilePath))) {
-						pw.println(resultAutomaton.get().toNuSMVString(events, actions));
-					} catch (FileNotFoundException e) {
-						logger.warning("File " + nusmvFilePath + " not found: " + e.getMessage());
-					}
-				}
-				
-				final Verifier usualVerifier = new Verifier(logger, strFormulae, events, actions, varNumber);
-				final List<Counterexample> counterexamples =
-						usualVerifier.verifyNondetMoore(resultAutomaton.get());
-				if (counterexamples.stream().allMatch(Counterexample::isEmpty)) {
+				boolean verified = verifier.verify(resultAutomaton.get());
+				if (verified) {
 					logger.info("VERIFIED");
 				} else {
 					logger.severe("NOT VERIFIED");
 				}
 				
 				// completeness check
-				boolean complete = true;
-				for (MooreNode s : resultAutomaton.get().states()) {
-					for (String event : events) {
-						if (!s.transitions().stream().anyMatch(t -> t.event().endsWith(event))) {
-							complete = false;
+				boolean isComplete = true;
+				if (complete) {
+					for (Node s : resultAutomaton.get().states()) {
+						if (s.transitionCount() != events.size()) {
+							isComplete = false;
+						}
+					}
+				} else {
+					for (Node s : resultAutomaton.get().states()) {
+						if (s.transitionCount() == 0) {
+							isComplete = false;
 						}
 					}
 				}
-				if (complete) {
+				if (isComplete) {
 					logger.info("COMPLETE");
 				} else {
 					logger.severe("INCOMPLETE");
@@ -281,6 +276,6 @@ public class PlantBuilderMain {
 	}
 
 	public static void main(String[] args) {
-		new PlantBuilderMain().run(args);
+		new FastAutomatonBuilderMain().run(args);
 	}
 }

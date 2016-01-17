@@ -189,10 +189,10 @@ public abstract class FormulaBuilder {
 		for (Node node : tree.nodes()) {
 			for (Transition t : node.transitions()) {
 				for (int nodeColor = 0; nodeColor < colorSize; nodeColor++) {
+					final BooleanVariable nodeVar = xVar(node.number(), nodeColor);
 					for (int childColor = 0; childColor < colorSize; childColor++) {
-						BooleanVariable nodeVar = xVar(node.number(), nodeColor);
-						BooleanVariable childVar = xVar(t.dst().number(), childColor);
-						BooleanVariable relationVar = yVar(nodeColor, childColor, t.event());
+						final BooleanVariable childVar = xVar(t.dst().number(), childColor);
+						final BooleanVariable relationVar = yVar(nodeColor, childColor, t.event());
 						constraints.add(BinaryOperation.or(relationVar, nodeVar.not(), childVar.not()));
 						constraints.add(BinaryOperation.or(relationVar.not(), nodeVar.not(), childVar));
 					}

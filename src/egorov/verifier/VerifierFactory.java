@@ -67,7 +67,7 @@ public class VerifierFactory {
         		 .collect(Collectors.toList()));
     }
         
-    public void configureStateMachine(Automaton automaton) {
+    public void configureDetMealyMachine(Automaton automaton) {
     	final StateMachine machine = new StateMachine();
 
     	final SimpleState[] statesArr = new SimpleState[automaton.stateCount()];

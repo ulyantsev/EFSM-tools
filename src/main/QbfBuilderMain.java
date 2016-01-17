@@ -27,7 +27,7 @@ import sat_solving.SatSolver;
 import sat_solving.SolvingStrategy;
 import scenario.StringScenario;
 import structures.Automaton;
-import structures.NegativeScenariosTree;
+import structures.NegativeScenarioTree;
 import structures.Node;
 import structures.ScenarioTree;
 import structures.Transition;
@@ -255,7 +255,7 @@ public class QbfBuilderMain {
 				scenarios.addAll(StringScenario.loadScenarios(scenarioPath, varNumber));
 			}
 			
-			final NegativeScenariosTree negativeTree = new NegativeScenariosTree();
+			final NegativeScenarioTree negativeTree = new NegativeScenarioTree();
 			if (negscFilePath != null) {
 				negativeTree.load(negscFilePath, varNumber);
 			}

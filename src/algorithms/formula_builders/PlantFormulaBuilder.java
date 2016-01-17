@@ -19,18 +19,18 @@ import bnf_formulae.BooleanVariable;
  */
 
 public class PlantFormulaBuilder {
-	protected final int colorSize;
-	protected final List<String> events;
-	protected final List<String> actions;
-	protected final PositivePlantScenarioForest positiveForest;
-	protected final NegativePlantScenarioForest negativeForest;
+	private final int colorSize;
+	private final List<String> events;
+	private final List<String> actions;
+	private final PositivePlantScenarioForest positiveForest;
+	private final NegativePlantScenarioForest negativeForest;
 	
 	/**
 	 * Special forest (actually, tree) for G(...) specifications, which are processed separately
 	 */
-	protected final NegativePlantScenarioForest globalNegativeForest;
+	private final NegativePlantScenarioForest globalNegativeForest;
 	
-	protected final List<BooleanVariable> vars = new ArrayList<>();
+	private final List<BooleanVariable> vars = new ArrayList<>();
 	
 	public PlantFormulaBuilder(int colorSize, PositivePlantScenarioForest positiveForest,
 			NegativePlantScenarioForest negativeForest, NegativePlantScenarioForest globalNegativeForest,

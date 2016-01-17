@@ -42,7 +42,7 @@
     <property name="safety.ltl.generator.main" value="main/misc/SafetyLTLGeneratorMain"/>
     <property name="safety.ltl.generator.jar" value="safety-ltl-generator.jar"/>
 
-    <property name="max.clique.finder.main" value="main/misc/MaxCliqueFinderMain"/>
+    <property name="max.clique.finder.main" value="main/MaxCliqueFinderMain"/>
     <property name="max.clique.finder.jar" value="max-clique-finder.jar"/>
 
     <property name="plant.generator.main" value="main/plant/PlantAutomatonGeneratorMain"/>
@@ -53,6 +53,9 @@
 
     <property name="plant.scenario.generator.main" value="main/plant/PlantScenarioGeneratorMain"/>
     <property name="plant.scenario.generator.jar" value="plant-scenario-generator.jar"/>
+
+    <property name="fast.automaton.generator.main" value="main/FastAutomatonBuilderMain"/>
+    <property name="fast.automaton.generator.jar" value="fast-automaton-generator.jar"/>
 
     <target name="all" 
             depends="consistency-jar, 
@@ -69,7 +72,8 @@
                      max-clique-finder-jar,
                      plant-generator-jar,
                      verifier-jar,
-                     plant-scenario-generator-jar">
+                     plant-scenario-generator-jar,
+                     fast-automaton-generator-jar">
     </target>
 
     <target name="minizinc-generator-jar">
@@ -405,6 +409,33 @@
             </manifest>
             <zipfileset src="${args4j.path}" excludes="META-INF/*.SF"/>
             <zipfileset src="${commons.lang3.path}" excludes="META-INF/*.SF"/>
+        </jar>
+
+        <delete dir="${bin.dir}"/>
+    </target>
+
+    <target name="fast-automaton-generator-jar">
+        <mkdir dir="${bin.dir}"/>
+        <javac srcdir="${src.dir}"
+               destdir="${bin.dir}"
+               classpath="${args4j.path}:${commons.lang3.path}:${javassist.path}:${ltl2ba.path}:${ognl.path}"
+               includeantruntime="false"
+               debug="true"
+               debuglevel="lines,vars,source">
+            <include name="${fast.automaton.generator.main}.java"/>
+        </javac>
+
+        <jar destfile="${jars.dir}/${fast.automaton.generator.jar}"
+             basedir="${bin.dir}">
+            <manifest>
+                <attribute name="main-class" value="${fast.automaton.generator.main}"/>
+            </manifest>
+
+            <zipfileset src="${args4j.path}" excludes="meta-inf/*.sf"/>
+            <zipfileset src="${commons.lang3.path}" excludes="meta-inf/*.sf"/>
+            <zipfileset src="${javassist.path}" excludes="meta-inf/*.sf"/>
+            <zipfileset src="${ltl2ba.path}" excludes="meta-inf/*.sf"/>
+            <zipfileset src="${ognl.path}" excludes="meta-inf/*.sf"/>
         </jar>
 
         <delete dir="${bin.dir}"/>
