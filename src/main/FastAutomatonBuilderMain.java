@@ -210,9 +210,6 @@ public class FastAutomatonBuilderMain {
 				logger.info("Automaton with " + size + " states WAS FOUND!");
 				logger.info("Automaton builder execution time: " + executionTime);
 				
-				for (StringScenario sc : scenarios) {
-					System.out.println(resultAutomaton.get().isCompliantWithScenario(sc));
-				}
 				if (scenarios.stream().allMatch(sc -> resultAutomaton.get().isCompliantWithScenario(sc))) {
 					logger.info("COMPLIES WITH SCENARIOS");
 				} else {

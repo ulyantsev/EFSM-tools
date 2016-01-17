@@ -16,7 +16,7 @@ import bool.MyBooleanExpression;
 
 public class StringScenario {
 	private static String removeVariables(String input, int varNumber) throws ParseException {
-		final Pattern p = Pattern.compile("(\\w+)\\s+\\[([^\\[\\]]+)\\]");
+		final Pattern p = Pattern.compile("(\\w+)(\\s)*+\\[([^\\[\\]]+)\\]");
 		final StringBuilder sb = new StringBuilder();
 		final Matcher m = p.matcher(input);
 		int lastPos = 0;
@@ -24,7 +24,7 @@ public class StringScenario {
 			final String event = m.group(1);
 			sb.append(input.substring(lastPos, m.start()));
 			final List<String> expansion = new ArrayList<>();
-			final MyBooleanExpression expr = MyBooleanExpression.get(m.group(2));
+			final MyBooleanExpression expr = MyBooleanExpression.get(m.group(3));
 			final List<String> varAssignments = expr.getSatVarCombinations(varNumber);
 			for (String varAssignment : varAssignments) {
 				expansion.add(event + varAssignment);
