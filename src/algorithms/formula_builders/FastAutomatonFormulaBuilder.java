@@ -33,8 +33,10 @@ public class FastAutomatonFormulaBuilder {
 	
 	private final List<BooleanVariable> vars = new ArrayList<>();
 	
+	private final NegativeScenarioTree globalNegativeTree;
+	
 	public FastAutomatonFormulaBuilder(int colorSize, ScenarioTree positiveForest,
-			NegativeScenarioTree negativeTree,
+			NegativeScenarioTree negativeTree, NegativeScenarioTree globalNegativeTree,
 			List<String> events, List<String> actions, boolean complete, boolean bfsConstraints) {
 		this.colorSize = colorSize;
 		this.events = events;
@@ -43,6 +45,7 @@ public class FastAutomatonFormulaBuilder {
 		this.negativeTree = negativeTree;
 		this.complete = complete;
 		this.bfsConstraints = bfsConstraints;
+		this.globalNegativeTree = globalNegativeTree;
 	}
 	
 	public static BooleanVariable xVar(int node, int color) {
@@ -57,8 +60,8 @@ public class FastAutomatonFormulaBuilder {
 		return BooleanVariable.byName("z", from, action, event).get();
 	}
 	
-	public static BooleanVariable xxVar(int node, int color) {
-		return BooleanVariable.byName("xx", node, color).get();
+	public static BooleanVariable xxVar(int node, int color, boolean isGlobal) {
+		return BooleanVariable.byName(isGlobal ? "xxg" : "xx", node, color).get();
 	}
 	
 	private void addPositiveVars() {
@@ -88,6 +91,11 @@ public class FastAutomatonFormulaBuilder {
 		for (Node node : negativeTree.nodes()) {
 			for (int color = 0; color < colorSize; color++) {
 				vars.add(BooleanVariable.getOrCreate("xx", node.number(), color));
+			}
+		}
+		for (Node node : globalNegativeTree.nodes()) {
+			for (int color = 0; color < colorSize; color++) {
+				vars.add(BooleanVariable.getOrCreate("xxg", node.number(), color));
 			}
 		}
 	}
@@ -226,27 +234,40 @@ public class FastAutomatonFormulaBuilder {
 		}
 	}
 	
+	// negative constraints
+	
 	private void negativeScenarioBasis(List<int[]> constraints) {
 		constraints.add(new int[] {
-				xxVar(negativeTree.getRoot().number(), 0).number
+				xxVar(0, 0, false).number
 		});
 	}
 	
-	private void negativeScenarioPropagation(List<int[]> constraints) {
+	private void globalNegativeScenarioBasis(List<int[]> constraints) {
+		for (int i = 0; i < colorSize; i++) {
+			constraints.add(new int[] {
+					xxVar(0, i, true).number
+			});
+		}
+	}
+	
+	private void negativeScenarioPropagation(List<int[]> constraints, boolean isGlobal) {
 		final int[] xxParent = new int[colorSize];
 		final int[][] actionEq = new int[colorSize][actions.size()];
 		final int[] xxChild = new int[colorSize];
 
-		for (NegativeNode node : negativeTree.nodes()) {
+		final NegativeScenarioTree tree =
+				isGlobal ? globalNegativeTree : negativeTree;
+		
+		for (NegativeNode node : tree.nodes()) {
 			boolean xxParentFilled = false;
 			for (Transition edge : node.transitions()) {
 				final NegativeNode childNode = (NegativeNode) edge.dst();
-				if (!negativeTree.processChild(childNode)) {
+				if (!tree.processChild(childNode)) {
 					continue;
 				}
 				if (!xxParentFilled) {
 					for (int color = 0; color < colorSize; color++) {
-						xxParent[color] = xxVar(node.number(), color).number;
+						xxParent[color] = xxVar(node.number(), color, isGlobal).number;
 					}
 					xxParentFilled = true;
 				}
@@ -261,7 +282,7 @@ public class FastAutomatonFormulaBuilder {
 					}
 				}
 				for (int color = 0; color < colorSize; color++) {
-					xxChild[color] = xxVar(childNode.number(), color).number;
+					xxChild[color] = xxVar(childNode.number(), color, isGlobal).number;
 				}
 				for (int color1 = 0; color1 < colorSize; color1++) {
 					for (int color2 = 0; color2 < colorSize; color2++) {
@@ -277,13 +298,16 @@ public class FastAutomatonFormulaBuilder {
 		}
 	}
 	
-	private void negativeScenarioTermination(List<int[]> constraints) {
-		for (NegativeNode node : negativeTree.nodes()) {
+	private void negativeScenarioTermination(List<int[]> constraints, boolean isGlobal) {
+		final NegativeScenarioTree tree =
+				isGlobal ? globalNegativeTree : negativeTree;
+		
+		for (NegativeNode node : tree.nodes()) {
 			final int nodeNumber = node.number();
 			if (node.strongInvalid()) {
 				for (int color = 0; color < colorSize; color++) {
 					constraints.add(new int[] {
-							-xxVar(nodeNumber, color).number
+							-xxVar(nodeNumber, color, isGlobal).number
 					});
 				}
 			} else {
@@ -291,8 +315,8 @@ public class FastAutomatonFormulaBuilder {
 					final int loopNumber = loop.number();
 					for (int color = 0; color < colorSize; color++) {
 						constraints.add(new int[] {
-								-xxVar(nodeNumber, color).number,
-								-xxVar(loopNumber, color).number
+								-xxVar(nodeNumber, color, isGlobal).number,
+								-xxVar(loopNumber, color, isGlobal).number
 						});
 					}
 				}
@@ -327,8 +351,11 @@ public class FastAutomatonFormulaBuilder {
 	public List<int[]> negativeConstraints() {
 		final List<int[]> constraints = new ArrayList<>();
 		negativeScenarioBasis(constraints);
-		negativeScenarioPropagation(constraints);
-		negativeScenarioTermination(constraints);
+		globalNegativeScenarioBasis(constraints);
+		for (boolean isGlobal : Arrays.asList(false, true)) {
+			negativeScenarioPropagation(constraints, isGlobal);
+			negativeScenarioTermination(constraints, isGlobal);
+		}
 		return constraints;
 	}
 	

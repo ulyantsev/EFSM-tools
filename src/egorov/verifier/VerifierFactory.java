@@ -70,10 +70,17 @@ public class VerifierFactory {
     public void configureDetMealyMachine(Automaton automaton) {
     	final StateMachine machine = new StateMachine();
 
+    	final SimpleState nondetInit = verifyFromAllStates
+    			? new SimpleState("nondet_init", true)
+    			: null;
+    	if (verifyFromAllStates) {
+    		machine.addState(nondetInit);
+    	}
+    	
     	final SimpleState[] statesArr = new SimpleState[automaton.stateCount()];
 		for (int i = 0; i < automaton.stateCount(); i++) {
 			statesArr[i] = new SimpleState(String.valueOf(i),
-                    automaton.startState().number() == i);
+                    automaton.startState().number() == i && !verifyFromAllStates);
 		}
 		for (int i = 0; i < automaton.stateCount(); i++) {
 			final Node currentState = automaton.state(i);
@@ -82,6 +89,9 @@ public class VerifierFactory {
                         extractEvent(t.event()), statesArr[t.dst().number()]);
 				Arrays.stream(t.actions().getActions()).forEach(out::addAction);
 				statesArr[i].addOutgoingTransition(out);
+				if (verifyFromAllStates) {
+					nondetInit.addOutgoingTransition(out);
+				}
 			}
 			machine.addState(statesArr[i]);
 		}

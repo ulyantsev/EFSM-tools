@@ -10,6 +10,7 @@ import java.util.TreeSet;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import structures.Automaton;
 import structures.Transition;
@@ -27,6 +28,30 @@ public class Verifier {
 		this(logger, ltlFormulae, events, actions, varNumber, false);
 	}
 	
+	public static final String G_REGEX = "^ *G *\\(.*$";
+	
+	public Verifier globalVerifier() {
+		final VerifierFactory globalFactory = new VerifierFactory(true);
+		
+		final List<String> projection = ltlFormulae.stream()
+				.filter(f -> f.matches(G_REGEX))
+				.collect(Collectors.toList());
+		try {
+			globalFactory.prepareFormulas(projection);
+		} catch (TranslationException | LtlParseException e) {
+			throw new RuntimeException(e);
+		}
+		
+		return new Verifier(projection, allEvents, allActions, globalFactory);
+	}
+	
+	private Verifier(List<String> ltlFormulae, Set<String> events, Set<String> actions, VerifierFactory verifier) {
+		this.ltlFormulae = ltlFormulae;
+		allEvents = events;
+		allActions = actions;
+		this.verifier = verifier;
+	}
+		
 	public Verifier(Logger logger, List<String> ltlFormulae, List<String> events, List<String> actions, int varNumber, boolean verifyFromAllStates) {
 		this.ltlFormulae = ltlFormulae;
 		logger.info(ltlFormulae.toString());

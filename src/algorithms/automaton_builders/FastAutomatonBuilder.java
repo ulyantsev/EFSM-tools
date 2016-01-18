@@ -7,8 +7,10 @@ package algorithms.automaton_builders;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -90,18 +92,38 @@ public class FastAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 				: ("(" + String.join(")&(", additionalFormulae) + ")");
 	}
 	
-	public static Optional<Automaton> build(Logger logger, ScenarioTree positiveForest,
-			NegativeScenarioTree negativeForest, int size, String resultFilePath,
+	private static boolean containsTrue(boolean[] array){
+	    for (boolean val : array) {
+	        if (val) {
+	            return true;
+	        }
+	    }
+	    return false;
+	}
+	
+	public static Optional<Automaton> build(Logger logger, ScenarioTree positiveTree,
+			NegativeScenarioTree negativeTree, int size, String resultFilePath,
 			List<String> strFormulae, List<LtlNode> formulae, List<String> events,
 			List<String> actions, Verifier verifier, long finishTime,
-			boolean complete, boolean bfsConstraints) throws IOException {
+			boolean complete, boolean bfsConstraints, boolean useGlobalTree) throws IOException {
 		deleteTrash();
+		
+		final boolean[] ltlIsG = new boolean[strFormulae.size()];
+		for (int i = 0; i < strFormulae.size(); i++) {
+			ltlIsG[i] = strFormulae.get(i).matches(Verifier.G_REGEX);
+		}
+		if (!containsTrue(ltlIsG)) {
+			useGlobalTree = false;
+		}
+		final Verifier globalVerifier = useGlobalTree
+				? verifier.globalVerifier() : null;
+		final NegativeScenarioTree globalTree = new NegativeScenarioTree();
 		
 		IncrementalInterface incr = null;
 		
 		for (int iteration = 0; System.currentTimeMillis() < finishTime; iteration++) {
-			final FastAutomatonFormulaBuilder builder = new FastAutomatonFormulaBuilder(size, positiveForest,
-					negativeForest, events, actions, complete, bfsConstraints);
+			final FastAutomatonFormulaBuilder builder = new FastAutomatonFormulaBuilder(size, positiveTree,
+					negativeTree, globalTree, events, actions, complete, bfsConstraints);
 			builder.createVars();
 			final int secondsLeft = timeLeftForSolver(finishTime);
 			if (iteration == 0) {
@@ -118,7 +140,7 @@ public class FastAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 			}
 
 			final Automaton automaton = constructAutomatonFromAssignment(logger, ass.list(),
-					positiveForest, size, true,
+					positiveTree, size, true,
 					complete ? CompletenessType.NORMAL : CompletenessType.NO_DEAD_ENDS).getLeft();
 
 			// verify
@@ -128,10 +150,31 @@ public class FastAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 			if (counterexamples.stream().allMatch(Counterexample::isEmpty)) {
 				incr.halt();
 				return reportResult(logger, iteration, Optional.of(automaton));
+			} else if (useGlobalTree) {
+				final List<Counterexample> globalCounterexamples =
+						globalVerifier.verifyWithCounterexamplesWithNoDeadEndRemoval(automaton);
+				final Set<Counterexample> normalCEs = new LinkedHashSet<>();
+				final Set<Counterexample> globalCEs = new LinkedHashSet<>();
+				int globalIndex = 0;
+				for (int i = 0; i < counterexamples.size(); i++) {
+					final Counterexample normalCE = counterexamples.get(i);
+					if (ltlIsG[i]) {
+						final Counterexample globalCE = globalCounterexamples.get(globalIndex++);
+						if (!globalCE.isEmpty() && globalCE.loopLength == 0) {
+							globalCEs.add(globalCE);
+						} else if (!normalCE.isEmpty()) {
+							normalCEs.add(normalCE);
+						}
+					} else if (!normalCE.isEmpty()) {
+						normalCEs.add(normalCE);
+					}
+				}
+				normalCEs.stream().forEach(ce -> addCounterexample(logger, size, ce, negativeTree));
+				globalCEs.stream().forEach(ce -> addCounterexample(logger, size, ce, globalTree));
 			} else {
 				counterexamples.stream()
 						.filter(ce -> !ce.isEmpty()).distinct()
-						.forEach(ce -> addCounterexample(logger, size, ce, negativeForest));
+						.forEach(ce -> addCounterexample(logger, size, ce, negativeTree));
 			}
 		}
 		incr.halt();

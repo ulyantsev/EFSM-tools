@@ -26,7 +26,7 @@ for l in 50 100 200; do
             rm -f "$fsm"
             java -Xms2G -Xmx4G -jar ../jars/fast-automaton-generator.jar "$sc_name" \
                 --ltl "$ltl_name" --size $size --eventNumber 2 --actionNumber 2 --varNumber 2 \
-                --timeout $timeout --result "$fsm" \
+                --timeout $timeout --result "$fsm" --bfsConstraints \
                 2>&1 | grep "\\(INFO\\|WARNING\\|SEVERE\\|Exception\\|OutOfMemoryError|\\AssertionError\\)" > $ev_name.log && touch $ev_name.done
         done
     done

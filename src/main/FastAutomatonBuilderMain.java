@@ -86,6 +86,10 @@ public class FastAutomatonBuilderMain {
 	@Option(name = "--bfsConstraints", aliases = { "-bc" }, handler = BooleanOptionHandler.class, usage = "BFS symmetry breaking")
 	private boolean bfsConstraints;
 	
+	@Option(name = "--globalTree", aliases = { "-gt" }, handler = BooleanOptionHandler.class,
+			usage = "use a special negative tree to handle finite counterexamples produced from G(...) formulae")
+	private boolean globalTree;
+	
 	private void launcher(String[] args) throws IOException {
 		Locale.setDefault(Locale.US);
 
@@ -202,8 +206,10 @@ public class FastAutomatonBuilderMain {
 			
 			final Verifier verifier = new Verifier(logger, strFormulae, events, actions, varNumber);
 			final long finishTime = System.currentTimeMillis() + timeout * 1000;
-			final Optional<Automaton> resultAutomaton = FastAutomatonBuilder.build(logger, positiveForest, negativeForest, size,
-					resultFilePath, strFormulae, formulae, events, actions, verifier, finishTime, complete, bfsConstraints);
+			final Optional<Automaton> resultAutomaton = FastAutomatonBuilder.build(logger,
+					positiveForest, negativeForest, size, resultFilePath, strFormulae, formulae,
+					events, actions, verifier, finishTime, complete, bfsConstraints,
+					globalTree);
 			final double executionTime = (System.currentTimeMillis() - startTime) / 1000.;
 			
 			if (!resultAutomaton.isPresent()) {
