@@ -83,6 +83,9 @@ public class FastAutomatonBuilderMain {
 	@Option(name = "--complete", aliases = { "-cm" }, handler = BooleanOptionHandler.class, usage = "completeness")
 	private boolean complete;
 	
+	@Option(name = "--bfsConstraints", aliases = { "-bc" }, handler = BooleanOptionHandler.class, usage = "BFS symmetry breaking")
+	private boolean bfsConstraints;
+	
 	private void launcher(String[] args) throws IOException {
 		Locale.setDefault(Locale.US);
 
@@ -200,7 +203,7 @@ public class FastAutomatonBuilderMain {
 			final Verifier verifier = new Verifier(logger, strFormulae, events, actions, varNumber);
 			final long finishTime = System.currentTimeMillis() + timeout * 1000;
 			final Optional<Automaton> resultAutomaton = FastAutomatonBuilder.build(logger, positiveForest, negativeForest, size,
-					resultFilePath, ltlFilePath, formulae, events, actions, verifier, finishTime, complete);
+					resultFilePath, strFormulae, formulae, events, actions, verifier, finishTime, complete, bfsConstraints);
 			final double executionTime = (System.currentTimeMillis() - startTime) / 1000.;
 			
 			if (!resultAutomaton.isPresent()) {

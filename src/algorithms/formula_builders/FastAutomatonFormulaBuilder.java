@@ -29,18 +29,20 @@ public class FastAutomatonFormulaBuilder {
 	private final ScenarioTree positiveTree;
 	private final NegativeScenarioTree negativeTree;
 	private final boolean complete;
+	private final boolean bfsConstraints;
 	
 	private final List<BooleanVariable> vars = new ArrayList<>();
 	
 	public FastAutomatonFormulaBuilder(int colorSize, ScenarioTree positiveForest,
 			NegativeScenarioTree negativeTree,
-			List<String> events, List<String> actions, boolean complete) {
+			List<String> events, List<String> actions, boolean complete, boolean bfsConstraints) {
 		this.colorSize = colorSize;
 		this.events = events;
 		this.actions = actions;
 		this.positiveTree = positiveForest;
 		this.negativeTree = negativeTree;
 		this.complete = complete;
+		this.bfsConstraints = bfsConstraints;
 	}
 	
 	public static BooleanVariable xVar(int node, int color) {
@@ -76,6 +78,9 @@ public class FastAutomatonFormulaBuilder {
 					vars.add(BooleanVariable.getOrCreate("z", color, action, e));
 				}
 			}
+		}
+		if (bfsConstraints) {
+			addBFSVars();
 		}
 	}
 	
@@ -310,6 +315,12 @@ public class FastAutomatonFormulaBuilder {
 		eachNodeHasColorConstraints(constraints);
 		eachNodeHasOnlyColorConstraints(constraints);
 		scenarioActionConstraints(constraints);
+		if (bfsConstraints) {
+			parentConstraints(constraints);
+			pDefinitions(constraints);
+			tDefinitions(constraints);
+			childrenOrderConstraints(constraints);
+		}
 		return constraints;
 	}
 	
@@ -319,5 +330,154 @@ public class FastAutomatonFormulaBuilder {
 		negativeScenarioPropagation(constraints);
 		negativeScenarioTermination(constraints);
 		return constraints;
+	}
+	
+	// BFS constraints
+	
+	private BooleanVariable pVar(int j, int i) {
+		return BooleanVariable.byName("p", j, i).get();
+	}
+	
+	private BooleanVariable tVar(int i, int j) {
+		return BooleanVariable.byName("t", i, j).get();
+	}
+	
+	private BooleanVariable mVar(String event, int i, int j) {
+		return BooleanVariable.byName("m", event, i, j).get();
+	}
+	
+	private void addBFSVars() {
+		// p_ji, t_ij
+		for (int i = 0; i < colorSize; i++) {
+			for (int j = i + 1; j < colorSize; j++) {
+				vars.add(BooleanVariable.getOrCreate("p", j, i));
+				vars.add(BooleanVariable.getOrCreate("t", i, j));
+			}
+		}
+		if (events.size() > 2) {
+			// m_efij
+			for (String e : events) {
+				for (int i = 0; i < colorSize; i++) {
+					for (int j = i + 1; j < colorSize; j++) {
+						vars.add(BooleanVariable.getOrCreate("m", e, i, j));
+					}
+				}
+			}
+		}
+	}
+	
+	private void parentConstraints(List<int[]> constraints) {
+		for (int j = 1; j < colorSize; j++) {
+			final int[] options = new int[j];
+			for (int i = 0; i < j; i++) {
+				options[i] = pVar(j, i).number;
+			}
+			constraints.add(options);
+		}
+		
+		for (int k = 0; k < colorSize; k++) {
+			for (int i = k + 1; i < colorSize; i++) {
+				for (int j = i + 1; j < colorSize - 1; j++) {
+					constraints.add(new int[] {
+							-pVar(j, i).number,
+							-pVar(j + 1, k).number
+					});
+				}
+			}
+		}
+	}
+	
+	private void pDefinitions(List<int[]> constraints) {
+		for (int i = 0; i < colorSize; i++) {
+			for (int j = i + 1; j < colorSize; j++) {
+				constraints.add(new int[] {
+						-pVar(j, i).number,
+						tVar(i, j).number
+				});
+				final int[] options = new int[i + 2];
+				for (int k = i - 1; k >= 0; k--) {
+					constraints.add(new int[] {
+							-pVar(j, i).number,
+							-tVar(k, j).number
+					});
+					options[k] = tVar(k, j).number;
+				}
+				options[i] = -tVar(i, j).number;
+				options[i + 1] = pVar(j, i).number;
+				constraints.add(options);
+			}
+		}
+	}
+	
+	private void tDefinitions(List<int[]> constraints) {
+		for (int i = 0; i < colorSize; i++) {
+			for (int j = i + 1; j < colorSize; j++) {
+				final int[] options = new int[events.size() + 1];
+				for (int ei = 0; ei < events.size(); ei++) {
+					final String e = events.get(ei);
+					constraints.add(new int[] {
+							-yVar(i, j, e).number,
+							tVar(i, j).number
+					});
+					options[ei] = yVar(i, j, e).number;
+				}
+				options[events.size()] = -tVar(i, j).number;
+				constraints.add(options);
+			}
+		}
+	}
+	
+	private void childrenOrderConstraints(List<int[]> constraints) {
+		if (events.size() > 2) {
+			// m definitions
+			for (int i = 0; i < colorSize; i++) {
+				for (int j = i + 1; j < colorSize; j++) {
+					for (int eventIndex1 = 0; eventIndex1 < events.size(); eventIndex1++) {
+						final String e1 = events.get(eventIndex1);
+						constraints.add(new int[] {
+								-mVar(e1, i, j).number,
+								yVar(i, j, e1).number
+						});
+						final int[] options = new int[eventIndex1 + 2];
+						for (int eventIndex2 = eventIndex1 - 1; eventIndex2 >= 0; eventIndex2--) {
+							final String e2 = events.get(eventIndex2);
+							constraints.add(new int[] {
+									-mVar(e1, i, j).number,
+									-yVar(i, j, e2).number
+							});
+							options[eventIndex2] = yVar(i, j, e2).number;
+						}
+						options[eventIndex1] = -yVar(i, j, e1).number;
+						options[eventIndex1 + 1] = mVar(e1, i, j).number;
+						constraints.add(options);
+					}
+				}
+			}
+			// children constraints
+			for (int i = 0; i < colorSize; i++) {
+				for (int j = i + 1; j < colorSize - 1; j++) {
+					for (int k = 0; k < events.size(); k++) {
+						for (int n = k + 1; n < events.size(); n++) {
+							constraints.add(new int[] {
+									-pVar(j, i).number,
+									-pVar(j + 1, i).number,
+									-mVar(events.get(n), i, j).number,
+									-mVar(events.get(k), i, j + 1).number
+							});
+						}
+					}
+				}
+			}
+		} else {
+			for (int i = 0; i < colorSize; i++) {
+				for (int j = i + 1; j < colorSize - 1; j++) {
+					constraints.add(new int[] {
+							-pVar(j, i).number,
+							-pVar(j + 1, i).number,
+							yVar(i, j, events.get(0)).number
+					});
+				}
+			}
+		}
 	}
 }

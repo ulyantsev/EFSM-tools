@@ -4,14 +4,11 @@ package algorithms.automaton_builders;
  * (c) Igor Buzhinsky
  */
 
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.Scanner;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -42,52 +39,49 @@ public class FastAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 	/*
 	 * LTL, G(<propositional formula>)
 	 */
-	private static String transitionSpecification(String ltlFilePath, int states,
-			List<String> events, List<String> actions) throws FileNotFoundException {
-		if (ltlFilePath == null) {
+	private static String transitionSpecification(List<String> strFormulae, int states,
+			List<String> events, List<String> actions) {
+		if (strFormulae.isEmpty()) {
 			return null;
 		}
 		final List<String> additionalFormulae = new ArrayList<>();
 		final String eventRegexStart = "(event|wasEvent)\\((ep\\.)?";
 		final String actionRegexStart = "(action|wasAction)\\((co\\.)?";
-		try (final Scanner sc = new Scanner(new File(ltlFilePath))) {
-			while (sc.hasNextLine()) {
-				String formula = sc.nextLine();
-				if (formula.isEmpty()) {
-					continue;
-				}
-				if (formula.startsWith("G(") && formula.endsWith(")")) {
-					formula = formula.substring(2, formula.length() - 1);
-				} else {
-					continue;
-				}
-				
-				// FIXME make a better check
-				if (formula.matches("^.*[GFXUR]\\s*\\(.*$")) {
-					continue;
-				}
-				
-				formula = ltl2limboole(formula);
-				for (int i = 0; i < states; i++) {
-					for (String event : events) {
-						String constraint = formula;
-						final FormulaList options = new FormulaList(BinaryOperations.OR);
-						for (int j = 0; j < states; j++) {
-							options.add(BooleanVariable.byName("y", i, j, event).get());
-						}
-						final String eRepl = options.assemble().toLimbooleString();
-						constraint = constraint.replaceAll(eventRegexStart + event + "\\)", eRepl);
-						for (String otherEvent : events) {
-							if (!otherEvent.equals(event)) {
-								constraint = constraint.replaceAll(eventRegexStart + otherEvent + "\\)", "(1&!1)");
-							}
-						}
-						for (String action : actions) {
-							final String acRepl = BooleanVariable.byName("z", i, action, event).get().toLimbooleString();
-							constraint = constraint.replaceAll(actionRegexStart + action + "\\)", acRepl);
-						}
-						additionalFormulae.add(constraint);
+		for (String formula : strFormulae) {
+			if (formula.isEmpty()) {
+				continue;
+			}
+			if (formula.startsWith("G(") && formula.endsWith(")")) {
+				formula = formula.substring(2, formula.length() - 1);
+			} else {
+				continue;
+			}
+			
+			// FIXME make a better check
+			if (formula.matches("^.*[GFXUR]\\s*\\(.*$")) {
+				continue;
+			}
+			
+			formula = ltl2limboole(formula);
+			for (int i = 0; i < states; i++) {
+				for (String event : events) {
+					String constraint = formula;
+					final FormulaList options = new FormulaList(BinaryOperations.OR);
+					for (int j = 0; j < states; j++) {
+						options.add(BooleanVariable.byName("y", i, j, event).get());
 					}
+					final String eRepl = options.assemble().toLimbooleString();
+					constraint = constraint.replaceAll(eventRegexStart + event + "\\)", eRepl);
+					for (String otherEvent : events) {
+						if (!otherEvent.equals(event)) {
+							constraint = constraint.replaceAll(eventRegexStart + otherEvent + "\\)", "(1&!1)");
+						}
+					}
+					for (String action : actions) {
+						final String acRepl = BooleanVariable.byName("z", i, action, event).get().toLimbooleString();
+						constraint = constraint.replaceAll(actionRegexStart + action + "\\)", acRepl);
+					}
+					additionalFormulae.add(constraint);
 				}
 			}
 		}
@@ -98,21 +92,21 @@ public class FastAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 	
 	public static Optional<Automaton> build(Logger logger, ScenarioTree positiveForest,
 			NegativeScenarioTree negativeForest, int size, String resultFilePath,
-			String ltlFilePath, List<LtlNode> formulae, List<String> events,
+			List<String> strFormulae, List<LtlNode> formulae, List<String> events,
 			List<String> actions, Verifier verifier, long finishTime,
-			boolean complete) throws IOException {
+			boolean complete, boolean bfsConstraints) throws IOException {
 		deleteTrash();
 		
 		IncrementalInterface incr = null;
 		
 		for (int iteration = 0; System.currentTimeMillis() < finishTime; iteration++) {
 			final FastAutomatonFormulaBuilder builder = new FastAutomatonFormulaBuilder(size, positiveForest,
-					negativeForest, events, actions, complete);
+					negativeForest, events, actions, complete, bfsConstraints);
 			builder.createVars();
 			final int secondsLeft = timeLeftForSolver(finishTime);
 			if (iteration == 0) {
-				final String transSpec = transitionSpecification(ltlFilePath, size, events, actions);
 				final List<int[]> constraints = builder.positiveConstraints();
+				final String transSpec = transitionSpecification(strFormulae, size, events, actions);
 				incr = new IncrementalInterface(constraints, transSpec, logger);
 			}
 			

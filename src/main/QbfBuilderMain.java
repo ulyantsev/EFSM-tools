@@ -361,7 +361,7 @@ public class QbfBuilderMain {
 		}
 	}
 
-	private boolean checkBfs(Automaton a, List<String> events, Logger logger) {
+	static boolean checkBfs(Automaton a, List<String> events, Logger logger) {
 		final Deque<Integer> queue = new ArrayDeque<>();
 		final boolean[] visited = new boolean[a.stateCount()];
 		visited[a.startState().number()] = true;
