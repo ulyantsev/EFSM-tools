@@ -7,7 +7,6 @@ package structures;
 import java.io.FileNotFoundException;
 import java.text.ParseException;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -20,20 +19,12 @@ public class NegativeScenarioTree {
     private final NegativeNode root;
     private final Set<NegativeNode> nodes;
 
-    private final Set<NegativeNode> unprocessedChildren = new HashSet<>();
-	
-	public boolean processChild(NegativeNode node) {
-		return unprocessedChildren.remove(node);
-	}
-    
     public NegativeScenarioTree() {
-        this.root = new NegativeNode(0);
-        this.nodes = new LinkedHashSet<>();
-        this.nodes.add(root);
+        root = new NegativeNode(0);
+        nodes = new LinkedHashSet<>();
+        nodes.add(root);
     }
 
-    // TODO processed nodes
-    
     public NegativeNode getRoot() {
         return root;
     }
@@ -81,7 +72,6 @@ public class NegativeScenarioTree {
     			if (dst == null) {
             		dst = new NegativeNode(nodes.size());
             		nodes.add(dst);
-            		unprocessedChildren.add(dst);
             	}
                 src.addTransition(e, expr, actions, dst);
     		}

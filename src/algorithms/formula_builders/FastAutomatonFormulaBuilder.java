@@ -6,9 +6,12 @@ package algorithms.formula_builders;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import org.apache.commons.lang3.tuple.Pair;
 
 import structures.NegativeNode;
 import structures.NegativeScenarioTree;
@@ -236,19 +239,29 @@ public class FastAutomatonFormulaBuilder {
 	
 	// negative constraints
 	
+	private boolean negativeBasisAdded = false;
+	
 	private void negativeScenarioBasis(List<int[]> constraints) {
-		constraints.add(new int[] {
-				xxVar(0, 0, false).number
-		});
+		if (!negativeBasisAdded) {
+			for (int i = 0; i < colorSize; i++) {
+				constraints.add(new int[] {
+						(i == 0 ? 1 : -1) * xxVar(0, i, false).number
+				});
+			}
+		}
 	}
 	
 	private void globalNegativeScenarioBasis(List<int[]> constraints) {
-		for (int i = 0; i < colorSize; i++) {
-			constraints.add(new int[] {
-					xxVar(0, i, true).number
-			});
+		if (!negativeBasisAdded) {
+			for (int i = 0; i < colorSize; i++) {
+				constraints.add(new int[] {
+						xxVar(0, i, true).number
+				});
+			}
 		}
 	}
+	
+    private final Set<NegativeNode> unprocessedChildren = new HashSet<>();
 	
 	private void negativeScenarioPropagation(List<int[]> constraints, boolean isGlobal) {
 		final int[] xxParent = new int[colorSize];
@@ -262,41 +275,57 @@ public class FastAutomatonFormulaBuilder {
 			boolean xxParentFilled = false;
 			for (Transition edge : node.transitions()) {
 				final NegativeNode childNode = (NegativeNode) edge.dst();
-				if (!tree.processChild(childNode)) {
-					continue;
-				}
-				if (!xxParentFilled) {
+				if (unprocessedChildren.add(childNode)) {
+					/*if (!isGlobal) {
+						// not more than one color for a usual negative node
+						for (int color1 = 0; color1 < colorSize; color1++) {
+							final BooleanVariable v1 = xxVar(node.number(), color1, isGlobal);
+							for (int color2 = 0; color2 < color1; color2++) {
+								final BooleanVariable v2 = xxVar(node.number(), color2, isGlobal);					
+								constraints.add(new int[] {
+										-v1.number,
+										-v2.number
+								});
+							}
+						}
+					}*/
+					
+					if (!xxParentFilled) {
+						for (int color = 0; color < colorSize; color++) {
+							xxParent[color] = xxVar(node.number(), color, isGlobal).number;
+						}
+						xxParentFilled = true;
+					}
+					final String event = edge.event();
+					final List<String> actionList = Arrays.asList(edge.actions().getActions());
 					for (int color = 0; color < colorSize; color++) {
-						xxParent[color] = xxVar(node.number(), color, isGlobal).number;
+						for (int i = 0; i < actions.size(); i++) {
+							final String action = actions.get(i);
+							final int sign = actionList.contains(action) ? 1 : -1;
+							// we actually need the negation, this -sign:
+							actionEq[color][i] = -sign * zVar(color, action, event).number;
+						}
 					}
-					xxParentFilled = true;
-				}
-				final String event = edge.event();
-				final List<String> actionList = Arrays.asList(edge.actions().getActions());
-				for (int color = 0; color < colorSize; color++) {
-					for (int i = 0; i < actions.size(); i++) {
-						final String action = actions.get(i);
-						final int sign = actionList.contains(action) ? 1 : -1;
-						// we actually need the negation, this -sign:
-						actionEq[color][i] = -sign * zVar(color, action, event).number;
+					for (int color = 0; color < colorSize; color++) {
+						xxChild[color] = xxVar(childNode.number(), color, isGlobal).number;
 					}
-				}
-				for (int color = 0; color < colorSize; color++) {
-					xxChild[color] = xxVar(childNode.number(), color, isGlobal).number;
-				}
-				for (int color1 = 0; color1 < colorSize; color1++) {
-					for (int color2 = 0; color2 < colorSize; color2++) {
-						final int[] constraint = new int[actions.size() + 3];
-						System.arraycopy(actionEq[color1], 0, constraint, 0, actions.size());
-						constraint[actions.size() + 0] = -xxParent[color1];
-						constraint[actions.size() + 1] = -yVar(color1, color2, event).number;
-						constraint[actions.size() + 2] = xxChild[color2];
-						constraints.add(constraint);
+					for (int color1 = 0; color1 < colorSize; color1++) {
+						for (int color2 = 0; color2 < colorSize; color2++) {
+							final int[] constraint = new int[actions.size() + 3];
+							System.arraycopy(actionEq[color1], 0, constraint, 0, actions.size());
+							constraint[actions.size() + 0] = -xxParent[color1];
+							constraint[actions.size() + 1] = -yVar(color1, color2, event).number;
+							constraint[actions.size() + 2] = xxChild[color2];
+							constraints.add(constraint);
+						}
 					}
 				}
 			}
 		}
 	}
+	
+	private final Set<NegativeNode> processedTerminalNodes = new HashSet<>();
+	private final Set<Pair<NegativeNode, NegativeNode>> processedLoops = new HashSet<>();
 	
 	private void negativeScenarioTermination(List<int[]> constraints, boolean isGlobal) {
 		final NegativeScenarioTree tree =
@@ -305,19 +334,23 @@ public class FastAutomatonFormulaBuilder {
 		for (NegativeNode node : tree.nodes()) {
 			final int nodeNumber = node.number();
 			if (node.strongInvalid()) {
-				for (int color = 0; color < colorSize; color++) {
-					constraints.add(new int[] {
-							-xxVar(nodeNumber, color, isGlobal).number
-					});
+				if (processedTerminalNodes.add(node)) {
+					for (int color = 0; color < colorSize; color++) {
+						constraints.add(new int[] {
+								-xxVar(nodeNumber, color, isGlobal).number
+						});
+					}
 				}
 			} else {
 				for (NegativeNode loop : node.loops()) {
-					final int loopNumber = loop.number();
-					for (int color = 0; color < colorSize; color++) {
-						constraints.add(new int[] {
-								-xxVar(nodeNumber, color, isGlobal).number,
-								-xxVar(loopNumber, color, isGlobal).number
-						});
+					if (processedLoops.add(Pair.of(node, loop))) {
+						final int loopNumber = loop.number();
+						for (int color = 0; color < colorSize; color++) {
+							constraints.add(new int[] {
+									-xxVar(nodeNumber, color, isGlobal).number,
+									-xxVar(loopNumber, color, isGlobal).number
+							});
+						}
 					}
 				}
 			}
@@ -352,6 +385,7 @@ public class FastAutomatonFormulaBuilder {
 		final List<int[]> constraints = new ArrayList<>();
 		negativeScenarioBasis(constraints);
 		globalNegativeScenarioBasis(constraints);
+		negativeBasisAdded = true;
 		for (boolean isGlobal : Arrays.asList(false, true)) {
 			negativeScenarioPropagation(constraints, isGlobal);
 			negativeScenarioTermination(constraints, isGlobal);
