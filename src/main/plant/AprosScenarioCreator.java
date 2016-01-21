@@ -15,6 +15,8 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.tuple.Pair;
+
 public class AprosScenarioCreator {
 	private final static String INPUT_DIRECTORY = "qbf/plant-synthesis/vver-traces";
 	private final static String OUTPUT_TRACE_FILENAME = "qbf/plant-synthesis/vver.sc";
@@ -35,12 +37,23 @@ public class AprosScenarioCreator {
 		private final List<Double> cutoffs;
 		private final boolean isInput;
 		private final String name;
+		private double min = Double.POSITIVE_INFINITY;
+		private double max = Double.NEGATIVE_INFINITY;
 		
 		public Parameter(boolean isInput, String name, Double... cutoffs) {
 			this.isInput = isInput;
 			this.name = name;
 			this.cutoffs = new ArrayList<>(Arrays.asList(cutoffs));
 			this.cutoffs.add(Double.POSITIVE_INFINITY);
+		}
+		
+		public void updateLimits(double value) {
+			min = Math.min(min, value);
+			max = Math.max(max, value);
+		}
+		
+		public Pair<Double, Double> limits() {
+			return Pair.of(min, max);
 		}
 		
 		private String traceName(int index) {
@@ -142,6 +155,7 @@ public class AprosScenarioCreator {
 						for (int i = 0; i < PARAMETERS.size(); i++) {
 							final Parameter p = PARAMETERS.get(i);
 							final double value = Double.parseDouble(tokens[i + 1]);
+							p.updateLimits(value);
 							if (p.isInput) {
 								event.append(p.traceNameIndex(value));
 							} else {
@@ -196,5 +210,11 @@ public class AprosScenarioCreator {
 				+ " --ltl " + OUTPUT_LTL_FILENAME
 				+ " --actionspec " + OUTPUT_ACTIONSPEC_FILENAME
 				+ " --size <SIZE> --varNumber 0 --tree tree.gv");
+		
+		// paramter limits
+		System.out.println("Found parameter boundaries:");
+		for (Parameter p : PARAMETERS)  {
+			System.out.println(p.name + " in " + p.limits());
+		}
 	}
 }

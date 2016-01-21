@@ -153,7 +153,7 @@ public class NondetMooreAutomaton {
         return sb.toString();
     }
     
-    public String toNuSMVString(List<String> events, List<String> actions) {
+    public String toNuSMVString__v2(List<String> events, List<String> actions) {
     	events = events.stream().map(s -> "input_" + s).collect(Collectors.toList());
     	final StringBuilder sb = new StringBuilder();
     	sb.append("MODULE main\n");
@@ -192,6 +192,53 @@ public class NondetMooreAutomaton {
     				? "FALSE"
     				: ("state in { " + String.join(", ", properStates) + " }");
     		sb.append("    output_" + action + " := " + condition + ";\n");
+    	}
+    	return sb.toString();
+    }
+    
+    public String toNuSMVString(List<String> events, List<String> actions) {
+    	events = events.stream().map(s -> "input_" + s).collect(Collectors.toList());
+    	final StringBuilder sb = new StringBuilder();
+    	final int syncCycles = 10;
+    	sb.append("MODULE PLANT(input)\n");
+    	sb.append("VAR\n");
+    	sb.append("    state: 0.." + (stateCount() - 1) + ";\n");
+    	sb.append("    clock: 0.." + (syncCycles - 1) + ";\n");
+    	sb.append("ASSIGN\n");
+    	sb.append("    init(clock) := 0\n");
+    	sb.append("    next(clock) := (clock + 1) mod " + syncCycles + "\n");
+    	sb.append("    init(state) := { " + startStates().toString().replace("[", "").replace("]", "") + " };\n");
+    	sb.append("    next(state) := case\n");
+    	sb.append("        clock < " + (syncCycles - 1) + ": state;\n");
+    	for (int i = 0; i < stateCount(); i++) {
+    		for (String event : events) {
+    			final List<Integer> destinations = new ArrayList<>();
+    			for (MooreTransition t : states.get(i).transitions()) {
+        			if (("input_" + t.event()).equals(event)) {
+        				destinations.add(t.dst().number());
+        			}
+        		}
+    			sb.append("        state = " + i + " & next(input) = "
+    					+ event + ": { " +  destinations.toString().replace("[", "").replace("]", "") + " };\n");
+    		}
+    	}
+    	sb.append("        TRUE: 0;\n");
+    	sb.append("    esac;\n");
+    	sb.append("DEFINE\n");
+    	for (String action : actions) {
+    		final List<String> properStates = new ArrayList<>();
+    		for (int i = 0; i < stateCount(); i++) {
+    			if (ArrayUtils.contains(states.get(i).actions().getActions(), action)) {
+    				properStates.add(String.valueOf(i));
+    			}
+    		}
+    		final String condition = properStates.isEmpty()
+    				? "FALSE"
+    				: ("state in { " + String.join(", ", properStates) + " }");
+    		sb.append("    output_" + action + " := " + condition + ";\n");
+    	}
+    	for (int i = 0; i < events.size(); i++) {
+    		sb.append("    input_" + events.get(i) + " := " + i + ";\n");
     	}
     	return sb.toString();
     }
