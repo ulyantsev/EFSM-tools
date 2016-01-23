@@ -215,8 +215,9 @@ public class PlantBuilderMain {
 			if (fast && strFormulae.isEmpty()) {
 				resultAutomaton = RapidPlantAutomatonBuilder.build(positiveForest, events);
 			} else if (fast) {
+				final Verifier usualVerifier = new Verifier(logger, strFormulae, events, actions, varNumber);
 				resultAutomaton = StateMergingPlantAutomatonBuilder.build(logger, positiveForest,
-						ltlFilePath, formulae, events, actions, verifier, finishTime);
+						ltlFilePath, formulae, events, actions, usualVerifier, finishTime);
 			} else {
 				resultAutomaton = PlantAutomatonBuilder.build(logger, positiveForest, negativeForest, size,
 						actionspecFilePath, formulae, events, actions, verifier, finishTime);

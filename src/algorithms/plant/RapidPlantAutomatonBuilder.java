@@ -63,8 +63,7 @@ public class RapidPlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 			}
 		}
 		// completion with loops
-		for (int i = 0; i < automaton.stateCount(); i++) {
-			final MooreNode state = automaton.state(i);
+		for (MooreNode state : automaton.states()) {
 			for (String event : events) {
 				if (!state.hasTransition(event)) {
 					state.addTransition(event, state);

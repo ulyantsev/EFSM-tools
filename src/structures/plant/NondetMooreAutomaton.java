@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.ArrayUtils;
@@ -273,5 +274,64 @@ public class NondetMooreAutomaton {
     		}
     	}
     	return true;
+    }
+    
+    // copy and remove y by redirecting transitions to x
+    public NondetMooreAutomaton merge__(MooreNode x, MooreNode y) {
+    	final List<StringActions> actions = new ArrayList<>();
+    	for (MooreNode state : states) {
+    		actions.add(state.actions());
+    	}
+		final NondetMooreAutomaton a = new NondetMooreAutomaton(states.size(), actions,
+				new ArrayList<>(isStart));
+		if (isStartState(y.number())) {
+			a.isStart.set(y.number(), false);
+			a.isStart.set(x.number(), true);
+		}
+		for (MooreNode state : states) {
+			final MooreNode src = a.state((state.number() == y.number() ? x : state).number());
+			for (MooreTransition t : state.transitions()) {
+				final MooreNode dst = a.state((t.dst().number() == y.number() ? x : t.dst()).number());
+				if (!src.allDst(t.event()).contains(dst)) {
+					src.addTransition(t.event(), dst);
+				}
+			}
+		}
+		return a;
+    }
+    
+    // copy and remove y by redirecting transitions to x
+    public NondetMooreAutomaton merge(MooreNode x, MooreNode y) {
+    	if (y.number() <= x.number()) {
+    		throw new AssertionError();
+    	}
+    	final Function<Integer, Integer> shift = n -> n < y.number() ? n : (n - 1);
+    	
+    	final List<StringActions> actions = new ArrayList<>();
+    	final List<Boolean> isStart = new ArrayList<>();
+    	for (MooreNode state : states) {
+    		if (state.number() != y.number()) {
+    			actions.add(state.actions());
+    			isStart.add(isStartState(state.number()));
+    		}
+    	}
+		if (isStartState(y.number())) {
+			isStart.set(shift.apply(x.number()), true);
+		}
+
+		final NondetMooreAutomaton a = new NondetMooreAutomaton(states.size() - 1, actions,
+				isStart);
+
+		for (MooreNode state : states) {
+			final MooreNode src = a.state(shift.apply((state.number() == y.number() ? x : state).number()));
+			for (MooreTransition t : state.transitions()) {
+				final MooreNode dst = a.state(shift.apply((t.dst().number() == y.number()
+						? x : t.dst()).number()));
+				if (!src.allDst(t.event()).contains(dst)) {
+					src.addTransition(t.event(), dst);
+				}
+			}
+		}
+		return a;
     }
 }
