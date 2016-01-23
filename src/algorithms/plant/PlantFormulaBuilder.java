@@ -1,4 +1,4 @@
-package algorithms.formula_builders;
+package algorithms.plant;
 
 /**
  * (c) Igor Buzhinsky

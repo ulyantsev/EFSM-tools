@@ -18,10 +18,10 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.tuple.Pair;
 
 public class AprosScenarioCreator {
-	private final static String INPUT_DIRECTORY = "qbf/plant-synthesis/vver-traces";
-	private final static String OUTPUT_TRACE_FILENAME = "qbf/plant-synthesis/vver.sc";
-	private final static String OUTPUT_ACTIONSPEC_FILENAME = "qbf/plant-synthesis/vver.actionspec";
-	private final static String OUTPUT_LTL_FILENAME = "qbf/plant-synthesis/vver.ltl";
+	private final static String INPUT_DIRECTORY = "evaluation/plant-synthesis/vver-traces";
+	private final static String OUTPUT_TRACE_FILENAME = "evaluation/plant-synthesis/vver.sc";
+	private final static String OUTPUT_ACTIONSPEC_FILENAME = "evaluation/plant-synthesis/vver.actionspec";
+	private final static String OUTPUT_LTL_FILENAME = "evaluation/plant-synthesis/vver.ltl";
 	
 	private final static List<Parameter> PARAMETERS = Arrays.asList(
 			new Parameter(false, "pressure_live_stream", 3.5),

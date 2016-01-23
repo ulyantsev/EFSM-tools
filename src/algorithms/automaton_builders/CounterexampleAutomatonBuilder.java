@@ -78,7 +78,7 @@ public class CounterexampleAutomatonBuilder extends ScenarioAndLtlAutomatonBuild
 	}
 		
 	public static Optional<Automaton> build(Logger logger, ScenarioTree tree, int size, String solverParams,
-			String resultFilePath, List<LtlNode> formulae, List<String> events, List<String> actions,
+			List<LtlNode> formulae, List<String> events, List<String> actions,
 			SatSolver satSolver, Verifier verifier, long finishTime, CompletenessType completenessType,
 			NegativeScenarioTree negativeTree, boolean useCompletenessHeuristics) throws IOException {
 		deleteTrash();
@@ -172,9 +172,5 @@ public class CounterexampleAutomatonBuilder extends ScenarioAndLtlAutomatonBuild
 		}
 		logger.info("TOTAL TIME LIMIT EXCEEDED, ANSWER IS UNKNOWN");
 		return Optional.empty();
-	}
-	
-	protected static int timeLeftForSolver(long finishTime) {
-		return (int) (finishTime - System.currentTimeMillis()) / 1000 + 1;
 	}
 }

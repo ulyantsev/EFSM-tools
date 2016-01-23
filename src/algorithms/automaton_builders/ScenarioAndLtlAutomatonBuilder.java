@@ -135,4 +135,8 @@ public abstract class ScenarioAndLtlAutomatonBuilder {
 				.replace("and", "&").replace("or", "|")
 				.replace("not", "!");
 	}
+	
+	protected static int timeLeftForSolver(long finishTime) {
+		return (int) (finishTime - System.currentTimeMillis()) / 1000 + 1;
+	}
 }

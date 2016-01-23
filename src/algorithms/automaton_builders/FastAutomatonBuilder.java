@@ -199,8 +199,4 @@ public class FastAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 		}
 		logger.info("ADDING COUNTEREXAMPLE: " + counterexample);
 	}
-	
-	protected static int timeLeftForSolver(long finishTime) {
-		return (int) (finishTime - System.currentTimeMillis()) / 1000 + 1;
-	}
 }

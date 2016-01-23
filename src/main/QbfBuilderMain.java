@@ -274,7 +274,7 @@ public class QbfBuilderMain {
 				break;
 			case COUNTEREXAMPLE:
 				resultAutomaton = CounterexampleAutomatonBuilder.build(logger, tree, size, solverParams,
-						resultFilePath, formulae, events, actions, satsolver, verifier, finishTime,
+						formulae, events, actions, satsolver, verifier, finishTime,
 						completenesstype, negativeTree, !noCompletenessHeuristics);
 				break;
 			case STATE_MERGING:

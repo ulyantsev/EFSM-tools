@@ -22,19 +22,22 @@ import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
+import org.kohsuke.args4j.spi.BooleanOptionHandler;
 
 import scenario.StringScenario;
 import structures.plant.MooreNode;
 import structures.plant.NegativePlantScenarioForest;
 import structures.plant.NondetMooreAutomaton;
 import structures.plant.PositivePlantScenarioForest;
-import algorithms.automaton_builders.PlantAutomatonBuilder;
+import algorithms.plant.PlantAutomatonBuilder;
+import algorithms.plant.RapidPlantAutomatonBuilder;
+import algorithms.plant.StateMergingPlantAutomatonBuilder;
 import egorov.ltl.LtlParseException;
 import egorov.ltl.LtlParser;
 import egorov.ltl.grammar.LtlNode;
 import egorov.verifier.Counterexample;
-import egorov.verifier.Verifier;
 import egorov.verifier.NondetMooreVerifierPair;
+import egorov.verifier.Verifier;
 
 public class PlantBuilderMain {
 	@Argument(usage = "paths to files with scenarios", metaVar = "files", required = true)
@@ -86,6 +89,10 @@ public class PlantBuilderMain {
 
 	@Option(name = "--nusmv", aliases = { "-nusmv" }, usage = "file for NuSMV output (optional)", metaVar = "<file>")
 	private String nusmvFilePath;
+	
+	@Option(name = "--fast", aliases = { "-fast" }, handler = BooleanOptionHandler.class,
+			usage = "use the fast but inprecise way of model generation (size, negative scenarios and action specifications are ignored)")
+	private boolean fast;
 	
 	private void launcher(String[] args) throws IOException {
 		Locale.setDefault(Locale.US);
@@ -203,15 +210,26 @@ public class PlantBuilderMain {
 			
 			final NondetMooreVerifierPair verifier = new NondetMooreVerifierPair(logger, strFormulae, events, actions, varNumber);
 			final long finishTime = System.currentTimeMillis() + timeout * 1000;
-			final Optional<NondetMooreAutomaton> resultAutomaton = PlantAutomatonBuilder.build(logger, positiveForest, negativeForest, size,
-					resultFilePath, ltlFilePath, actionspecFilePath, formulae, events, actions, verifier, finishTime);
+			final Optional<NondetMooreAutomaton> resultAutomaton;
+			
+			if (fast && strFormulae.isEmpty()) {
+				resultAutomaton = RapidPlantAutomatonBuilder.build(positiveForest, events);
+			} else if (fast) {
+				resultAutomaton = StateMergingPlantAutomatonBuilder.build(logger, positiveForest,
+						ltlFilePath, formulae, events, actions, verifier, finishTime);
+			} else {
+				resultAutomaton = PlantAutomatonBuilder.build(logger, positiveForest, negativeForest, size,
+						actionspecFilePath, formulae, events, actions, verifier, finishTime);
+			}
+			
 			final double executionTime = (System.currentTimeMillis() - startTime) / 1000.;
 			
 			if (!resultAutomaton.isPresent()) {
 				logger.info("Automaton with " + size + " states NOT FOUND!");
 				logger.info("Automaton builder execution time: " + executionTime);
 			} else {
-				logger.info("Automaton with " + size + " states WAS FOUND!");
+				logger.info("Automaton with " + resultAutomaton.get().stateCount()
+						+ " states WAS FOUND!");
 				logger.info("Automaton builder execution time: " + executionTime);
 				
 				if (resultAutomaton.get().isCompliantWithScenarios(scenarios, true)) {

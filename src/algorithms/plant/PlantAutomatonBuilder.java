@@ -1,4 +1,4 @@
-package algorithms.automaton_builders;
+package algorithms.plant;
 
 /**
  * (c) Igor Buzhinsky
@@ -33,7 +33,7 @@ import structures.plant.MooreTransition;
 import structures.plant.NegativePlantScenarioForest;
 import structures.plant.NondetMooreAutomaton;
 import structures.plant.PositivePlantScenarioForest;
-import algorithms.formula_builders.PlantFormulaBuilder;
+import algorithms.automaton_builders.ScenarioAndLtlAutomatonBuilder;
 import bnf_formulae.BooleanVariable;
 import bool.MyBooleanExpression;
 import egorov.ltl.grammar.LtlNode;
@@ -163,8 +163,8 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 	}
 	
 	public static Optional<NondetMooreAutomaton> build(Logger logger, PositivePlantScenarioForest positiveForest,
-			NegativePlantScenarioForest negativeForest, int size, String resultFilePath,
-			String ltlFilePath, String actionspecFilePath, List<LtlNode> formulae,
+			NegativePlantScenarioForest negativeForest, int size,
+			String actionspecFilePath, List<LtlNode> formulae,
 			List<String> events, List<String> actions, NondetMooreVerifierPair verifier, long finishTime) throws IOException {
 		deleteTrash();
 		SimpleVerifier.setLoopWeight(size);
@@ -282,9 +282,5 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 		).collect(Collectors.toList());
 		negativeForest.addScenario(new StringScenario(true, counterexample.events(), expr, actions));
 		logger.info("ADDING COUNTEREXAMPLE: " + counterexample);
-	}
-	
-	protected static int timeLeftForSolver(long finishTime) {
-		return (int) (finishTime - System.currentTimeMillis()) / 1000 + 1;
 	}
 }
