@@ -2,8 +2,12 @@ package structures.plant;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -20,7 +24,7 @@ import scenario.StringActions;
 import scenario.StringScenario;
 
 public class NondetMooreAutomaton {
-    private final List<Boolean> isStart = new ArrayList<>();
+    private final List<Boolean> isInitial = new ArrayList<>();
     private final List<MooreNode> states = new ArrayList<>();
 
     public static NondetMooreAutomaton readGV(String filename) throws FileNotFoundException {
@@ -88,17 +92,17 @@ public class NondetMooreAutomaton {
         for (int i = 0; i < statesCount; i++) {
             states.add(new MooreNode(i, actions.get(i)));
         }
-        this.isStart.addAll(isStart);
+        this.isInitial.addAll(isStart);
     }
 
-    public boolean isStartState(int index) {
-        return isStart.get(index);
+    public boolean isInitialState(int index) {
+        return isInitial.get(index);
     }
     
-    public List<Integer> startStates() {
+    public List<Integer> initialStates() {
     	final List<Integer> result = new ArrayList<>();
     	for (int i = 0; i < states.size(); i++) {
-    		if (isStartState(i)) {
+    		if (isInitialState(i)) {
     			result.add(i);
     		}
     	}
@@ -131,14 +135,14 @@ public class NondetMooreAutomaton {
     	sb.append("# generated file; view: dot -Tpng <filename> > filename.png\n"
         	+ "digraph Automaton {\n");
     	
-    	final String initNodes = String.join(", ", startStates().stream().map(s -> "init" + s).collect(Collectors.toList()));
+    	final String initNodes = String.join(", ", initialStates().stream().map(s -> "init" + s).collect(Collectors.toList()));
     	
 		sb.append("    " + initNodes + " [shape=point, width=0.01, height=0.01, label=\"\", color=white];\n");
 		sb.append("    node [shape=circle, fixedsize=true, width=1.5, height=1.5];\n");
     	for (int i = 0; i < states.size(); i++) {
     		final MooreNode state = states.get(i);
     		sb.append("    " + state.number() + " [label=\"" + state + "\"]" + ";\n");
-    		if (isStart.get(i)) {
+    		if (isInitial.get(i)) {
     			sb.append("    init" + state.number() + " -> " + state.number() + ";\n");
     		}
     	}
@@ -164,7 +168,7 @@ public class NondetMooreAutomaton {
     	sb.append("ASSIGN\n");
     	sb.append("    init(input) := initial_input;\n");
     	sb.append("    next(input) := { " + events.toString().replace("[", "").replace("]", "") + " };\n");
-    	sb.append("    init(state) := { " + startStates().toString().replace("[", "").replace("]", "") + " };\n");
+    	sb.append("    init(state) := { " + initialStates().toString().replace("[", "").replace("]", "") + " };\n");
     	sb.append("    next(state) := case\n");
     	for (int i = 0; i < stateCount(); i++) {
     		for (String event : events) {
@@ -208,7 +212,7 @@ public class NondetMooreAutomaton {
     	sb.append("ASSIGN\n");
     	sb.append("    init(clock) := 0\n");
     	sb.append("    next(clock) := (clock + 1) mod " + syncCycles + "\n");
-    	sb.append("    init(state) := { " + startStates().toString().replace("[", "").replace("]", "") + " };\n");
+    	sb.append("    init(state) := { " + initialStates().toString().replace("[", "").replace("]", "") + " };\n");
     	sb.append("    next(state) := case\n");
     	sb.append("        clock < " + (syncCycles - 1) + ": state;\n");
     	for (int i = 0; i < stateCount(); i++) {
@@ -249,7 +253,7 @@ public class NondetMooreAutomaton {
         	boolean[] curStates = new boolean[states.size()];
         	final StringActions firstActions = sc.getActions(0);
     		for (int i = 0; i < states.size(); i++) {
-    			if (isStartState(i) && states.get(i).actions().setEquals(firstActions)) {
+    			if (isInitialState(i) && states.get(i).actions().setEquals(firstActions)) {
     				curStates[i] = true;
     			}
     		}
@@ -277,30 +281,6 @@ public class NondetMooreAutomaton {
     }
     
     // copy and remove y by redirecting transitions to x
-    public NondetMooreAutomaton merge__(MooreNode x, MooreNode y) {
-    	final List<StringActions> actions = new ArrayList<>();
-    	for (MooreNode state : states) {
-    		actions.add(state.actions());
-    	}
-		final NondetMooreAutomaton a = new NondetMooreAutomaton(states.size(), actions,
-				new ArrayList<>(isStart));
-		if (isStartState(y.number())) {
-			a.isStart.set(y.number(), false);
-			a.isStart.set(x.number(), true);
-		}
-		for (MooreNode state : states) {
-			final MooreNode src = a.state((state.number() == y.number() ? x : state).number());
-			for (MooreTransition t : state.transitions()) {
-				final MooreNode dst = a.state((t.dst().number() == y.number() ? x : t.dst()).number());
-				if (!src.allDst(t.event()).contains(dst)) {
-					src.addTransition(t.event(), dst);
-				}
-			}
-		}
-		return a;
-    }
-    
-    // copy and remove y by redirecting transitions to x
     public NondetMooreAutomaton merge(MooreNode x, MooreNode y) {
     	if (y.number() <= x.number()) {
     		throw new AssertionError();
@@ -308,30 +288,98 @@ public class NondetMooreAutomaton {
     	final Function<Integer, Integer> shift = n -> n < y.number() ? n : (n - 1);
     	
     	final List<StringActions> actions = new ArrayList<>();
-    	final List<Boolean> isStart = new ArrayList<>();
+    	final List<Boolean> isInitial = new ArrayList<>();
     	for (MooreNode state : states) {
     		if (state.number() != y.number()) {
     			actions.add(state.actions());
-    			isStart.add(isStartState(state.number()));
+    			isInitial.add(isInitialState(state.number()));
     		}
     	}
-		if (isStartState(y.number())) {
-			isStart.set(shift.apply(x.number()), true);
+		if (isInitialState(y.number())) {
+			isInitial.set(shift.apply(x.number()), true);
 		}
 
-		final NondetMooreAutomaton a = new NondetMooreAutomaton(states.size() - 1, actions,
-				isStart);
+		final NondetMooreAutomaton merged = new NondetMooreAutomaton(states.size() - 1,
+				actions, isInitial);
 
 		for (MooreNode state : states) {
-			final MooreNode src = a.state(shift.apply((state.number() == y.number() ? x : state).number()));
+			final MooreNode src = merged.state(
+					shift.apply((state.number() == y.number() ? x : state).number()));
 			for (MooreTransition t : state.transitions()) {
-				final MooreNode dst = a.state(shift.apply((t.dst().number() == y.number()
+				final MooreNode dst = merged.state(shift.apply((t.dst().number() == y.number()
 						? x : t.dst()).number()));
 				if (!src.allDst(t.event()).contains(dst)) {
 					src.addTransition(t.event(), dst);
 				}
 			}
 		}
-		return a;
+		return merged;
+    }
+    
+    public NondetMooreAutomaton copy() {
+    	final List<StringActions> actions = new ArrayList<>();
+    	for (MooreNode state : states) {
+			actions.add(state.actions());
+    	}
+
+		final NondetMooreAutomaton copy = new NondetMooreAutomaton(states.size(), actions,
+				new ArrayList<>(this.isInitial));
+
+		for (MooreNode state : states) {
+			final MooreNode src = copy.state(state.number());
+			for (MooreTransition t : state.transitions()) {
+				src.addTransition(t.event(), copy.state(t.dst().number()));
+			}
+		}
+		return copy;
+    }
+    
+    public void removeDeadlocks() {
+    	Map<MooreNode, Set<MooreTransition>> reversedTransitions = null;
+    	final Set<MooreNode> allDeadlockStates = new HashSet<>();
+    	while (true) {
+	    	final Set<MooreNode> deadlockStates = new HashSet<>();
+	    	// initial deadlock states
+	    	for (MooreNode state : states) {
+	    		if (state.transitions().isEmpty()) {
+	    			deadlockStates.add(state);
+	    		}
+	    	}
+	    	if (!allDeadlockStates.addAll(deadlockStates)) {
+	    		return;
+	    	}
+	    	final Deque<MooreNode> unprocessedNodes = new ArrayDeque<>(deadlockStates);
+
+	    	if (reversedTransitions == null) {
+		    	reversedTransitions = new HashMap<>();
+		    	for (MooreNode state : states) {
+		    		reversedTransitions.put(state, new HashSet<>());
+		    	}
+		    	for (MooreNode state : states) {
+		    		for (MooreTransition t : state.transitions()) {
+		    			reversedTransitions.get(t.dst()).add(t);
+		    		}
+		    	}
+	    	}
+	    	while (!unprocessedNodes.isEmpty()) {
+	    		final MooreNode node = unprocessedNodes.pollFirst();
+	    		final List<MooreTransition> trans = new ArrayList<>(reversedTransitions.get(node));
+	    		for (MooreTransition t : trans) {
+	    			t.src().removeTransition(t);
+	    		}
+	    		for (MooreTransition t : trans) {
+	    			if (t.src().transitionsCount() == 0) {
+	    				deadlockStates.add(t.src());
+	    				if (!allDeadlockStates.add(t.src())) {
+	    					unprocessedNodes.add(t.src());
+	    				}
+	    			}
+	    		}
+	    	}
+	    	
+	    	for (MooreNode node : deadlockStates) {
+	    		isInitial.set(node.number(), false);
+	    	}
+    	}
     }
 }

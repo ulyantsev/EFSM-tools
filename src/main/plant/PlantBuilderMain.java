@@ -91,7 +91,9 @@ public class PlantBuilderMain {
 	private String nusmvFilePath;
 	
 	@Option(name = "--fast", aliases = { "-fast" }, handler = BooleanOptionHandler.class,
-			usage = "use the fast but inprecise way of model generation (size, negative scenarios and action specifications are ignored)")
+			usage = "use the fast but inprecise way of model generation "
+					+ "(size, negative scenarios and action specifications are ignored, "
+					+ "LTL formulae are partially ignored)")
 	private boolean fast;
 	
 	private void launcher(String[] args) throws IOException {

@@ -75,7 +75,7 @@ public class PlantScenarioGeneratorMain {
 		final List<StringScenario> scenarios = new ArrayList<>();
 		
 		for (int i = 0; i < scenariosNumber; i++) {
-			final List<Integer> startStates = automaton.startStates();
+			final List<Integer> startStates = automaton.initialStates();
 			final int startState = startStates.get(random.nextInt(startStates.size()));
 			final int length = minLength + random.nextInt(maxLength - minLength + 1);
 			final List<String> events = new ArrayList<>();

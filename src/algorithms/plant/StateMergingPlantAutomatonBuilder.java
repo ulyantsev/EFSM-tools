@@ -32,6 +32,7 @@ public class StateMergingPlantAutomatonBuilder extends ScenarioAndLtlAutomatonBu
 	private static NondetMooreAutomaton mergeMinimize(Random rnd,
 			NondetMooreAutomaton currentPlant, Verifier verifier) {
 		l: while (true) {
+			System.out.print("States: " + currentPlant.stateCount() + " ");
 			final Map<StringActions, Set<MooreNode>> startClusters = new LinkedHashMap<>();
 			for (MooreNode node : currentPlant.states()) {
 				Set<MooreNode> cluster = startClusters.get(node.actions());
@@ -63,19 +64,24 @@ public class StateMergingPlantAutomatonBuilder extends ScenarioAndLtlAutomatonBu
 			Collections.shuffle(mergeablePairs, rnd);
 			
 			for (Pair<MooreNode, MooreNode> p : mergeablePairs) {
+				System.out.print("_");
 				final MooreNode x = p.getLeft();
 				final MooreNode y = p.getRight();
-				// TODO	implement dead end removal
 				
 				final NondetMooreAutomaton merged = currentPlant.merge(x, y);
+				final NondetMooreAutomaton noDeadlocks = merged.copy();
+				noDeadlocks.removeDeadlocks();
 				
-				final boolean verified = verifier.verifyNondetMoore(merged).stream()
+				final boolean verified = noDeadlocks.initialStates().isEmpty()
+						|| verifier.verifyNondetMoore(merged).stream()
 						.allMatch(Counterexample::isEmpty);
 				if (verified) {
 					currentPlant = merged;
+					System.out.println();
 					continue l;
 				}
 			}
+			System.out.println();
 			return currentPlant; // no more correct merges
 		}
 	}
@@ -103,23 +109,18 @@ public class StateMergingPlantAutomatonBuilder extends ScenarioAndLtlAutomatonBu
 		}
 		
 		final Random rnd = new Random(435568);
-		final int attempts = 1;
-		final List<Pair<NondetMooreAutomaton, Boolean>> foundSolutions = new ArrayList<>();
-		for (int i = 0; i < attempts; i++) {
-			final NondetMooreAutomaton candidate = mergeMinimize(rnd, forestAutomaton, verifier);
-			foundSolutions.add(Pair.of(candidate, false));
-			// TODO completion to match formulae
-			
-			// completion with loops
-			for (MooreNode state : candidate.states()) {
-				for (String event : events) {
-					if (!state.hasTransition(event)) {
-						state.addTransition(event, state);
-					}
+		final NondetMooreAutomaton automaton = mergeMinimize(rnd, forestAutomaton, verifier);
+
+		// completion with loops
+		for (MooreNode state : automaton.states()) {
+			for (String event : events) {
+				if (!state.hasTransition(event)) {
+					state.addTransition(event, state);
 				}
 			}
 		}
+		// TODO completion to match formulae?
 		
-		return Optional.of(foundSolutions.get(0).getLeft());
+		return Optional.of(automaton);
 	}
 }

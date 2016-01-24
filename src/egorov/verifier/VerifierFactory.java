@@ -108,7 +108,7 @@ public class VerifierFactory {
 		final SimpleState nondetInit = new SimpleState("nondet_init", true);
     	
 		for (int i = 0; i < automaton.stateCount(); i++) {
-			if (automaton.isStartState(i)) {
+			if (automaton.isInitialState(i)) {
 				final StateTransition out = new StateTransition("", statesArr[i]);
 				Arrays.stream(automaton.state(i).actions().getActions()).forEach(out::addAction);
 				if (!verifyFromAllStates) {
