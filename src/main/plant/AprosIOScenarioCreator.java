@@ -17,20 +17,22 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.tuple.Pair;
 
-public class AprosScenarioCreator {
-	private final static String INPUT_DIRECTORY = "evaluation/plant-synthesis/vver-traces";
+public class AprosIOScenarioCreator {
+	private final static String INPUT_DIRECTORY = "evaluation/plant-synthesis/vver-traces-2";
 	private final static String OUTPUT_TRACE_FILENAME = "evaluation/plant-synthesis/vver.sc";
 	private final static String OUTPUT_ACTIONSPEC_FILENAME = "evaluation/plant-synthesis/vver.actionspec";
 	private final static String OUTPUT_LTL_FILENAME = "evaluation/plant-synthesis/vver.ltl";
 	
+	private final static double INTERVAL_SEC = 1.0;
+	
 	private final static List<Parameter> PARAMETERS = Arrays.asList(
-			new Parameter(false, "pressure_live_stream", 3.5),
+			new Parameter(false, "water_level", 2.3, 2.8),
 			new Parameter(false, "pressure_lower_plenum", 3.5, 8.0, 10.0),
-			new Parameter(true, "th11_speed_setpoint", 1.0),
-			new Parameter(true, "tj11_speed_setpoint", 1.0),
-			new Parameter(true, "tq11_speed_setpoint", 1.0),
+			new Parameter(false, "pressure_live_stream", 3.5),
 			new Parameter(false, "voltage", 4800.0),
-			new Parameter(false, "water_level", 2.3, 2.8)
+			new Parameter(true, "tq11_speed_setpoint", 1.0),
+			new Parameter(true, "tj11_speed_setpoint", 1.0),
+			new Parameter(true, "th11_speed_setpoint", 1.0)
 	);
 	
 	private static class Parameter {
@@ -140,21 +142,29 @@ public class AprosScenarioCreator {
 				}
 				final List<String> events = new ArrayList<>();
 				final List<String> actions = new ArrayList<>();
+				
+				double timestampToRecord = INTERVAL_SEC;
+				
 				try (Scanner sc = new Scanner(new File(INPUT_DIRECTORY + "/" + filename))) {
-					for (int i = 0; i < 2; i++) {
+					for (int i = 0; i < 2 + PARAMETERS.size(); i++) {
 						sc.nextLine();
 					}
 					while (sc.hasNextLine()) {
-						final String line = sc.nextLine().replace(",", ".");
-						if (line.replace("\t", "").replace(" ", "").isEmpty()) {
+						final String line = sc.nextLine();
+						final String[] tokens = line.split(" +");
+						
+						double curTimestamp = Double.parseDouble(tokens[1]);
+						if (curTimestamp >= timestampToRecord) {
+							timestampToRecord += INTERVAL_SEC;
+						} else {
 							continue;
 						}
-						final String[] tokens = line.split("\t");
+						
 						final StringBuilder event = new StringBuilder("A");
 						final List<String> thisActions = new ArrayList<>();
 						for (int i = 0; i < PARAMETERS.size(); i++) {
 							final Parameter p = PARAMETERS.get(i);
-							final double value = Double.parseDouble(tokens[i + 1]);
+							final double value = Double.parseDouble(tokens[i + 2]);
 							p.updateLimits(value);
 							if (p.isInput) {
 								event.append(p.traceNameIndex(value));

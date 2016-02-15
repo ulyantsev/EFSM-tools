@@ -102,7 +102,6 @@ public class PlantFormulaBuilder {
 			}
 			constraints.add(constraint);
 		}
-		// return constraints.assemble("scenario constraints: each tree node has a color");
 	}
 
 	private void eachNodeHasOnlyColorConstraints(List<int[]> constraints) {
@@ -118,7 +117,6 @@ public class PlantFormulaBuilder {
 				}
 			}
 		}
-		//return constraints.assemble("scenario constraints: each tree node has at most one color");
 	}
 	
 	private void transitionConstraints(List<int[]> constraints) {
@@ -138,7 +136,6 @@ public class PlantFormulaBuilder {
 				}
 			}
 		}
-		//return constraints.assemble("scenario constraints: connection between x's and y's");
 	}
 	
 	private void scenarioActionConstraints(List<int[]> constraints) {
@@ -154,7 +151,6 @@ public class PlantFormulaBuilder {
 				}
 			}
 		}
-		//return constraints.assemble("scenario action constraints");
 	}
 	
 	private void eventCompletenessConstraints(List<int[]> constraints) {
@@ -167,7 +163,6 @@ public class PlantFormulaBuilder {
 				constraints.add(constraint);
 			}
 		}
-		//return constraints.assemble("induce a complete automaton");
 	}
 	
 	private void negativeScenarioBasis(List<int[]> constraints) {
@@ -176,8 +171,8 @@ public class PlantFormulaBuilder {
 				continue;
 			}
 			for (MooreNode root : positiveForest.roots()) {
-				for (int nodeColor = 0; nodeColor < colorSize; nodeColor++) {
-					if (root.actions().equals(negRoot.actions())) {
+				if (root.actions().setEquals(negRoot.actions())) {
+					for (int nodeColor = 0; nodeColor < colorSize; nodeColor++) {
 						constraints.add(new int[] {
 								-xVar(root.number(), nodeColor).number,
 								xxVar(negRoot.number(), nodeColor, false).number
@@ -186,7 +181,6 @@ public class PlantFormulaBuilder {
 				}
 			}
 		}
-		//return constraints.assemble("negative scenario basis");
 	}
 	
 	private void globalNegativeScenarioBasis(List<int[]> constraints) {
@@ -204,7 +198,6 @@ public class PlantFormulaBuilder {
 				});
 			}
 		}
-		//return constraints.assemble("global negative scenario basis");
 	}
 	
 	private void negativeScenarioPropagation(List<int[]> constraints, boolean isGlobal) {
@@ -233,7 +226,7 @@ public class PlantFormulaBuilder {
 					for (int i = 0; i < actions.size(); i++) {
 						final String action = actions.get(i);
 						final int sign = actionList.contains(action) ? 1 : -1;
-						// we actually need the negation, this -sign:
+						// we actually need the negation, thus -sign:
 						actionEq[color][i] = -sign * zVar(color, action).number;
 					}
 				}
@@ -252,7 +245,6 @@ public class PlantFormulaBuilder {
 				}
 			}
 		}
-		//return constraints.assemble("negative scenario propagation");
 	}
 	
 	private void negativeScenarioTermination(List<int[]> constraints, boolean isGlobal) {
@@ -267,7 +259,6 @@ public class PlantFormulaBuilder {
 				});
 			}
 		}
-		//return constraints.assemble("negative scenario termination");
 	}
 	
 	public void createVars() {

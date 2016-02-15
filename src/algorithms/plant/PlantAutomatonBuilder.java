@@ -199,6 +199,8 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 			final Pair<List<Counterexample>, List<Counterexample>> counterexamples =
 					verifier.verifyNondetMoore(automaton);
 			
+			//System.out.println(automaton);
+			
 			final List<Counterexample> mixedCE = new ArrayList<>(counterexamples.getLeft());
 			mixedCE.addAll(counterexamples.getRight());
 			if (mixedCE.stream().allMatch(Counterexample::isEmpty)) {
