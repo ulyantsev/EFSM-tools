@@ -204,17 +204,16 @@ public class NondetMooreAutomaton {
     public String toNuSMVString(List<String> events, List<String> actions) {
     	events = events.stream().map(s -> "input_" + s).collect(Collectors.toList());
     	final StringBuilder sb = new StringBuilder();
-    	final int syncCycles = 10;
     	sb.append("MODULE PLANT(input)\n");
     	sb.append("VAR\n");
     	sb.append("    state: 0.." + (stateCount() - 1) + ";\n");
-    	sb.append("    clock: 0.." + (syncCycles - 1) + ";\n");
+    	//sb.append("    initial_delay: 0..1;\n");
     	sb.append("ASSIGN\n");
-    	sb.append("    init(clock) := 0\n");
-    	sb.append("    next(clock) := (clock + 1) mod " + syncCycles + "\n");
+    	//sb.append("    init(initial_delay) := 0;\n");
+    	//sb.append("    next(initial_delay) := 1;\n");
     	sb.append("    init(state) := { " + initialStates().toString().replace("[", "").replace("]", "") + " };\n");
     	sb.append("    next(state) := case\n");
-    	sb.append("        clock < " + (syncCycles - 1) + ": state;\n");
+    	//sb.append("        initial_delay = 0 : state;\n");
     	for (int i = 0; i < stateCount(); i++) {
     		for (String event : events) {
     			final List<Integer> destinations = new ArrayList<>();
@@ -243,7 +242,7 @@ public class NondetMooreAutomaton {
     		sb.append("    output_" + action + " := " + condition + ";\n");
     	}
     	for (int i = 0; i < events.size(); i++) {
-    		sb.append("    input_" + events.get(i) + " := " + i + ";\n");
+    		sb.append("    " + events.get(i) + " := " + i + ";\n");
     	}
     	return sb.toString();
     }
