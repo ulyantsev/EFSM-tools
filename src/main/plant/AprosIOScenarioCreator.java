@@ -22,7 +22,7 @@ public class AprosIOScenarioCreator {
 	private final static List<Parameter> PARAMETERS_PROTECTION1 = Arrays.asList(
 			new Parameter(false, "water_level", 2.3, 2.8),
 			new Parameter(false, "pressure_lower_plenum", 3.5, 8.0, 10.0),
-			new Parameter(false, "pressure_live_stream", 3.5),
+			new Parameter(false, "pressure_live_steam", 3.5),
 			new Parameter(false, "voltage", 4800.0),
 			new Parameter(true, "tq11_speed_setpoint", 1.0),
 			new Parameter(true, "tj11_speed_setpoint", 1.0),
@@ -30,18 +30,40 @@ public class AprosIOScenarioCreator {
 	);
 	
 	private final static List<Parameter> PARAMETERS_PROTECTION7 = Arrays.asList(
-			new Parameter(false, "pressure56x", 1.96),
-			new Parameter(false, "pressure54x", 1.96),
-			new Parameter(false, "pressure52x", 1.96),
-			new Parameter(false, "pressure15x", 1.96),
-			new Parameter(false, "pressure13x", 1.96),
-			new Parameter(false, "pressure11x", 1.96),
+			new Parameter(false, "level56x", 1.96),
+			new Parameter(false, "level54x", 1.96),
+			new Parameter(false, "level52x", 1.96),
+			new Parameter(false, "level15x", 1.96),
+			new Parameter(false, "level13x", 1.96),
+			new Parameter(false, "level11x", 1.96),
 			new Parameter(false, "voltage", 4800.0),
 			new Parameter(true, "pump_speed", 1.0),
 			new Parameter(true, "valve_open", 0.5),
 			new Parameter(true, "valve_close", 0.5),
 			new Parameter(true, "signal64x", 0.5),
 			new Parameter(true, "signal65x", 0.5)
+	);
+	
+	private final static List<Parameter> PARAMETERS_PLANT = Arrays.asList(
+			new Parameter(false, "pressurizer_water_level", 2.3, 2.8, 3.705),
+			new Parameter(false, "pressure_lower_plenum", 3.5, 8.0, 10.0),
+			new Parameter(false, "pressure_live_steam", 3.0, 3.5),
+			new Parameter(false, "voltage", 4800.0),
+			new Parameter(false, "level56x", 1.8, 1.96),
+			new Parameter(false, "level54x", 1.8, 1.96),
+			new Parameter(false, "level52x", 1.8, 1.96),
+			new Parameter(false, "level15x", 1.8, 1.96),
+			new Parameter(false, "level13x", 1.8, 1.96),
+			new Parameter(false, "level11x", 1.8, 1.96),
+			new Parameter(false, "pressure56x", 4.6), // just random cutoff
+			new Parameter(false, "pressure54x", 4.6),
+			new Parameter(false, "pressure52x", 4.6),
+			new Parameter(false, "pressure15x", 4.6),
+			new Parameter(false, "pressure13x", 4.6),
+			new Parameter(false, "pressure11x", 4.6),
+			new Parameter(false, "reac_rel_power", 0.1, 0.95, 1.0, 1.1),
+			new Parameter(false, "pressure_upper_plenum", 10.8, 13.4),
+			new Parameter(false, "temp_upper_plenum", 180.0, 317.0)
 	);
 	
 	static class Configuration {
@@ -65,7 +87,11 @@ public class AprosIOScenarioCreator {
 			"evaluation/plant-synthesis/vver-traces-protection7",
 			1.0, PARAMETERS_PROTECTION7);
 	
-	private final static Configuration CONFIGURATION = CONFIGURATION_PROTECTION7;
+	private final static Configuration CONFIGURATION_PLANT = new Configuration(
+			"evaluation/plant-synthesis/vver-traces-plant",
+			1.0, PARAMETERS_PLANT);
+	
+	private final static Configuration CONFIGURATION = CONFIGURATION_PLANT;
 	
 	private final static String OUTPUT_TRACE_FILENAME = "evaluation/plant-synthesis/vver.sc";
 	private final static String OUTPUT_ACTIONSPEC_FILENAME = "evaluation/plant-synthesis/vver.actionspec";
