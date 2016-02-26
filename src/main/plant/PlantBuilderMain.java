@@ -12,6 +12,7 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -65,6 +66,10 @@ public class PlantBuilderMain {
 	@Option(name = "--actionDescriptions", aliases = { "-ad" }, usage = "comma-separated action descriptions to be included into GV and SMV output",
 			metaVar = "<actionDescriptions>")
 	private String actionDescriptions;
+	
+	@Option(name = "--colorRules", aliases = { "-cr" }, usage = "comma-separated state coloring rules for GV output, each in the form action->color",
+			metaVar = "<colorRules>")
+	private String colorRules;
 	
 	@Option(name = "--varNumber", aliases = { "-vn" }, usage = "number of variables (x0, x1, ...)", metaVar = "<varNumber>")
 	private int varNumber = 0;
@@ -266,9 +271,23 @@ public class PlantBuilderMain {
 					}
 				}
 				
+				final Map<String, String> colorRuleMap = new LinkedHashMap<>();
+				if (colorRules != null) {
+					final String[] tokens = colorRules.split(",");
+					// linked, since the order is important
+					for (String token : tokens) {
+						final String[] parts = token.split("->");
+						if (parts.length != 2 || !actions.contains(parts[0])) {
+							logger.warning("Invalid color rule " + token + "!");
+						} else {
+							colorRuleMap.put(parts[0], parts[1]);
+						}
+					}
+				}
+				
 				// writing to a file
 				try (PrintWriter pw = new PrintWriter(new File(resultFilePath))) {
-					pw.println(resultAutomaton.get());
+					pw.println(resultAutomaton.get().toString(colorRuleMap));
 				} catch (FileNotFoundException e) {
 					logger.warning("File " + resultFilePath + " not found: " + e.getMessage());
 				}

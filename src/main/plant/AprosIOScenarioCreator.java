@@ -55,12 +55,12 @@ public class AprosIOScenarioCreator {
 			new Parameter(false, "level15x", 1.8, 1.96),
 			new Parameter(false, "level13x", 1.8, 1.96),
 			new Parameter(false, "level11x", 1.8, 1.96),
-			new Parameter(false, "pressure56x", 4.6), // just random cutoff
-			new Parameter(false, "pressure54x", 4.6),
-			new Parameter(false, "pressure52x", 4.6),
-			new Parameter(false, "pressure15x", 4.6),
-			new Parameter(false, "pressure13x", 4.6),
-			new Parameter(false, "pressure11x", 4.6),
+			new Parameter(false, "pressure56x"/*, 4.6*/), // just random cutoff
+			new Parameter(false, "pressure54x"/*, 4.6*/),
+			new Parameter(false, "pressure52x"/*, 4.6*/),
+			new Parameter(false, "pressure15x"/*, 4.6*/),
+			new Parameter(false, "pressure13x"/*, 4.6*/),
+			new Parameter(false, "pressure11x"/*, 4.6*/),
 			new Parameter(false, "reac_rel_power", 0.1, 0.95, 1.0, 1.1),
 			new Parameter(false, "pressure_upper_plenum", 10.8, 13.4),
 			new Parameter(false, "temp_upper_plenum", 180.0, 317.0),
@@ -71,12 +71,17 @@ public class AprosIOScenarioCreator {
 		final String inputDirectory;
 		final double intervalSec;
 		final List<Parameter> parameters;
+		final List<String> colorRules = new ArrayList<>();
 		
 		public Configuration(String inputDirectory, double intervalSec,
 				List<Parameter> parameters) {
 			this.inputDirectory = inputDirectory;
 			this.intervalSec = intervalSec;
 			this.parameters = parameters;
+		}
+		
+		public void addColorRule(Parameter param, int index, String color) {
+			colorRules.add(param.traceName(index) + "->" + color);
 		}
 	}
 	
@@ -91,6 +96,18 @@ public class AprosIOScenarioCreator {
 	private final static Configuration CONFIGURATION_PLANT = new Configuration(
 			"evaluation/plant-synthesis/vver-traces-plant-2",
 			1.0, PARAMETERS_PLANT);
+	static {
+		// some of the trip conditions
+		CONFIGURATION_PLANT.addColorRule(PARAMETERS_PLANT.get(2), 0, "yellow");
+		CONFIGURATION_PLANT.addColorRule(PARAMETERS_PLANT.get(16), 4, "yellow");
+		CONFIGURATION_PLANT.addColorRule(PARAMETERS_PLANT.get(18), 2, "yellow");
+		CONFIGURATION_PLANT.addColorRule(PARAMETERS_PLANT.get(17), 2, "yellow");
+
+		// reactor relative power
+		CONFIGURATION_PLANT.addColorRule(PARAMETERS_PLANT.get(16), 0, "blue");
+		CONFIGURATION_PLANT.addColorRule(PARAMETERS_PLANT.get(16), 3, "red");
+		CONFIGURATION_PLANT.addColorRule(PARAMETERS_PLANT.get(16), 4, "red");
+	}
 	
 	private final static Configuration CONFIGURATION = CONFIGURATION_PLANT;
 	
@@ -301,7 +318,9 @@ public class AprosIOScenarioCreator {
 				+ OUTPUT_TRACE_FILENAME + " --actionNames "
 				+ String.join(",", allActions)
 				+ " --actionDescriptions "
-				+  "\"" + String.join(",", allActionDescriptions) + "\""
+				+ "\"" + String.join(",", allActionDescriptions) + "\""
+				+ " --colorRules "
+				+ "\"" + String.join(",", CONFIGURATION.colorRules) + "\""
 				+ " --actionNumber " + allActions.size()
 				+ " --eventNames "
 				+ String.join(",", allEvents)
