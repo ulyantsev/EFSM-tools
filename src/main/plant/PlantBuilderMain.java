@@ -11,8 +11,10 @@ import java.io.PrintWriter;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import java.util.logging.FileHandler;
 import java.util.logging.Logger;
@@ -59,6 +61,10 @@ public class PlantBuilderMain {
 	@Option(name = "--actionNames", aliases = { "-anm" }, usage = "optional comma-separated action names (default: z0, z1, z2, ...)",
 			metaVar = "<actionNames>")
 	private String actionNames;
+	
+	@Option(name = "--actionDescriptions", aliases = { "-ad" }, usage = "comma-separated action descriptions to be included into GV and SMV output",
+			metaVar = "<actionDescriptions>")
+	private String actionDescriptions;
 	
 	@Option(name = "--varNumber", aliases = { "-vn" }, usage = "number of variables (x0, x1, ...)", metaVar = "<varNumber>")
 	private int varNumber = 0;
@@ -214,7 +220,7 @@ public class PlantBuilderMain {
 			final long finishTime = System.currentTimeMillis() + timeout * 1000;
 			final Optional<NondetMooreAutomaton> resultAutomaton;
 			
-			if (fast && strFormulae.isEmpty()) {
+			if (fast /*&& strFormulae.isEmpty()*/) {
 				resultAutomaton = RapidPlantAutomatonBuilder.build(positiveForest, events);
 			} else if (fast) {
 				final Verifier usualVerifier = new Verifier(logger, strFormulae, events, actions, varNumber);
@@ -247,6 +253,19 @@ public class PlantBuilderMain {
 					logger.severe("NOT COMPLIES WITH NEGATIVE SCENARIOS");
 				}
 
+				if (actionDescriptions != null) {
+					final String[] tokens = actionDescriptions.split(",");
+					if (tokens.length != actionNumber) {
+						logger.warning("Wrong number of action descriptions; they are ignored!");
+					} else {
+						final Map<String, String> descriptions = new HashMap<>();
+						for (int i = 0; i < actionNumber; i++) {
+							descriptions.put(actions.get(i), tokens[i]);
+						}
+						resultAutomaton.get().setActionDescriptions(descriptions);
+					}
+				}
+				
 				// writing to a file
 				try (PrintWriter pw = new PrintWriter(new File(resultFilePath))) {
 					pw.println(resultAutomaton.get());

@@ -63,7 +63,8 @@ public class AprosIOScenarioCreator {
 			new Parameter(false, "pressure11x", 4.6),
 			new Parameter(false, "reac_rel_power", 0.1, 0.95, 1.0, 1.1),
 			new Parameter(false, "pressure_upper_plenum", 10.8, 13.4),
-			new Parameter(false, "temp_upper_plenum", 180.0, 317.0)
+			new Parameter(false, "temp_upper_plenum", 180.0, 317.0),
+			new Parameter(true, "trip", 1.0)
 	);
 	
 	static class Configuration {
@@ -88,7 +89,7 @@ public class AprosIOScenarioCreator {
 			1.0, PARAMETERS_PROTECTION7);
 	
 	private final static Configuration CONFIGURATION_PLANT = new Configuration(
-			"evaluation/plant-synthesis/vver-traces-plant",
+			"evaluation/plant-synthesis/vver-traces-plant-2",
 			1.0, PARAMETERS_PLANT);
 	
 	private final static Configuration CONFIGURATION = CONFIGURATION_PLANT;
@@ -131,6 +132,25 @@ public class AprosIOScenarioCreator {
 			}
 			for (int j = 0; j < cutoffs.size(); j++) {
 				res.add(traceName(j));
+			}
+			return res;
+		}
+		
+		public List<String> descriptions() {
+			final List<String> res = new ArrayList<>();
+			if (isInput) {
+				return res;
+			}
+			for (int j = 0; j < cutoffs.size(); j++) {
+				if (cutoffs.size() == 0) {
+					res.add("any " + name);
+				} else if (j == 0) {
+					res.add(name + " < " + cutoffs.get(j));
+				} else if (j == cutoffs.size() - 1) {
+					res.add(cutoffs.get(j - 1) + " <= " + name);
+				} else {
+					res.add(cutoffs.get(j - 1) + " <= " + name + " < " + cutoffs.get(j));
+				}
 			}
 			return res;
 		}
@@ -268,8 +288,10 @@ public class AprosIOScenarioCreator {
 		
 		// all actions
 		final List<String> allActions = new ArrayList<>();
+		final List<String> allActionDescriptions = new ArrayList<>();
 		for (Parameter p : CONFIGURATION.parameters) {
 			allActions.addAll(p.traceNames());
+			allActionDescriptions.addAll(p.descriptions());
 		}
 		
 		// execution command
@@ -277,14 +299,16 @@ public class AprosIOScenarioCreator {
 		System.out.println("Run:");
 		System.out.println("java -jar jars/plant-automaton-generator.jar "
 				+ OUTPUT_TRACE_FILENAME + " --actionNames "
-				+ allActions.toString().replace(" ", "").replace("[", "").replace("]", "")
+				+ String.join(",", allActions)
+				+ " --actionDescriptions "
+				+  "\"" + String.join(",", allActionDescriptions) + "\""
 				+ " --actionNumber " + allActions.size()
 				+ " --eventNames "
-				+ allEvents.toString().replace(" ", "").replace("[", "").replace("]", "")
+				+ String.join(",", allEvents)
 				+ " --eventNumber " + allEvents.size()
 				+ " --ltl " + OUTPUT_LTL_FILENAME
 				+ " --actionspec " + OUTPUT_ACTIONSPEC_FILENAME
-				+ " --size " + recommendedSize + " --varNumber 0 --tree tree.gv --nusmv automaton.smv");
+				+ " --size " + recommendedSize + " --varNumber 0 --tree tree.gv --nusmv automaton.smv --fast");
 		
 		// parameter limits
 		System.out.println("Found parameter boundaries:");

@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import scenario.StringActions;
@@ -55,8 +56,14 @@ public class MooreNode {
     
     @Override
     public String toString() {
+    	return toString(Collections.emptyMap());
+    }
+    
+    public String toString(Map<String, String> actionDescriptions) {
     	return String.valueOf(number + "\\n{" + String.join(",\\n",
-    			Arrays.stream(actions.getActions()).map(Object::toString)
+    			Arrays.stream(actions.getActions())
+    			.map(Object::toString)
+    			.map(s -> actionDescriptions.containsKey(s) ? actionDescriptions.get(s) : s)
     			.collect(Collectors.toList())) + "}");
     }
     
