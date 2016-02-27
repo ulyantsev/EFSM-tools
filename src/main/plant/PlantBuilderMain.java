@@ -38,9 +38,9 @@ import verification.ltl.grammar.LtlNode;
 import verification.verifier.Counterexample;
 import verification.verifier.NondetMooreVerifierPair;
 import verification.verifier.Verifier;
+import algorithms.plant.EvolutionaryPlantAutomatonBuilder;
 import algorithms.plant.PlantAutomatonBuilder;
 import algorithms.plant.RapidPlantAutomatonBuilder;
-import algorithms.plant.StateMergingPlantAutomatonBuilder;
 
 public class PlantBuilderMain {
 	@Argument(usage = "paths to files with scenarios", metaVar = "files", required = true)
@@ -225,11 +225,14 @@ public class PlantBuilderMain {
 			final long finishTime = System.currentTimeMillis() + timeout * 1000;
 			final Optional<NondetMooreAutomaton> resultAutomaton;
 			
-			if (fast /*&& strFormulae.isEmpty()*/) {
+			if (fast && strFormulae.isEmpty()) {
 				resultAutomaton = RapidPlantAutomatonBuilder.build(positiveForest, events);
 			} else if (fast) {
 				final Verifier usualVerifier = new Verifier(logger, strFormulae, events, actions, varNumber);
-				resultAutomaton = StateMergingPlantAutomatonBuilder.build(logger, positiveForest,
+				resultAutomaton
+					//= StateMergingPlantAutomatonBuilder.build(logger, positiveForest,
+					//	ltlFilePath, formulae, events, actions, usualVerifier, finishTime);
+					= EvolutionaryPlantAutomatonBuilder.build(logger, positiveForest,
 						ltlFilePath, formulae, events, actions, usualVerifier, finishTime);
 			} else {
 				resultAutomaton = PlantAutomatonBuilder.build(logger, positiveForest, negativeForest, size,

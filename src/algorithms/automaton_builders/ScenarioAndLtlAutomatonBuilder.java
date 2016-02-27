@@ -132,8 +132,8 @@ public abstract class ScenarioAndLtlAutomatonBuilder {
 	protected static String ltl2limboole(String formula) {
 		return formula
 				.replace("&&", "&").replace("||", "|")
-				.replace("and", "&").replace("or", "|")
-				.replace("not", "!");
+				.replaceAll("\\band\\b", "&").replaceAll("\\bor\\b", "|")
+				.replaceAll("\\bnot\\b", "!");
 	}
 	
 	protected static int timeLeftForSolver(long finishTime) {

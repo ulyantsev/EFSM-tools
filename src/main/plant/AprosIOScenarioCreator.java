@@ -85,10 +85,12 @@ public class AprosIOScenarioCreator {
 		}
 	}
 	
+	@SuppressWarnings("unused")
 	private final static Configuration CONFIGURATION_PROTECTION1 = new Configuration(
 			"evaluation/plant-synthesis/vver-traces-2",
 			1.0, PARAMETERS_PROTECTION1);
 	
+	@SuppressWarnings("unused")
 	private final static Configuration CONFIGURATION_PROTECTION7 = new Configuration(
 			"evaluation/plant-synthesis/vver-traces-protection7",
 			1.0, PARAMETERS_PROTECTION7);

@@ -130,7 +130,7 @@ public class NondetMooreAutomaton {
     }
 
     public void addTransition(MooreNode state, MooreTransition transition) {
-        state.addTransition(transition.event(), transition.dst());
+        state.addTransition(transition);
     }
     
     public void removeTransition(MooreNode state, MooreTransition transition) {

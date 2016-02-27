@@ -37,6 +37,10 @@ public class MooreNode {
         transitions.add(transition);
     }
     
+    public void addTransition(MooreTransition transition) {
+        transitions.add(transition);
+    }
+    
     public void removeTransition(MooreTransition transition) {
     	for (int i = 0; i < transitions.size(); i++) {
     		if (transitions.get(i) == transition) {
