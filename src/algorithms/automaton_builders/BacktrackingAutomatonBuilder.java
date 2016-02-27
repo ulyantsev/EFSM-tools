@@ -23,13 +23,13 @@ import structures.Automaton;
 import structures.Node;
 import structures.ScenarioTree;
 import structures.Transition;
+import verification.ltl.grammar.LtlNode;
+import verification.verifier.Verifier;
 import algorithms.AutomatonCompleter;
 import algorithms.AutomatonCompleter.CompletenessType;
 import algorithms.exception.AutomatonFoundException;
 import algorithms.exception.TimeLimitExceededException;
 import bool.MyBooleanExpression;
-import egorov.ltl.grammar.LtlNode;
-import egorov.verifier.Verifier;
 
 public class BacktrackingAutomatonBuilder {
 	private static abstract class TraverseState {

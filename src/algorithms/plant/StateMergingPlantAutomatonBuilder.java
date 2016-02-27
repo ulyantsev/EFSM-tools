@@ -23,10 +23,10 @@ import structures.plant.MooreNode;
 import structures.plant.MooreTransition;
 import structures.plant.NondetMooreAutomaton;
 import structures.plant.PositivePlantScenarioForest;
+import verification.ltl.grammar.LtlNode;
+import verification.verifier.Counterexample;
+import verification.verifier.Verifier;
 import algorithms.automaton_builders.ScenarioAndLtlAutomatonBuilder;
-import egorov.ltl.grammar.LtlNode;
-import egorov.verifier.Counterexample;
-import egorov.verifier.Verifier;
 
 public class StateMergingPlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 	private static NondetMooreAutomaton mergeMinimize(Random rnd,

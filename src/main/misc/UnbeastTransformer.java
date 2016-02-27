@@ -27,17 +27,17 @@ import scenario.StringScenario;
 import structures.Automaton;
 import structures.Node;
 import structures.Transition;
+import verification.ltl.LtlParseException;
+import verification.ltl.LtlParser;
+import verification.ltl.grammar.BinaryOperator;
+import verification.ltl.grammar.BooleanNode;
+import verification.ltl.grammar.INodeVisitor;
+import verification.ltl.grammar.LtlNode;
+import verification.ltl.grammar.Predicate;
+import verification.ltl.grammar.UnaryOperator;
+import verification.verifier.Verifier;
 import bool.MyBooleanExpression;
 import choco.kernel.common.util.tools.ArrayUtils;
-import egorov.ltl.LtlParseException;
-import egorov.ltl.LtlParser;
-import egorov.ltl.grammar.BinaryOperator;
-import egorov.ltl.grammar.BooleanNode;
-import egorov.ltl.grammar.INodeVisitor;
-import egorov.ltl.grammar.LtlNode;
-import egorov.ltl.grammar.Predicate;
-import egorov.ltl.grammar.UnaryOperator;
-import egorov.verifier.Verifier;
 
 public class UnbeastTransformer {
 	public static void main(String[] args) throws IOException, ParseException, LtlParseException {

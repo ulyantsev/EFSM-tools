@@ -14,10 +14,10 @@ import org.kohsuke.args4j.spi.BooleanOptionHandler;
 
 import structures.Automaton;
 import structures.plant.NondetMooreAutomaton;
+import verification.ltl.LtlParser;
+import verification.verifier.Counterexample;
+import verification.verifier.Verifier;
 import algorithms.AutomatonGVLoader;
-import egorov.ltl.LtlParser;
-import egorov.verifier.Counterexample;
-import egorov.verifier.Verifier;
 
 public class VerifierMain {
 	@Option(name = "--eventNumber", aliases = { "-en" }, usage = "number of events", metaVar = "<eventNumber>", required = true)

@@ -29,11 +29,11 @@ import structures.Automaton;
 import structures.NegativeScenarioTree;
 import structures.Node;
 import structures.ScenarioTree;
+import verification.ltl.LtlParseException;
+import verification.ltl.LtlParser;
+import verification.ltl.grammar.LtlNode;
+import verification.verifier.Verifier;
 import algorithms.automaton_builders.FastAutomatonBuilder;
-import egorov.ltl.LtlParseException;
-import egorov.ltl.LtlParser;
-import egorov.ltl.grammar.LtlNode;
-import egorov.verifier.Verifier;
 
 public class FastAutomatonBuilderMain {
 	@Argument(usage = "paths to files with scenarios", metaVar = "files", required = true)

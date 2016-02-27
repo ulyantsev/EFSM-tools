@@ -13,10 +13,10 @@ import scenario.StringActions;
 import structures.Automaton;
 import structures.Node;
 import structures.Transition;
+import verification.verifier.Verifier;
 import algorithms.exception.AutomatonFoundException;
 import algorithms.exception.TimeLimitExceededException;
 import bool.MyBooleanExpression;
-import egorov.verifier.Verifier;
 
 public class AutomatonCompleter {
 	private final Verifier verifier;

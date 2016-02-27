@@ -21,6 +21,8 @@ import sat_solving.SolverResult;
 import sat_solving.SolverResult.SolverResults;
 import structures.Automaton;
 import structures.ScenarioTree;
+import verification.ltl.grammar.LtlNode;
+import verification.verifier.Verifier;
 import algorithms.AutomatonCompleter.CompletenessType;
 import algorithms.exception.TimeLimitExceededException;
 import algorithms.formula_builders.QbfFormulaBuilder;
@@ -28,8 +30,6 @@ import bnf_formulae.BooleanFormula;
 import bnf_formulae.BooleanFormula.SolveAsSatResult;
 import bnf_formulae.QuantifiedBooleanFormula;
 import bnf_formulae.QuantifiedBooleanFormula.FormulaSizeException;
-import egorov.ltl.grammar.LtlNode;
-import egorov.verifier.Verifier;
 
 public class QbfAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {	
 	public final static String PRECOMPUTED_DIR_NAME = "qbf/bfs-prohibited-ys";

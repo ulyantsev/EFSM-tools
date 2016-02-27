@@ -33,13 +33,13 @@ import structures.plant.MooreTransition;
 import structures.plant.NegativePlantScenarioForest;
 import structures.plant.NondetMooreAutomaton;
 import structures.plant.PositivePlantScenarioForest;
+import verification.ltl.grammar.LtlNode;
+import verification.verifier.Counterexample;
+import verification.verifier.NondetMooreVerifierPair;
+import verification.verifier.SimpleVerifier;
 import algorithms.automaton_builders.ScenarioAndLtlAutomatonBuilder;
 import bnf_formulae.BooleanVariable;
 import bool.MyBooleanExpression;
-import egorov.ltl.grammar.LtlNode;
-import egorov.verifier.Counterexample;
-import egorov.verifier.SimpleVerifier;
-import egorov.verifier.NondetMooreVerifierPair;
 
 public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 	protected static Optional<NondetMooreAutomaton> reportResult(Logger logger, int iterations, Optional<NondetMooreAutomaton> a) {

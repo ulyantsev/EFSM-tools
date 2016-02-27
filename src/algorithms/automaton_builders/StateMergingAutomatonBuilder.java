@@ -13,11 +13,11 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Logger;
 
-import egorov.verifier.Counterexample;
-import egorov.verifier.Verifier;
 import scenario.StringScenario;
 import structures.APTA;
 import structures.Automaton;
+import verification.verifier.Counterexample;
+import verification.verifier.Verifier;
 
 public class StateMergingAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 	private static APTA getAPTA(List<List<String>> possc, Set<List<String>> negsc) {

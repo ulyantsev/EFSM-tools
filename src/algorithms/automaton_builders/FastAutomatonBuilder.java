@@ -22,15 +22,15 @@ import scenario.StringScenario;
 import structures.Automaton;
 import structures.NegativeScenarioTree;
 import structures.ScenarioTree;
+import verification.ltl.grammar.LtlNode;
+import verification.verifier.Counterexample;
+import verification.verifier.Verifier;
 import algorithms.AutomatonCompleter.CompletenessType;
 import algorithms.formula_builders.FastAutomatonFormulaBuilder;
 import bnf_formulae.BinaryOperations;
 import bnf_formulae.BooleanVariable;
 import bnf_formulae.FormulaList;
 import bool.MyBooleanExpression;
-import egorov.ltl.grammar.LtlNode;
-import egorov.verifier.Counterexample;
-import egorov.verifier.Verifier;
 
 public class FastAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 	protected static Optional<Automaton> reportResult(Logger logger, int iterations, Optional<Automaton> a) {

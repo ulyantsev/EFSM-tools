@@ -12,6 +12,12 @@ import java.util.function.Function;
 import java.util.logging.Logger;
 
 import structures.ScenarioTree;
+import verification.ltl.LtlNormalizer;
+import verification.ltl.grammar.BinaryOperator;
+import verification.ltl.grammar.BooleanNode;
+import verification.ltl.grammar.LtlNode;
+import verification.ltl.grammar.Predicate;
+import verification.ltl.grammar.UnaryOperator;
 import algorithms.AutomatonCompleter.CompletenessType;
 import bnf_formulae.BinaryOperation;
 import bnf_formulae.BinaryOperations;
@@ -21,12 +27,6 @@ import bnf_formulae.FalseFormula;
 import bnf_formulae.FormulaList;
 import bnf_formulae.QuantifiedBooleanFormula;
 import bnf_formulae.TrueFormula;
-import egorov.ltl.LtlNormalizer;
-import egorov.ltl.grammar.BinaryOperator;
-import egorov.ltl.grammar.BooleanNode;
-import egorov.ltl.grammar.LtlNode;
-import egorov.ltl.grammar.Predicate;
-import egorov.ltl.grammar.UnaryOperator;
 
 public class QbfFormulaBuilder extends FormulaBuilder {
 	private final Logger logger;

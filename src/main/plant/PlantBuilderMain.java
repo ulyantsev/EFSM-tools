@@ -32,15 +32,15 @@ import structures.plant.MooreNode;
 import structures.plant.NegativePlantScenarioForest;
 import structures.plant.NondetMooreAutomaton;
 import structures.plant.PositivePlantScenarioForest;
+import verification.ltl.LtlParseException;
+import verification.ltl.LtlParser;
+import verification.ltl.grammar.LtlNode;
+import verification.verifier.Counterexample;
+import verification.verifier.NondetMooreVerifierPair;
+import verification.verifier.Verifier;
 import algorithms.plant.PlantAutomatonBuilder;
 import algorithms.plant.RapidPlantAutomatonBuilder;
 import algorithms.plant.StateMergingPlantAutomatonBuilder;
-import egorov.ltl.LtlParseException;
-import egorov.ltl.LtlParser;
-import egorov.ltl.grammar.LtlNode;
-import egorov.verifier.Counterexample;
-import egorov.verifier.NondetMooreVerifierPair;
-import egorov.verifier.Verifier;
 
 public class PlantBuilderMain {
 	@Argument(usage = "paths to files with scenarios", metaVar = "files", required = true)

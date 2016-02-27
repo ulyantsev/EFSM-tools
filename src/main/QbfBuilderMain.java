@@ -31,16 +31,16 @@ import structures.NegativeScenarioTree;
 import structures.Node;
 import structures.ScenarioTree;
 import structures.Transition;
+import verification.ltl.LtlParseException;
+import verification.ltl.LtlParser;
+import verification.ltl.grammar.LtlNode;
+import verification.verifier.Verifier;
 import algorithms.AutomatonCompleter.CompletenessType;
 import algorithms.automaton_builders.BacktrackingAutomatonBuilder;
 import algorithms.automaton_builders.CounterexampleAutomatonBuilder;
 import algorithms.automaton_builders.QbfAutomatonBuilder;
 import algorithms.automaton_builders.StateMergingAutomatonBuilder;
 import bool.MyBooleanExpression;
-import egorov.ltl.LtlParseException;
-import egorov.ltl.LtlParser;
-import egorov.ltl.grammar.LtlNode;
-import egorov.verifier.Verifier;
 
 public class QbfBuilderMain {
 	@Argument(usage = "paths to files with scenarios", metaVar = "files", required = true)
