@@ -1,7 +1,0 @@
-G(!action(waterlevel0) || X(action(waterlevel0) || action(waterlevel1)))
-G(!action(waterlevel1) || X(action(waterlevel1) || action(waterlevel0) || action(waterlevel2)))
-G(!action(waterlevel2) || X(action(waterlevel2) || action(waterlevel1)))
-G(!action(pressurelowerplenum0) || X(action(pressurelowerplenum0) || action(pressurelowerplenum1)))
-G(!action(pressurelowerplenum1) || X(action(pressurelowerplenum1) || action(pressurelowerplenum0) || action(pressurelowerplenum2)))
-G(!action(pressurelowerplenum2) || X(action(pressurelowerplenum2) || action(pressurelowerplenum1) || action(pressurelowerplenum3)))
-G(!action(pressurelowerplenum3) || X(action(pressurelowerplenum3) || action(pressurelowerplenum2)))

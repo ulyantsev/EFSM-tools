@@ -236,8 +236,10 @@ public abstract class BooleanFormula {
 			constraintWriter.writeInt(0);
 			for (int i : constraint) {
 				constraintWriter.writeInt(i);
+				//System.out.print(i + " ");
 			}
 			constraintWriter.writeInt(0);
+			//System.out.print("0\n");
 		}
 	}
 	
