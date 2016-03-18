@@ -222,7 +222,7 @@ public class NondetMooreAutomaton {
     		final String condition = properStates.isEmpty()
     				? "FALSE"
     				: ("state in { " + String.join(", ", properStates) + " }");
-    		final String comment = actionDescriptions.containsKey(action) ? (" # " + actionDescriptions.get(action)) : "";
+    		final String comment = actionDescriptions.containsKey(action) ? (" -- " + actionDescriptions.get(action)) : "";
     		sb.append("    output_" + action + " := " + condition + ";" + comment + "\n");
     	}
     	for (int i = 0; i < events.size(); i++) {

@@ -64,11 +64,11 @@ public class MooreNode {
     }
     
     public String toString(Map<String, String> actionDescriptions) {
-    	return String.valueOf(number + "\\n{" + String.join(",\\n",
+    	return String.valueOf(number + "\\n" + String.join("\\n",
     			Arrays.stream(actions.getActions())
     			.map(Object::toString)
     			.map(s -> actionDescriptions.containsKey(s) ? actionDescriptions.get(s) : s)
-    			.collect(Collectors.toList())) + "}");
+    			.collect(Collectors.toList())));
     }
     
     public MooreNode scenarioDst(String event, StringActions actions) {
