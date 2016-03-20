@@ -31,7 +31,6 @@ public class AprosIOScenarioCreator {
 			new Parameter(true, "tj11_speed_setpoint", 1.0),
 			new Parameter(true, "th11_speed_setpoint", 1.0)
 	);
-	
 	private final static List<Parameter> PARAMETERS_PROTECTION7 = Arrays.asList(
 			new Parameter(false, "level56x", 1.96),
 			new Parameter(false, "level54x", 1.96),
@@ -46,7 +45,6 @@ public class AprosIOScenarioCreator {
 			new Parameter(true, "signal64x", 0.5),
 			new Parameter(true, "signal65x", 0.5)
 	);
-	
 	private final static List<Parameter> PARAMETERS_PLANT = Arrays.asList(
 			new Parameter(false, "pressurizer_water_level", 2.3, 2.8, 3.705),
 			new Parameter(false, "pressure_lower_plenum", 3.5, 8.0, 10.0),
@@ -138,11 +136,23 @@ public class AprosIOScenarioCreator {
 
 	static class Parameter {
 		private final List<Double> cutoffs;
-		private final String scName;
+		private String scName;
 		private final String aprosName;
 		private double min = Double.POSITIVE_INFINITY;
 		private double max = Double.NEGATIVE_INFINITY;
 
+		public static void unify(Parameter p, Parameter q) {
+			if (p.aprosName.equals(q.aprosName)) {
+				final Set<Double> allCutoffs = new TreeSet<>(p.cutoffs);
+				allCutoffs.addAll(q.cutoffs);
+				p.cutoffs.clear();
+				p.cutoffs.addAll(allCutoffs);
+				q.cutoffs.clear();
+				q.cutoffs.addAll(allCutoffs);
+				q.scName = p.scName;
+			}
+		}
+		
 		public Parameter(String aprosName, String name, Double... cutoffs) {
 			this.scName = name;
 			this.aprosName = aprosName;
@@ -242,6 +252,12 @@ public class AprosIOScenarioCreator {
 			}
 			return res;
 		}
+		
+		@Override
+		public String toString() {
+			return "param " + aprosName + " (" + scName + ") "
+					+ cutoffs.subList(0, cutoffs.size() - 1);
+		}
 	}
 
 	static class Configuration {
@@ -250,6 +266,12 @@ public class AprosIOScenarioCreator {
 		final List<Parameter> inputParameters;
 		final List<String> colorRules = new ArrayList<>();
 
+		public List<Parameter> allParameters() {
+			final List<Parameter> params = new ArrayList<>(outputParameters);
+			params.addAll(inputParameters);
+			return params;
+		}
+		
 		public Configuration(double intervalSec,
 				List<Parameter> outputParameters,
 				List<Parameter> inputParameters) {
@@ -260,6 +282,16 @@ public class AprosIOScenarioCreator {
 
 		public void addColorRule(Parameter param, int index, String color) {
 			colorRules.add(param.traceName(index) + "->" + color);
+		}
+		
+		@Override
+		public String toString() {
+			return "out:\n  " +  
+					String.join("\n  ", outputParameters.stream()
+							.map(p -> p.toString()).collect(Collectors.toList()))
+					+ "\nin:\n  " + 
+					String.join("\n  ", inputParameters.stream()
+						.map(p -> p.toString()).collect(Collectors.toList()));
 		}
 	}
 
@@ -278,7 +310,7 @@ public class AprosIOScenarioCreator {
 	final static Parameter pumpTH11SpeedSetpoint = new Parameter(
 			"TH11D001_R01#DC2_OUTPUT_VALUE", "th11_speed_setpoint", 1.0);
 
-	private final static Configuration CONFIGURATION_PROTECTION1 = new Configuration(
+	final static Configuration CONFIGURATION_PROTECTION1 = new Configuration(
 			1.0, Arrays.asList(
 			pressurizerWaterLevel, pressureInLowerPlenum,
 			liveSteamPressure, busbarVoltage), Arrays.asList(
@@ -308,7 +340,7 @@ public class AprosIOScenarioCreator {
 	final static Parameter prot7toProt5signal65 = new Parameter(
 			"YZU001XL65#BINARY_VALUE", "prot7_signal65x", 0.5);
 
-	private final static Configuration CONFIGURATION_PROTECTION7 = new Configuration(
+	final static Configuration CONFIGURATION_PROTECTION7 = new Configuration(
 			1.0,
 			Arrays.asList(steamGeneratorLevel56, steamGeneratorLevel54,
 					steamGeneratorLevel52, steamGeneratorLevel15,
@@ -354,7 +386,7 @@ public class AprosIOScenarioCreator {
 	final static Parameter prot5valve46close = new Parameter(
 			"RL46S001_VA1#VO_CLOSE", "valve46close", 0.5);
 	
-	private final static Configuration CONFIGURATION_PROTECTION5 = new Configuration(
+	final static Configuration CONFIGURATION_PROTECTION5 = new Configuration(
 			1.0, Arrays.asList(
 			steamGeneratorPressure56_prot5,
 			steamGeneratorPressure54_prot5,
@@ -462,7 +494,7 @@ public class AprosIOScenarioCreator {
 	final static Parameter prot6valveL76close = new Parameter(
 			"RL76S003_VA1#VO_CLOSE", "valveL76close", 0.5);
 	
-	private final static Configuration CONFIGURATION_PROTECTION6 = new Configuration(
+	final static Configuration CONFIGURATION_PROTECTION6 = new Configuration(
 				1.0, Arrays.asList(
 				liveSteamPressure_entirePlant), Arrays.asList(
 				prot6valveA11open, prot6valveA11close,
@@ -493,7 +525,7 @@ public class AprosIOScenarioCreator {
 	final static Parameter rodPosition = new Parameter(
 			"YC00B001_RA1#RA_RE_RODP2", "rodPosition", 1.0, 2.0);
 
-	private final static Configuration CONFIGURATION_REA_TUR_TRIP = new Configuration(
+	final static Configuration CONFIGURATION_REA_TUR_TRIP = new Configuration(
 			1.0, Arrays.asList(
 				liveSteamPressure_entirePlant,
 				reacRelPower_entirePlant,
@@ -517,7 +549,7 @@ public class AprosIOScenarioCreator {
 	// but it just states that liveSteamPressure < 3
 
 
-	private final static Configuration CONFIGURATION_PLANT = new Configuration(
+	final static Configuration CONFIGURATION_PLANT = new Configuration(
 			1.0,
 			Arrays.asList(
 					pressurizerWaterLevel_entirePlant,
@@ -561,7 +593,7 @@ public class AprosIOScenarioCreator {
 	final static Parameter rodPosition_reacco = new Parameter(
 			"YC00B001_RA1#RA_RE_RODP", "rod_position", 1.0, 2.0);
 	
-	private final static Configuration CONFIGURATION_REACTOR_CO = new Configuration(
+	final static Configuration CONFIGURATION_REACTOR_CO = new Configuration(
 			1.0,
 			Arrays.asList(
 					binSigFromReaPowLimit_reacco,
@@ -602,7 +634,7 @@ public class AprosIOScenarioCreator {
 	final static Parameter valveK53_preslevco = new Parameter(
 			"TK53S002_VA1#V_POSITION_SET_VALUE", "valveK53", 0.5);
 	
-	private final static Configuration CONFIGURATION_PRES_LEV_CONT = new Configuration(
+	final static Configuration CONFIGURATION_PRES_LEV_CONT = new Configuration(
 			1.0,
 			Arrays.asList(
 				YA11T001_preslevco, YA11T002_preslevco,
@@ -635,7 +667,7 @@ public class AprosIOScenarioCreator {
 	final static Parameter valve1402_prespresco = new Parameter(
 			"YP14S002_VA1#V_POSITION_SET_VALUE", "valve1402", 0.5);
 	
-	private final static Configuration CONFIGURATION_PRES_PRES_CONT = new Configuration(
+	final static Configuration CONFIGURATION_PRES_PRES_CONT = new Configuration(
 			1.0,
 			Arrays.asList(
 					pressurizerWaterLevel_entirePlant,
@@ -650,19 +682,28 @@ public class AprosIOScenarioCreator {
 					valve1302_prespresco,
 					valve1402_prespresco));
 
-	private final static Configuration CONFIGURATION = CONFIGURATION_PRES_PRES_CONT;
+	private final static Configuration CONFIGURATION = CONFIGURATION_PROTECTION7;
 
 	private final static String OUTPUT_TRACE_FILENAME = "evaluation/plant-synthesis/vver.sc";
 	private final static String OUTPUT_ACTIONSPEC_FILENAME = "evaluation/plant-synthesis/vver.actionspec";
 	private final static String OUTPUT_LTL_FILENAME = "evaluation/plant-synthesis/vver.ltl";
-
-	public static void main(String[] args) throws FileNotFoundException {
-		final long time = System.currentTimeMillis();
+	
+	public static List<String> generateScenarios(Configuration conf, Dataset ds) throws FileNotFoundException {
 		// traces
 		final Set<String> allEvents = new TreeSet<>();
 		final Set<List<String>> allActionCombinations = new HashSet<>();
 		
-		final Dataset ds = new Dataset(CONFIGURATION);
+		// coverage
+		final Set<Pair<String, Integer>> inputCovered = new HashSet<>();
+		final Set<Pair<String, Integer>> outputCovered = new HashSet<>();
+		int totalInputValues = 0;
+		int totalOutputValues = 0;
+		for (Parameter p : conf.inputParameters) {
+			totalInputValues += p.cutoffs.size();
+		}
+		for (Parameter p : conf.outputParameters) {
+			totalOutputValues += p.cutoffs.size();
+		}
 		
 		try (PrintWriter pw = new PrintWriter(new File(OUTPUT_TRACE_FILENAME))) {
 			for (List<double[]> trace : ds.values) {
@@ -673,13 +714,17 @@ public class AprosIOScenarioCreator {
 					final StringBuilder event = new StringBuilder("A");
 					final List<String> thisActions = new ArrayList<>();
 					
-					for (Parameter p : CONFIGURATION.inputParameters) {
-						double value = ds.get(snapshot, p);
-						event.append(p.traceNameIndex(value));
+					for (Parameter p : conf.inputParameters) {
+						final double value = ds.get(snapshot, p);
+						final int index = p.traceNameIndex(value);
+						inputCovered.add(Pair.of(p.aprosName, index));
+						event.append(index);
 					}
 					
-					for (Parameter p : CONFIGURATION.outputParameters) {
-						double value = ds.get(snapshot, p);
+					for (Parameter p : conf.outputParameters) {
+						final double value = ds.get(snapshot, p);
+						final int index = p.traceNameIndex(value);
+						outputCovered.add(Pair.of(p.aprosName, index));
 						thisActions.add(p.traceName(value));
 					}
 					
@@ -699,7 +744,7 @@ public class AprosIOScenarioCreator {
 		// actionspec
 		try (PrintWriter pw = new PrintWriter(new File(
 				OUTPUT_ACTIONSPEC_FILENAME))) {
-			for (Parameter p : CONFIGURATION.outputParameters) {
+			for (Parameter p : conf.outputParameters) {
 				for (String str : p.actionspec()) {
 					pw.println(str);
 				}
@@ -708,7 +753,7 @@ public class AprosIOScenarioCreator {
 
 		// temporal properties
 		try (PrintWriter pw = new PrintWriter(new File(OUTPUT_LTL_FILENAME))) {
-			for (Parameter p : CONFIGURATION.outputParameters) {
+			for (Parameter p : conf.outputParameters) {
 				for (String str : p.temporalProperties()) {
 					pw.println(str);
 				}
@@ -718,7 +763,7 @@ public class AprosIOScenarioCreator {
 		// all actions
 		final List<String> allActions = new ArrayList<>();
 		final List<String> allActionDescriptions = new ArrayList<>();
-		for (Parameter p : CONFIGURATION.outputParameters) {
+		for (Parameter p : conf.outputParameters) {
 			allActions.addAll(p.traceNames());
 			allActionDescriptions.addAll(p.descriptions());
 		}
@@ -726,40 +771,73 @@ public class AprosIOScenarioCreator {
 		// execution command
 		final int recommendedSize = allActionCombinations.size();
 		final String nl = " \\\n";
-		final String ltl;
-		final String fast;
+
+		System.out.println("Run:");
+		
+		final List<String> builderArgs = new ArrayList<>();
+		builderArgs.add(OUTPUT_TRACE_FILENAME);
+		builderArgs.add("--actionNames");
+		builderArgs.add(String.join(",", allActions));
+		builderArgs.add("--actionDescriptions");
+		builderArgs.add(String.join(",", allActionDescriptions));
+		builderArgs.add("--colorRules");
+		builderArgs.add(String.join(",", conf.colorRules));
+		builderArgs.add("--actionNumber");
+		builderArgs.add(String.valueOf(allActions.size()));
+		builderArgs.add("--eventNames");
+		builderArgs.add(String.join(",", allEvents));
+		builderArgs.add("--eventNumber");
+		builderArgs.add(String.valueOf(allEvents.size()));
 		if (recommendedSize > 10) {
-			ltl = "";
-			fast = " --fast";
+			builderArgs.add("--fast");
 			System.out.println("# LTL disabled: estimated state number is too large");
 		} else {
-			ltl = " --ltl \"" + OUTPUT_LTL_FILENAME + "\"" + nl;
-			fast = "";
+			builderArgs.add("--ltl");
+			builderArgs.add(OUTPUT_LTL_FILENAME);
 		}
-		System.out.println("Run:");
-		System.out.println("java -jar jars/plant-automaton-generator.jar \"" + OUTPUT_TRACE_FILENAME + "\"" + nl
-				+ " --actionNames " + String.join(",", allActions) + nl
-				+ " --actionDescriptions " + "\"" + String.join(",", allActionDescriptions) + "\"" + nl
-				+ " --colorRules " + "\"" + String.join(",", CONFIGURATION.colorRules) + "\"" + nl
-				+ " --actionNumber " + allActions.size() + nl
-				+ " --eventNames " + String.join(",", allEvents) + nl
-				+ " --eventNumber " + allEvents.size() + nl
-				+ ltl
-				+ " --actionspec \"" + OUTPUT_ACTIONSPEC_FILENAME + "\"" + nl
-				+ " --size " + recommendedSize + nl
-				+ " --varNumber 0 --tree tree.gv --nusmv automaton.smv" + fast);
+		builderArgs.add("--actionspec");
+		builderArgs.add(OUTPUT_ACTIONSPEC_FILENAME);
+		builderArgs.add("--size");
+		builderArgs.add(String.valueOf(recommendedSize));
+		builderArgs.add("--varNumber");
+		builderArgs.add("0");
+		builderArgs.add("--nusmv");
+		builderArgs.add("automaton.smv");
+		builderArgs.add("--serialize");
+		builderArgs.add("automaton.bin");
+		
+		System.out.print("java -jar jars/plant-automaton-generator.jar ");
+		for (String arg : builderArgs) {
+			if (arg.startsWith("--")) {
+				System.out.print(nl + " " + arg + " ");
+			} else {
+				System.out.print("\"" + arg + "\"");
+			}
+		}
+		System.out.println();
 
 		// parameter limits
 		System.out.println("Found parameter boundaries:");
 		final Function<Parameter, String> describe = p -> {
 			return p.scName + " in " + p.limits() + ", bounds " + p.cutoffs.subList(0, p.cutoffs.size() - 1);
 		};
-		for (Parameter p : CONFIGURATION.outputParameters) {
+		for (Parameter p : conf.outputParameters) {
 			System.out.println(" output " + describe.apply(p));
 		}
-		for (Parameter p : CONFIGURATION.inputParameters) {
+		for (Parameter p : conf.inputParameters) {
 			System.out.println(" input " + describe.apply(p));
 		}
+		
+		System.out.println(String.format("Input coverage: %.2f%%", 100.0 * inputCovered.size() / totalInputValues));
+		System.out.println(String.format("Output coverage: %.2f%%", 100.0 * outputCovered.size() / totalOutputValues));
+		
+		return builderArgs;
+	}
+	
+	public static void main(String[] args) throws FileNotFoundException {
+		final long time = System.currentTimeMillis();
+		final Dataset ds = new Dataset(CONFIGURATION);
+		generateScenarios(CONFIGURATION, ds);
 		System.out.println("Execution time: " + (System.currentTimeMillis() - time) + " ms");
 	}
 }

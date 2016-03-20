@@ -2,6 +2,7 @@ package structures.plant;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.Serializable;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -24,7 +25,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import scenario.StringActions;
 import scenario.StringScenario;
 
-public class NondetMooreAutomaton {
+public class NondetMooreAutomaton implements Serializable {
     private final List<Boolean> isInitial = new ArrayList<>();
     private final List<MooreNode> states = new ArrayList<>();
     

@@ -180,7 +180,9 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 			final int secondsLeft = timeLeftForSolver(finishTime);
 			if (iteration == 0) {
 				// create
+				logger.info("Generating initial constraints...");
 				final List<int[]> positiveConstraints = builder.positiveConstraints();
+				logger.info("Generated initial constraints.");
 				final String actionSpec = actionSpecification(actionspecFilePath, size, actions);
 				incr = new IncrementalInterface(positiveConstraints, actionSpec, logger);
 			}

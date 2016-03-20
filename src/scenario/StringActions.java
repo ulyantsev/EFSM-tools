@@ -1,9 +1,10 @@
 package scenario;
 
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.TreeSet;
 
-public class StringActions {
+public class StringActions implements Serializable {
 	private final String[] actions;
 
 	public StringActions(String str) {

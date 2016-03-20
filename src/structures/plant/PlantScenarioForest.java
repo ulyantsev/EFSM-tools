@@ -35,7 +35,7 @@ public abstract class PlantScenarioForest {
      */
     public void load(String filepath, int varNumber) throws FileNotFoundException, ParseException {
         for (StringScenario scenario : StringScenario.loadScenarios(filepath, varNumber)) {
-            addScenario(scenario);
+        	addScenario(scenario);
         }
     }
     

@@ -6,7 +6,9 @@ package main.plant;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -27,6 +29,9 @@ import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 import org.kohsuke.args4j.spi.BooleanOptionHandler;
 
+import algorithms.plant.EvolutionaryPlantAutomatonBuilder;
+import algorithms.plant.PlantAutomatonBuilder;
+import algorithms.plant.RapidPlantAutomatonBuilder;
 import scenario.StringScenario;
 import structures.plant.MooreNode;
 import structures.plant.NegativePlantScenarioForest;
@@ -38,9 +43,6 @@ import verification.ltl.grammar.LtlNode;
 import verification.verifier.Counterexample;
 import verification.verifier.NondetMooreVerifierPair;
 import verification.verifier.Verifier;
-import algorithms.plant.EvolutionaryPlantAutomatonBuilder;
-import algorithms.plant.PlantAutomatonBuilder;
-import algorithms.plant.RapidPlantAutomatonBuilder;
 
 public class PlantBuilderMain {
 	@Argument(usage = "paths to files with scenarios", metaVar = "files", required = true)
@@ -63,11 +65,11 @@ public class PlantBuilderMain {
 			metaVar = "<actionNames>")
 	private String actionNames;
 	
-	@Option(name = "--actionDescriptions", aliases = { "-ad" }, usage = "comma-separated action descriptions to be included into GV and SMV output",
+	@Option(name = "--actionDescriptions", usage = "comma-separated action descriptions to be included into GV and SMV output",
 			metaVar = "<actionDescriptions>")
 	private String actionDescriptions;
 	
-	@Option(name = "--colorRules", aliases = { "-cr" }, usage = "comma-separated state coloring rules for GV output, each in the form action->color",
+	@Option(name = "--colorRules", usage = "comma-separated state coloring rules for GV output, each in the form action->color",
 			metaVar = "<colorRules>")
 	private String colorRules;
 	
@@ -98,24 +100,28 @@ public class PlantBuilderMain {
 	@Option(name = "--timeout", aliases = { "-to" }, usage = "solver timeout (sec)", metaVar = "<timeout>")
 	private int timeout = 60 * 60 * 24;
 
-	@Option(name = "--nusmv", aliases = { "-nusmv" }, usage = "file for NuSMV output (optional)", metaVar = "<file>")
+	@Option(name = "--nusmv", usage = "file for NuSMV output (optional)", metaVar = "<file>")
 	private String nusmvFilePath;
 	
-	@Option(name = "--fast", aliases = { "-fast" }, handler = BooleanOptionHandler.class,
+	@Option(name = "--serialize", usage = "serialized binary output", metaVar = "<file>")
+	private String serializeFilePath;
+	
+	@Option(name = "--fast", handler = BooleanOptionHandler.class,
 			usage = "use the fast but inprecise way of model generation "
 					+ "(size, negative scenarios and action specifications are ignored, "
 					+ "LTL formulae are partially ignored)")
 	private boolean fast;
 	
-	private void launcher(String[] args) throws IOException {
+	private void launcher(String[] args) throws IOException {		
 		Locale.setDefault(Locale.US);
+		final long startTime = System.currentTimeMillis();
 
-		CmdLineParser parser = new CmdLineParser(this);
+		final CmdLineParser parser = new CmdLineParser(this);
 		try {
 			parser.parseArgument(args);
 		} catch (CmdLineException e) {
 			System.out.println("Plant automaton builder from scenarios and LTL formulae");
-			System.out.println("Authors: Igor Buzhinsky (igor.buzhinsky@gmail.com), Vladimir Ulyantsev (ulyantsev@rain.ifmo.ru)\n");
+			System.out.println("Author: Igor Buzhinsky (igor.buzhinsky@gmail.com)\n");
 			System.out.print("Usage: ");
 			parser.printSingleLineUsage(System.out);
 			System.out.println();
@@ -140,18 +146,22 @@ public class PlantBuilderMain {
 		}
 
 		final PositivePlantScenarioForest positiveForest = new PositivePlantScenarioForest();
-		for (String filePath : arguments) {
+		final List<StringScenario> scenarios = new ArrayList<>();
+		for (String scenarioPath : arguments) {
 			try {
-				positiveForest.load(filePath, varNumber);
-				logger.info("Loaded scenarios from " + filePath);
-				logger.info("  Total scenarios tree size: " + positiveForest.nodeCount());
+				scenarios.addAll(StringScenario.loadScenarios(scenarioPath, varNumber));
 			} catch (IOException | ParseException e) {
-				logger.warning("Can't load scenarios from file " + filePath);
+				logger.warning("Can't load scenarios from file " + scenarioPath);
 				e.printStackTrace();
 				return;
 			}
+			logger.info("Loaded scenarios from " + scenarioPath);
 		}
-		
+		for (StringScenario sc : scenarios) {
+			positiveForest.addScenario(sc);
+		}
+		logger.info("Scenario tree size: " + positiveForest.nodeCount());
+
 		if (treeFilePath != null) {
 			try (PrintWriter pw = new PrintWriter(new File(treeFilePath))) {
 				pw.println(positiveForest);
@@ -206,11 +216,6 @@ public class PlantBuilderMain {
 			final List<LtlNode> formulae = LtlParser.parse(strFormulae);
 			logger.info("LTL formula from " + ltlFilePath);
 			
-			final List<StringScenario> scenarios = new ArrayList<>();
-			for (String scenarioPath : arguments) {
-				scenarios.addAll(StringScenario.loadScenarios(scenarioPath, varNumber));
-			}
-			
 			final List<StringScenario> negativeScenarios = new ArrayList<>();
 			final NegativePlantScenarioForest negativeForest = new NegativePlantScenarioForest();
 			if (negscFilePath != null) {
@@ -218,12 +223,13 @@ public class PlantBuilderMain {
 				negativeForest.load(negscFilePath, varNumber);
 			}
 
-			long startTime = System.currentTimeMillis();
-			logger.info("Start building automaton");
+			logger.info("Initializing the verifier...");
 			
 			final NondetMooreVerifierPair verifier = new NondetMooreVerifierPair(logger, strFormulae, events, actions, varNumber);
 			final long finishTime = System.currentTimeMillis() + timeout * 1000;
 			final Optional<NondetMooreAutomaton> resultAutomaton;
+			
+			logger.info("Started building automaton.");
 			
 			if (fast && strFormulae.isEmpty()) {
 				resultAutomaton = RapidPlantAutomatonBuilder.build(positiveForest, events);
@@ -300,6 +306,12 @@ public class PlantBuilderMain {
 						pw.println(resultAutomaton.get().toNuSMVString(events, actions));
 					} catch (FileNotFoundException e) {
 						logger.warning("File " + nusmvFilePath + " not found: " + e.getMessage());
+					}
+				}
+				if (serializeFilePath != null) {
+					try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(
+							new File(serializeFilePath)))) {
+						oos.writeObject(resultAutomaton.get());
 					}
 				}
 				
