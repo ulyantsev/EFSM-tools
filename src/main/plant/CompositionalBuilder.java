@@ -15,7 +15,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.function.Consumer;
 
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -37,9 +39,15 @@ public class CompositionalBuilder {
 			1.0, Arrays.asList(AprosIOScenarioCreator.pressurizerWaterLevel),
 			Arrays.asList(AprosIOScenarioCreator.tripSignal));
 	
-	//private final static Configuration CONF1 = AprosIOScenarioCreator.CONFIGURATION_PROTECTION1;
-	//private final static Configuration CONF2 = AprosIOScenarioCreator.CONFIGURATION_PROTECTION7;
+	final static Configuration CONF3 = new Configuration(
+			1.0, Arrays.asList(AprosIOScenarioCreator.reacRelPower_entirePlant),
+			Arrays.asList(AprosIOScenarioCreator.prot5valve41open));
 	
+	final static List<Configuration> CONFS = Arrays.asList(CONF1, CONF2, CONF3);
+	//final static List<Configuration> CONFS = Arrays.asList(CONF2, CONF1, CONF3);
+	//final static List<Configuration> CONFS = Arrays.asList(CONF1, CONF3, CONF2);
+	//final static List<Configuration> CONFS = Arrays.asList(CONF3, CONF2, CONF1);
+
 	static class StatePair {
 		final MooreNode first;
 		final MooreNode second;
@@ -79,17 +87,11 @@ public class CompositionalBuilder {
 			
 			// remove internal connections
 			final Set<String> removing = new TreeSet<>();
-			l: for (String a : actions) {
-				for (Pair<Parameter, Integer> p : match.outputInputPairs) {
-					if (isProperAction(a, p.getLeft().traceNamePrefix())) {
+			for (String a : actions) {
+				for (String prefix : match.badActionPrefixes) {
+					if (isProperAction(a, prefix)) {
 						removing.add(a);
-						continue l;
-					}
-				}
-				for (Pair<Integer, Parameter> p : match.inputOutputPairs) {
-					if (isProperAction(a, p.getRight().traceNamePrefix())) {
-						removing.add(a);
-						continue l;
+						break;
 					}
 				}
 			}
@@ -152,8 +154,38 @@ public class CompositionalBuilder {
 		return true;
 	}
 	
-	private static void compose(NondetMooreAutomaton a1, NondetMooreAutomaton a2, Match match,
-			Set<List<String>> allActionCombinationsSorted) throws FileNotFoundException {
+	private static Configuration composeConfigurations(Configuration c1, Configuration c2, Match match) {
+		// outputs
+		final Map<String, Parameter> traceNameToParam = new TreeMap<>();
+		final Consumer<Parameter> process = p -> {
+			traceNameToParam.putIfAbsent(p.traceNamePrefix(), p);
+		};
+		c1.outputParameters.forEach(process);
+		c2.outputParameters.forEach(process);
+		for (String prefix : match.badActionPrefixes) {
+			traceNameToParam.remove(prefix);
+		}
+		final List<Parameter> outputs = new ArrayList<>(traceNameToParam.values());
+		
+		// inputs
+		final List<Parameter> inputs = new ArrayList<>();
+		for (int i = 0; i < c1.inputParameters.size(); i++) {
+			if (!match.badFirstIndices.contains(i)) {
+				inputs.add(c1.inputParameters.get(i));
+			}
+		}
+		for (int i = 0; i < c2.inputParameters.size(); i++) {
+			if (!match.badSecondIndices.contains(i)) {
+				inputs.add(c2.inputParameters.get(i));
+			}
+		}
+		
+		return new Configuration(c1.intervalSec, outputs, inputs);
+	}
+	
+	private static NondetMooreAutomaton compose(NondetMooreAutomaton a1, NondetMooreAutomaton a2,
+			Match match, Set<List<String>> allActionCombinationsSorted,
+			String outputFilename) throws FileNotFoundException {
 		final List<MooreNode> compositeStates = new ArrayList<>();
 		
 		final Deque<Pair<StatePair, MooreNode>> q = new ArrayDeque<>();
@@ -204,28 +236,14 @@ public class CompositionalBuilder {
 					
 					final StatePair p = new StatePair(t1.dst(), t2.dst());
 					if (p.isConsistent(match) && p.isPresentInTraces(allActionCombinationsSorted)) {
-						final Set<Integer> badSecondIndices = new TreeSet<>();
-						final Set<Integer> badFirstIndices = new TreeSet<>();
-						
-						// duplicate indices
-						for (Pair<Integer, Integer> ip : match.inputPairs) {
-							badSecondIndices.add(ip.getRight());
-						}
-						for (Pair<Parameter, Integer> oip : match.outputInputPairs) {
-							badSecondIndices.add(oip.getRight());
-						}
-						for (Pair<Integer, Parameter> iop : match.inputOutputPairs) {
-							badFirstIndices.add(iop.getLeft());
-						}
-							
 						final StringBuilder event = new StringBuilder("A");
 						for (int i = 1; i < e1.length(); i++) {
-							if (!badFirstIndices.contains(i - 1)) {
+							if (!match.badFirstIndices.contains(i - 1)) {
 								event.append(e1.charAt(i));
 							}
 						}
 						for (int i = 1; i < e2.length(); i++) {
-							if (!badSecondIndices.contains(i - 1)) {
+							if (!match.badSecondIndices.contains(i - 1)) {
 								event.append(e2.charAt(i));
 							}
 						}
@@ -265,9 +283,10 @@ public class CompositionalBuilder {
 		isInitial.addAll(Collections.nCopies(compositeStates.size() - initialStateNum, false));
 		final NondetMooreAutomaton result = new NondetMooreAutomaton(compositeStates, isInitial);
 		System.out.println(result);
-		try (PrintWriter pw = new PrintWriter("automaton.gv")) {
+		try (PrintWriter pw = new PrintWriter(outputFilename)) {
 			pw.println(result);
 		}
+		return result;
 	}
 	
 	private static Configuration outputConfigurationComposition(Configuration c1, Configuration c2) {
@@ -289,106 +308,141 @@ public class CompositionalBuilder {
 		final List<Pair<Integer, Integer>> inputPairs = new ArrayList<>();
 		final List<Pair<Integer, Parameter>> inputOutputPairs = new ArrayList<>();
 		final List<Pair<Parameter, Integer>> outputInputPairs = new ArrayList<>();
+		final Set<Integer> badFirstIndices = new TreeSet<>();
+		final Set<Integer> badSecondIndices = new TreeSet<>();
+		final Set<String> badActionPrefixes = new TreeSet<>();
+		
+		Match(Configuration c1, Configuration c2) {
+			for (Parameter p : c1.outputParameters) {
+				for (Parameter q : c2.outputParameters) {
+					if (Parameter.unify(p, q)) {
+						outputPairs.add(Pair.of(p, q));
+					}
+				}
+			}
+			for (int i = 0; i < c1.inputParameters.size(); i++) {
+				final Parameter p = c1.inputParameters.get(i);
+				for (int j = 0; j < c2.inputParameters.size(); j++) {
+					final Parameter q = c2.inputParameters.get(j);
+					if (Parameter.unify(p, q)) {
+						inputPairs.add(Pair.of(i, j));
+					}
+				}
+			}
+			
+			for (Parameter p : c1.outputParameters) {
+				for (int j = 0; j < c2.inputParameters.size(); j++) {
+					final Parameter q = c2.inputParameters.get(j);
+					if (Parameter.unify(p, q)) {
+						outputInputPairs.add(Pair.of(p, j));
+					}
+				}
+			}
+			
+			for (int i = 0; i < c1.inputParameters.size(); i++) {
+				final Parameter p = c1.inputParameters.get(i);
+				for (Parameter q : c2.outputParameters) {
+					if (Parameter.unify(p, q)) {
+						inputOutputPairs.add(Pair.of(i, q));
+					}
+				}
+			}
+			
+			// internal connections
+			for (Pair<Integer, Parameter> iop : inputOutputPairs) {
+				badFirstIndices.add(iop.getLeft());
+			}
+			// duplications
+			for (Pair<Integer, Integer> ip : inputPairs) {
+				badSecondIndices.add(ip.getRight());
+			}
+			// internal connections
+			for (Pair<Parameter, Integer> oip : outputInputPairs) {
+				badSecondIndices.add(oip.getRight());
+			}
+			
+			for (Pair<Parameter, Integer> p : outputInputPairs) {
+				badActionPrefixes.add(p.getLeft().traceNamePrefix());
+			}
+			for (Pair<Integer, Parameter> p : inputOutputPairs) {
+				badActionPrefixes.add(p.getRight().traceNamePrefix());
+			}
+		}
 	}
 	
 	public static void main(String[] args) throws FileNotFoundException {		
-		// 1. Unify parameters
-		final Match match = new Match();
-
-		
-		for (Parameter p : CONF1.outputParameters) {
-			for (Parameter q : CONF2.outputParameters) {
-				if (Parameter.unify(p, q)) {
-					match.outputPairs.add(Pair.of(p, q));
-				}
+		// 1. Unification of all configuration pairs:
+		System.out.println("*** UNIFICATION");
+		for (int i = 0; i < CONFS.size(); i++) {
+			for (int j = 0; j < i; j++) {
+				new Match(CONFS.get(i), CONFS.get(j));
 			}
 		}
-		for (int i = 0; i < CONF1.inputParameters.size(); i++) {
-			final Parameter p = CONF1.inputParameters.get(i);
-			for (int j = 0; j < CONF2.inputParameters.size(); j++) {
-				final Parameter q = CONF2.inputParameters.get(j);
-				if (Parameter.unify(p, q)) {
-					match.inputPairs.add(Pair.of(i, j));
-				}
-			}
-		}
-		
-		for (Parameter p : CONF1.outputParameters) {
-			for (int j = 0; j < CONF2.inputParameters.size(); j++) {
-				final Parameter q = CONF2.inputParameters.get(j);
-				if (Parameter.unify(p, q)) {
-					match.outputInputPairs.add(Pair.of(p, j));
-				}
-			}
-		}
-		
-		for (int i = 0; i < CONF1.inputParameters.size(); i++) {
-			final Parameter p = CONF1.inputParameters.get(i);
-			for (Parameter q : CONF2.outputParameters) {
-				if (Parameter.unify(p, q)) {
-					match.inputOutputPairs.add(Pair.of(i, q));
-				}
-			}
-		}
-		
-		System.out.println(CONF1);
-		System.out.println();
-		System.out.println(CONF2);
-		System.out.println();
-		if (CONF1.intervalSec != CONF2.intervalSec) {
+		if (CONFS.stream().map(s -> s.intervalSec).distinct().count() > 1) {
 			System.err.println("Incompatible intervals, stopping.");
 			return;
 		}
 		
 		// 2. Load the dataset
+		System.out.println("*** LOADING THE DATASET");
 		final Dataset ds = new Dataset(CONF1.intervalSec);
 		
-		// 3. Run scenario generation & automaton builders
-		final List<String> params1 = AprosIOScenarioCreator.generateScenarios(CONF1,
-				ds, new HashSet<>(), "automaton1.gv", "automaton1.smv", "automaton1.bin", false);
-		System.out.println();
-		PlantBuilderMain.main(params1.toArray(new String[params1.size()]));
-		NondetMooreAutomaton a1 = null;
-		try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream("automaton1.bin"))) {
-			a1 = (NondetMooreAutomaton) ois.readObject();
-		} catch (IOException | ClassNotFoundException e) {
-			e.printStackTrace();
-			return;
+		// 3. Build all the basic plants
+		final List<NondetMooreAutomaton> automata = new ArrayList<>();
+		for (int i = 0; i < CONFS.size(); i++) {
+			System.out.println("*** BUILDING BASIC PLANTS, STAGE " + (i + 1));
+			final Configuration conf = CONFS.get(i);
+			System.out.println(conf);
+			System.out.println();
+			final String namePrefix = "automaton" + i + ".";
+			
+			final List<String> params = AprosIOScenarioCreator.generateScenarios(conf,
+					ds, new HashSet<>(), namePrefix + "gv", namePrefix + "smv",
+					namePrefix + "bin", false);
+			System.out.println();
+			PlantBuilderMain.main(params.toArray(new String[params.size()]));
+			NondetMooreAutomaton a = null;
+			try (ObjectInputStream ois = new ObjectInputStream(
+					new FileInputStream(namePrefix + "bin"))) {
+				a = (NondetMooreAutomaton) ois.readObject();
+			} catch (IOException | ClassNotFoundException e) {
+				e.printStackTrace();
+				return;
+			}
+			automata.add(a);
+			System.out.println();
+			System.out.println(a);
+			System.out.println();
 		}
-		System.out.println();
-		System.out.println(a1);
-		System.out.println();
 		
-		final List<String> params2 = AprosIOScenarioCreator.generateScenarios(CONF2, ds,
-				new HashSet<>(), "automaton2.gv", "automaton2.smv", "automaton2.bin", false);
-		System.out.println();
-		PlantBuilderMain.main(params2.toArray(new String[params2.size()]));
-		NondetMooreAutomaton a2 = null;
-		try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream("automaton2.bin"))) {
-			a2 = (NondetMooreAutomaton) ois.readObject();
-		} catch (IOException | ClassNotFoundException e) {
-			e.printStackTrace();
-			return;
-		}
-		System.out.println();
-		System.out.println(a2);
-		System.out.println();
+		// 4. Iteratively compose automata
+		Configuration lastConf = CONFS.get(0);
+		NondetMooreAutomaton lastAuto = automata.get(0);
+		for (int i = 1; i < CONFS.size(); i++) {
+			System.out.println("*** COMPOSING, STAGE " + i);
+			final Configuration conf1 = lastConf;
+			final Configuration conf2 = CONFS.get(i);
+			final Match match = new Match(conf1, conf2);
+			final String namePrefix = "automaton_comp" + i + ".";
+			
+			// Obtain the set of all possible composite actions
+			final Set<List<String>> allActionCombinations = new HashSet<>();
+			AprosIOScenarioCreator.generateScenarios(outputConfigurationComposition(conf1, conf2),
+					ds, allActionCombinations, "", "", "", false);
+			final Set<List<String>> allActionCombinationsSorted = new HashSet<>();
+			for (List<String> actionCombination : allActionCombinations) {
+				final List<String> copy = new ArrayList<>(actionCombination);
+				Collections.sort(copy);
+				allActionCombinationsSorted.add(copy);
+			}
 
-		
-		// 4. Obtain the set of all possible composite actions
-		final Set<List<String>> allActionCombinations = new HashSet<>();
-		AprosIOScenarioCreator.generateScenarios(outputConfigurationComposition(CONF1, CONF2),
-				ds, allActionCombinations, "automaton.gv", "automaton.smv", "automaton.bin", false);
-		final Set<List<String>> allActionCombinationsSorted = new HashSet<>();
-		for (List<String> actionCombination : allActionCombinations) {
-			final List<String> copy = new ArrayList<>(actionCombination);
-			Collections.sort(copy);
-			allActionCombinationsSorted.add(copy);
+			// Compose
+			System.out.println();
+			System.out.println("Composing...");
+			lastAuto = compose(lastAuto, automata.get(i), match,
+					allActionCombinationsSorted, namePrefix + "gv");
+			lastConf = composeConfigurations(conf1, conf2, match);
+			System.out.println(lastConf);
 		}
-		
-		// 5. Compose
-		System.out.println();
-		System.out.println("Composing...");
-		compose(a1, a2, match, allActionCombinationsSorted);
 	}
 }
