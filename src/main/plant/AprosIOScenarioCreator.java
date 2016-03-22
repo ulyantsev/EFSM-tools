@@ -698,11 +698,8 @@ public class AprosIOScenarioCreator {
 	private final static String OUTPUT_ACTIONSPEC_FILENAME = "evaluation/plant-synthesis/vver.actionspec";
 	private final static String OUTPUT_LTL_FILENAME = "evaluation/plant-synthesis/vver.ltl";
 	
-	public static List<String> generateScenarios(Configuration conf, Dataset ds) throws FileNotFoundException {
-		return generateScenarios(conf, ds, new HashSet<>());
-	}
-	
-	public static List<String> generateScenarios(Configuration conf, Dataset ds, Set<List<String>> allActionCombinations) throws FileNotFoundException {
+	public static List<String> generateScenarios(Configuration conf, Dataset ds, Set<List<String>> allActionCombinations,
+			String gvOutput, String smvOutput, String binOutput, boolean addActionDescriptions) throws FileNotFoundException {
 		// traces
 		final Set<String> allEvents = new TreeSet<>();
 		
@@ -791,8 +788,10 @@ public class AprosIOScenarioCreator {
 		builderArgs.add(OUTPUT_TRACE_FILENAME);
 		builderArgs.add("--actionNames");
 		builderArgs.add(String.join(",", allActions));
-		builderArgs.add("--actionDescriptions");
-		builderArgs.add(String.join(",", allActionDescriptions));
+		if (addActionDescriptions) {
+			builderArgs.add("--actionDescriptions");
+			builderArgs.add(String.join(",", allActionDescriptions));
+		}
 		builderArgs.add("--colorRules");
 		builderArgs.add(String.join(",", conf.colorRules));
 		builderArgs.add("--actionNumber");
@@ -814,11 +813,13 @@ public class AprosIOScenarioCreator {
 		builderArgs.add(String.valueOf(recommendedSize));
 		builderArgs.add("--varNumber");
 		builderArgs.add("0");
+		builderArgs.add("--result");
+		builderArgs.add(gvOutput);
 		builderArgs.add("--nusmv");
-		builderArgs.add("automaton.smv");
+		builderArgs.add(smvOutput);
 		builderArgs.add("--serialize");
-		builderArgs.add("automaton.bin");
-		
+		builderArgs.add(binOutput);
+
 		System.out.print("java -jar jars/plant-automaton-generator.jar ");
 		for (String arg : builderArgs) {
 			if (arg.startsWith("--")) {
@@ -850,7 +851,8 @@ public class AprosIOScenarioCreator {
 	public static void main(String[] args) throws FileNotFoundException {
 		final long time = System.currentTimeMillis();
 		final Dataset ds = new Dataset(CONFIGURATION.intervalSec);
-		generateScenarios(CONFIGURATION, ds);
+		generateScenarios(CONFIGURATION, ds, new HashSet<>(),
+				"automaton.gv", "automaton.smv", "automaton.bin", true);
 		System.out.println("Execution time: " + (System.currentTimeMillis() - time) + " ms");
 	}
 }

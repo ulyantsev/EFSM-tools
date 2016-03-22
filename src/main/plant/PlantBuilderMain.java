@@ -13,6 +13,7 @@ import java.io.PrintWriter;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -199,7 +200,8 @@ public class PlantBuilderMain {
 		
 		List<String> actions;
 		if (actionNames != null) {
-			actions = Arrays.asList(actionNames.split(","));
+			actions = actionNames.isEmpty() ? Collections.emptyList()
+					: Arrays.asList(actionNames.split(","));
 			if (actions.size() != actionNumber) {
 				logger.warning("The number of actions in <actionNames> does not correspond to <actionNumber>!");
 				return;
