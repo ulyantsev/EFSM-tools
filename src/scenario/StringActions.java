@@ -2,11 +2,17 @@ package scenario;
 
 import java.io.Serializable;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 public class StringActions implements Serializable {
 	private final String[] actions;
 
+	public StringActions(Collection<String> actions) {
+		this(String.join(",", actions.stream().map(Object::toString).collect(Collectors.toList())));
+	}
+	
 	public StringActions(String str) {
 		str = str.trim();
 		actions = str.isEmpty() ? new String[0] : str.split(",");

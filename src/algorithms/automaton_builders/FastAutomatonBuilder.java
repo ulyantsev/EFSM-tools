@@ -7,13 +7,19 @@ package algorithms.automaton_builders;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.tuple.Pair;
+
+import sat_solving.Assignment;
 import sat_solving.IncrementalInterface;
 import sat_solving.SolverResult;
 import sat_solving.SolverResult.SolverResults;
@@ -21,7 +27,9 @@ import scenario.StringActions;
 import scenario.StringScenario;
 import structures.Automaton;
 import structures.NegativeScenarioTree;
+import structures.Node;
 import structures.ScenarioTree;
+import structures.Transition;
 import verification.ltl.grammar.LtlNode;
 import verification.verifier.Counterexample;
 import verification.verifier.Verifier;
@@ -33,6 +41,103 @@ import bnf_formulae.FormulaList;
 import bool.MyBooleanExpression;
 
 public class FastAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
+	/*
+	 * Returns (automaton, transition variables supported by scenarios).
+	 * Events and actions are represented by indices.
+	 */
+	public static Pair<Automaton, List<BooleanVariable>> constructAutomatonFromAssignment(
+			Logger logger, List<Assignment> ass, ScenarioTree tree, int colorSize,
+			boolean complete, CompletenessType completenessType,
+			List<String> actionList, List<String> eventList) {
+		List<BooleanVariable> filteredYVars = new ArrayList<>();
+		final int[] nodeColors = new int[tree.nodeCount()];
+		
+		ass.stream()
+				.filter(a -> a.value && a.var.name.startsWith("x_"))
+				.forEach(a -> {
+					String[] tokens = a.var.name.split("_");
+					assert tokens.length == 3;
+					final int node = Integer.parseInt(tokens[1]);
+					final int color = Integer.parseInt(tokens[2]);
+					nodeColors[node] = color;
+				});
+		// add transitions from scenarios
+		final Automaton ans = new Automaton(colorSize);
+		for (int i = 0; i < tree.nodeCount(); i++) {
+			final int color = nodeColors[i];
+			final Node state = ans.state(color);
+			for (Transition t : tree.nodes().get(i).transitions()) {
+				if (!state.hasTransition(t.event(), t.expr())) {
+					int childColor = nodeColors[t.dst().number()];
+					state.addTransition(t.event(), t.expr(),
+						t.actions(), ans.state(childColor));
+				}
+			}
+		}
+
+		if (complete) {
+			// add other transitions
+			for (Assignment a : ass.stream()
+					.filter(a -> a.value && a.var.name.startsWith("y_"))
+					.collect(Collectors.toList())) {
+				String[] tokens = a.var.name.split("_");
+				assert tokens.length == 4;
+				final int from = Integer.parseInt(tokens[1]);
+				final int to = Integer.parseInt(tokens[2]);
+				final int eventIndex = Integer.parseInt(tokens[3]);
+				final String event = eventList.get(eventIndex);
+	
+				Node state = ans.state(from);
+	
+				if (state.hasTransition(event, MyBooleanExpression.getTautology())) {
+					filteredYVars.add(a.var);
+				}
+				
+				// include transitions not from scenarios
+				List<String> properUniqueActions = new ArrayList<>();
+				for (Assignment az : ass) {
+					if (az.value && az.var.name.startsWith("z_" + from + "_")
+							&& az.var.name.endsWith("_" + eventIndex)) {
+						properUniqueActions.add(actionList.get(
+								Integer.parseInt(az.var.name.split("_")[2])));
+					}
+				}
+				Collections.sort(properUniqueActions);
+	
+				if (!state.hasTransition(event, MyBooleanExpression.getTautology())) {
+					// add
+					boolean include;
+					if (completenessType == CompletenessType.NORMAL) {
+						include = true;
+					} else if (completenessType == CompletenessType.NO_DEAD_ENDS) {
+						include = state.transitionCount() == 0;
+					} else {
+						throw new AssertionError();
+					}
+					if (include) {
+						state.addTransition(event, MyBooleanExpression.getTautology(),
+							new StringActions(String.join(",",
+							properUniqueActions)), ans.state(to));
+						//logger.info("ADDING TRANSITION NOT FROM SCENARIOS " + a.var + " " + properUniqueActions);
+					}
+				} else {
+					// check
+					Transition t = state.transition(event, MyBooleanExpression.getTautology());
+					if (t.dst() != ans.state(to)) {
+						logger.severe("INVALID TRANSITION DESTINATION " + a.var);
+					}
+					List<String> actualActions = new ArrayList<>(new TreeSet<>(
+							Arrays.asList(t.actions().getActions())));
+					if (!actualActions.equals(properUniqueActions)) {
+						logger.severe("ACTIONS DO NOT MATCH");
+					}
+				}
+			}
+		}
+		
+		return Pair.of(ans, filteredYVars);
+	}
+	
 	protected static Optional<Automaton> reportResult(Logger logger, int iterations, Optional<Automaton> a) {
 		logger.info("ITERATIONS: " + (iterations + 1));
 		return a;
@@ -66,11 +171,12 @@ public class FastAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 			
 			formula = ltl2limboole(formula);
 			for (int i = 0; i < states; i++) {
-				for (String event : events) {
+				for (int ei = 0; ei < events.size(); ei++) {
+					final String event = events.get(ei);
 					String constraint = formula;
 					final FormulaList options = new FormulaList(BinaryOperations.OR);
 					for (int j = 0; j < states; j++) {
-						options.add(BooleanVariable.byName("y", i, j, event).get());
+						options.add(BooleanVariable.byName("y", i, j, ei).get());
 					}
 					final String eRepl = options.assemble().toLimbooleString();
 					constraint = constraint.replaceAll(eventRegexStart + event + "\\)", eRepl);
@@ -79,8 +185,9 @@ public class FastAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 							constraint = constraint.replaceAll(eventRegexStart + otherEvent + "\\)", "(1&!1)");
 						}
 					}
-					for (String action : actions) {
-						final String acRepl = BooleanVariable.byName("z", i, action, event).get().toLimbooleString();
+					for (int ai = 0; ai < actions.size(); ai++) {
+						final String action = actions.get(ai);
+						final String acRepl = BooleanVariable.byName("z", i, ai, ei).get().toLimbooleString();
 						constraint = constraint.replaceAll(actionRegexStart + action + "\\)", acRepl);
 					}
 					additionalFormulae.add(constraint);
@@ -141,7 +248,8 @@ public class FastAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 
 			final Automaton automaton = constructAutomatonFromAssignment(logger, ass.list(),
 					positiveTree, size, true,
-					complete ? CompletenessType.NORMAL : CompletenessType.NO_DEAD_ENDS).getLeft();
+					complete ? CompletenessType.NORMAL : CompletenessType.NO_DEAD_ENDS,
+					actions, events).getLeft();
 
 			// verify
 			final List<Counterexample> counterexamples =

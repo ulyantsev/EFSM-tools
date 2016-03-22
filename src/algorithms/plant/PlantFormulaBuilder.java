@@ -7,6 +7,8 @@ package algorithms.plant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 import structures.plant.MooreNode;
 import structures.plant.MooreTransition;
@@ -21,7 +23,9 @@ import bnf_formulae.BooleanVariable;
 public class PlantFormulaBuilder {
 	private final int colorSize;
 	private final List<String> events;
+	private final Map<String, Integer> eventIndices = new TreeMap<>();
 	private final List<String> actions;
+	private final Map<String, Integer> actionIndices = new TreeMap<>();
 	private final PositivePlantScenarioForest positiveForest;
 	private final NegativePlantScenarioForest negativeForest;
 	
@@ -37,7 +41,13 @@ public class PlantFormulaBuilder {
 			List<String> events, List<String> actions) {
 		this.colorSize = colorSize;
 		this.events = events;
+		for (int i = 0; i < events.size(); i++) {
+			eventIndices.put(events.get(i), i);
+		}
 		this.actions = actions;
+		for (int i = 0; i < actions.size(); i++) {
+			actionIndices.put(actions.get(i), i);
+		}
 		this.positiveForest = positiveForest;
 		this.negativeForest = negativeForest;
 		this.globalNegativeForest = globalNegativeForest;
@@ -47,11 +57,19 @@ public class PlantFormulaBuilder {
 		return BooleanVariable.byName("x", node, color).get();
 	}
 	
-	public static BooleanVariable yVar(int from, int to, String event) {
+	public BooleanVariable yVar(int from, int to, String event) {
+		return yVar(from, to, eventIndices.get(event));
+	}
+	
+	public static BooleanVariable yVar(int from, int to, int event) {
 		return BooleanVariable.byName("y", from, to, event).get();
 	}
 	
-	public static BooleanVariable zVar(int state, String action) {
+	public BooleanVariable zVar(int state, String action) {
+		return zVar(state, actionIndices.get(action));
+	}
+	
+	public static BooleanVariable zVar(int state, int action) {
 		return BooleanVariable.byName("z", state, action).get();
 	}
 	
@@ -66,14 +84,14 @@ public class PlantFormulaBuilder {
 				vars.add(BooleanVariable.getOrCreate("x", node.number(), color));
 			}
 			// transition vars
-			for (String e : events) {
+			for (int ei = 0; ei < events.size(); ei++) {
 				for (int childColor = 0; childColor < colorSize; childColor++) {
-					vars.add(BooleanVariable.getOrCreate("y", color, childColor, e));
+					vars.add(BooleanVariable.getOrCreate("y", color, childColor, ei));
 				}
 			}
 			// action vars
-			for (String action : actions) {
-				vars.add(BooleanVariable.getOrCreate("z", color, action));
+			for (int ai = 0; ai < actions.size(); ai++) {
+				vars.add(BooleanVariable.getOrCreate("z", color, ai));
 			}
 		}
 	}
@@ -142,11 +160,12 @@ public class PlantFormulaBuilder {
 		for (MooreNode node : positiveForest.nodes()) {
 			final List<String> actionSequence = Arrays.asList(node.actions().getActions());
 			for (int nodeColor = 0; nodeColor < colorSize; nodeColor++) {
-				for (String action : actions) {
+				for (int ai = 0; ai < actions.size(); ai++) {
+					final String action = actions.get(ai);
 					constraints.add(new int[] {
 							-xVar(node.number(), nodeColor).number,
 							(actionSequence.contains(action) ? 1 : -1)
-								* zVar(nodeColor, action).number
+								* zVar(nodeColor, ai).number
 					});
 				}
 			}
@@ -155,10 +174,10 @@ public class PlantFormulaBuilder {
 	
 	private void eventCompletenessConstraints(List<int[]> constraints) {
 		for (int i1 = 0; i1 < colorSize; i1++) {
-			for (String e : events) {
+			for (int ei = 0; ei < events.size(); ei++) {
 				final int[] constraint = new int[colorSize];
 				for (int i2 = 0; i2 < colorSize; i2++) {
-					constraint[i2] = yVar(i1, i2, e).number;
+					constraint[i2] = yVar(i1, i2, ei).number;
 				}
 				constraints.add(constraint);
 			}

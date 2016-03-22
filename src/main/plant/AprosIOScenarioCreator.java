@@ -84,12 +84,12 @@ public class AprosIOScenarioCreator {
 			return result;
 		}
 		
-		public Dataset(Configuration conf) throws FileNotFoundException {
+		public Dataset(double intervalSec) throws FileNotFoundException {
 			for (String filename : new File(INPUT_DIRECTORY).list()) {
 				if (!filename.endsWith(".txt")) {
 					continue;
 				}
-				double timestampToRecord = conf.intervalSec;
+				double timestampToRecord = intervalSec;
 
 				try (Scanner sc = new Scanner(new File(INPUT_DIRECTORY
 						+ "/" + filename))) {
@@ -118,7 +118,7 @@ public class AprosIOScenarioCreator {
 
 						double curTimestamp = Double.parseDouble(tokens[1]);
 						if (curTimestamp >= timestampToRecord) {
-							timestampToRecord += conf.intervalSec;
+							timestampToRecord += intervalSec;
 						} else {
 							continue;
 						}
@@ -136,12 +136,16 @@ public class AprosIOScenarioCreator {
 
 	static class Parameter {
 		private final List<Double> cutoffs;
-		private String scName;
+		private String traceName;
 		private final String aprosName;
 		private double min = Double.POSITIVE_INFINITY;
 		private double max = Double.NEGATIVE_INFINITY;
 
-		public static void unify(Parameter p, Parameter q) {
+		public String aprosName() {
+			return aprosName;
+		}
+		
+		public static boolean unify(Parameter p, Parameter q) {
 			if (p.aprosName.equals(q.aprosName)) {
 				final Set<Double> allCutoffs = new TreeSet<>(p.cutoffs);
 				allCutoffs.addAll(q.cutoffs);
@@ -149,12 +153,14 @@ public class AprosIOScenarioCreator {
 				p.cutoffs.addAll(allCutoffs);
 				q.cutoffs.clear();
 				q.cutoffs.addAll(allCutoffs);
-				q.scName = p.scName;
+				q.traceName = p.traceName;
+				return true;
 			}
+			return false;
 		}
 		
 		public Parameter(String aprosName, String name, Double... cutoffs) {
-			this.scName = name;
+			this.traceName = name;
 			this.aprosName = aprosName;
 			this.cutoffs = new ArrayList<>(Arrays.asList(cutoffs));
 			this.cutoffs.add(Double.POSITIVE_INFINITY);
@@ -169,8 +175,12 @@ public class AprosIOScenarioCreator {
 			return Pair.of(min, max);
 		}
 
+		public String traceNamePrefix() {
+			return traceName;
+		}
+		
 		private String traceName(int index) {
-			return scName.replace("_", "") + index;
+			return traceNamePrefix() + index;
 		}
 
 		// assuming that this is an output parameter
@@ -187,13 +197,13 @@ public class AprosIOScenarioCreator {
 			final List<String> res = new ArrayList<>();
 			for (int j = 0; j < cutoffs.size(); j++) {
 				if (cutoffs.size() == 1) {
-					res.add("any " + scName);
+					res.add("any " + traceName);
 				} else if (j == 0) {
-					res.add(scName + " < " + cutoffs.get(j));
+					res.add(traceName + " < " + cutoffs.get(j));
 				} else if (j == cutoffs.size() - 1) {
-					res.add(cutoffs.get(j - 1) + " ≤ " + scName);
+					res.add(cutoffs.get(j - 1) + " ≤ " + traceName);
 				} else {
-					res.add(cutoffs.get(j - 1) + " ≤ " + scName + " < "
+					res.add(cutoffs.get(j - 1) + " ≤ " + traceName + " < "
 							+ cutoffs.get(j));
 				}
 			}
@@ -255,7 +265,7 @@ public class AprosIOScenarioCreator {
 		
 		@Override
 		public String toString() {
-			return "param " + aprosName + " (" + scName + ") "
+			return "param " + aprosName + " (" + traceName + ") "
 					+ cutoffs.subList(0, cutoffs.size() - 1);
 		}
 	}
@@ -682,16 +692,19 @@ public class AprosIOScenarioCreator {
 					valve1302_prespresco,
 					valve1402_prespresco));
 
-	private final static Configuration CONFIGURATION = CONFIGURATION_PROTECTION7;
+	private final static Configuration CONFIGURATION = CONFIGURATION_PROTECTION1;
 
 	private final static String OUTPUT_TRACE_FILENAME = "evaluation/plant-synthesis/vver.sc";
 	private final static String OUTPUT_ACTIONSPEC_FILENAME = "evaluation/plant-synthesis/vver.actionspec";
 	private final static String OUTPUT_LTL_FILENAME = "evaluation/plant-synthesis/vver.ltl";
 	
 	public static List<String> generateScenarios(Configuration conf, Dataset ds) throws FileNotFoundException {
+		return generateScenarios(conf, ds, new HashSet<>());
+	}
+	
+	public static List<String> generateScenarios(Configuration conf, Dataset ds, Set<List<String>> allActionCombinations) throws FileNotFoundException {
 		// traces
 		final Set<String> allEvents = new TreeSet<>();
-		final Set<List<String>> allActionCombinations = new HashSet<>();
 		
 		// coverage
 		final Set<Pair<String, Integer>> inputCovered = new HashSet<>();
@@ -819,7 +832,7 @@ public class AprosIOScenarioCreator {
 		// parameter limits
 		System.out.println("Found parameter boundaries:");
 		final Function<Parameter, String> describe = p -> {
-			return p.scName + " in " + p.limits() + ", bounds " + p.cutoffs.subList(0, p.cutoffs.size() - 1);
+			return p.traceName + " in " + p.limits() + ", bounds " + p.cutoffs.subList(0, p.cutoffs.size() - 1);
 		};
 		for (Parameter p : conf.outputParameters) {
 			System.out.println(" output " + describe.apply(p));
@@ -836,7 +849,7 @@ public class AprosIOScenarioCreator {
 	
 	public static void main(String[] args) throws FileNotFoundException {
 		final long time = System.currentTimeMillis();
-		final Dataset ds = new Dataset(CONFIGURATION);
+		final Dataset ds = new Dataset(CONFIGURATION.intervalSec);
 		generateScenarios(CONFIGURATION, ds);
 		System.out.println("Execution time: " + (System.currentTimeMillis() - time) + " ms");
 	}

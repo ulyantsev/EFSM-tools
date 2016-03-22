@@ -97,11 +97,16 @@ public class NondetMooreAutomaton implements Serializable {
 		return a;
 	}
 	
-    public NondetMooreAutomaton(int statesCount, List<StringActions> actions, List<Boolean> isStart) {
+    public NondetMooreAutomaton(List<MooreNode> states, List<Boolean> isStart) {
+    	this.states.addAll(states);
+        this.isInitial.addAll(isStart);
+    }
+    
+    public NondetMooreAutomaton(int statesCount, List<StringActions> actions, List<Boolean> isInitial) {
         for (int i = 0; i < statesCount; i++) {
             states.add(new MooreNode(i, actions.get(i)));
         }
-        this.isInitial.addAll(isStart);
+        this.isInitial.addAll(isInitial);
     }
 
     public boolean isInitialState(int index) {

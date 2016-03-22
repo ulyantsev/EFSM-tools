@@ -48,7 +48,7 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 	}
 		
 	private static NondetMooreAutomaton constructAutomatonFromAssignment(Logger logger, List<Assignment> ass,
-			PositivePlantScenarioForest forest, int colorSize) {
+			PositivePlantScenarioForest forest, int colorSize, List<String> actionList, List<String> eventList) {
 		final List<Boolean> isStart = Arrays.asList(ArrayUtils.toObject(new boolean[colorSize]));
 		final List<List<String>> actions = new ArrayList<>();
 		for (int i = 0; i < isStart.size(); i++) {
@@ -71,7 +71,7 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 					coloring.put(node, color);
 				} else if (tokens[0].equals("z")) {
 					final int state = Integer.parseInt(tokens[1]);
-					final String action = tokens[2];
+					final String action = actionList.get(Integer.parseInt(tokens[2]));
 					actions.get(state).add(action);
 				}
 			}
@@ -87,7 +87,7 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 				if (tokens[0].equals("y")) {
 					final int from = Integer.parseInt(tokens[1]);
 					final int to = Integer.parseInt(tokens[2]);
-					final String event = tokens[3];
+					final String event = eventList.get(Integer.parseInt(tokens[3]));
 					automaton.state(from).addTransition(event, automaton.state(to));
 				}
 			}
@@ -149,9 +149,10 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 				final String transformed = ltl2limboole(line);
 				for (int i = 0; i < states; i++) {
 					String constraint = transformed;
-					for (String action : actions) {
+					for (int ai = 0; ai < actions.size(); ai++) {
+						final String action = actions.get(ai);
 						constraint = constraint.replaceAll("action\\(" + action + "\\)",
-								BooleanVariable.byName("z", i, action).get().toLimbooleString());
+								BooleanVariable.byName("z", i, ai).get().toLimbooleString());
 					}
 					additionalFormulae.add(constraint);
 				}
@@ -195,7 +196,7 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 			}
 
 			final NondetMooreAutomaton automaton = constructAutomatonFromAssignment(logger, ass.list(),
-					positiveForest, size);
+					positiveForest, size, actions, events);
 
 			// verify
 			final Pair<List<Counterexample>, List<Counterexample>> counterexamples =
