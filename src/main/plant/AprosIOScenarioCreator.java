@@ -699,7 +699,7 @@ public class AprosIOScenarioCreator {
 	private final static String OUTPUT_LTL_FILENAME = "evaluation/plant-synthesis/vver.ltl";
 	
 	public static List<String> generateScenarios(Configuration conf, Dataset ds, Set<List<String>> allActionCombinations,
-			String gvOutput, String smvOutput, String binOutput, boolean addActionDescriptions) throws FileNotFoundException {
+			String gvOutput, String smvOutput, String binOutput, boolean addActionDescriptions, int sizeThreshold) throws FileNotFoundException {
 		// traces
 		final Set<String> allEvents = new TreeSet<>();
 		
@@ -800,7 +800,7 @@ public class AprosIOScenarioCreator {
 		builderArgs.add(String.join(",", allEvents));
 		builderArgs.add("--eventNumber");
 		builderArgs.add(String.valueOf(allEvents.size()));
-		if (recommendedSize > 10) {
+		if (recommendedSize > sizeThreshold) {
 			builderArgs.add("--fast");
 			System.out.println("# LTL disabled: estimated state number is too large");
 		} else {
@@ -852,7 +852,7 @@ public class AprosIOScenarioCreator {
 		final long time = System.currentTimeMillis();
 		final Dataset ds = new Dataset(CONFIGURATION.intervalSec);
 		generateScenarios(CONFIGURATION, ds, new HashSet<>(),
-				"automaton.gv", "automaton.smv", "automaton.bin", true);
+				"automaton.gv", "automaton.smv", "automaton.bin", true, 10);
 		System.out.println("Execution time: " + (System.currentTimeMillis() - time) + " ms");
 	}
 }

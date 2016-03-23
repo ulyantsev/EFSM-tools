@@ -30,7 +30,55 @@ import structures.plant.MooreTransition;
 import structures.plant.NondetMooreAutomaton;
 
 public class CompositionalBuilder {
-	final static Configuration CONF1 = new Configuration(
+	// Block-based composition
+	final static Parameter reacRelPower = new Parameter(
+			"YC00B001#NR1_POWER", "reac_rel_power", 0.1, 0.5, 0.95, 1.0, 1.1);
+	final static Parameter trip = new Parameter(
+			"YZ10U404FL01#FF_OUTPUT_VALUE", "trip", 0.5);
+	final static Parameter rodPosition2 = new Parameter(
+			"YC00B001_RA1#RA_RE_RODP2", "rod_position2_", 1.0);
+	final static Parameter rodPosition1 = new Parameter(
+			"YC00B001_RA1#RA_RE_RODP", "rod_position1_", 1.0);
+	
+	final static Configuration CONF_REAC = new Configuration(
+			1.0, Arrays.asList(reacRelPower),
+			Arrays.asList(trip, rodPosition1, rodPosition2));
+	
+	final static Parameter pressurizerWaterLevel = new Parameter(
+			"YP10B001#PR11_LIQ_LEVEL", "pressurizer_water_level", 2.3, 2.8,
+			3.705);
+	final static Parameter pressurizerPressure = new Parameter(
+			"YP10B001_NO8#NO6_PRESSURE", "pressurizer_pressure", 8e6, 9e6, 10e6, 11e6, 12e6, 13e6);
+	final static Parameter valveE51_preslevco = new Parameter(
+			"TE51S002_VA1#V_POSITION_SET_VALUE", "valveE51", 0.5);
+	final static Parameter valveK52_preslevco = new Parameter(
+			"TK52S002_VA1#V_POSITION_SET_VALUE", "valveK52", 0.5);
+	final static Parameter valveK53_preslevco = new Parameter(
+			"TK53S002_VA1#V_POSITION_SET_VALUE", "valveK53", 0.5);
+	
+	final static Configuration CONF_PRESSURIZER = new Configuration(
+			1.0, Arrays.asList(pressurizerWaterLevel, pressurizerPressure),
+			Arrays.asList(valveE51_preslevco, valveK52_preslevco, valveK53_preslevco));
+
+	final static Parameter pressureInLowerPlenum = new Parameter(
+			"YC00J005#TA11_PRESSURE", "pressure_lower_plenum", 3.5, 8.0, 10.0);
+	final static Parameter liveSteamPressure = new Parameter(
+			"RA00J010#PO11_PRESSURE", "pressure_live_steam", 3.5);
+	
+	final static Configuration CONF_MISC = new Configuration(
+			1.0, Arrays.asList(pressureInLowerPlenum, liveSteamPressure),
+			Arrays.asList());
+	
+	final static List<Configuration> CONFS = Arrays.asList(CONF_PRESSURIZER, CONF_REAC, CONF_MISC);
+
+	// Control diagram-based composition
+	/*final static List<Configuration> CONFS = Arrays.asList(
+			AprosIOScenarioCreator.CONFIGURATION_PROTECTION1,
+			AprosIOScenarioCreator.CONFIGURATION_PROTECTION5,
+			AprosIOScenarioCreator.CONFIGURATION_PROTECTION7);
+	 */
+	
+	/*final static Configuration CONF1 = new Configuration(
 			1.0, Arrays.asList(
 			AprosIOScenarioCreator.pressureInLowerPlenum),
 			Arrays.asList(AprosIOScenarioCreator.tripSignal));
@@ -44,6 +92,7 @@ public class CompositionalBuilder {
 			Arrays.asList(AprosIOScenarioCreator.prot5valve41open));
 	
 	final static List<Configuration> CONFS = Arrays.asList(CONF1, CONF2, CONF3);
+	*/
 	//final static List<Configuration> CONFS = Arrays.asList(CONF2, CONF1, CONF3);
 	//final static List<Configuration> CONFS = Arrays.asList(CONF1, CONF3, CONF2);
 	//final static List<Configuration> CONFS = Arrays.asList(CONF3, CONF2, CONF1);
@@ -385,7 +434,7 @@ public class CompositionalBuilder {
 		
 		// 2. Load the dataset
 		System.out.println("*** LOADING THE DATASET");
-		final Dataset ds = new Dataset(CONF1.intervalSec);
+		final Dataset ds = new Dataset(CONFS.get(0).intervalSec);
 		
 		// 3. Build all the basic plants
 		final List<NondetMooreAutomaton> automata = new ArrayList<>();
@@ -398,7 +447,7 @@ public class CompositionalBuilder {
 			
 			final List<String> params = AprosIOScenarioCreator.generateScenarios(conf,
 					ds, new HashSet<>(), namePrefix + "gv", namePrefix + "smv",
-					namePrefix + "bin", false);
+					namePrefix + "bin", false, 0);
 			System.out.println();
 			PlantBuilderMain.main(params.toArray(new String[params.size()]));
 			NondetMooreAutomaton a = null;
@@ -428,7 +477,7 @@ public class CompositionalBuilder {
 			// Obtain the set of all possible composite actions
 			final Set<List<String>> allActionCombinations = new HashSet<>();
 			AprosIOScenarioCreator.generateScenarios(outputConfigurationComposition(conf1, conf2),
-					ds, allActionCombinations, "", "", "", false);
+					ds, allActionCombinations, "", "", "", false, 0);
 			final Set<List<String>> allActionCombinationsSorted = new HashSet<>();
 			for (List<String> actionCombination : allActionCombinations) {
 				final List<String> copy = new ArrayList<>(actionCombination);
