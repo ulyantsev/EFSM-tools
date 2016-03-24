@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import org.apache.commons.lang3.tuple.Pair;
@@ -88,10 +89,11 @@ public class CompositionalBuilder {
 	
 	/*******************************************/
 	
-	final static List<Configuration> CONFS = CONF_STRUCTURE;
+	final static List<Configuration> CONFS = CONF_NETWORK;
 	final static int FAST_THRESHOLD = 0;
 	final static boolean ALL_EVENT_COMBINATIONS = false;
 	final static String TRACE_LOCATION = TraceTranslator.INPUT_DIRECTORY;
+	final static boolean ENSURE_COMPLETENESS = true;
 	
 	/*******************************************/
 	
@@ -167,12 +169,27 @@ public class CompositionalBuilder {
 		return new Configuration(c1.intervalSec, outputs, inputs);
 	}
 	
+	private static String joinEvents(String e1, String e2, Match match) {
+		final StringBuilder event = new StringBuilder("A");
+		for (int i = 1; i < e1.length(); i++) {
+			if (!match.badFirstIndices.contains(i - 1)) {
+				event.append(e1.charAt(i));
+			}
+		}
+		for (int i = 1; i < e2.length(); i++) {
+			if (!match.badSecondIndices.contains(i - 1)) {
+				event.append(e2.charAt(i));
+			}
+		}
+		return event.toString();
+	}
+	
 	private static NondetMooreAutomaton compose(NondetMooreAutomaton a1, NondetMooreAutomaton a2,
 			Match match, Set<List<String>> allActionCombinationsSorted) throws FileNotFoundException {
 		final List<MooreNode> compositeStates = new ArrayList<>();
 		
 		final Deque<Pair<StatePair, MooreNode>> q = new ArrayDeque<>();
-		final Map<Set<String>, MooreNode> allEnqueudOutputCombinations = new HashMap<>();
+		final Map<Set<String>, MooreNode> allEnqueuedOutputCombinations = new HashMap<>();
 		for (int initial1 : a1.initialStates()) {
 			for (int initial2 : a2.initialStates()) {
 				final MooreNode state1 = a1.state(initial1);
@@ -180,7 +197,7 @@ public class CompositionalBuilder {
 				final StatePair p = new StatePair(state1, state2);
 				if (p.isConsistent(match) && p.isPresentInTraces(allActionCombinationsSorted)) {
 					final MooreNode node = p.toMooreNode(compositeStates.size(), match);
-					allEnqueudOutputCombinations.put(p.actionSet(match), node);
+					allEnqueuedOutputCombinations.put(p.actionSet(match), node);
 					q.add(Pair.of(p, node));
 					compositeStates.add(node);
 				}
@@ -188,10 +205,36 @@ public class CompositionalBuilder {
 		}
 		final int initialStateNum = q.size();
 		
+		final List<String> allEventsList = new ArrayList<>();
+		final StatePair firstPair = q.getFirst().getLeft();
+		for (MooreTransition t1 : firstPair.first.transitions()) {
+			for (MooreTransition t2 : firstPair.second.transitions()) {
+				allEventsList.add(joinEvents(t1.event(), t2.event(), match));
+			}
+		}
+		
 		while (!q.isEmpty()) {
 			final Pair<StatePair, MooreNode> retrieved = q.removeLast();
 			final StatePair pair = retrieved.getLeft();
 			final MooreNode src = retrieved.getRight();
+			
+			final Set<String> allEvents = new TreeSet<>(allEventsList);
+			final Map<String, StatePair> potentialTransitions = new TreeMap<>();
+
+			final BiConsumer<StatePair, String> add = (p, event) -> {
+				final Set<String> actionSet = p.actionSet(match);
+				MooreNode dst = allEnqueuedOutputCombinations.get(actionSet);
+				if (dst == null) {
+					dst = p.toMooreNode(compositeStates.size(), match);
+					q.add(Pair.of(p, dst));
+					compositeStates.add(dst);
+					allEnqueuedOutputCombinations.put(actionSet, dst);
+				}
+				
+				if (!src.allDst(event).contains(dst)) {
+					src.addTransition(event.toString(), dst);
+				}
+			};
 			
 			for (MooreTransition t1 : pair.first.transitions()) {
 				final String e1 = t1.event();
@@ -204,6 +247,9 @@ public class CompositionalBuilder {
 					// **** then there are some semantical problems
 					
 					// internal connection consistency
+					final String event = joinEvents(e1, e2, match);
+					final StatePair p = new StatePair(t1.dst(), t2.dst());
+					
 					if (!isConsistentWithInputs(t2.dst(), e1, match, false)) {
 						continue;
 					}
@@ -217,33 +263,29 @@ public class CompositionalBuilder {
 						}
 					}
 					
-					final StatePair p = new StatePair(t1.dst(), t2.dst());
-					if (p.isConsistent(match) && p.isPresentInTraces(allActionCombinationsSorted)) {
-						final StringBuilder event = new StringBuilder("A");
-						for (int i = 1; i < e1.length(); i++) {
-							if (!match.badFirstIndices.contains(i - 1)) {
-								event.append(e1.charAt(i));
-							}
-						}
-						for (int i = 1; i < e2.length(); i++) {
-							if (!match.badSecondIndices.contains(i - 1)) {
-								event.append(e2.charAt(i));
-							}
-						}
-						
-						final Set<String> actionSet = p.actionSet(match);
-						MooreNode dst = allEnqueudOutputCombinations.get(actionSet);
-						if (dst == null) {
-							dst = p.toMooreNode(compositeStates.size(), match);
-							q.add(Pair.of(p, dst));
-							compositeStates.add(dst);
-							allEnqueudOutputCombinations.put(actionSet, dst);
-						}
-						
-						final String e = event.toString();
-						if (!src.allDst(e).contains(dst)) {
-							src.addTransition(event.toString(), dst);
-						}
+					if (!p.isConsistent(match)) {
+						continue;
+					}
+
+					potentialTransitions.put(event, p);
+					
+					if (p.isPresentInTraces(allActionCombinationsSorted)) {
+						add.accept(p, event);
+						allEvents.remove(event);
+					}
+				}
+			}
+			if (ENSURE_COMPLETENESS) {
+				if (!allEvents.isEmpty()) {
+					System.err.println("Missing transitions: " + allEvents.size());
+				}
+				for (String e : allEvents) {
+					if (potentialTransitions.containsKey(e)) {
+						add.accept(potentialTransitions.get(e), e);
+						System.err.println("Expanding state space beyond traces...");
+					} else {
+						add.accept(pair, e);
+						System.err.println("Adding self-loop...");
 					}
 				}
 			}
