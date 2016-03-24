@@ -551,12 +551,8 @@ public class TraceTranslator {
 		}
 
 		// all actions
-		final List<String> allActions = new ArrayList<>();
-		final List<String> allActionDescriptions = new ArrayList<>();
-		for (Parameter p : conf.outputParameters) {
-			allActions.addAll(p.traceNames());
-			allActionDescriptions.addAll(p.descriptions());
-		}
+		final List<String> allActions = conf.actions();
+		final List<String> allActionDescriptions = conf.actionDescriptions();
 
 		// execution command
 		final int recommendedSize = allActionCombinations.size();

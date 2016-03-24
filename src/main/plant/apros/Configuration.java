@@ -1,8 +1,14 @@
 package main.plant.apros;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
+
+import org.apache.commons.lang3.tuple.Pair;
+
+import structures.plant.NondetMooreAutomaton;
 
 public class Configuration {
 	final double intervalSec;
@@ -14,6 +20,44 @@ public class Configuration {
 		final List<Parameter> params = new ArrayList<>(outputParameters);
 		params.addAll(inputParameters);
 		return params;
+	}
+	
+	public List<String> actionDescriptions() {
+		final List<String> result = new ArrayList<>();
+		for (Parameter p : outputParameters) {
+			result.addAll(p.descriptions());
+		}
+		return result;
+	}
+	
+	public List<String> actions() {
+		final List<String> result = new ArrayList<>();
+		for (Parameter p : outputParameters) {
+			result.addAll(p.traceNames());
+		}
+		return result;
+	}
+	
+	public void annotate(NondetMooreAutomaton a) {
+		final Map<String, String> descriptions = new LinkedHashMap<>();
+		final List<String> actions = actions();
+		final List<String> actionDescriptions = actionDescriptions();
+		for (int i = 0; i < actions.size(); i++) {
+			descriptions.put(actions.get(i), actionDescriptions.get(i));
+		}
+		a.setActionDescriptions(descriptions);
+
+		final List<Pair<String, List<Double>>> actionThresholds = new ArrayList<>();
+		for (Parameter p : outputParameters) {
+			actionThresholds.add(Pair.of(p.traceName(), p.cutoffs));
+		}
+		a.setActionThresholds(actionThresholds);
+		
+		final List<Pair<String, List<Double>>> eventThresholds = new ArrayList<>();
+		for (Parameter p : inputParameters) {
+			eventThresholds.add(Pair.of(p.traceName(), p.cutoffs));
+		}	
+		a.setEventThresholds(eventThresholds);
 	}
 	
 	public Configuration(double intervalSec,

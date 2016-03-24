@@ -71,16 +71,18 @@ public class Parameter {
 	public List<String> descriptions() {
 		final List<String> res = new ArrayList<>();
 		for (int j = 0; j < cutoffs.size(); j++) {
+			String s;
 			if (cutoffs.size() == 1) {
-				res.add("any " + traceName);
+				s = "any " + traceName;
 			} else if (j == 0) {
-				res.add(traceName + " < " + cutoffs.get(j));
+				s = traceName + " < " + cutoffs.get(j);
 			} else if (j == cutoffs.size() - 1) {
-				res.add(cutoffs.get(j - 1) + " ≤ " + traceName);
+				s = cutoffs.get(j - 1) + " ≤ " + traceName;
 			} else {
-				res.add(cutoffs.get(j - 1) + " ≤ " + traceName + " < "
-						+ cutoffs.get(j));
+				s = cutoffs.get(j - 1) + " ≤ " + traceName + " < "
+						+ cutoffs.get(j);
 			}
+			res.add("[" + j + "] " + s);
 		}
 		return res;
 	}

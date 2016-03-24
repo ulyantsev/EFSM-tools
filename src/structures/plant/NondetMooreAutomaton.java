@@ -30,9 +30,23 @@ public class NondetMooreAutomaton {
     
     // optional, for pretty output
     private Map<String, String> actionDescriptions = Collections.emptyMap();
-
+    
     public void setActionDescriptions(Map<String, String> actionDescriptions) {
     	this.actionDescriptions = actionDescriptions;
+    }
+    
+    // optional, for NuSMV output conversion
+    private List<Pair<String, List<Double>>> actionThresholds = Collections.emptyList();
+    
+    public void setActionThresholds(List<Pair<String, List<Double>>> actionThresholds) {
+    	this.actionThresholds = actionThresholds;
+    }
+    
+    // optional, for NuSMV input conversion
+    private List<Pair<String, List<Double>>> eventThresholds = Collections.emptyList();
+    
+    public void setEventThresholds(List<Pair<String, List<Double>>> eventThresholds) {
+    	this.eventThresholds = eventThresholds;
     }
     
     public static NondetMooreAutomaton readGV(String filename) throws FileNotFoundException {
@@ -184,6 +198,39 @@ public class NondetMooreAutomaton {
     	return toString(Collections.emptyMap());
     }
 
+    private static int intervalMin(List<Double> thresholds, int interval) {
+    	return interval == 0 ? (Integer.MIN_VALUE + 1)
+				: (int) Math.round(Math.floor(thresholds.get(interval - 1)));
+    }
+    
+    private static int intervalMax(List<Double> thresholds, int interval) {
+    	return interval == thresholds.size() - 1 ? Integer.MAX_VALUE
+				: (int) Math.round(Math.ceil(thresholds.get(interval)));
+    }
+    
+    private static void nusmvEventDescriptions(int[] arr, int index, StringBuilder result,
+    		List<Pair<String, List<Double>>> thresholds, List<String> events) {
+		if (index == arr.length) {
+			final String event = "input_A" + Arrays.toString(arr).replaceAll("[,\\[\\] ]", "");
+			if (!events.contains(event)) {
+				return;
+			}
+			final List<String> conditions = new ArrayList<>();
+			for (int i = 0; i < arr.length; i++) {
+				conditions.add("CONT_INPUT_" + thresholds.get(i).getLeft()
+						+ " in " + intervalMin(thresholds.get(i).getRight(), arr[i])
+						+ ".." + intervalMax(thresholds.get(i).getRight(), arr[i]));
+			}
+			result.append("        " + String.join(" & ", conditions) + ": plant." + event + ";\n");
+		} else {
+			final int intervalNum = thresholds.get(index).getRight().size();
+			for (int i = 0; i < intervalNum; i++) {
+				arr[index] = i;
+				nusmvEventDescriptions(arr, index + 1, result, thresholds, events);
+			}
+		}
+	}
+    
     public String toNuSMVString(List<String> events, List<String> actions) {
     	events = events.stream().map(s -> "input_" + s).collect(Collectors.toList());
     	final StringBuilder sb = new StringBuilder();
@@ -191,6 +238,20 @@ public class NondetMooreAutomaton {
     	sb.append("VAR\n");
     	sb.append("    input: 0.." + (events.size() - 1) + ";\n");
     	sb.append("    plant: PLANT(input);\n");
+    	if (!eventThresholds.isEmpty()) {
+    		for (Pair<String, List<Double>> entry : eventThresholds) {
+    			final String paramName = entry.getLeft();
+    			sb.append("    CONT_INPUT_" + paramName + ": " + (Integer.MIN_VALUE + 1)
+    					+ ".." + Integer.MAX_VALUE + ";\n");
+    		}
+    		sb.append("DEFINE\n");
+    		sb.append("    DISCRETIZED_UNPUT := case\n");
+			int[] arr = new int[eventThresholds.size()];
+    		nusmvEventDescriptions(arr, 0, sb, eventThresholds, events);
+    		sb.append("        TRUE: 0;\n");
+    		sb.append("    esac;\n");
+    	}
+    	
     	sb.append("\n");
     	sb.append("MODULE PLANT(input)\n");
     	sb.append("VAR\n");
@@ -233,6 +294,22 @@ public class NondetMooreAutomaton {
     	for (int i = 0; i < events.size(); i++) {
     		sb.append("    " + events.get(i) + " := " + i + ";\n");
     	}
+    	
+    	// output conversion to continuous values
+    	for (Pair<String, List<Double>> entry : actionThresholds) {
+    		final String paramName = entry.getKey();
+    		final List<Double> thresholds = entry.getValue();
+    		sb.append("    CONT_" + paramName + " := case\n");
+    		for (int i = 0; i < thresholds.size(); i++) {
+    			final int minBound = intervalMin(thresholds, i);
+    			final int maxBound = intervalMax(thresholds, i);
+    			sb.append("        output_" + paramName + i + ": "
+    					+ minBound + ".." + maxBound + ";\n");
+    		}
+    		sb.append("        TRUE: 0;\n");
+    		sb.append("    esac;\n");
+    	}
+    	
     	return sb.toString();
     }
     
@@ -269,6 +346,7 @@ public class NondetMooreAutomaton {
     }
     
     // copy and remove y by redirecting transitions to x
+    @Deprecated // TODO remove
     public NondetMooreAutomaton merge(MooreNode x, MooreNode y) {
     	if (y.number() <= x.number()) {
     		throw new AssertionError();

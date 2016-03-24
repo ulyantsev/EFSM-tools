@@ -19,7 +19,6 @@ import java.util.function.Consumer;
 import org.apache.commons.lang3.tuple.Pair;
 
 import main.plant.PlantBuilderMain;
-import scenario.StringActions;
 import structures.plant.MooreNode;
 import structures.plant.MooreTransition;
 import structures.plant.NondetMooreAutomaton;
@@ -96,69 +95,6 @@ public class CompositionalBuilder {
 	
 	/*******************************************/
 	
-	static class StatePair {
-		final MooreNode first;
-		final MooreNode second;
-		
-		public StatePair(MooreNode first, MooreNode second) {
-			this.first = first;
-			this.second = second;
-		}
-		
-		boolean isConsistent(Match match) {
-			final String[] actions1 = first.actions().getActions();
-			final String[] actions2 = second.actions().getActions();
-			for (Pair<Parameter, Parameter> pair : match.outputPairs) {
-				final String prefix = pair.getLeft().traceName();
-				final int i1 = actionIntervalIndex(actions1, prefix);
-				final int i2 = actionIntervalIndex(actions2, prefix);
-				if (i1 != i2) {
-					return false;
-				}
-			}
-			return true;
-		}
-		
-		Set<String> actionSet() {
-			final Set<String> actions = new TreeSet<>();
-			for (String action : first.actions().getActions()) {
-				actions.add(action);
-			}
-			for (String action : second.actions().getActions()) {
-				actions.add(action);
-			}
-			return actions;
-		}
-		
-		Set<String> actionSet(Match match) {
-			final Set<String> actions = actionSet();
-			
-			// remove internal connections
-			final Set<String> removing = new TreeSet<>();
-			for (String a : actions) {
-				for (String prefix : match.badActionPrefixes) {
-					if (isProperAction(a, prefix)) {
-						removing.add(a);
-						break;
-					}
-				}
-			}
-			
-			actions.removeAll(removing);
-			return actions;
-		}
-		
-		boolean isPresentInTraces(Set<List<String>> allActionCombinationsSorted) {
-			final List<String> actions = new ArrayList<>(actionSet());
-			return allActionCombinationsSorted.contains(actions);
-		}
-		
-		MooreNode toMooreNode(int number, Match match) {
-			final Set<String> actionSet = actionSet(match);
-			return new MooreNode(number, new StringActions(actionSet));
-		}
-	}
-	
 	// assuming that we have at most 10 intervals
 	static boolean isProperAction(String action, String prefix) {
 		return action.startsWith(prefix)
@@ -232,8 +168,7 @@ public class CompositionalBuilder {
 	}
 	
 	private static NondetMooreAutomaton compose(NondetMooreAutomaton a1, NondetMooreAutomaton a2,
-			Match match, Set<List<String>> allActionCombinationsSorted,
-			String outputFilename) throws FileNotFoundException {
+			Match match, Set<List<String>> allActionCombinationsSorted) throws FileNotFoundException {
 		final List<MooreNode> compositeStates = new ArrayList<>();
 		
 		final Deque<Pair<StatePair, MooreNode>> q = new ArrayDeque<>();
@@ -329,12 +264,7 @@ public class CompositionalBuilder {
 		final List<Boolean> isInitial = new ArrayList<>();
 		isInitial.addAll(Collections.nCopies(initialStateNum, true));
 		isInitial.addAll(Collections.nCopies(compositeStates.size() - initialStateNum, false));
-		final NondetMooreAutomaton result = new NondetMooreAutomaton(compositeStates, isInitial);
-		System.out.println(result);
-		try (PrintWriter pw = new PrintWriter(outputFilename)) {
-			pw.println(result);
-		}
-		return result;
+		return new NondetMooreAutomaton(compositeStates, isInitial);
 	}
 	
 	private static Configuration outputConfigurationComposition(Configuration c1, Configuration c2) {
@@ -456,9 +386,8 @@ public class CompositionalBuilder {
 				return;
 			}
 			final NondetMooreAutomaton a = builder.resultAutomaton().get();
+			dumpAutomaton(a, conf, namePrefix);
 			automata.add(a);
-			System.out.println();
-			System.out.println(a);
 			System.out.println();
 		}
 		
@@ -488,9 +417,31 @@ public class CompositionalBuilder {
 			System.out.println();
 			System.out.println("Composing...");
 			lastAuto = compose(lastAuto, automata.get(i), match,
-					allActionCombinationsSorted, namePrefix + "gv");
+					allActionCombinationsSorted);
 			lastConf = composeConfigurations(conf1, conf2, match);
+			dumpAutomaton(lastAuto, lastConf, namePrefix);
 			System.out.println(lastConf);
+			System.out.println();
+		}
+	}
+	
+	// assuming completeness and checking only state 0
+	private static List<String> eventsFromAutomaton(NondetMooreAutomaton a) {
+		final Set<String> result = new TreeSet<>();
+		for (MooreTransition t : a.state(0).transitions()) {
+			result.add(t.event());
+		}
+		return new ArrayList<>(result);
+	}
+	
+	private static void dumpAutomaton(NondetMooreAutomaton a, Configuration conf,
+			String namePrefix) throws FileNotFoundException {
+		conf.annotate(a);
+		try (PrintWriter pw = new PrintWriter(namePrefix + "gv")) {
+			pw.println(a);
+		}
+		try (PrintWriter pw = new PrintWriter(namePrefix + "smv")) {
+			pw.println(a.toNuSMVString(eventsFromAutomaton(a), conf.actions()));
 		}
 	}
 }
