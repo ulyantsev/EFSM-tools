@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
+import main.plant.apros.Parameter;
 import scenario.StringActions;
 import scenario.StringScenario;
 
@@ -36,16 +37,16 @@ public class NondetMooreAutomaton {
     }
     
     // optional, for NuSMV output conversion
-    private List<Pair<String, List<Double>>> actionThresholds = Collections.emptyList();
+    private List<Pair<String, Parameter>> actionThresholds = Collections.emptyList();
     
-    public void setActionThresholds(List<Pair<String, List<Double>>> actionThresholds) {
+    public void setActionThresholds(List<Pair<String, Parameter>> actionThresholds) {
     	this.actionThresholds = actionThresholds;
     }
     
     // optional, for NuSMV input conversion
-    private List<Pair<String, List<Double>>> eventThresholds = Collections.emptyList();
+    private List<Pair<String, Parameter>> eventThresholds = Collections.emptyList();
     
-    public void setEventThresholds(List<Pair<String, List<Double>>> eventThresholds) {
+    public void setEventThresholds(List<Pair<String, Parameter>> eventThresholds) {
     	this.eventThresholds = eventThresholds;
     }
     
@@ -198,18 +199,8 @@ public class NondetMooreAutomaton {
     	return toString(Collections.emptyMap());
     }
 
-    private static int intervalMin(List<Double> thresholds, int interval) {
-    	return interval == 0 ? (Integer.MIN_VALUE + 1)
-				: (int) Math.round(Math.floor(thresholds.get(interval - 1)));
-    }
-    
-    private static int intervalMax(List<Double> thresholds, int interval) {
-    	return interval == thresholds.size() - 1 ? Integer.MAX_VALUE
-				: (int) Math.round(Math.ceil(thresholds.get(interval)));
-    }
-    
     private static void nusmvEventDescriptions(int[] arr, int index, StringBuilder result,
-    		List<Pair<String, List<Double>>> thresholds, List<String> events) {
+    		List<Pair<String, Parameter>> thresholds, List<String> events) {
 		if (index == arr.length) {
 			final String event = "input_A" + Arrays.toString(arr).replaceAll("[,\\[\\] ]", "");
 			if (!events.contains(event)) {
@@ -217,13 +208,13 @@ public class NondetMooreAutomaton {
 			}
 			final List<String> conditions = new ArrayList<>();
 			for (int i = 0; i < arr.length; i++) {
-				conditions.add("CONT_INPUT_" + thresholds.get(i).getLeft()
-						+ " in " + intervalMin(thresholds.get(i).getRight(), arr[i])
-						+ ".." + intervalMax(thresholds.get(i).getRight(), arr[i]));
+				final String paramName = thresholds.get(i).getLeft();
+				final Parameter param = thresholds.get(i).getRight();
+				conditions.add(param.nusmvCondition("CONT_INPUT_" + paramName, arr[i]));
 			}
 			result.append("        " + String.join(" & ", conditions) + ": plant." + event + ";\n");
 		} else {
-			final int intervalNum = thresholds.get(index).getRight().size();
+			final int intervalNum = thresholds.get(index).getRight().valueCount();
 			for (int i = 0; i < intervalNum; i++) {
 				arr[index] = i;
 				nusmvEventDescriptions(arr, index + 1, result, thresholds, events);
@@ -239,10 +230,11 @@ public class NondetMooreAutomaton {
     	sb.append("    input: 0.." + (events.size() - 1) + ";\n");
     	sb.append("    plant: PLANT(input);\n");
     	if (!eventThresholds.isEmpty()) {
-    		for (Pair<String, List<Double>> entry : eventThresholds) {
+    		for (Pair<String, Parameter> entry : eventThresholds) {
     			final String paramName = entry.getLeft();
-    			sb.append("    CONT_INPUT_" + paramName + ": " + (Integer.MIN_VALUE + 1)
-    					+ ".." + Integer.MAX_VALUE + ";\n");
+    			final Parameter param = entry.getRight();
+    			sb.append("    CONT_INPUT_" + paramName + ": " + param.nusmvType()
+    					+ ";\n");
     		}
     		sb.append("DEFINE\n");
     		sb.append("    DISCRETIZED_UNPUT := case\n");
@@ -296,17 +288,15 @@ public class NondetMooreAutomaton {
     	}
     	
     	// output conversion to continuous values
-    	for (Pair<String, List<Double>> entry : actionThresholds) {
+    	for (Pair<String, Parameter> entry : actionThresholds) {
     		final String paramName = entry.getKey();
-    		final List<Double> thresholds = entry.getValue();
+    		final Parameter param = entry.getValue();
     		sb.append("    CONT_" + paramName + " := case\n");
-    		for (int i = 0; i < thresholds.size(); i++) {
-    			final int minBound = intervalMin(thresholds, i);
-    			final int maxBound = intervalMax(thresholds, i);
+    		for (int i = 0; i < param.valueCount(); i++) {
     			sb.append("        output_" + paramName + i + ": "
-    					+ minBound + ".." + maxBound + ";\n");
+    					+ param.nusmvInterval(i) + ";\n");
     		}
-    		sb.append("        TRUE: 0;\n");
+    		sb.append("        TRUE: " + param.defaultValue() + ";\n");
     		sb.append("    esac;\n");
     	}
     	

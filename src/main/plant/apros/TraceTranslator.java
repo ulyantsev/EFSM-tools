@@ -66,19 +66,19 @@ public class TraceTranslator {
 	
 	final static String INPUT_DIRECTORY = "evaluation/plant-synthesis/vver-traces-entire-plant";
 
-	final static Parameter pressurizerWaterLevel = new Parameter(
+	final static Parameter pressurizerWaterLevel = new RealParameter(
 			"YP10B001#PR11_LIQ_LEVEL", "water_level", 2.3, 2.8);
-	final static Parameter pressureInLowerPlenum = new Parameter(
+	final static Parameter pressureInLowerPlenum = new RealParameter(
 			"YC00J005#TA11_PRESSURE", "pressure_lower_plenum", 3.5, 8.0, 10.0);
-	final static Parameter liveSteamPressure = new Parameter(
+	final static Parameter liveSteamPressure = new RealParameter(
 			"RA00J010#PO11_PRESSURE", "pressure_live_steam", 3.5);
-	final static Parameter busbarVoltage = new Parameter(
+	final static Parameter busbarVoltage = new RealParameter(
 			"BU_N1#ES_NO_VOLTAGE_REAL", "voltage", 4800.0);
-	final static Parameter pumpTQ11SpeedSetopint = new Parameter(
+	final static Parameter pumpTQ11SpeedSetopint = new RealParameter(
 			"TQ11D001_R01#DC2_OUTPUT_VALUE", "tq11_speed_setpoint", 1.0);
-	final static Parameter pumpTJ11SpeedSetopint = new Parameter(
+	final static Parameter pumpTJ11SpeedSetopint = new RealParameter(
 			"TJ11D001_R01#DC2_OUTPUT_VALUE", "tj11_speed_setpoint", 1.0);
-	final static Parameter pumpTH11SpeedSetpoint = new Parameter(
+	final static Parameter pumpTH11SpeedSetpoint = new RealParameter(
 			"TH11D001_R01#DC2_OUTPUT_VALUE", "th11_speed_setpoint", 1.0);
 
 	final static Configuration CONFIGURATION_PROTECTION1 = new Configuration(
@@ -88,28 +88,28 @@ public class TraceTranslator {
 			pumpTQ11SpeedSetopint, pumpTJ11SpeedSetopint,
 			pumpTH11SpeedSetpoint));
 	
-	final static Parameter steamGeneratorLevel56 = new Parameter(
+	final static Parameter steamGeneratorLevel56 = new RealParameter(
 			"YB56W001#SG12_LIQ_LEVEL", "level56x", 1.96);
-	final static Parameter steamGeneratorLevel54 = new Parameter(
+	final static Parameter steamGeneratorLevel54 = new RealParameter(
 			"YB54W001#SG12_LIQ_LEVEL", "level54x", 1.96);
-	final static Parameter steamGeneratorLevel52 = new Parameter(
+	final static Parameter steamGeneratorLevel52 = new RealParameter(
 			"YB52W001#SG12_LIQ_LEVEL", "level52x", 1.96);
-	final static Parameter steamGeneratorLevel15 = new Parameter(
+	final static Parameter steamGeneratorLevel15 = new RealParameter(
 			"YB15W001#SG12_LIQ_LEVEL", "level15x", 1.96);
-	final static Parameter steamGeneratorLevel13 = new Parameter(
+	final static Parameter steamGeneratorLevel13 = new RealParameter(
 			"YB13W001#SG12_LIQ_LEVEL", "level13x", 1.96);
-	final static Parameter steamGeneratorLevel11 = new Parameter(
+	final static Parameter steamGeneratorLevel11 = new RealParameter(
 			"YB11W001#SG12_LIQ_LEVEL", "level11x", 1.96);
-	final static Parameter prot7pumpSpeed = new Parameter(
+	final static Parameter prot7pumpSpeed = new RealParameter(
 			"RL92D001_PU1#P_SPEED_OLD", "prot7_pump_speed", 1.0);
-	final static Parameter prot7ValveOpen = new Parameter(
-			"RL92S005_VA1#VO_OPEN", "prot7_valve_open", 0.5);
-	final static Parameter prot7ValveClose = new Parameter(
-			"RL92S005_VA1#VO_CLOSE", "prot7_valve_close", 0.5);
-	final static Parameter prot7toProt5signal64 = new Parameter(
-			"YZU001XL64#BINARY_VALUE", "prot7_signal64x", 0.5);
-	final static Parameter prot7toProt5signal65 = new Parameter(
-			"YZU001XL65#BINARY_VALUE", "prot7_signal65x", 0.5);
+	final static Parameter prot7ValveOpen = new BoolParameter(
+			"RL92S005_VA1#VO_OPEN", "prot7_valve_open");
+	final static Parameter prot7ValveClose = new BoolParameter(
+			"RL92S005_VA1#VO_CLOSE", "prot7_valve_close");
+	final static Parameter prot7toProt5signal64 = new BoolParameter(
+			"YZU001XL64#BINARY_VALUE", "prot7_signal64_");
+	final static Parameter prot7toProt5signal65 = new BoolParameter(
+			"YZU001XL65#BINARY_VALUE", "prot7_signal65_");
 
 	final static Configuration CONFIGURATION_PROTECTION7 = new Configuration(
 			1.0,
@@ -119,43 +119,43 @@ public class TraceTranslator {
 			Arrays.asList(prot7pumpSpeed, prot7ValveOpen, prot7ValveClose,
 					prot7toProt5signal64, prot7toProt5signal65));
 
-	final static Parameter steamGeneratorPressure56_prot5 = new Parameter(
+	final static Parameter steamGeneratorPressure56_prot5 = new RealParameter(
 			"YB56W001#SG12_PRESSURE_3_4", "pressure56x", 4.0); // random cutoff
-	final static Parameter steamGeneratorPressure54_prot5 = new Parameter(
+	final static Parameter steamGeneratorPressure54_prot5 = new RealParameter(
 			"YB54W001#SG12_PRESSURE_3_4", "pressure54x", 4.0); // random cutoff
-	final static Parameter steamGeneratorPressure52_prot5 = new Parameter(
+	final static Parameter steamGeneratorPressure52_prot5 = new RealParameter(
 			"YB52W001#SG12_PRESSURE_3_4", "pressure52x", 4.0); // random cutoff
-	final static Parameter steamGeneratorPressure15_prot5 = new Parameter(
+	final static Parameter steamGeneratorPressure15_prot5 = new RealParameter(
 			"YB15W001#SG12_PRESSURE_3_4", "pressure15x", 4.0); // random cutoff
-	final static Parameter steamGeneratorPressure13_prot5 = new Parameter(
+	final static Parameter steamGeneratorPressure13_prot5 = new RealParameter(
 			"YB13W001#SG12_PRESSURE_3_4", "pressure13x", 4.0); // random cutoff
-	final static Parameter steamGeneratorPressure11_prot5 = new Parameter(
+	final static Parameter steamGeneratorPressure11_prot5 = new RealParameter(
 			"YB11W001#SG12_PRESSURE_3_4", "pressure11x", 4.0); // random cutoff
 	
-	final static Parameter prot5valve41open = new Parameter(
-			"RL41S001_VA1#VO_OPEN", "valve41open", 0.5);
-	final static Parameter prot5valve41close = new Parameter(
-			"RL41S001_VA1#VO_CLOSE", "valve41close", 0.5);
-	final static Parameter prot5valve42open = new Parameter(
-			"RL42S001_VA1#VO_OPEN", "valve42open", 0.5);
-	final static Parameter prot5valve42close = new Parameter(
-			"RL42S001_VA1#VO_CLOSE", "valve42close", 0.5);
-	final static Parameter prot5valve43open = new Parameter(
-			"RL43S001_VA1#VO_OPEN", "valve43open", 0.5);
-	final static Parameter prot5valve43close = new Parameter(
-			"RL43S001_VA1#VO_CLOSE", "valve43close", 0.5);
-	final static Parameter prot5valve44open = new Parameter(
-			"RL44S001_VA1#VO_OPEN", "valve44open", 0.5);
-	final static Parameter prot5valve44close = new Parameter(
-			"RL44S001_VA1#VO_CLOSE", "valve44close", 0.5);
-	final static Parameter prot5valve45open = new Parameter(
-			"RL45S001_VA1#VO_OPEN", "valve45open", 0.5);
-	final static Parameter prot5valve45close = new Parameter(
-			"RL45S001_VA1#VO_CLOSE", "valve45close", 0.5);
-	final static Parameter prot5valve46open = new Parameter(
-			"RL46S001_VA1#VO_OPEN", "valve46open", 0.5);
-	final static Parameter prot5valve46close = new Parameter(
-			"RL46S001_VA1#VO_CLOSE", "valve46close", 0.5);
+	final static Parameter prot5valve41open = new BoolParameter(
+			"RL41S001_VA1#VO_OPEN", "valve41open");
+	final static Parameter prot5valve41close = new BoolParameter(
+			"RL41S001_VA1#VO_CLOSE", "valve41close");
+	final static Parameter prot5valve42open = new BoolParameter(
+			"RL42S001_VA1#VO_OPEN", "valve42open");
+	final static Parameter prot5valve42close = new BoolParameter(
+			"RL42S001_VA1#VO_CLOSE", "valve42close");
+	final static Parameter prot5valve43open = new BoolParameter(
+			"RL43S001_VA1#VO_OPEN", "valve43open");
+	final static Parameter prot5valve43close = new BoolParameter(
+			"RL43S001_VA1#VO_CLOSE", "valve43close");
+	final static Parameter prot5valve44open = new BoolParameter(
+			"RL44S001_VA1#VO_OPEN", "valve44open");
+	final static Parameter prot5valve44close = new BoolParameter(
+			"RL44S001_VA1#VO_CLOSE", "valve44close");
+	final static Parameter prot5valve45open = new BoolParameter(
+			"RL45S001_VA1#VO_OPEN", "valve45open");
+	final static Parameter prot5valve45close = new BoolParameter(
+			"RL45S001_VA1#VO_CLOSE", "valve45close");
+	final static Parameter prot5valve46open = new BoolParameter(
+			"RL46S001_VA1#VO_OPEN", "valve46open");
+	final static Parameter prot5valve46close = new BoolParameter(
+			"RL46S001_VA1#VO_CLOSE", "valve46close");
 	
 	final static Configuration CONFIGURATION_PROTECTION5 = new Configuration(
 			1.0, Arrays.asList(
@@ -174,96 +174,96 @@ public class TraceTranslator {
 			prot5valve45open, prot5valve45close,
 			prot5valve46open, prot5valve46close));
 
-	final static Parameter pressurizerWaterLevel_entirePlant = new Parameter(
+	final static Parameter pressurizerWaterLevel_entirePlant = new RealParameter(
 			"YP10B001#PR11_LIQ_LEVEL", "pressurizer_water_level", 2.3, 2.8,
 			3.705);
-	final static Parameter pressureInLowerPlenum_entirePlant = new Parameter(
+	final static Parameter pressureInLowerPlenum_entirePlant = new RealParameter(
 			"YC00J005#TA11_PRESSURE", "pressure_lower_plenum", 3.5, 8.0, 10.0);
-	final static Parameter liveSteamPressure_entirePlant = new Parameter(
+	final static Parameter liveSteamPressure_entirePlant = new RealParameter(
 			"RA00J010#PO11_PRESSURE", "pressure_live_steam", 3.0, 3.5);
-	final static Parameter busbarVoltage_entirePlant = new Parameter(
+	final static Parameter busbarVoltage_entirePlant = new RealParameter(
 			"BU_N1#ES_NO_VOLTAGE_REAL", "voltage", 4800.0);
-	final static Parameter steamGeneratorLevel56_entirePlant = new Parameter(
+	final static Parameter steamGeneratorLevel56_entirePlant = new RealParameter(
 			"YB56W001#SG12_LIQ_LEVEL", "level56x", 1.8, 1.96);
-	final static Parameter steamGeneratorLevel54_entirePlant = new Parameter(
+	final static Parameter steamGeneratorLevel54_entirePlant = new RealParameter(
 			"YB54W001#SG12_LIQ_LEVEL", "level54x", 1.8, 1.96);
-	final static Parameter steamGeneratorLevel52_entirePlant = new Parameter(
+	final static Parameter steamGeneratorLevel52_entirePlant = new RealParameter(
 			"YB52W001#SG12_LIQ_LEVEL", "level52x", 1.8, 1.96);
-	final static Parameter steamGeneratorLevel15_entirePlant = new Parameter(
+	final static Parameter steamGeneratorLevel15_entirePlant = new RealParameter(
 			"YB15W001#SG12_LIQ_LEVEL", "level15x", 1.8, 1.96);
-	final static Parameter steamGeneratorLevel13_entirePlant = new Parameter(
+	final static Parameter steamGeneratorLevel13_entirePlant = new RealParameter(
 			"YB13W001#SG12_LIQ_LEVEL", "level13x", 1.8, 1.96);
-	final static Parameter steamGeneratorLevel11_entirePlant = new Parameter(
+	final static Parameter steamGeneratorLevel11_entirePlant = new RealParameter(
 			"YB11W001#SG12_LIQ_LEVEL", "level11x", 1.8, 1.96);
-	final static Parameter steamGeneratorPressure56_entirePlant = new Parameter(
+	final static Parameter steamGeneratorPressure56_entirePlant = new RealParameter(
 			"YB56W001#SG12_PRESSURE_3_4", "pressure56x");
-	final static Parameter steamGeneratorPressure54_entirePlant = new Parameter(
+	final static Parameter steamGeneratorPressure54_entirePlant = new RealParameter(
 			"YB54W001#SG12_PRESSURE_3_4", "pressure54x");
-	final static Parameter steamGeneratorPressure52_entirePlant = new Parameter(
+	final static Parameter steamGeneratorPressure52_entirePlant = new RealParameter(
 			"YB52W001#SG12_PRESSURE_3_4", "pressure52x");
-	final static Parameter steamGeneratorPressure15_entirePlant = new Parameter(
+	final static Parameter steamGeneratorPressure15_entirePlant = new RealParameter(
 			"YB15W001#SG12_PRESSURE_3_4", "pressure15x");
-	final static Parameter steamGeneratorPressure13_entirePlant = new Parameter(
+	final static Parameter steamGeneratorPressure13_entirePlant = new RealParameter(
 			"YB13W001#SG12_PRESSURE_3_4", "pressure13x");
-	final static Parameter steamGeneratorPressure11_entirePlant = new Parameter(
+	final static Parameter steamGeneratorPressure11_entirePlant = new RealParameter(
 			"YB11W001#SG12_PRESSURE_3_4", "pressure11x");
-	final static Parameter reacRelPower_entirePlant = new Parameter(
+	final static Parameter reacRelPower_entirePlant = new RealParameter(
 			"YC00B001#NR1_POWER", "reac_rel_power", 0.1, 0.95, 1.0, 1.1);
-	final static Parameter pressureUpperPlenum_entirePlant = new Parameter(
+	final static Parameter pressureUpperPlenum_entirePlant = new RealParameter(
 			"YC00J030#TA11_PRESSURE", "pressure_upper_plenum", 10.8, 13.4);
-	final static Parameter tempUpperPlenum_entirePlant = new Parameter(
+	final static Parameter tempUpperPlenum_entirePlant = new RealParameter(
 			"YC00J030#TA11_TEMPERATURE", "temp_upper_plenum", 180.0, 317.0);
-	final static Parameter tripSignal = new Parameter(
-			"YZ10U404FL01#FF_OUTPUT_VALUE", "trip", 0.5);
+	final static Parameter tripSignal = new BoolParameter(
+			"YZ10U404FL01#FF_OUTPUT_VALUE", "trip");
 
-	final static Parameter prot6valveA11open = new Parameter(
-			"RA11S003_VA1#VO_OPEN", "valveA11open", 0.5);
-	final static Parameter prot6valveA11close = new Parameter(
-			"RA11S003_VA1#VO_CLOSE", "valveA11close", 0.5);
-	final static Parameter prot6valveA52open = new Parameter(
-			"RA52S003_VA1#VO_OPEN", "valveA52open", 0.5);
-	final static Parameter prot6valveA52close = new Parameter(
-			"RA52S003_VA1#VO_CLOSE", "valveA52close", 0.5);
-	final static Parameter prot6valveA13open = new Parameter(
-			"RA13S003_VA1#VO_OPEN", "valveA13open", 0.5);
-	final static Parameter prot6valveA13close = new Parameter(
-			"RA13S003_VA1#VO_CLOSE", "valveA13close", 0.5);
-	final static Parameter prot6valveA54open = new Parameter(
-			"RA54S003_VA1#VO_OPEN", "valveA54open", 0.5);
-	final static Parameter prot6valveA54close = new Parameter(
-			"RA54S003_VA1#VO_CLOSE", "valveA54close", 0.5);
-	final static Parameter prot6valveA15open = new Parameter(
-			"RA15S003_VA1#VO_OPEN", "valveA15open", 0.5);
-	final static Parameter prot6valveA15close = new Parameter(
-			"RA15S003_VA1#VO_CLOSE", "valveA15close", 0.5);
-	final static Parameter prot6valveA56open = new Parameter(
-			"RA56S003_VA1#VO_OPEN", "valveA56open", 0.5);
-	final static Parameter prot6valveA56close = new Parameter(
-			"RA56S003_VA1#VO_CLOSE", "valveA56close", 0.5);
-	final static Parameter prot6valveL31open = new Parameter(
-			"RL31S003_VA1#VO_OPEN", "valveL31open", 0.5);
-	final static Parameter prot6valveL31close = new Parameter(
-			"RL31S003_VA1#VO_CLOSE", "valveL31close", 0.5);
-	final static Parameter prot6valveL72open = new Parameter(
-			"RL72S003_VA1#VO_OPEN", "valveL72open", 0.5);
-	final static Parameter prot6valveL72close = new Parameter(
-			"RL72S003_VA1#VO_CLOSE", "valveL72close", 0.5);
-	final static Parameter prot6valveL33open = new Parameter(
-			"RL33S003_VA1#VO_OPEN", "valveL33open", 0.5);
-	final static Parameter prot6valveL33close = new Parameter(
-			"RL33S003_VA1#VO_CLOSE", "valveL33close", 0.5);
-	final static Parameter prot6valveL74open = new Parameter(
-			"RL74S003_VA1#VO_OPEN", "valveL74open", 0.5);
-	final static Parameter prot6valveL74close = new Parameter(
-			"RL74S003_VA1#VO_CLOSE", "valveL74close", 0.5);
-	final static Parameter prot6valveL35open = new Parameter(
-			"RL35S003_VA1#VO_OPEN", "valveL35open", 0.5);
-	final static Parameter prot6valveL35close = new Parameter(
-			"RL35S003_VA1#VO_CLOSE", "valveL35close", 0.5);
-	final static Parameter prot6valveL76open = new Parameter(
-			"RL76S003_VA1#VO_OPEN", "valveL76open", 0.5);
-	final static Parameter prot6valveL76close = new Parameter(
-			"RL76S003_VA1#VO_CLOSE", "valveL76close", 0.5);
+	final static Parameter prot6valveA11open = new BoolParameter(
+			"RA11S003_VA1#VO_OPEN", "valveA11open");
+	final static Parameter prot6valveA11close = new BoolParameter(
+			"RA11S003_VA1#VO_CLOSE", "valveA11close");
+	final static Parameter prot6valveA52open = new BoolParameter(
+			"RA52S003_VA1#VO_OPEN", "valveA52open");
+	final static Parameter prot6valveA52close = new BoolParameter(
+			"RA52S003_VA1#VO_CLOSE", "valveA52close");
+	final static Parameter prot6valveA13open = new BoolParameter(
+			"RA13S003_VA1#VO_OPEN", "valveA13open");
+	final static Parameter prot6valveA13close = new BoolParameter(
+			"RA13S003_VA1#VO_CLOSE", "valveA13close");
+	final static Parameter prot6valveA54open = new BoolParameter(
+			"RA54S003_VA1#VO_OPEN", "valveA54open");
+	final static Parameter prot6valveA54close = new BoolParameter(
+			"RA54S003_VA1#VO_CLOSE", "valveA54close");
+	final static Parameter prot6valveA15open = new BoolParameter(
+			"RA15S003_VA1#VO_OPEN", "valveA15open");
+	final static Parameter prot6valveA15close = new BoolParameter(
+			"RA15S003_VA1#VO_CLOSE", "valveA15close");
+	final static Parameter prot6valveA56open = new BoolParameter(
+			"RA56S003_VA1#VO_OPEN", "valveA56open");
+	final static Parameter prot6valveA56close = new BoolParameter(
+			"RA56S003_VA1#VO_CLOSE", "valveA56close");
+	final static Parameter prot6valveL31open = new BoolParameter(
+			"RL31S003_VA1#VO_OPEN", "valveL31open");
+	final static Parameter prot6valveL31close = new BoolParameter(
+			"RL31S003_VA1#VO_CLOSE", "valveL31close");
+	final static Parameter prot6valveL72open = new BoolParameter(
+			"RL72S003_VA1#VO_OPEN", "valveL72open");
+	final static Parameter prot6valveL72close = new BoolParameter(
+			"RL72S003_VA1#VO_CLOSE", "valveL72close");
+	final static Parameter prot6valveL33open = new BoolParameter(
+			"RL33S003_VA1#VO_OPEN", "valveL33open");
+	final static Parameter prot6valveL33close = new BoolParameter(
+			"RL33S003_VA1#VO_CLOSE", "valveL33close");
+	final static Parameter prot6valveL74open = new BoolParameter(
+			"RL74S003_VA1#VO_OPEN", "valveL74open");
+	final static Parameter prot6valveL74close = new BoolParameter(
+			"RL74S003_VA1#VO_CLOSE", "valveL74close");
+	final static Parameter prot6valveL35open = new BoolParameter(
+			"RL35S003_VA1#VO_OPEN", "valveL35open");
+	final static Parameter prot6valveL35close = new BoolParameter(
+			"RL35S003_VA1#VO_CLOSE", "valveL35close");
+	final static Parameter prot6valveL76open = new BoolParameter(
+			"RL76S003_VA1#VO_OPEN", "valveL76open");
+	final static Parameter prot6valveL76close = new BoolParameter(
+			"RL76S003_VA1#VO_CLOSE", "valveL76close");
 	
 	final static Configuration CONFIGURATION_PROTECTION6 = new Configuration(
 				1.0, Arrays.asList(
@@ -281,19 +281,19 @@ public class TraceTranslator {
 				prot6valveL35open, prot6valveL35close,
 				prot6valveL76open, prot6valveL76close));
 
-	final static Parameter coolantPumpStopped51 = new Parameter(
-			"SK00C010XG51#BINARY_VALUE", "coolantPumpStopped51", 0.5);
-	final static Parameter coolantPumpStopped52 = new Parameter(
-			"SK00C010XG52#BINARY_VALUE", "coolantPumpStopped52", 0.5);
-	final static Parameter coolantPumpStopped53 = new Parameter(
-			"SK00C010XG53#BINARY_VALUE", "coolantPumpStopped53", 0.5);
-	final static Parameter coolantPumpStopped54 = new Parameter(
-			"SK00C010XG54#BINARY_VALUE", "coolantPumpStopped54", 0.5);
-	final static Parameter coolantPumpStopped55 = new Parameter(
-			"SK00C010XG55#BINARY_VALUE", "coolantPumpStopped55", 0.5);
-	final static Parameter coolantPumpStopped56 = new Parameter(
-			"SK00C010XG56#BINARY_VALUE", "coolantPumpStopped56", 0.5);
-	final static Parameter rodPosition = new Parameter(
+	final static Parameter coolantPumpStopped51 = new BoolParameter(
+			"SK00C010XG51#BINARY_VALUE", "coolantPumpStopped51");
+	final static Parameter coolantPumpStopped52 = new BoolParameter(
+			"SK00C010XG52#BINARY_VALUE", "coolantPumpStopped52");
+	final static Parameter coolantPumpStopped53 = new BoolParameter(
+			"SK00C010XG53#BINARY_VALUE", "coolantPumpStopped53");
+	final static Parameter coolantPumpStopped54 = new BoolParameter(
+			"SK00C010XG54#BINARY_VALUE", "coolantPumpStopped54");
+	final static Parameter coolantPumpStopped55 = new BoolParameter(
+			"SK00C010XG55#BINARY_VALUE", "coolantPumpStopped55");
+	final static Parameter coolantPumpStopped56 = new BoolParameter(
+			"SK00C010XG56#BINARY_VALUE", "coolantPumpStopped56");
+	final static Parameter rodPosition = new RealParameter(
 			"YC00B001_RA1#RA_RE_RODP2", "rodPosition", 1.0, 2.0);
 
 	final static Configuration CONFIGURATION_REA_TUR_TRIP = new Configuration(
@@ -357,11 +357,11 @@ public class TraceTranslator {
 		CONFIGURATION_PLANT.addColorRule(reacRelPower_entirePlant, 4, "red");
 	}
 	
-	final static Parameter binSigFromReaPowLimit_reacco = new Parameter(
-			"YK00_ROMXL01#BINARY_VALUE", "bin_sig_rea_pow_limit", 0.5);
-	final static Parameter anSigFromReaPowLimit_reacco = new Parameter(
+	final static Parameter binSigFromReaPowLimit_reacco = new BoolParameter(
+			"YK00_ROMXL01#BINARY_VALUE", "bin_sig_rea_pow_limit");
+	final static Parameter anSigFromReaPowLimit_reacco = new RealParameter(
 			"YK00_ROMXJ35#ANALOG_VALUE", "an_sig_rea_pow_limit", 1.0, 2.0);
-	final static Parameter rodPosition_reacco = new Parameter(
+	final static Parameter rodPosition_reacco = new RealParameter(
 			"YC00B001_RA1#RA_RE_RODP", "rod_position", 1.0, 2.0);
 	
 	final static Configuration CONFIGURATION_REACTOR_CO = new Configuration(
@@ -373,37 +373,37 @@ public class TraceTranslator {
 					reacRelPower_entirePlant
 			), Arrays.asList(rodPosition_reacco));
 	
-	final static Parameter YA11T001_preslevco = new Parameter(
+	final static Parameter YA11T001_preslevco = new RealParameter(
 			"YA11T001#ME_OUTPUT_VALUE", "YA11T001", 270.0);
-	final static Parameter YA11T002_preslevco = new Parameter(
+	final static Parameter YA11T002_preslevco = new RealParameter(
 			"YA11T002#ME_OUTPUT_VALUE", "YA11T002", 270.0);
-	final static Parameter YA12T001_preslevco = new Parameter(
+	final static Parameter YA12T001_preslevco = new RealParameter(
 			"YA12T001#ME_OUTPUT_VALUE", "YA12T001", 270.0);
-	final static Parameter YA12T002_preslevco = new Parameter(
+	final static Parameter YA12T002_preslevco = new RealParameter(
 			"YA12T002#ME_OUTPUT_VALUE", "YA12T002", 270.0);
-	final static Parameter YA13T001_preslevco = new Parameter(
+	final static Parameter YA13T001_preslevco = new RealParameter(
 			"YA13T001#ME_OUTPUT_VALUE", "YA13T001", 270.0);
-	final static Parameter YA13T002_preslevco = new Parameter(
+	final static Parameter YA13T002_preslevco = new RealParameter(
 			"YA13T002#ME_OUTPUT_VALUE", "YA13T002", 270.0);
-	final static Parameter YA14T001_preslevco = new Parameter(
+	final static Parameter YA14T001_preslevco = new RealParameter(
 			"YA14T001#ME_OUTPUT_VALUE", "YA14T001", 270.0);
-	final static Parameter YA14T002_preslevco = new Parameter(
+	final static Parameter YA14T002_preslevco = new RealParameter(
 			"YA14T002#ME_OUTPUT_VALUE", "YA14T002", 270.0);
-	final static Parameter YA15T001_preslevco = new Parameter(
+	final static Parameter YA15T001_preslevco = new RealParameter(
 			"YA15T001#ME_OUTPUT_VALUE", "YA15T001", 270.0);
-	final static Parameter YA15T002_preslevco = new Parameter(
+	final static Parameter YA15T002_preslevco = new RealParameter(
 			"YA15T002#ME_OUTPUT_VALUE", "YA15T002", 270.0);
-	final static Parameter YA16T001_preslevco = new Parameter(
+	final static Parameter YA16T001_preslevco = new RealParameter(
 			"YA16T001#ME_OUTPUT_VALUE", "YA16T001", 270.0);
-	final static Parameter YA16T002_preslevco = new Parameter(
+	final static Parameter YA16T002_preslevco = new RealParameter(
 			"YA16T002#ME_OUTPUT_VALUE", "YA16T002", 270.0);
 	
-	final static Parameter valveE51_preslevco = new Parameter(
-			"TE51S002_VA1#V_POSITION_SET_VALUE", "valveE51", 0.5);
-	final static Parameter valveK52_preslevco = new Parameter(
-			"TK52S002_VA1#V_POSITION_SET_VALUE", "valveK52", 0.5);
-	final static Parameter valveK53_preslevco = new Parameter(
-			"TK53S002_VA1#V_POSITION_SET_VALUE", "valveK53", 0.5);
+	final static Parameter valveE51_preslevco = new BoolParameter(
+			"TE51S002_VA1#V_POSITION_SET_VALUE", "valveE51");
+	final static Parameter valveK52_preslevco = new BoolParameter(
+			"TK52S002_VA1#V_POSITION_SET_VALUE", "valveK52");
+	final static Parameter valveK53_preslevco = new BoolParameter(
+			"TK53S002_VA1#V_POSITION_SET_VALUE", "valveK53");
 	
 	final static Configuration CONFIGURATION_PRES_LEV_CONT = new Configuration(
 			1.0,
@@ -417,26 +417,26 @@ public class TraceTranslator {
 			), Arrays.asList(valveE51_preslevco,
 					valveK52_preslevco, valveK53_preslevco));
 	
-	final static Parameter pressurizerPressure_prespresco = new Parameter(
+	final static Parameter pressurizerPressure_prespresco = new RealParameter(
 			"YP10B001_NO8#NO6_PRESSURE", "pressurizer_pressure", 8e6, 9e6, 10e6, 11e6, 12e6, 13e6);
-	final static Parameter power_prespresco = new Parameter(
+	final static Parameter power_prespresco = new RealParameter(
 			"YP10B001_HS1#HS_POWER", "power", 0.5);
-	final static Parameter valve1311_prespresco = new Parameter(
-			"YP13S011_VA1#V_POSITION_SET_VALUE", "valve1311", 0.5);
-	final static Parameter valve1411_prespresco = new Parameter(
-			"YP14S011_VA1#V_POSITION_SET_VALUE", "valve1411", 0.5);
-	final static Parameter valve1308_prespresco = new Parameter(
-			"YP13S008_VA1#V_POSITION_SET_VALUE", "valve1308", 0.5);
-	final static Parameter valve1408_prespresco = new Parameter(
-			"YP14S008_VA1#V_POSITION_SET_VALUE", "valve1408", 0.5);
-	final static Parameter valve1305_prespresco = new Parameter(
-			"YP13S005_VA1#V_POSITION_SET_VALUE", "valve1305", 0.5);
-	final static Parameter valve1405_prespresco = new Parameter(
-			"YP14S005_VA1#V_POSITION_SET_VALUE", "valve1405", 0.5);
-	final static Parameter valve1302_prespresco = new Parameter(
-			"YP13S002_VA1#V_POSITION_SET_VALUE", "valve1302", 0.5);
-	final static Parameter valve1402_prespresco = new Parameter(
-			"YP14S002_VA1#V_POSITION_SET_VALUE", "valve1402", 0.5);
+	final static Parameter valve1311_prespresco = new BoolParameter(
+			"YP13S011_VA1#V_POSITION_SET_VALUE", "valve1311");
+	final static Parameter valve1411_prespresco = new BoolParameter(
+			"YP14S011_VA1#V_POSITION_SET_VALUE", "valve1411");
+	final static Parameter valve1308_prespresco = new BoolParameter(
+			"YP13S008_VA1#V_POSITION_SET_VALUE", "valve1308");
+	final static Parameter valve1408_prespresco = new BoolParameter(
+			"YP14S008_VA1#V_POSITION_SET_VALUE", "valve1408");
+	final static Parameter valve1305_prespresco = new BoolParameter(
+			"YP13S005_VA1#V_POSITION_SET_VALUE", "valve1305");
+	final static Parameter valve1405_prespresco = new BoolParameter(
+			"YP14S005_VA1#V_POSITION_SET_VALUE", "valve1405");
+	final static Parameter valve1302_prespresco = new BoolParameter(
+			"YP13S002_VA1#V_POSITION_SET_VALUE", "valve1302");
+	final static Parameter valve1402_prespresco = new BoolParameter(
+			"YP14S002_VA1#V_POSITION_SET_VALUE", "valve1402");
 	
 	final static Configuration CONFIGURATION_PRES_PRES_CONT = new Configuration(
 			1.0,
@@ -463,7 +463,7 @@ public class TraceTranslator {
 		if (index == arr.length) {
 			result.add(String.valueOf(arr));
 		} else {
-			final int intervalNum = parameters.get(index - 1).cutoffs.size();
+			final int intervalNum = parameters.get(index - 1).valueCount();
 			for (int i = 0; i < intervalNum; i++) {
 				arr[index] = Character.forDigit(i, 10);
 				allEventCombinations(arr, index + 1, result, parameters);
@@ -489,10 +489,10 @@ public class TraceTranslator {
 		int totalInputValues = 0;
 		int totalOutputValues = 0;
 		for (Parameter p : conf.inputParameters) {
-			totalInputValues += p.cutoffs.size();
+			totalInputValues += p.valueCount();
 		}
 		for (Parameter p : conf.outputParameters) {
-			totalOutputValues += p.cutoffs.size();
+			totalOutputValues += p.valueCount();
 		}
 		
 		try (PrintWriter pw = new PrintWriter(new File(OUTPUT_TRACE_FILENAME))) {
@@ -607,7 +607,7 @@ public class TraceTranslator {
 		// parameter limits
 		System.out.println("Found parameter boundaries:");
 		final Function<Parameter, String> describe = p -> {
-			return p.traceName() + " in " + p.limits() + ", bounds " + p.cutoffs.subList(0, p.cutoffs.size() - 1);
+			return p.traceName() + " in " + p.limits() + " - " + p;
 		};
 		for (Parameter p : conf.outputParameters) {
 			System.out.println(" output " + describe.apply(p));
@@ -616,8 +616,10 @@ public class TraceTranslator {
 			System.out.println(" input " + describe.apply(p));
 		}
 		
-		System.out.println(String.format("Input coverage: %.2f%%", 100.0 * inputCovered.size() / totalInputValues));
-		System.out.println(String.format("Output coverage: %.2f%%", 100.0 * outputCovered.size() / totalOutputValues));
+		System.out.println(String.format("Input coverage: %.2f%%",
+				100.0 * inputCovered.size() / totalInputValues));
+		System.out.println(String.format("Output coverage: %.2f%%",
+				100.0 * outputCovered.size() / totalOutputValues));
 		
 		return builderArgs;
 	}

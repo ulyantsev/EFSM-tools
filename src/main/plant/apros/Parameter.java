@@ -1,7 +1,6 @@
 package main.plant.apros;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
@@ -9,8 +8,7 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.tuple.Pair;
 
-public class Parameter {
-	final List<Double> cutoffs;
+public abstract class Parameter {
 	private String traceName;
 	private final String aprosName;
 	private double min = Double.POSITIVE_INFINITY;
@@ -20,25 +18,32 @@ public class Parameter {
 		return aprosName;
 	}
 	
+	public abstract int valueCount();
+	
 	public static boolean unify(Parameter p, Parameter q) {
 		if (p.aprosName.equals(q.aprosName)) {
-			final Set<Double> allCutoffs = new TreeSet<>(p.cutoffs);
-			allCutoffs.addAll(q.cutoffs);
-			p.cutoffs.clear();
-			p.cutoffs.addAll(allCutoffs);
-			q.cutoffs.clear();
-			q.cutoffs.addAll(allCutoffs);
+			if (p instanceof RealParameter && q instanceof RealParameter) {
+				final RealParameter rp = (RealParameter) p;
+				final RealParameter rq = (RealParameter) q;
+				final Set<Double> allCutoffs = new TreeSet<>(rp.cutoffs);
+				allCutoffs.addAll(rq.cutoffs);
+				rp.cutoffs.clear();
+				rp.cutoffs.addAll(allCutoffs);
+				rq.cutoffs.clear();
+				rq.cutoffs.addAll(allCutoffs);
+			} else if (p instanceof BoolParameter && q instanceof BoolParameter) {
+			} else {
+				throw new RuntimeException("Incompatible parameter types.");
+			}
 			q.traceName = p.traceName;
 			return true;
 		}
 		return false;
 	}
 	
-	public Parameter(String aprosName, String name, Double... cutoffs) {
-		this.traceName = name;
+	public Parameter(String aprosName, String traceName) {
 		this.aprosName = aprosName;
-		this.cutoffs = new ArrayList<>(Arrays.asList(cutoffs));
-		this.cutoffs.add(Double.POSITIVE_INFINITY);
+		this.traceName = traceName;
 	}
 
 	public void updateLimits(double value) {
@@ -54,57 +59,33 @@ public class Parameter {
 		return traceName;
 	}
 	
-	private String traceName(int index) {
+	protected String traceName(int index) {
 		return traceName() + index;
 	}
 
 	// assuming that this is an output parameter
-	public List<String> traceNames() {
-		final List<String> res = new ArrayList<>();
-		for (int j = 0; j < cutoffs.size(); j++) {
-			res.add(traceName(j));
-		}
-		return res;
-	}
+	public abstract List<String> traceNames();
 
 	// assuming that this is an output parameter
-	public List<String> descriptions() {
-		final List<String> res = new ArrayList<>();
-		for (int j = 0; j < cutoffs.size(); j++) {
-			String s;
-			if (cutoffs.size() == 1) {
-				s = "any " + traceName;
-			} else if (j == 0) {
-				s = traceName + " < " + cutoffs.get(j);
-			} else if (j == cutoffs.size() - 1) {
-				s = cutoffs.get(j - 1) + " ≤ " + traceName;
-			} else {
-				s = cutoffs.get(j - 1) + " ≤ " + traceName + " < "
-						+ cutoffs.get(j);
-			}
-			res.add("[" + j + "] " + s);
-		}
-		return res;
-	}
+	public abstract List<String> descriptions();
 
-	public int traceNameIndex(double value) {
-		for (int i = 0; i < cutoffs.size(); i++) {
-			if (value < cutoffs.get(i)) {
-				return i;
-			}
-		}
-		throw new AssertionError();
-	}
+	public abstract int traceNameIndex(double value);
 
+	public abstract String defaultValue();
+	
 	public String traceName(double value) {
 		return traceName(traceNameIndex(value));
 	}
+	
+	public abstract String nusmvType();
+	public abstract String nusmvInterval(int index);
+	public abstract String nusmvCondition(String name, int index);
 
 	// assuming that this is an output parameter
 	public List<String> actionspec() {
 		final List<String> res = new ArrayList<>();
 		final List<String> actions = new ArrayList<>();
-		for (int i = 0; i < cutoffs.size(); i++) {
+		for (int i = 0; i < valueCount(); i++) {
 			actions.add("action(" + traceName(i) + ")");
 		}
 		res.add(String.join(" || ", actions));
@@ -120,16 +101,16 @@ public class Parameter {
 	// smooth changes
 	public List<String> temporalProperties() {
 		final List<String> res = new ArrayList<>();
-		if (cutoffs.size() < 3) {
+		if (valueCount() < 3) {
 			return res;
 		}
-		for (int i = 0; i < cutoffs.size(); i++) {
+		for (int i = 0; i < valueCount(); i++) {
 			List<String> vicinity = new ArrayList<>();
 			vicinity.add(traceName(i));
 			if (i > 0) {
 				vicinity.add(traceName(i - 1));
 			}
-			if (i < cutoffs.size() - 1) {
+			if (i < valueCount() - 1) {
 				vicinity.add(traceName(i + 1));
 			}
 			vicinity = vicinity.stream().map(s -> "action(" + s + ")")
@@ -138,11 +119,5 @@ public class Parameter {
 					+ String.join(" || ", vicinity) + "))");
 		}
 		return res;
-	}
-	
-	@Override
-	public String toString() {
-		return "param " + aprosName + " (" + traceName + ") "
-				+ cutoffs.subList(0, cutoffs.size() - 1);
 	}
 }

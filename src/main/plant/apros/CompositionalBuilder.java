@@ -26,38 +26,38 @@ import structures.plant.NondetMooreAutomaton;
 
 public class CompositionalBuilder {
 	// Block-based composition
-	final static Parameter reacRelPower = new Parameter(
+	final static Parameter reacRelPower = new RealParameter(
 			"YC00B001#NR1_POWER", "reac_rel_power", 0.1, 0.5, 0.95, 1.0, 1.1);
-	final static Parameter trip = new Parameter(
-			"YZ10U404FL01#FF_OUTPUT_VALUE", "trip", 0.5);
-	final static Parameter rodPosition2 = new Parameter(
+	final static Parameter trip = new BoolParameter(
+			"YZ10U404FL01#FF_OUTPUT_VALUE", "trip");
+	final static Parameter rodPosition2 = new RealParameter(
 			"YC00B001_RA1#RA_RE_RODP2", "rod_position2_", 1.0);
-	final static Parameter rodPosition1 = new Parameter(
+	final static Parameter rodPosition1 = new RealParameter(
 			"YC00B001_RA1#RA_RE_RODP", "rod_position1_", 1.0);
 	
 	final static Configuration CONF_REAC = new Configuration(
 			1.0, Arrays.asList(reacRelPower),
 			Arrays.asList(trip, rodPosition1, rodPosition2));
 	
-	final static Parameter pressurizerWaterLevel = new Parameter(
+	final static Parameter pressurizerWaterLevel = new RealParameter(
 			"YP10B001#PR11_LIQ_LEVEL", "pressurizer_water_level", 2.3, 2.8,
 			3.705);
-	final static Parameter pressurizerPressure = new Parameter(
+	final static Parameter pressurizerPressure = new RealParameter(
 			"YP10B001_NO8#NO6_PRESSURE", "pressurizer_pressure", 8e6, 9e6, 10e6, 11e6, 12e6, 13e6);
-	final static Parameter valveE51_preslevco = new Parameter(
-			"TE51S002_VA1#V_POSITION_SET_VALUE", "valveE51", 0.5);
-	final static Parameter valveK52_preslevco = new Parameter(
-			"TK52S002_VA1#V_POSITION_SET_VALUE", "valveK52", 0.5);
-	final static Parameter valveK53_preslevco = new Parameter(
-			"TK53S002_VA1#V_POSITION_SET_VALUE", "valveK53", 0.5);
+	final static Parameter valveE51_preslevco = new BoolParameter(
+			"TE51S002_VA1#V_POSITION_SET_VALUE", "valveE51");
+	final static Parameter valveK52_preslevco = new BoolParameter(
+			"TK52S002_VA1#V_POSITION_SET_VALUE", "valveK52");
+	final static Parameter valveK53_preslevco = new BoolParameter(
+			"TK53S002_VA1#V_POSITION_SET_VALUE", "valveK53");
 	
 	final static Configuration CONF_PRESSURIZER = new Configuration(
 			1.0, Arrays.asList(pressurizerWaterLevel, pressurizerPressure),
 			Arrays.asList(valveE51_preslevco, valveK52_preslevco, valveK53_preslevco));
 
-	final static Parameter pressureInLowerPlenum = new Parameter(
+	final static Parameter pressureInLowerPlenum = new RealParameter(
 			"YC00J005#TA11_PRESSURE", "pressure_lower_plenum", 3.5, 8.0, 10.0);
-	final static Parameter liveSteamPressure = new Parameter(
+	final static Parameter liveSteamPressure = new RealParameter(
 			"RA00J010#PO11_PRESSURE", "pressure_live_steam", 3.5);
 	
 	final static Configuration CONF_MISC = new Configuration(
@@ -74,7 +74,8 @@ public class CompositionalBuilder {
 	
 	final static Configuration CONF1 = new Configuration(
 			1.0, Arrays.asList(
-			TraceTranslator.pressureInLowerPlenum),
+			TraceTranslator.pressureInLowerPlenum,
+			TraceTranslator.prot5valve43open),
 			Arrays.asList(TraceTranslator.tripSignal));
 	
 	final static Configuration CONF2 = new Configuration(
@@ -89,7 +90,7 @@ public class CompositionalBuilder {
 	
 	/*******************************************/
 	
-	final static List<Configuration> CONFS = CONF_NETWORK;
+	final static List<Configuration> CONFS = CONF_STRUCTURE;
 	final static int FAST_THRESHOLD = 0;
 	final static boolean ALL_EVENT_COMBINATIONS = false;
 	final static String TRACE_LOCATION = TraceTranslator.INPUT_DIRECTORY;

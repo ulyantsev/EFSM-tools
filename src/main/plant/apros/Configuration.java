@@ -47,15 +47,15 @@ public class Configuration {
 		}
 		a.setActionDescriptions(descriptions);
 
-		final List<Pair<String, List<Double>>> actionThresholds = new ArrayList<>();
+		final List<Pair<String, Parameter>> actionThresholds = new ArrayList<>();
 		for (Parameter p : outputParameters) {
-			actionThresholds.add(Pair.of(p.traceName(), p.cutoffs));
+			actionThresholds.add(Pair.of(p.traceName(), p));
 		}
 		a.setActionThresholds(actionThresholds);
 		
-		final List<Pair<String, List<Double>>> eventThresholds = new ArrayList<>();
+		final List<Pair<String, Parameter>> eventThresholds = new ArrayList<>();
 		for (Parameter p : inputParameters) {
-			eventThresholds.add(Pair.of(p.traceName(), p.cutoffs));
+			eventThresholds.add(Pair.of(p.traceName(), p));
 		}	
 		a.setEventThresholds(eventThresholds);
 	}
