@@ -1,9 +1,6 @@
-package main.plant;
+package main.plant.apros;
 
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.io.PrintWriter;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -21,9 +18,7 @@ import java.util.function.Consumer;
 
 import org.apache.commons.lang3.tuple.Pair;
 
-import main.plant.AprosIOScenarioCreator.Configuration;
-import main.plant.AprosIOScenarioCreator.Dataset;
-import main.plant.AprosIOScenarioCreator.Parameter;
+import main.plant.PlantBuilderMain;
 import scenario.StringActions;
 import structures.plant.MooreNode;
 import structures.plant.MooreTransition;
@@ -73,22 +68,22 @@ public class CompositionalBuilder {
 
 	// Control diagram-based composition
 	final static List<Configuration> CONF_NETWORK = Arrays.asList(
-			AprosIOScenarioCreator.CONFIGURATION_PROTECTION1,
-			AprosIOScenarioCreator.CONFIGURATION_PROTECTION5,
-			AprosIOScenarioCreator.CONFIGURATION_PROTECTION7);
+			TraceTranslator.CONFIGURATION_PROTECTION1,
+			TraceTranslator.CONFIGURATION_PROTECTION5,
+			TraceTranslator.CONFIGURATION_PROTECTION7);
 	
 	final static Configuration CONF1 = new Configuration(
 			1.0, Arrays.asList(
-			AprosIOScenarioCreator.pressureInLowerPlenum),
-			Arrays.asList(AprosIOScenarioCreator.tripSignal));
+			TraceTranslator.pressureInLowerPlenum),
+			Arrays.asList(TraceTranslator.tripSignal));
 	
 	final static Configuration CONF2 = new Configuration(
-			1.0, Arrays.asList(AprosIOScenarioCreator.pressurizerWaterLevel),
-			Arrays.asList(AprosIOScenarioCreator.tripSignal));
+			1.0, Arrays.asList(TraceTranslator.pressurizerWaterLevel),
+			Arrays.asList(TraceTranslator.tripSignal));
 	
 	final static Configuration CONF3 = new Configuration(
-			1.0, Arrays.asList(AprosIOScenarioCreator.reacRelPower_entirePlant),
-			Arrays.asList(AprosIOScenarioCreator.prot5valve41open));
+			1.0, Arrays.asList(TraceTranslator.reacRelPower_entirePlant),
+			Arrays.asList(TraceTranslator.prot5valve41open));
 	
 	final static List<Configuration> CONF_TEST = Arrays.asList(CONF1, CONF2, CONF3);
 	
@@ -96,8 +91,8 @@ public class CompositionalBuilder {
 	
 	final static List<Configuration> CONFS = CONF_STRUCTURE;
 	final static int FAST_THRESHOLD = 0;
-	final static boolean ALL_EVENT_COMBINATIONS = true;
-	final static String TRACE_LOCATION = AprosIOScenarioCreator.INPUT_DIRECTORY;
+	final static boolean ALL_EVENT_COMBINATIONS = false;
+	final static String TRACE_LOCATION = TraceTranslator.INPUT_DIRECTORY;
 	
 	/*******************************************/
 	
@@ -114,7 +109,7 @@ public class CompositionalBuilder {
 			final String[] actions1 = first.actions().getActions();
 			final String[] actions2 = second.actions().getActions();
 			for (Pair<Parameter, Parameter> pair : match.outputPairs) {
-				final String prefix = pair.getLeft().traceNamePrefix();
+				final String prefix = pair.getLeft().traceName();
 				final int i1 = actionIntervalIndex(actions1, prefix);
 				final int i2 = actionIntervalIndex(actions2, prefix);
 				if (i1 != i2) {
@@ -186,7 +181,7 @@ public class CompositionalBuilder {
 		if (isOutputInput) {
 			for (Pair<Parameter, Integer> pair : match.outputInputPairs) {
 				final int firstIndex = actionIntervalIndex(node.actions().getActions(),
-						pair.getLeft().traceNamePrefix());
+						pair.getLeft().traceName());
 				final int secondIndex = Integer.parseInt(String.valueOf(
 						outgoingEvent.charAt(pair.getRight() + 1)));
 				if (firstIndex != secondIndex) {
@@ -196,7 +191,7 @@ public class CompositionalBuilder {
 		} else {
 			for (Pair<Integer, Parameter> pair : match.inputOutputPairs) {
 				final int secondIndex = actionIntervalIndex(node.actions().getActions(),
-						pair.getRight().traceNamePrefix());
+						pair.getRight().traceName());
 				final int firstIndex = Integer.parseInt(String.valueOf(
 						outgoingEvent.charAt(pair.getLeft() + 1)));
 				if (firstIndex != secondIndex) {
@@ -211,7 +206,7 @@ public class CompositionalBuilder {
 		// outputs
 		final Map<String, Parameter> traceNameToParam = new TreeMap<>();
 		final Consumer<Parameter> process = p -> {
-			traceNameToParam.putIfAbsent(p.traceNamePrefix(), p);
+			traceNameToParam.putIfAbsent(p.traceName(), p);
 		};
 		c1.outputParameters.forEach(process);
 		c2.outputParameters.forEach(process);
@@ -415,10 +410,10 @@ public class CompositionalBuilder {
 			}
 			
 			for (Pair<Parameter, Integer> p : outputInputPairs) {
-				badActionPrefixes.add(p.getLeft().traceNamePrefix());
+				badActionPrefixes.add(p.getLeft().traceName());
 			}
 			for (Pair<Integer, Parameter> p : inputOutputPairs) {
-				badActionPrefixes.add(p.getRight().traceNamePrefix());
+				badActionPrefixes.add(p.getRight().traceName());
 			}
 		}
 	}
@@ -449,19 +444,18 @@ public class CompositionalBuilder {
 			System.out.println();
 			final String namePrefix = "automaton" + i + ".";
 			
-			final List<String> params = AprosIOScenarioCreator.generateScenarios(conf,
+			final List<String> params = TraceTranslator.generateScenarios(conf,
 					ds, new HashSet<>(), namePrefix + "gv", namePrefix + "smv",
-					namePrefix + "bin", false, FAST_THRESHOLD, ALL_EVENT_COMBINATIONS);
+					false, FAST_THRESHOLD, ALL_EVENT_COMBINATIONS);
 			System.out.println();
-			PlantBuilderMain.main(params.toArray(new String[params.size()]));
-			NondetMooreAutomaton a = null;
-			try (ObjectInputStream ois = new ObjectInputStream(
-					new FileInputStream(namePrefix + "bin"))) {
-				a = (NondetMooreAutomaton) ois.readObject();
-			} catch (IOException | ClassNotFoundException e) {
-				e.printStackTrace();
+			final PlantBuilderMain builder = new PlantBuilderMain();
+			builder.run(params.toArray(new String[params.size()]));
+			if (!builder.resultAutomaton().isPresent()) {
+				System.err.println("Basic plant model constuction failed; "
+						+ "is the number of states sufficient?");
 				return;
 			}
+			final NondetMooreAutomaton a = builder.resultAutomaton().get();
 			automata.add(a);
 			System.out.println();
 			System.out.println(a);
@@ -480,8 +474,8 @@ public class CompositionalBuilder {
 			
 			// Obtain the set of all possible composite actions
 			final Set<List<String>> allActionCombinations = new HashSet<>();
-			AprosIOScenarioCreator.generateScenarios(outputConfigurationComposition(conf1, conf2),
-					ds, allActionCombinations, "", "", "", false, FAST_THRESHOLD,
+			TraceTranslator.generateScenarios(outputConfigurationComposition(conf1, conf2),
+					ds, allActionCombinations, "", "", false, FAST_THRESHOLD,
 					ALL_EVENT_COMBINATIONS);
 			final Set<List<String>> allActionCombinationsSorted = new HashSet<>();
 			for (List<String> actionCombination : allActionCombinations) {

@@ -1,4 +1,4 @@
-package main.plant;
+package main.plant.apros;
 
 /**
  * (c) Igor Buzhinsky
@@ -9,19 +9,15 @@ import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Scanner;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.tuple.Pair;
 
-public class AprosIOScenarioCreator {
+public class TraceTranslator {
 	/*private final static List<Parameter> PARAMETERS_PROTECTION1 = Arrays.asList(
 			new Parameter(false, "water_level", 2.3, 2.8),
 			new Parameter(false, "pressure_lower_plenum", 3.5, 8.0, 10.0),
@@ -69,241 +65,6 @@ public class AprosIOScenarioCreator {
 	);*/
 	
 	final static String INPUT_DIRECTORY = "evaluation/plant-synthesis/vver-traces-entire-plant";
-	
-	static class Dataset {
-		private final Map<String, Integer> paramIndices = new HashMap<>();
-		private final List<List<double[]>> values = new ArrayList<>();
-
-		public double get(double[] values, Parameter p) {
-			final Integer index = paramIndices.get(p.aprosName);
-			if (index == null) {
-				throw new RuntimeException("Missing parameter: " + p.aprosName);
-			}
-			final double result = values[paramIndices.get(p.aprosName)];
-			p.updateLimits(result);
-			return result;
-		}
-		
-		public Dataset(double intervalSec, String traceLocation) throws FileNotFoundException {
-			for (String filename : new File(traceLocation).list()) {
-				if (!filename.endsWith(".txt")) {
-					continue;
-				}
-				double timestampToRecord = intervalSec;
-
-				try (Scanner sc = new Scanner(new File(traceLocation
-						+ "/" + filename))) {
-					final List<double[]> valueLines = new ArrayList<>();
-					values.add(valueLines);
-
-					final int paramNum = Integer.valueOf(sc.nextLine()) - 1;
-					sc.nextLine();
-					if (paramIndices.isEmpty()) {
-						// read param names
-						for (int i = 0; i < paramNum; i++) {
-							final String[] tokens = sc.nextLine().split(" ");
-							final String name = tokens[1] + "#" + tokens[2];
-							paramIndices.put(name, paramIndices.size());
-						}
-					} else {
-						// skip param names
-						for (int i = 0; i < paramNum; i++) {
-							sc.nextLine();
-						}
-					}
-
-					while (sc.hasNextLine()) {
-						final String line = sc.nextLine();
-						final String[] tokens = line.split(" +");
-
-						double curTimestamp = Double.parseDouble(tokens[1]);
-						if (curTimestamp >= timestampToRecord) {
-							timestampToRecord += intervalSec;
-						} else {
-							continue;
-						}
-
-						final double[] valueLine = new double[paramNum];
-						for (int i = 0; i < paramNum; i++) {
-							valueLine[i] = Double.parseDouble(tokens[i + 2]);
-						}
-						valueLines.add(valueLine);
-					}
-				}
-			}
-		}
-	}
-
-	static class Parameter {
-		private final List<Double> cutoffs;
-		private String traceName;
-		private final String aprosName;
-		private double min = Double.POSITIVE_INFINITY;
-		private double max = Double.NEGATIVE_INFINITY;
-
-		public String aprosName() {
-			return aprosName;
-		}
-		
-		public static boolean unify(Parameter p, Parameter q) {
-			if (p.aprosName.equals(q.aprosName)) {
-				final Set<Double> allCutoffs = new TreeSet<>(p.cutoffs);
-				allCutoffs.addAll(q.cutoffs);
-				p.cutoffs.clear();
-				p.cutoffs.addAll(allCutoffs);
-				q.cutoffs.clear();
-				q.cutoffs.addAll(allCutoffs);
-				q.traceName = p.traceName;
-				return true;
-			}
-			return false;
-		}
-		
-		public Parameter(String aprosName, String name, Double... cutoffs) {
-			this.traceName = name;
-			this.aprosName = aprosName;
-			this.cutoffs = new ArrayList<>(Arrays.asList(cutoffs));
-			this.cutoffs.add(Double.POSITIVE_INFINITY);
-		}
-
-		public void updateLimits(double value) {
-			min = Math.min(min, value);
-			max = Math.max(max, value);
-		}
-
-		public Pair<Double, Double> limits() {
-			return Pair.of(min, max);
-		}
-
-		public String traceNamePrefix() {
-			return traceName;
-		}
-		
-		private String traceName(int index) {
-			return traceNamePrefix() + index;
-		}
-
-		// assuming that this is an output parameter
-		public List<String> traceNames() {
-			final List<String> res = new ArrayList<>();
-			for (int j = 0; j < cutoffs.size(); j++) {
-				res.add(traceName(j));
-			}
-			return res;
-		}
-
-		// assuming that this is an output parameter
-		public List<String> descriptions() {
-			final List<String> res = new ArrayList<>();
-			for (int j = 0; j < cutoffs.size(); j++) {
-				if (cutoffs.size() == 1) {
-					res.add("any " + traceName);
-				} else if (j == 0) {
-					res.add(traceName + " < " + cutoffs.get(j));
-				} else if (j == cutoffs.size() - 1) {
-					res.add(cutoffs.get(j - 1) + " ≤ " + traceName);
-				} else {
-					res.add(cutoffs.get(j - 1) + " ≤ " + traceName + " < "
-							+ cutoffs.get(j));
-				}
-			}
-			return res;
-		}
-
-		public int traceNameIndex(double value) {
-			for (int i = 0; i < cutoffs.size(); i++) {
-				if (value < cutoffs.get(i)) {
-					return i;
-				}
-			}
-			throw new AssertionError();
-		}
-
-		public String traceName(double value) {
-			return traceName(traceNameIndex(value));
-		}
-
-		// assuming that this is an output parameter
-		public List<String> actionspec() {
-			final List<String> res = new ArrayList<>();
-			final List<String> actions = new ArrayList<>();
-			for (int i = 0; i < cutoffs.size(); i++) {
-				actions.add("action(" + traceName(i) + ")");
-			}
-			res.add(String.join(" || ", actions));
-			for (int i = 0; i < actions.size(); i++) {
-				for (int j = i + 1; j < actions.size(); j++) {
-					res.add("!" + actions.get(i) + " || !" + actions.get(j));
-				}
-			}
-			return res;
-		}
-
-		// assuming that this is an input parameter
-		// smooth changes
-		public List<String> temporalProperties() {
-			final List<String> res = new ArrayList<>();
-			if (cutoffs.size() < 3) {
-				return res;
-			}
-			for (int i = 0; i < cutoffs.size(); i++) {
-				List<String> vicinity = new ArrayList<>();
-				vicinity.add(traceName(i));
-				if (i > 0) {
-					vicinity.add(traceName(i - 1));
-				}
-				if (i < cutoffs.size() - 1) {
-					vicinity.add(traceName(i + 1));
-				}
-				vicinity = vicinity.stream().map(s -> "action(" + s + ")")
-						.collect(Collectors.toList());
-				res.add("G(!" + vicinity.get(0) + " || X("
-						+ String.join(" || ", vicinity) + "))");
-			}
-			return res;
-		}
-		
-		@Override
-		public String toString() {
-			return "param " + aprosName + " (" + traceName + ") "
-					+ cutoffs.subList(0, cutoffs.size() - 1);
-		}
-	}
-
-	static class Configuration {
-		final double intervalSec;
-		final List<Parameter> outputParameters;
-		final List<Parameter> inputParameters;
-		final List<String> colorRules = new ArrayList<>();
-
-		public List<Parameter> allParameters() {
-			final List<Parameter> params = new ArrayList<>(outputParameters);
-			params.addAll(inputParameters);
-			return params;
-		}
-		
-		public Configuration(double intervalSec,
-				List<Parameter> outputParameters,
-				List<Parameter> inputParameters) {
-			this.intervalSec = intervalSec;
-			this.outputParameters = outputParameters;
-			this.inputParameters = inputParameters;
-		}
-
-		public void addColorRule(Parameter param, int index, String color) {
-			colorRules.add(param.traceName(index) + "->" + color);
-		}
-		
-		@Override
-		public String toString() {
-			return "out:\n  " +  
-					String.join("\n  ", outputParameters.stream()
-							.map(p -> p.toString()).collect(Collectors.toList()))
-					+ "\nin:\n  " + 
-					String.join("\n  ", inputParameters.stream()
-						.map(p -> p.toString()).collect(Collectors.toList()));
-		}
-	}
 
 	final static Parameter pressurizerWaterLevel = new Parameter(
 			"YP10B001#PR11_LIQ_LEVEL", "water_level", 2.3, 2.8);
@@ -711,7 +472,7 @@ public class AprosIOScenarioCreator {
 	}
 	
 	public static List<String> generateScenarios(Configuration conf, Dataset ds, Set<List<String>> allActionCombinations,
-			String gvOutput, String smvOutput, String binOutput, boolean addActionDescriptions, int sizeThreshold,
+			String gvOutput, String smvOutput, boolean addActionDescriptions, int sizeThreshold,
 			boolean allEventCombinations) throws FileNotFoundException {
 		// traces
 		final Set<String> allEvents = new TreeSet<>();
@@ -746,14 +507,14 @@ public class AprosIOScenarioCreator {
 					for (Parameter p : conf.inputParameters) {
 						final double value = ds.get(snapshot, p);
 						final int index = p.traceNameIndex(value);
-						inputCovered.add(Pair.of(p.aprosName, index));
+						inputCovered.add(Pair.of(p.aprosName(), index));
 						event.append(index);
 					}
 					
 					for (Parameter p : conf.outputParameters) {
 						final double value = ds.get(snapshot, p);
 						final int index = p.traceNameIndex(value);
-						outputCovered.add(Pair.of(p.aprosName, index));
+						outputCovered.add(Pair.of(p.aprosName(), index));
 						thisActions.add(p.traceName(value));
 					}
 					
@@ -836,8 +597,6 @@ public class AprosIOScenarioCreator {
 		builderArgs.add(gvOutput);
 		builderArgs.add("--nusmv");
 		builderArgs.add(smvOutput);
-		builderArgs.add("--serialize");
-		builderArgs.add(binOutput);
 
 		System.out.print("java -jar jars/plant-automaton-generator.jar ");
 		for (String arg : builderArgs) {
@@ -852,7 +611,7 @@ public class AprosIOScenarioCreator {
 		// parameter limits
 		System.out.println("Found parameter boundaries:");
 		final Function<Parameter, String> describe = p -> {
-			return p.traceName + " in " + p.limits() + ", bounds " + p.cutoffs.subList(0, p.cutoffs.size() - 1);
+			return p.traceName() + " in " + p.limits() + ", bounds " + p.cutoffs.subList(0, p.cutoffs.size() - 1);
 		};
 		for (Parameter p : conf.outputParameters) {
 			System.out.println(" output " + describe.apply(p));
@@ -871,7 +630,7 @@ public class AprosIOScenarioCreator {
 		final long time = System.currentTimeMillis();
 		final Dataset ds = new Dataset(CONFIGURATION.intervalSec, INPUT_DIRECTORY);
 		generateScenarios(CONFIGURATION, ds, new HashSet<>(),
-				"automaton.gv", "automaton.smv", "automaton.bin", true, 10, false);
+				"automaton.gv", "automaton.smv", true, 10, false);
 		System.out.println("Execution time: " + (System.currentTimeMillis() - time) + " ms");
 	}
 }

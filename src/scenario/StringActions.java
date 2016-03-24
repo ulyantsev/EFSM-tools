@@ -1,12 +1,11 @@
 package scenario;
 
-import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
-public class StringActions implements Serializable {
+public class StringActions {
 	private final String[] actions;
 
 	public StringActions(Collection<String> actions) {

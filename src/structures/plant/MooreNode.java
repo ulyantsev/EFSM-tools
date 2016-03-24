@@ -1,6 +1,5 @@
 package structures.plant;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -11,7 +10,7 @@ import java.util.stream.Collectors;
 
 import scenario.StringActions;
 
-public class MooreNode implements Serializable {
+public class MooreNode {
     private int number;
     private final StringActions actions;
     private final List<MooreTransition> transitions = new ArrayList<>(1);

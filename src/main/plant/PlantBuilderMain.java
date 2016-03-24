@@ -6,9 +6,7 @@ package main.plant;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -104,14 +102,17 @@ public class PlantBuilderMain {
 	@Option(name = "--nusmv", usage = "file for NuSMV output (optional)", metaVar = "<file>")
 	private String nusmvFilePath;
 	
-	@Option(name = "--serialize", usage = "serialized binary output", metaVar = "<file>")
-	private String serializeFilePath;
-	
 	@Option(name = "--fast", handler = BooleanOptionHandler.class,
 			usage = "use the fast but inprecise way of model generation "
 					+ "(size, negative scenarios and action specifications are ignored, "
 					+ "LTL formulae are partially ignored)")
 	private boolean fast;
+	
+	private Optional<NondetMooreAutomaton> resultAutomaton = null;
+	
+	public Optional<NondetMooreAutomaton> resultAutomaton() {
+		return resultAutomaton;
+	}
 	
 	private void launcher(String[] args) throws IOException {		
 		Locale.setDefault(Locale.US);
@@ -229,7 +230,6 @@ public class PlantBuilderMain {
 			
 			final NondetMooreVerifierPair verifier = new NondetMooreVerifierPair(logger, strFormulae, events, actions, varNumber);
 			final long finishTime = System.currentTimeMillis() + timeout * 1000;
-			final Optional<NondetMooreAutomaton> resultAutomaton;
 			
 			logger.info("Started building automaton.");
 			
@@ -308,12 +308,6 @@ public class PlantBuilderMain {
 						pw.println(resultAutomaton.get().toNuSMVString(events, actions));
 					} catch (FileNotFoundException e) {
 						logger.warning("File " + nusmvFilePath + " not found: " + e.getMessage());
-					}
-				}
-				if (serializeFilePath != null) {
-					try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(
-							new File(serializeFilePath)))) {
-						oos.writeObject(resultAutomaton.get());
 					}
 				}
 				

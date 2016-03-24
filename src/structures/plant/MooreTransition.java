@@ -1,8 +1,6 @@
 package structures.plant;
 
-import java.io.Serializable;
-
-public class MooreTransition implements Serializable {
+public class MooreTransition {
 	private final String event;
 	private final MooreNode src;
 	private final MooreNode dst;
