@@ -69,16 +69,15 @@ public class CompositionalBuilder {
 			1.0, Arrays.asList(pressureInLowerPlenum, liveSteamPressure),
 			Arrays.asList());
 	
-	final static List<Configuration> CONFS = Arrays.asList(CONF_PRESSURIZER, CONF_REAC, CONF_MISC);
+	final static List<Configuration> CONF_STRUCTURE = Arrays.asList(CONF_PRESSURIZER, CONF_REAC, CONF_MISC);
 
 	// Control diagram-based composition
-	/*final static List<Configuration> CONFS = Arrays.asList(
+	final static List<Configuration> CONF_NETWORK = Arrays.asList(
 			AprosIOScenarioCreator.CONFIGURATION_PROTECTION1,
 			AprosIOScenarioCreator.CONFIGURATION_PROTECTION5,
 			AprosIOScenarioCreator.CONFIGURATION_PROTECTION7);
-	 */
 	
-	/*final static Configuration CONF1 = new Configuration(
+	final static Configuration CONF1 = new Configuration(
 			1.0, Arrays.asList(
 			AprosIOScenarioCreator.pressureInLowerPlenum),
 			Arrays.asList(AprosIOScenarioCreator.tripSignal));
@@ -91,12 +90,17 @@ public class CompositionalBuilder {
 			1.0, Arrays.asList(AprosIOScenarioCreator.reacRelPower_entirePlant),
 			Arrays.asList(AprosIOScenarioCreator.prot5valve41open));
 	
-	final static List<Configuration> CONFS = Arrays.asList(CONF1, CONF2, CONF3);
-	*/
-	//final static List<Configuration> CONFS = Arrays.asList(CONF2, CONF1, CONF3);
-	//final static List<Configuration> CONFS = Arrays.asList(CONF1, CONF3, CONF2);
-	//final static List<Configuration> CONFS = Arrays.asList(CONF3, CONF2, CONF1);
-
+	final static List<Configuration> CONF_TEST = Arrays.asList(CONF1, CONF2, CONF3);
+	
+	/*******************************************/
+	
+	final static List<Configuration> CONFS = CONF_STRUCTURE;
+	final static int FAST_THRESHOLD = 0;
+	final static boolean ALL_EVENT_COMBINATIONS = true;
+	final static String TRACE_LOCATION = AprosIOScenarioCreator.INPUT_DIRECTORY;
+	
+	/*******************************************/
+	
 	static class StatePair {
 		final MooreNode first;
 		final MooreNode second;
@@ -434,7 +438,7 @@ public class CompositionalBuilder {
 		
 		// 2. Load the dataset
 		System.out.println("*** LOADING THE DATASET");
-		final Dataset ds = new Dataset(CONFS.get(0).intervalSec);
+		final Dataset ds = new Dataset(CONFS.get(0).intervalSec, TRACE_LOCATION);
 		
 		// 3. Build all the basic plants
 		final List<NondetMooreAutomaton> automata = new ArrayList<>();
@@ -447,7 +451,7 @@ public class CompositionalBuilder {
 			
 			final List<String> params = AprosIOScenarioCreator.generateScenarios(conf,
 					ds, new HashSet<>(), namePrefix + "gv", namePrefix + "smv",
-					namePrefix + "bin", false, 0);
+					namePrefix + "bin", false, FAST_THRESHOLD, ALL_EVENT_COMBINATIONS);
 			System.out.println();
 			PlantBuilderMain.main(params.toArray(new String[params.size()]));
 			NondetMooreAutomaton a = null;
@@ -477,7 +481,8 @@ public class CompositionalBuilder {
 			// Obtain the set of all possible composite actions
 			final Set<List<String>> allActionCombinations = new HashSet<>();
 			AprosIOScenarioCreator.generateScenarios(outputConfigurationComposition(conf1, conf2),
-					ds, allActionCombinations, "", "", "", false, 0);
+					ds, allActionCombinations, "", "", "", false, FAST_THRESHOLD,
+					ALL_EVENT_COMBINATIONS);
 			final Set<List<String>> allActionCombinationsSorted = new HashSet<>();
 			for (List<String> actionCombination : allActionCombinations) {
 				final List<String> copy = new ArrayList<>(actionCombination);

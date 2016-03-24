@@ -84,14 +84,14 @@ public class AprosIOScenarioCreator {
 			return result;
 		}
 		
-		public Dataset(double intervalSec) throws FileNotFoundException {
-			for (String filename : new File(INPUT_DIRECTORY).list()) {
+		public Dataset(double intervalSec, String traceLocation) throws FileNotFoundException {
+			for (String filename : new File(traceLocation).list()) {
 				if (!filename.endsWith(".txt")) {
 					continue;
 				}
 				double timestampToRecord = intervalSec;
 
-				try (Scanner sc = new Scanner(new File(INPUT_DIRECTORY
+				try (Scanner sc = new Scanner(new File(traceLocation
 						+ "/" + filename))) {
 					final List<double[]> valueLines = new ArrayList<>();
 					values.add(valueLines);
@@ -698,10 +698,29 @@ public class AprosIOScenarioCreator {
 	private final static String OUTPUT_ACTIONSPEC_FILENAME = "evaluation/plant-synthesis/vver.actionspec";
 	private final static String OUTPUT_LTL_FILENAME = "evaluation/plant-synthesis/vver.ltl";
 	
+	private static void allEventCombinations(char[] arr, int index, Set<String> result, List<Parameter> parameters) {
+		if (index == arr.length) {
+			result.add(String.valueOf(arr));
+		} else {
+			final int intervalNum = parameters.get(index - 1).cutoffs.size();
+			for (int i = 0; i < intervalNum; i++) {
+				arr[index] = Character.forDigit(i, 10);
+				allEventCombinations(arr, index + 1, result, parameters);
+			}
+		}
+	}
+	
 	public static List<String> generateScenarios(Configuration conf, Dataset ds, Set<List<String>> allActionCombinations,
-			String gvOutput, String smvOutput, String binOutput, boolean addActionDescriptions, int sizeThreshold) throws FileNotFoundException {
+			String gvOutput, String smvOutput, String binOutput, boolean addActionDescriptions, int sizeThreshold,
+			boolean allEventCombinations) throws FileNotFoundException {
 		// traces
 		final Set<String> allEvents = new TreeSet<>();
+		if (allEventCombinations) {
+			// complete event set
+			final char[] arr = new char[conf.inputParameters.size() + 1];
+			arr[0] = 'A';
+			allEventCombinations(arr, 1, allEvents, conf.inputParameters);
+		}
 		
 		// coverage
 		final Set<Pair<String, Integer>> inputCovered = new HashSet<>();
@@ -850,9 +869,9 @@ public class AprosIOScenarioCreator {
 	
 	public static void main(String[] args) throws FileNotFoundException {
 		final long time = System.currentTimeMillis();
-		final Dataset ds = new Dataset(CONFIGURATION.intervalSec);
+		final Dataset ds = new Dataset(CONFIGURATION.intervalSec, INPUT_DIRECTORY);
 		generateScenarios(CONFIGURATION, ds, new HashSet<>(),
-				"automaton.gv", "automaton.smv", "automaton.bin", true, 10);
+				"automaton.gv", "automaton.smv", "automaton.bin", true, 10, false);
 		System.out.println("Execution time: " + (System.currentTimeMillis() - time) + " ms");
 	}
 }
