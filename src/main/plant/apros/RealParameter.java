@@ -4,13 +4,27 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.apache.commons.lang3.tuple.Pair;
+
 public class RealParameter extends Parameter {
 	final List<Double> cutoffs;
+	private int lowerBound = Integer.MIN_VALUE + 1;
+	private int upperBound = Integer.MAX_VALUE;
 	
 	public RealParameter(String aprosName, String traceName, Double... cutoffs) {
+		this(aprosName, traceName, Pair.of(-Double.MAX_VALUE, Double.MAX_VALUE), cutoffs);
+	}
+	
+	public RealParameter(String aprosName, String traceName, Pair<Double, Double> bounds, Double... cutoffs) {
 		super(aprosName, traceName);
 		this.cutoffs = new ArrayList<>(Arrays.asList(cutoffs));
 		this.cutoffs.add(Double.POSITIVE_INFINITY);
+		if (bounds.getLeft() > lowerBound) {
+			lowerBound = (int) Math.round(Math.floor(bounds.getLeft()));
+		}
+		if (bounds.getRight() < upperBound) {
+			upperBound = (int) Math.round(Math.ceil(bounds.getRight()));
+		}
 	}
 	
 	@Override
@@ -44,6 +58,9 @@ public class RealParameter extends Parameter {
 	
 	@Override
 	public int traceNameIndex(double value) {
+		if (value < lowerBound || value > upperBound) {
+			throw new RuntimeException("Parameter bounds violated!");
+		}
 		for (int i = 0; i < cutoffs.size(); i++) {
 			if (value < cutoffs.get(i)) {
 				return i;
@@ -65,22 +82,27 @@ public class RealParameter extends Parameter {
 
 	@Override
 	public String nusmvType() {
-		return (Integer.MIN_VALUE + 1) + ".." + Integer.MAX_VALUE;
+		return lowerBound + ".." + upperBound;
 	}
 
 	@Override
 	public String nusmvCondition(String name, int index) {
-		return name + " in " + (index == 0 ? (Integer.MIN_VALUE + 1)
-				: (int) Math.round(Math.floor(cutoffs.get(index - 1))));
+		if (index == 0) {
+			return name + " <= " + intervalMax(index);
+		} else if (index == valueCount() - 1) {
+			return name + " >= " + intervalMin(index);
+		} else {
+			return name + " in " + nusmvInterval(index);
+		}
 	}
 
     private int intervalMin(int interval) {
-    	return interval == 0 ? (Integer.MIN_VALUE + 1)
+    	return interval == 0 ? lowerBound
 				: (int) Math.round(Math.floor(cutoffs.get(interval - 1)));
     }
     
     private int intervalMax(int interval) {
-    	return interval == cutoffs.size() - 1 ? Integer.MAX_VALUE
+    	return interval == cutoffs.size() - 1 ? upperBound
 				: (int) Math.round(Math.ceil(cutoffs.get(interval)));
     }
     

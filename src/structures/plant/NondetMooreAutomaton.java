@@ -227,9 +227,8 @@ public class NondetMooreAutomaton {
     	final StringBuilder sb = new StringBuilder();
     	sb.append("MODULE main()\n");
     	sb.append("VAR\n");
-    	sb.append("    input: 0.." + (events.size() - 1) + ";\n");
-    	sb.append("    plant: PLANT(input);\n");
     	if (!eventThresholds.isEmpty()) {
+        	sb.append("    plant: PLANT(DISCRETIZED_INPUT);\n");
     		for (Pair<String, Parameter> entry : eventThresholds) {
     			final String paramName = entry.getLeft();
     			final Parameter param = entry.getRight();
@@ -237,11 +236,14 @@ public class NondetMooreAutomaton {
     					+ ";\n");
     		}
     		sb.append("DEFINE\n");
-    		sb.append("    DISCRETIZED_UNPUT := case\n");
+    		sb.append("    DISCRETIZED_INPUT := case\n");
 			int[] arr = new int[eventThresholds.size()];
     		nusmvEventDescriptions(arr, 0, sb, eventThresholds, events);
     		sb.append("        TRUE: 0;\n");
     		sb.append("    esac;\n");
+    	} else {
+    		sb.append("    input: 0.." + (events.size() - 1) + ";\n");
+        	sb.append("    plant: PLANT(input);\n");
     	}
     	
     	sb.append("\n");
@@ -263,6 +265,7 @@ public class NondetMooreAutomaton {
         				destinations.add(t.dst().number());
         			}
         		}
+    			Collections.sort(destinations);
     			sb.append("        state = " + i + " & next(input) = "
     					+ event + ": { " +  destinations.toString().replace("[", "").replace("]", "") + " };\n");
     		}
@@ -283,14 +286,12 @@ public class NondetMooreAutomaton {
     		final String comment = actionDescriptions.containsKey(action) ? (" -- " + actionDescriptions.get(action)) : "";
     		sb.append("    output_" + action + " := " + condition + ";" + comment + "\n");
     	}
-    	for (int i = 0; i < events.size(); i++) {
-    		sb.append("    " + events.get(i) + " := " + i + ";\n");
-    	}
-    	
+
     	// output conversion to continuous values
     	for (Pair<String, Parameter> entry : actionThresholds) {
     		final String paramName = entry.getKey();
     		final Parameter param = entry.getValue();
+    		sb.append("\n");
     		sb.append("    CONT_" + paramName + " := case\n");
     		for (int i = 0; i < param.valueCount(); i++) {
     			sb.append("        output_" + paramName + i + ": "
@@ -298,6 +299,12 @@ public class NondetMooreAutomaton {
     		}
     		sb.append("        TRUE: " + param.defaultValue() + ";\n");
     		sb.append("    esac;\n");
+    	}
+
+		sb.append("\n");
+
+    	for (int i = 0; i < events.size(); i++) {
+    		sb.append("    " + events.get(i) + " := " + i + ";\n");
     	}
     	
     	return sb.toString();

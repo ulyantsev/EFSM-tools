@@ -25,25 +25,26 @@ import structures.plant.MooreTransition;
 import structures.plant.NondetMooreAutomaton;
 
 public class CompositionalBuilder {
+	final static Pair<Double, Double> POSITIVE = Pair.of(0.0, Double.POSITIVE_INFINITY);
+	
 	// Block-based composition
 	final static Parameter reacRelPower = new RealParameter(
-			"YC00B001#NR1_POWER", "reac_rel_power", 0.1, 0.5, 0.95, 1.0, 1.1);
+			"YC00B001#NR1_POWER", "reac_rel_power", POSITIVE, 0.1, 0.5, 0.95, 1.0, 1.1);
 	final static Parameter trip = new BoolParameter(
 			"YZ10U404FL01#FF_OUTPUT_VALUE", "trip");
 	final static Parameter rodPosition2 = new RealParameter(
-			"YC00B001_RA1#RA_RE_RODP2", "rod_position2_", 1.0);
+			"YC00B001_RA1#RA_RE_RODP2", "rod_position2_", Pair.of(0.0, 2.5), 1.0, 2.0);
 	final static Parameter rodPosition1 = new RealParameter(
-			"YC00B001_RA1#RA_RE_RODP", "rod_position1_", 1.0);
+			"YC00B001_RA1#RA_RE_RODP", "rod_position1_", Pair.of(0.0, 2.5), 1.0, 2.0);
 	
 	final static Configuration CONF_REAC = new Configuration(
 			1.0, Arrays.asList(reacRelPower),
 			Arrays.asList(trip, rodPosition1, rodPosition2));
 	
 	final static Parameter pressurizerWaterLevel = new RealParameter(
-			"YP10B001#PR11_LIQ_LEVEL", "pressurizer_water_level", 2.3, 2.8,
-			3.705);
+			"YP10B001#PR11_LIQ_LEVEL", "pressurizer_water_level", POSITIVE, 2.3, 2.8, 3.705);
 	final static Parameter pressurizerPressure = new RealParameter(
-			"YP10B001_NO8#NO6_PRESSURE", "pressurizer_pressure", 8e6, 9e6, 10e6, 11e6, 12e6, 13e6);
+			"YP10B001_NO8#NO6_PRESSURE", "pressurizer_pressure", POSITIVE, 8e6, 9e6, 10e6, 11e6, 12e6, 13e6);
 	final static Parameter valveE51_preslevco = new BoolParameter(
 			"TE51S002_VA1#V_POSITION_SET_VALUE", "valveE51");
 	final static Parameter valveK52_preslevco = new BoolParameter(
@@ -56,9 +57,9 @@ public class CompositionalBuilder {
 			Arrays.asList(valveE51_preslevco, valveK52_preslevco, valveK53_preslevco));
 
 	final static Parameter pressureInLowerPlenum = new RealParameter(
-			"YC00J005#TA11_PRESSURE", "pressure_lower_plenum", 3.5, 8.0, 10.0);
+			"YC00J005#TA11_PRESSURE", "pressure_lower_plenum", POSITIVE, 3.5, 8.0, 10.0);
 	final static Parameter liveSteamPressure = new RealParameter(
-			"RA00J010#PO11_PRESSURE", "pressure_live_steam", 3.5);
+			"RA00J010#PO11_PRESSURE", "pressure_live_steam", POSITIVE, 3.5);
 	
 	final static Configuration CONF_MISC = new Configuration(
 			1.0, Arrays.asList(pressureInLowerPlenum, liveSteamPressure),
