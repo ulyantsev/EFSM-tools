@@ -18,70 +18,24 @@ import java.util.function.Function;
 import org.apache.commons.lang3.tuple.Pair;
 
 public class TraceTranslator {
-	/*private final static List<Parameter> PARAMETERS_PROTECTION1 = Arrays.asList(
-			new Parameter(false, "water_level", 2.3, 2.8),
-			new Parameter(false, "pressure_lower_plenum", 3.5, 8.0, 10.0),
-			new Parameter(false, "pressure_live_steam", 3.5),
-			new Parameter(false, "voltage", 4800.0),
-			new Parameter(true, "tq11_speed_setpoint", 1.0),
-			new Parameter(true, "tj11_speed_setpoint", 1.0),
-			new Parameter(true, "th11_speed_setpoint", 1.0)
-	);
-	private final static List<Parameter> PARAMETERS_PROTECTION7 = Arrays.asList(
-			new Parameter(false, "level56x", 1.96),
-			new Parameter(false, "level54x", 1.96),
-			new Parameter(false, "level52x", 1.96),
-			new Parameter(false, "level15x", 1.96),
-			new Parameter(false, "level13x", 1.96),
-			new Parameter(false, "level11x", 1.96),
-			new Parameter(false, "voltage", 4800.0),
-			new Parameter(true, "pump_speed", 1.0),
-			new Parameter(true, "valve_open", 0.5),
-			new Parameter(true, "valve_close", 0.5),
-			new Parameter(true, "signal64x", 0.5),
-			new Parameter(true, "signal65x", 0.5)
-	);
-	private final static List<Parameter> PARAMETERS_PLANT = Arrays.asList(
-			new Parameter(false, "pressurizer_water_level", 2.3, 2.8, 3.705),
-			new Parameter(false, "pressure_lower_plenum", 3.5, 8.0, 10.0),
-			new Parameter(false, "pressure_live_steam", 3.0, 3.5),
-			new Parameter(false, "voltage", 4800.0),
-			new Parameter(false, "level56x", 1.8, 1.96),
-			new Parameter(false, "level54x", 1.8, 1.96),
-			new Parameter(false, "level52x", 1.8, 1.96),
-			new Parameter(false, "level15x", 1.8, 1.96),
-			new Parameter(false, "level13x", 1.8, 1.96),
-			new Parameter(false, "level11x", 1.8, 1.96),
-			new Parameter(false, "pressure56x"),
-			new Parameter(false, "pressure54x"),
-			new Parameter(false, "pressure52x"),
-			new Parameter(false, "pressure15x"),
-			new Parameter(false, "pressure13x"),
-			new Parameter(false, "pressure11x"),
-			new Parameter(false, "reac_rel_power", 0.1, 0.95, 1.0, 1.1),
-			new Parameter(false, "pressure_upper_plenum", 10.8, 13.4),
-			new Parameter(false, "temp_upper_plenum", 180.0, 317.0),
-			new Parameter(true, "trip", 1.0)
-	);*/
-	
 	final static String INPUT_DIRECTORY = "evaluation/plant-synthesis/vver-traces-entire-plant";
 
 	final static Parameter pressurizerWaterLevel = new RealParameter(
-			"YP10B001#PR11_LIQ_LEVEL", "water_level", 2.3, 2.8);
+			"YP10B001#PR11_LIQ_LEVEL", "water_level", Pair.of(0.0, 9.0), 2.3, 2.8);
 	final static Parameter pressureInLowerPlenum = new RealParameter(
-			"YC00J005#TA11_PRESSURE", "pressure_lower_plenum", 3.5, 8.0, 10.0);
+			"YC00J005#TA11_PRESSURE", "pressure_lower_plenum", Pair.of(0.0, 15.0), 0.8, 3.5, 8.0, 10.0);
 	final static Parameter liveSteamPressure = new RealParameter(
-			"RA00J010#PO11_PRESSURE", "pressure_live_steam", 3.5);
+			"RA00J010#PO11_PRESSURE", "pressure_live_steam", Pair.of(0.0, 5.0), 3.5);
 	final static Parameter busbarVoltage = new RealParameter(
-			"BU_N1#ES_NO_VOLTAGE_REAL", "voltage", 4800.0);
+			"BU_N1#ES_NO_VOLTAGE_REAL", "voltage", Pair.of(0.0, 7000.0), 4800.0);
 	final static Parameter pumpTQ11SpeedSetopint = new RealParameter(
-			"TQ11D001_R01#DC2_OUTPUT_VALUE", "tq11_speed_setpoint", 1.0);
+			"TQ11D001_R01#DC2_OUTPUT_VALUE", "tq11_speed_setpoint", Pair.of(0.0, 100.0), 1.0);
 	final static Parameter pumpTJ11SpeedSetopint = new RealParameter(
-			"TJ11D001_R01#DC2_OUTPUT_VALUE", "tj11_speed_setpoint", 1.0);
+			"TJ11D001_R01#DC2_OUTPUT_VALUE", "tj11_speed_setpoint", Pair.of(0.0, 100.0), 1.0);
 	final static Parameter pumpTH11SpeedSetpoint = new RealParameter(
-			"TH11D001_R01#DC2_OUTPUT_VALUE", "th11_speed_setpoint", 1.0);
+			"TH11D001_R01#DC2_OUTPUT_VALUE", "th11_speed_setpoint", Pair.of(0.0, 100.0), 1.0);
 
-	final static Configuration CONFIGURATION_PROTECTION1 = new Configuration(
+	final static Configuration CONF_PROTECTION1 = new Configuration(
 			1.0, Arrays.asList(
 			pressurizerWaterLevel, pressureInLowerPlenum,
 			liveSteamPressure, busbarVoltage), Arrays.asList(
@@ -89,19 +43,19 @@ public class TraceTranslator {
 			pumpTH11SpeedSetpoint));
 	
 	final static Parameter steamGeneratorLevel56 = new RealParameter(
-			"YB56W001#SG12_LIQ_LEVEL", "level56x", 1.96);
+			"YB56W001#SG12_LIQ_LEVEL", "level56x", Pair.of(0.0, 3.0), 1.96);
 	final static Parameter steamGeneratorLevel54 = new RealParameter(
-			"YB54W001#SG12_LIQ_LEVEL", "level54x", 1.96);
+			"YB54W001#SG12_LIQ_LEVEL", "level54x", Pair.of(0.0, 3.0), 1.96);
 	final static Parameter steamGeneratorLevel52 = new RealParameter(
-			"YB52W001#SG12_LIQ_LEVEL", "level52x", 1.96);
+			"YB52W001#SG12_LIQ_LEVEL", "level52x", Pair.of(0.0, 3.0), 1.96);
 	final static Parameter steamGeneratorLevel15 = new RealParameter(
-			"YB15W001#SG12_LIQ_LEVEL", "level15x", 1.96);
+			"YB15W001#SG12_LIQ_LEVEL", "level15x", Pair.of(0.0, 3.0), 1.96);
 	final static Parameter steamGeneratorLevel13 = new RealParameter(
-			"YB13W001#SG12_LIQ_LEVEL", "level13x", 1.96);
+			"YB13W001#SG12_LIQ_LEVEL", "level13x", Pair.of(0.0, 3.0), 1.96);
 	final static Parameter steamGeneratorLevel11 = new RealParameter(
-			"YB11W001#SG12_LIQ_LEVEL", "level11x", 1.96);
+			"YB11W001#SG12_LIQ_LEVEL", "level11x", Pair.of(0.0, 3.0), 1.96);
 	final static Parameter prot7pumpSpeed = new RealParameter(
-			"RL92D001_PU1#P_SPEED_OLD", "prot7_pump_speed", 1.0);
+			"RL92D001_PU1#P_SPEED_OLD", "prot7_pump_speed", Pair.of(0.0, 100.0), 1.0);
 	final static Parameter prot7ValveOpen = new BoolParameter(
 			"RL92S005_VA1#VO_OPEN", "prot7_valve_open");
 	final static Parameter prot7ValveClose = new BoolParameter(
@@ -111,7 +65,7 @@ public class TraceTranslator {
 	final static Parameter prot7toProt5signal65 = new BoolParameter(
 			"YZU001XL65#BINARY_VALUE", "prot7_signal65_");
 
-	final static Configuration CONFIGURATION_PROTECTION7 = new Configuration(
+	final static Configuration CONF_PROTECTION7 = new Configuration(
 			1.0,
 			Arrays.asList(steamGeneratorLevel56, steamGeneratorLevel54,
 					steamGeneratorLevel52, steamGeneratorLevel15,
@@ -120,17 +74,17 @@ public class TraceTranslator {
 					prot7toProt5signal64, prot7toProt5signal65));
 
 	final static Parameter steamGeneratorPressure56_prot5 = new RealParameter(
-			"YB56W001#SG12_PRESSURE_3_4", "pressure56x", 4.0); // random cutoff
+			"YB56W001#SG12_PRESSURE_3_4", "pressure56x", Pair.of(3.0, 6.0), 4.0); // random cutoff
 	final static Parameter steamGeneratorPressure54_prot5 = new RealParameter(
-			"YB54W001#SG12_PRESSURE_3_4", "pressure54x", 4.0); // random cutoff
+			"YB54W001#SG12_PRESSURE_3_4", "pressure54x", Pair.of(3.0, 6.0), 4.0); // random cutoff
 	final static Parameter steamGeneratorPressure52_prot5 = new RealParameter(
-			"YB52W001#SG12_PRESSURE_3_4", "pressure52x", 4.0); // random cutoff
+			"YB52W001#SG12_PRESSURE_3_4", "pressure52x", Pair.of(3.0, 6.0), 4.0); // random cutoff
 	final static Parameter steamGeneratorPressure15_prot5 = new RealParameter(
-			"YB15W001#SG12_PRESSURE_3_4", "pressure15x", 4.0); // random cutoff
+			"YB15W001#SG12_PRESSURE_3_4", "pressure15x", Pair.of(3.0, 6.0), 4.0); // random cutoff
 	final static Parameter steamGeneratorPressure13_prot5 = new RealParameter(
-			"YB13W001#SG12_PRESSURE_3_4", "pressure13x", 4.0); // random cutoff
+			"YB13W001#SG12_PRESSURE_3_4", "pressure13x", Pair.of(3.0, 6.0), 4.0); // random cutoff
 	final static Parameter steamGeneratorPressure11_prot5 = new RealParameter(
-			"YB11W001#SG12_PRESSURE_3_4", "pressure11x", 4.0); // random cutoff
+			"YB11W001#SG12_PRESSURE_3_4", "pressure11x", Pair.of(3.0, 6.0), 4.0); // random cutoff
 	
 	final static Parameter prot5valve41open = new BoolParameter(
 			"RL41S001_VA1#VO_OPEN", "valve41open");
@@ -157,7 +111,7 @@ public class TraceTranslator {
 	final static Parameter prot5valve46close = new BoolParameter(
 			"RL46S001_VA1#VO_CLOSE", "valve46close");
 	
-	final static Configuration CONFIGURATION_PROTECTION5 = new Configuration(
+	final static Configuration CONF_PROTECTION5 = new Configuration(
 			1.0, Arrays.asList(
 			steamGeneratorPressure56_prot5,
 			steamGeneratorPressure54_prot5,
@@ -175,26 +129,26 @@ public class TraceTranslator {
 			prot5valve46open, prot5valve46close));
 
 	final static Parameter pressurizerWaterLevel_entirePlant = new RealParameter(
-			"YP10B001#PR11_LIQ_LEVEL", "pressurizer_water_level", 2.3, 2.8,
+			"YP10B001#PR11_LIQ_LEVEL", "pressurizer_water_level", Pair.of(0.0, 9.0), 2.3, 2.8,
 			3.705);
 	final static Parameter pressureInLowerPlenum_entirePlant = new RealParameter(
 			"YC00J005#TA11_PRESSURE", "pressure_lower_plenum", 3.5, 8.0, 10.0);
 	final static Parameter liveSteamPressure_entirePlant = new RealParameter(
-			"RA00J010#PO11_PRESSURE", "pressure_live_steam", 3.0, 3.5);
+			"RA00J010#PO11_PRESSURE", "pressure_live_steam", Pair.of(0.0, 5.0), 3.0, 3.5);
 	final static Parameter busbarVoltage_entirePlant = new RealParameter(
-			"BU_N1#ES_NO_VOLTAGE_REAL", "voltage", 4800.0);
+			"BU_N1#ES_NO_VOLTAGE_REAL", "voltage", Pair.of(0.0, 7000.0), 4800.0);
 	final static Parameter steamGeneratorLevel56_entirePlant = new RealParameter(
-			"YB56W001#SG12_LIQ_LEVEL", "level56x", 1.8, 1.96);
+			"YB56W001#SG12_LIQ_LEVEL", "level56x", Pair.of(0.0, 3.0), 1.8, 1.96);
 	final static Parameter steamGeneratorLevel54_entirePlant = new RealParameter(
-			"YB54W001#SG12_LIQ_LEVEL", "level54x", 1.8, 1.96);
+			"YB54W001#SG12_LIQ_LEVEL", "level54x", Pair.of(0.0, 3.0), 1.8, 1.96);
 	final static Parameter steamGeneratorLevel52_entirePlant = new RealParameter(
-			"YB52W001#SG12_LIQ_LEVEL", "level52x", 1.8, 1.96);
+			"YB52W001#SG12_LIQ_LEVEL", "level52x", Pair.of(0.0, 3.0), 1.8, 1.96);
 	final static Parameter steamGeneratorLevel15_entirePlant = new RealParameter(
-			"YB15W001#SG12_LIQ_LEVEL", "level15x", 1.8, 1.96);
+			"YB15W001#SG12_LIQ_LEVEL", "level15x", Pair.of(0.0, 3.0), 1.8, 1.96);
 	final static Parameter steamGeneratorLevel13_entirePlant = new RealParameter(
-			"YB13W001#SG12_LIQ_LEVEL", "level13x", 1.8, 1.96);
+			"YB13W001#SG12_LIQ_LEVEL", "level13x", Pair.of(0.0, 3.0), 1.8, 1.96);
 	final static Parameter steamGeneratorLevel11_entirePlant = new RealParameter(
-			"YB11W001#SG12_LIQ_LEVEL", "level11x", 1.8, 1.96);
+			"YB11W001#SG12_LIQ_LEVEL", "level11x", Pair.of(0.0, 3.0), 1.8, 1.96);
 	final static Parameter steamGeneratorPressure56_entirePlant = new RealParameter(
 			"YB56W001#SG12_PRESSURE_3_4", "pressure56x");
 	final static Parameter steamGeneratorPressure54_entirePlant = new RealParameter(
@@ -208,11 +162,11 @@ public class TraceTranslator {
 	final static Parameter steamGeneratorPressure11_entirePlant = new RealParameter(
 			"YB11W001#SG12_PRESSURE_3_4", "pressure11x");
 	final static Parameter reacRelPower_entirePlant = new RealParameter(
-			"YC00B001#NR1_POWER", "reac_rel_power", 0.1, 0.95, 1.0, 1.1);
+			"YC00B001#NR1_POWER", "reac_rel_power", Pair.of(0.0, 2.0), 0.1, 0.95, 1.0, 1.1);
 	final static Parameter pressureUpperPlenum_entirePlant = new RealParameter(
-			"YC00J030#TA11_PRESSURE", "pressure_upper_plenum", 10.8, 13.4);
+			"YC00J030#TA11_PRESSURE", "pressure_upper_plenum", Pair.of(0.0, 20.0), 10.8, 13.4);
 	final static Parameter tempUpperPlenum_entirePlant = new RealParameter(
-			"YC00J030#TA11_TEMPERATURE", "temp_upper_plenum", 180.0, 317.0);
+			"YC00J030#TA11_TEMPERATURE", "temp_upper_plenum", Pair.of(0.0, 500.0), 180.0, 317.0);
 	final static Parameter tripSignal = new BoolParameter(
 			"YZ10U404FL01#FF_OUTPUT_VALUE", "trip");
 
@@ -265,7 +219,7 @@ public class TraceTranslator {
 	final static Parameter prot6valveL76close = new BoolParameter(
 			"RL76S003_VA1#VO_CLOSE", "valveL76close");
 	
-	final static Configuration CONFIGURATION_PROTECTION6 = new Configuration(
+	final static Configuration CONF_PROTECTION6 = new Configuration(
 				1.0, Arrays.asList(
 				liveSteamPressure_entirePlant), Arrays.asList(
 				prot6valveA11open, prot6valveA11close,
@@ -294,33 +248,52 @@ public class TraceTranslator {
 	final static Parameter coolantPumpStopped56 = new BoolParameter(
 			"SK00C010XG56#BINARY_VALUE", "coolantPumpStopped56");
 	final static Parameter rodPosition = new RealParameter(
-			"YC00B001_RA1#RA_RE_RODP2", "rodPosition", 1.0, 2.0);
+			"YC00B001_RA1#RA_RE_RODP2", "rodPosition", Pair.of(0.0, 2.5), 1.0, 2.0);
 
-	final static Configuration CONFIGURATION_REA_TUR_TRIP = new Configuration(
+	final static Parameter steamGeneratorLevel56_reaTurTrip = new RealParameter(
+			"YB56W001#SG12_LIQ_LEVEL", "level56x", Pair.of(0.0, 3.0), 1.8);
+	final static Parameter steamGeneratorLevel54_reaTurTrip = new RealParameter(
+			"YB54W001#SG12_LIQ_LEVEL", "level54x", Pair.of(0.0, 3.0), 1.8);
+	final static Parameter steamGeneratorLevel52_reaTurTrip = new RealParameter(
+			"YB52W001#SG12_LIQ_LEVEL", "level52x", Pair.of(0.0, 3.0), 1.8);
+	final static Parameter steamGeneratorLevel15_reaTurTrip = new RealParameter(
+			"YB15W001#SG12_LIQ_LEVEL", "level15x", Pair.of(0.0, 3.0), 1.8);
+	final static Parameter steamGeneratorLevel13_reaTurTrip = new RealParameter(
+			"YB13W001#SG12_LIQ_LEVEL", "level13x", Pair.of(0.0, 3.0), 1.8);
+	final static Parameter steamGeneratorLevel11_reaTurTrip = new RealParameter(
+			"YB11W001#SG12_LIQ_LEVEL", "level11x", Pair.of(0.0, 3.0), 1.8);
+	final static Parameter pressurizerWaterLevel_reaTurTrip = new RealParameter(
+			"YP10B001#PR11_LIQ_LEVEL", "pressurizer_water_level", Pair.of(0.0, 9.0), 3.705);
+	final static Parameter reacRelPower_reaTurTrip = new RealParameter(
+			"YC00B001#NR1_POWER", "reac_rel_power", Pair.of(0.0, 2.0), 1.1);
+	final static Parameter liveSteamPressure_reaTurTrip = new RealParameter(
+			"RA00J010#PO11_PRESSURE", "pressure_live_steam", Pair.of(0.0, 5.0), 3.0);
+	
+	final static Configuration CONF_REA_TUR_TRIP = new Configuration(
 			1.0, Arrays.asList(
-				liveSteamPressure_entirePlant,
-				reacRelPower_entirePlant,
+				liveSteamPressure_reaTurTrip,
+				reacRelPower_reaTurTrip,
 				tempUpperPlenum_entirePlant,
 				pressureUpperPlenum_entirePlant,
-				pressurizerWaterLevel_entirePlant,
-				steamGeneratorLevel56_entirePlant,
-				steamGeneratorLevel54_entirePlant,
-				steamGeneratorLevel52_entirePlant,
-				steamGeneratorLevel15_entirePlant,
-				steamGeneratorLevel13_entirePlant,
-				steamGeneratorLevel11_entirePlant,
+				pressurizerWaterLevel_reaTurTrip,
+				steamGeneratorLevel56_reaTurTrip,
+				steamGeneratorLevel54_reaTurTrip,
+				steamGeneratorLevel52_reaTurTrip,
+				steamGeneratorLevel15_reaTurTrip,
+				steamGeneratorLevel13_reaTurTrip,
+				steamGeneratorLevel11_reaTurTrip,
 				coolantPumpStopped51,
 				coolantPumpStopped52,
 				coolantPumpStopped53,
 				coolantPumpStopped54,
 				coolantPumpStopped55,
 				coolantPumpStopped56
-			), Arrays.asList(rodPosition));
+			), Arrays.asList(rodPosition, tripSignal));
 	// there is also YZU001XL48#BINARY_VALUE from protection6,
 	// but it just states that liveSteamPressure < 3
 
 
-	final static Configuration CONFIGURATION_PLANT = new Configuration(
+	final static Configuration CONF_PLANT = new Configuration(
 			1.0,
 			Arrays.asList(
 					pressurizerWaterLevel_entirePlant,
@@ -346,25 +319,25 @@ public class TraceTranslator {
 	
 	static {
 		// some of the trip conditions
-		CONFIGURATION_PLANT.addColorRule(liveSteamPressure_entirePlant, 0, "yellow");
-		CONFIGURATION_PLANT.addColorRule(reacRelPower_entirePlant, 4, "yellow");
-		CONFIGURATION_PLANT.addColorRule(tempUpperPlenum_entirePlant, 2, "yellow");
-		CONFIGURATION_PLANT.addColorRule(pressureUpperPlenum_entirePlant, 2, "yellow");
+		CONF_PLANT.addColorRule(liveSteamPressure_entirePlant, 0, "yellow");
+		CONF_PLANT.addColorRule(reacRelPower_entirePlant, 4, "yellow");
+		CONF_PLANT.addColorRule(tempUpperPlenum_entirePlant, 2, "yellow");
+		CONF_PLANT.addColorRule(pressureUpperPlenum_entirePlant, 2, "yellow");
 
 		// reactor relative power
-		CONFIGURATION_PLANT.addColorRule(reacRelPower_entirePlant, 0, "blue");
-		CONFIGURATION_PLANT.addColorRule(reacRelPower_entirePlant, 3, "red");
-		CONFIGURATION_PLANT.addColorRule(reacRelPower_entirePlant, 4, "red");
+		CONF_PLANT.addColorRule(reacRelPower_entirePlant, 0, "blue");
+		CONF_PLANT.addColorRule(reacRelPower_entirePlant, 3, "red");
+		CONF_PLANT.addColorRule(reacRelPower_entirePlant, 4, "red");
 	}
 	
 	final static Parameter binSigFromReaPowLimit_reacco = new BoolParameter(
 			"YK00_ROMXL01#BINARY_VALUE", "bin_sig_rea_pow_limit");
 	final static Parameter anSigFromReaPowLimit_reacco = new RealParameter(
-			"YK00_ROMXJ35#ANALOG_VALUE", "an_sig_rea_pow_limit", 1.0, 2.0);
+			"YK00_ROMXJ35#ANALOG_VALUE", "an_sig_rea_pow_limit", Pair.of(0.0, 2.5), 1.0, 2.0);
 	final static Parameter rodPosition_reacco = new RealParameter(
-			"YC00B001_RA1#RA_RE_RODP", "rod_position", 1.0, 2.0);
+			"YC00B001_RA1#RA_RE_RODP", "rod_position", Pair.of(0.0, 2.5), 1.0, 2.0);
 	
-	final static Configuration CONFIGURATION_REACTOR_CO = new Configuration(
+	final static Configuration CONF_REACTOR_CO = new Configuration(
 			1.0,
 			Arrays.asList(
 					binSigFromReaPowLimit_reacco,
@@ -374,29 +347,29 @@ public class TraceTranslator {
 			), Arrays.asList(rodPosition_reacco));
 	
 	final static Parameter YA11T001_preslevco = new RealParameter(
-			"YA11T001#ME_OUTPUT_VALUE", "YA11T001", 270.0);
+			"YA11T001#ME_OUTPUT_VALUE", "YA11T001", Pair.of(0.0, 350.0), 270.0);
 	final static Parameter YA11T002_preslevco = new RealParameter(
-			"YA11T002#ME_OUTPUT_VALUE", "YA11T002", 270.0);
+			"YA11T002#ME_OUTPUT_VALUE", "YA11T002", Pair.of(0.0, 350.0), 270.0);
 	final static Parameter YA12T001_preslevco = new RealParameter(
-			"YA12T001#ME_OUTPUT_VALUE", "YA12T001", 270.0);
+			"YA12T001#ME_OUTPUT_VALUE", "YA12T001", Pair.of(0.0, 350.0), 270.0);
 	final static Parameter YA12T002_preslevco = new RealParameter(
-			"YA12T002#ME_OUTPUT_VALUE", "YA12T002", 270.0);
+			"YA12T002#ME_OUTPUT_VALUE", "YA12T002", Pair.of(0.0, 350.0), 270.0);
 	final static Parameter YA13T001_preslevco = new RealParameter(
-			"YA13T001#ME_OUTPUT_VALUE", "YA13T001", 270.0);
+			"YA13T001#ME_OUTPUT_VALUE", "YA13T001", Pair.of(0.0, 350.0), 270.0);
 	final static Parameter YA13T002_preslevco = new RealParameter(
-			"YA13T002#ME_OUTPUT_VALUE", "YA13T002", 270.0);
+			"YA13T002#ME_OUTPUT_VALUE", "YA13T002", Pair.of(0.0, 350.0), 270.0);
 	final static Parameter YA14T001_preslevco = new RealParameter(
-			"YA14T001#ME_OUTPUT_VALUE", "YA14T001", 270.0);
+			"YA14T001#ME_OUTPUT_VALUE", "YA14T001", Pair.of(0.0, 350.0), 270.0);
 	final static Parameter YA14T002_preslevco = new RealParameter(
-			"YA14T002#ME_OUTPUT_VALUE", "YA14T002", 270.0);
+			"YA14T002#ME_OUTPUT_VALUE", "YA14T002", Pair.of(0.0, 350.0), 270.0);
 	final static Parameter YA15T001_preslevco = new RealParameter(
-			"YA15T001#ME_OUTPUT_VALUE", "YA15T001", 270.0);
+			"YA15T001#ME_OUTPUT_VALUE", "YA15T001", Pair.of(0.0, 350.0), 270.0);
 	final static Parameter YA15T002_preslevco = new RealParameter(
-			"YA15T002#ME_OUTPUT_VALUE", "YA15T002", 270.0);
+			"YA15T002#ME_OUTPUT_VALUE", "YA15T002", Pair.of(0.0, 350.0), 270.0);
 	final static Parameter YA16T001_preslevco = new RealParameter(
-			"YA16T001#ME_OUTPUT_VALUE", "YA16T001", 270.0);
+			"YA16T001#ME_OUTPUT_VALUE", "YA16T001", Pair.of(0.0, 350.0), 270.0);
 	final static Parameter YA16T002_preslevco = new RealParameter(
-			"YA16T002#ME_OUTPUT_VALUE", "YA16T002", 270.0);
+			"YA16T002#ME_OUTPUT_VALUE", "YA16T002", Pair.of(0.0, 350.0), 270.0);
 	
 	final static Parameter valveE51_preslevco = new BoolParameter(
 			"TE51S002_VA1#V_POSITION_SET_VALUE", "valveE51");
@@ -405,7 +378,7 @@ public class TraceTranslator {
 	final static Parameter valveK53_preslevco = new BoolParameter(
 			"TK53S002_VA1#V_POSITION_SET_VALUE", "valveK53");
 	
-	final static Configuration CONFIGURATION_PRES_LEV_CONT = new Configuration(
+	final static Configuration CONF_PRES_LEV_CONT = new Configuration(
 			1.0,
 			Arrays.asList(
 				YA11T001_preslevco, YA11T002_preslevco,
@@ -418,9 +391,9 @@ public class TraceTranslator {
 					valveK52_preslevco, valveK53_preslevco));
 	
 	final static Parameter pressurizerPressure_prespresco = new RealParameter(
-			"YP10B001_NO8#NO6_PRESSURE", "pressurizer_pressure", 8e6, 9e6, 10e6, 11e6, 12e6, 13e6);
+			"YP10B001_NO8#NO6_PRESSURE", "pressurizer_pressure", Pair.of(0.0, 20e6), 8e6, 9e6, 10e6, 11e6, 12e6, 13e6);
 	final static Parameter power_prespresco = new RealParameter(
-			"YP10B001_HS1#HS_POWER", "power", 0.5);
+			"YP10B001_HS1#HS_POWER", "power",  Pair.of(0.0, 1.0), 0.5);
 	final static Parameter valve1311_prespresco = new BoolParameter(
 			"YP13S011_VA1#V_POSITION_SET_VALUE", "valve1311");
 	final static Parameter valve1411_prespresco = new BoolParameter(
@@ -438,7 +411,7 @@ public class TraceTranslator {
 	final static Parameter valve1402_prespresco = new BoolParameter(
 			"YP14S002_VA1#V_POSITION_SET_VALUE", "valve1402");
 	
-	final static Configuration CONFIGURATION_PRES_PRES_CONT = new Configuration(
+	final static Configuration CONF_PRES_PRES_CONT = new Configuration(
 			1.0,
 			Arrays.asList(
 					pressurizerWaterLevel_entirePlant,
@@ -453,7 +426,7 @@ public class TraceTranslator {
 					valve1302_prespresco,
 					valve1402_prespresco));
 
-	private final static Configuration CONFIGURATION = CONFIGURATION_PROTECTION1;
+	private final static Configuration CONFIGURATION = CONF_PROTECTION1;
 
 	private final static String OUTPUT_TRACE_FILENAME = "evaluation/plant-synthesis/vver.sc";
 	private final static String OUTPUT_ACTIONSPEC_FILENAME = "evaluation/plant-synthesis/vver.actionspec";

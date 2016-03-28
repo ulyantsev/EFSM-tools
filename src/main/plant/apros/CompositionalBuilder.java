@@ -69,9 +69,9 @@ public class CompositionalBuilder {
 
 	// Control diagram-based composition
 	final static List<Configuration> CONF_NETWORK = Arrays.asList(
-			TraceTranslator.CONFIGURATION_PROTECTION1,
-			TraceTranslator.CONFIGURATION_PROTECTION5,
-			TraceTranslator.CONFIGURATION_PROTECTION7);
+			TraceTranslator.CONF_PROTECTION1,
+			TraceTranslator.CONF_PROTECTION5,
+			TraceTranslator.CONF_PROTECTION7);
 	
 	final static Configuration CONF1 = new Configuration(
 			1.0, Arrays.asList(
@@ -91,7 +91,8 @@ public class CompositionalBuilder {
 	
 	/*******************************************/
 	
-	final static List<Configuration> CONFS = CONF_STRUCTURE;
+	//final static List<Configuration> CONFS = CONF_STRUCTURE;
+	final static List<Configuration> CONFS = Arrays.asList(TraceTranslator.CONF_PRES_PRES_CONT);
 	final static int FAST_THRESHOLD = 0;
 	final static boolean ALL_EVENT_COMBINATIONS = false;
 	final static String TRACE_LOCATION = TraceTranslator.INPUT_DIRECTORY;
