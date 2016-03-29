@@ -39,12 +39,12 @@ public class CompositionalBuilder {
 	
 	final static Configuration CONF_REAC = new Configuration(
 			1.0, Arrays.asList(reacRelPower),
-			Arrays.asList(trip, rodPosition1, rodPosition2));
+			Arrays.asList(trip/*, rodPosition1, rodPosition2*/));
 	
 	final static Parameter pressurizerWaterLevel = new RealParameter(
-			"YP10B001#PR11_LIQ_LEVEL", "pressurizer_water_level", POSITIVE, 2.3, 2.8, 3.705);
+			"YP10B001#PR11_LIQ_LEVEL", "pressurizer_water_level", POSITIVE, 2.8, 3.705);
 	final static Parameter pressurizerPressure = new RealParameter(
-			"YP10B001_NO8#NO6_PRESSURE", "pressurizer_pressure", POSITIVE, 8e6, 9e6, 10e6, 11e6, 12e6, 13e6);
+			"YP10B001_NO8#NO6_PRESSURE", "pressurizer_pressure", POSITIVE, 9e6, 11e6, 13e6);
 	final static Parameter valveE51_preslevco = new BoolParameter(
 			"TE51S002_VA1#V_POSITION_SET_VALUE", "valveE51");
 	final static Parameter valveK52_preslevco = new BoolParameter(
@@ -56,6 +56,18 @@ public class CompositionalBuilder {
 			1.0, Arrays.asList(pressurizerWaterLevel, pressurizerPressure),
 			Arrays.asList(valveE51_preslevco, valveK52_preslevco, valveK53_preslevco));
 
+	static {
+		CONF_PRESSURIZER.addColorRule(pressurizerPressure, 0, "green");
+		CONF_PRESSURIZER.addColorRule(pressurizerPressure, 1, "yellow");
+		CONF_PRESSURIZER.addColorRule(pressurizerPressure, 2, "orange");
+		CONF_PRESSURIZER.addColorRule(pressurizerPressure, 3, "red");
+		CONF_REAC.addColorRule(reacRelPower, 0, "#0000ff");
+		CONF_REAC.addColorRule(reacRelPower, 1, "#4444ff");
+		CONF_REAC.addColorRule(reacRelPower, 2, "#9999ff");
+		CONF_REAC.addColorRule(reacRelPower, 3, "green");
+		CONF_REAC.addColorRule(reacRelPower, 4, "red");
+	}
+	
 	final static Parameter pressureInLowerPlenum = new RealParameter(
 			"YC00J005#TA11_PRESSURE", "pressure_lower_plenum", POSITIVE, 3.5, 8.0, 10.0);
 	final static Parameter liveSteamPressure = new RealParameter(
@@ -91,8 +103,8 @@ public class CompositionalBuilder {
 	
 	/*******************************************/
 	
-	//final static List<Configuration> CONFS = CONF_STRUCTURE;
-	final static List<Configuration> CONFS = Arrays.asList(TraceTranslator.CONF_PRES_PRES_CONT);
+	final static List<Configuration> CONFS = CONF_STRUCTURE;
+	//final static List<Configuration> CONFS = Arrays.asList(TraceTranslator.CONF_PLANT);
 	final static int FAST_THRESHOLD = 0;
 	final static boolean ALL_EVENT_COMBINATIONS = false;
 	final static String TRACE_LOCATION = TraceTranslator.INPUT_DIRECTORY;
@@ -431,7 +443,7 @@ public class CompositionalBuilder {
 				return;
 			}
 			final NondetMooreAutomaton a = builder.resultAutomaton().get();
-			dumpAutomaton(a, conf, namePrefix);
+			dumpAutomaton(a, conf, namePrefix, builder.colorRuleMap());
 			automata.add(a);
 			System.out.println();
 		}
@@ -464,7 +476,7 @@ public class CompositionalBuilder {
 			lastAuto = compose(lastAuto, automata.get(i), match,
 					allActionCombinationsSorted);
 			lastConf = composeConfigurations(conf1, conf2, match);
-			dumpAutomaton(lastAuto, lastConf, namePrefix);
+			dumpAutomaton(lastAuto, lastConf, namePrefix, Collections.emptyMap());
 			System.out.println(lastConf);
 			System.out.println();
 		}
@@ -480,10 +492,10 @@ public class CompositionalBuilder {
 	}
 	
 	private static void dumpAutomaton(NondetMooreAutomaton a, Configuration conf,
-			String namePrefix) throws FileNotFoundException {
+			String namePrefix, Map<String, String> colorRules) throws FileNotFoundException {
 		conf.annotate(a);
 		try (PrintWriter pw = new PrintWriter(namePrefix + "gv")) {
-			pw.println(a);
+			pw.println(a.toString(colorRules));
 		}
 		try (PrintWriter pw = new PrintWriter(namePrefix + "smv")) {
 			pw.println(a.toNuSMVString(eventsFromAutomaton(a), conf.actions()));

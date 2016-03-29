@@ -109,9 +109,14 @@ public class PlantBuilderMain {
 	private boolean fast;
 	
 	private Optional<NondetMooreAutomaton> resultAutomaton = null;
+	private final Map<String, String> colorRuleMap = new LinkedHashMap<>();
 	
 	public Optional<NondetMooreAutomaton> resultAutomaton() {
 		return resultAutomaton;
+	}
+	
+	public Map<String, String> colorRuleMap() {
+		return colorRuleMap;
 	}
 	
 	private void launcher(String[] args) throws IOException {		
@@ -282,7 +287,6 @@ public class PlantBuilderMain {
 					}
 				}
 				
-				final Map<String, String> colorRuleMap = new LinkedHashMap<>();
 				if (colorRules != null) {
 					final String[] tokens = colorRules.split(",");
 					// linked, since the order is important

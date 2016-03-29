@@ -132,7 +132,7 @@ public class TraceTranslator {
 			"YP10B001#PR11_LIQ_LEVEL", "pressurizer_water_level", Pair.of(0.0, 9.0), 2.3, 2.8,
 			3.705);
 	final static Parameter pressureInLowerPlenum_entirePlant = new RealParameter(
-			"YC00J005#TA11_PRESSURE", "pressure_lower_plenum", 3.5, 8.0, 10.0);
+			"YC00J005#TA11_PRESSURE", "pressure_lower_plenum", Pair.of(0.0, 15.0), 3.5, 8.0, 10.0);
 	final static Parameter liveSteamPressure_entirePlant = new RealParameter(
 			"RA00J010#PO11_PRESSURE", "pressure_live_steam", Pair.of(0.0, 5.0), 3.0, 3.5);
 	final static Parameter busbarVoltage_entirePlant = new RealParameter(
@@ -150,17 +150,17 @@ public class TraceTranslator {
 	final static Parameter steamGeneratorLevel11_entirePlant = new RealParameter(
 			"YB11W001#SG12_LIQ_LEVEL", "level11x", Pair.of(0.0, 3.0), 1.8, 1.96);
 	final static Parameter steamGeneratorPressure56_entirePlant = new RealParameter(
-			"YB56W001#SG12_PRESSURE_3_4", "pressure56x");
+			"YB56W001#SG12_PRESSURE_3_4", "pressure56x", Pair.of(0.0, 6.0));
 	final static Parameter steamGeneratorPressure54_entirePlant = new RealParameter(
-			"YB54W001#SG12_PRESSURE_3_4", "pressure54x");
+			"YB54W001#SG12_PRESSURE_3_4", "pressure54x", Pair.of(0.0, 6.0));
 	final static Parameter steamGeneratorPressure52_entirePlant = new RealParameter(
-			"YB52W001#SG12_PRESSURE_3_4", "pressure52x");
+			"YB52W001#SG12_PRESSURE_3_4", "pressure52x", Pair.of(0.0, 6.0));
 	final static Parameter steamGeneratorPressure15_entirePlant = new RealParameter(
-			"YB15W001#SG12_PRESSURE_3_4", "pressure15x");
+			"YB15W001#SG12_PRESSURE_3_4", "pressure15x", Pair.of(0.0, 6.0));
 	final static Parameter steamGeneratorPressure13_entirePlant = new RealParameter(
-			"YB13W001#SG12_PRESSURE_3_4", "pressure13x");
+			"YB13W001#SG12_PRESSURE_3_4", "pressure13x", Pair.of(0.0, 6.0));
 	final static Parameter steamGeneratorPressure11_entirePlant = new RealParameter(
-			"YB11W001#SG12_PRESSURE_3_4", "pressure11x");
+			"YB11W001#SG12_PRESSURE_3_4", "pressure11x", Pair.of(0.0, 6.0));
 	final static Parameter reacRelPower_entirePlant = new RealParameter(
 			"YC00B001#NR1_POWER", "reac_rel_power", Pair.of(0.0, 2.0), 0.1, 0.95, 1.0, 1.1);
 	final static Parameter pressureUpperPlenum_entirePlant = new RealParameter(
@@ -299,19 +299,19 @@ public class TraceTranslator {
 					pressurizerWaterLevel_entirePlant,
 					pressureInLowerPlenum_entirePlant,
 					liveSteamPressure_entirePlant,
-					busbarVoltage_entirePlant,
+					//busbarVoltage_entirePlant,
 					steamGeneratorLevel56_entirePlant,
-					steamGeneratorLevel54_entirePlant,
-					steamGeneratorLevel52_entirePlant,
+					//steamGeneratorLevel54_entirePlant,
+					//steamGeneratorLevel52_entirePlant,
 					steamGeneratorLevel15_entirePlant,
-					steamGeneratorLevel13_entirePlant,
-					steamGeneratorLevel11_entirePlant,
-					steamGeneratorPressure56_entirePlant,
-					steamGeneratorPressure54_entirePlant,
-					steamGeneratorPressure52_entirePlant,
-					steamGeneratorPressure15_entirePlant,
-					steamGeneratorPressure13_entirePlant,
-					steamGeneratorPressure11_entirePlant,
+					//steamGeneratorLevel13_entirePlant,
+					//steamGeneratorLevel11_entirePlant,
+					//steamGeneratorPressure56_entirePlant,
+					//steamGeneratorPressure54_entirePlant,
+					//steamGeneratorPressure52_entirePlant,
+					//steamGeneratorPressure15_entirePlant,
+					//steamGeneratorPressure13_entirePlant,
+					//steamGeneratorPressure11_entirePlant,
 					reacRelPower_entirePlant,
 					pressureUpperPlenum_entirePlant,
 					tempUpperPlenum_entirePlant
