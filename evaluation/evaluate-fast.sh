@@ -14,18 +14,18 @@ else
 fi
 
 echo "Compiling..."
-cd .. && ant fast-automaton-generator-jar && cd qbf
+cd .. && ant fast-automaton-generator-jar && cd evaluation
 echo "Evaluating..."
 
 fsm="generated-fsm.gv"
 events=4
 actions=4
 
-mkdir -p evaluation/$compdir
+mkdir -p "eval/$compdir"
 
 for ((size = $min_size; size <= $max_size; size++)); do
     for ((instance = 0; instance < 50; instance++)); do
-        ev_name=evaluation/$compdir/FAST-$size-$instance
+        ev_name="eval/$compdir/FAST-$size-$instance"
         if [ -f $ev_name/done ]; then
             echo skipping $ev_name
             continue

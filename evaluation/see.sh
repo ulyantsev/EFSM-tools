@@ -48,11 +48,11 @@ for compdir in "complete" "incomplete"; do
     for prefix in FAST* EXP* QSAT* COUN* BACK*; do
         echo_str=
         for ((s = 3; s <= 12; s++)); do
-            ls evaluation/$compdir/$prefix-$s-*/"done" 1>/dev/null 2>/dev/null
+            ls "eval"/$compdir/$prefix-$s-*/"done" 1>/dev/null 2>/dev/null
             if [[ $? != 0 ]]; then
                 continue
             fi
-            print_found_by_prefix evaluation/$compdir "$prefix-$s-"
+            print_found_by_prefix "eval/$compdir" "$prefix-$s-"
             echo_str='\n'
         done
         echo -en "$echo_str"

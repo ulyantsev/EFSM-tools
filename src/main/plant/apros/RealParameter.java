@@ -59,7 +59,7 @@ public class RealParameter extends Parameter {
 	@Override
 	public int traceNameIndex(double value) {
 		if (value < lowerBound || value > upperBound) {
-			throw new RuntimeException("Parameter bounds violated!");
+			throw new RuntimeException("Parameter " + traceName() + ": bounds violated for value " + value);
 		}
 		for (int i = 0; i < cutoffs.size(); i++) {
 			if (value < cutoffs.get(i)) {

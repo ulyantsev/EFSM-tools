@@ -23,7 +23,7 @@ public class TraceTranslator {
 	final static Parameter pressurizerWaterLevel = new RealParameter(
 			"YP10B001#PR11_LIQ_LEVEL", "water_level", Pair.of(0.0, 9.0), 2.3, 2.8);
 	final static Parameter pressureInLowerPlenum = new RealParameter(
-			"YC00J005#TA11_PRESSURE", "pressure_lower_plenum", Pair.of(0.0, 15.0), 0.8, 3.5, 8.0, 10.0);
+			"YC00J005#TA11_PRESSURE", "pressure_lower_plenum", Pair.of(0.0, 20.0), 0.8, 3.5, 8.0, 10.0);
 	final static Parameter liveSteamPressure = new RealParameter(
 			"RA00J010#PO11_PRESSURE", "pressure_live_steam", Pair.of(0.0, 5.0), 3.5);
 	final static Parameter busbarVoltage = new RealParameter(
@@ -74,17 +74,17 @@ public class TraceTranslator {
 					prot7toProt5signal64, prot7toProt5signal65));
 
 	final static Parameter steamGeneratorPressure56_prot5 = new RealParameter(
-			"YB56W001#SG12_PRESSURE_3_4", "pressure56x", Pair.of(3.0, 6.0), 4.0); // random cutoff
+			"YB56W001#SG12_PRESSURE_3_4", "pressure56x", Pair.of(2.0, 6.0), 4.0); // random cutoff
 	final static Parameter steamGeneratorPressure54_prot5 = new RealParameter(
-			"YB54W001#SG12_PRESSURE_3_4", "pressure54x", Pair.of(3.0, 6.0), 4.0); // random cutoff
+			"YB54W001#SG12_PRESSURE_3_4", "pressure54x", Pair.of(2.0, 6.0), 4.0); // random cutoff
 	final static Parameter steamGeneratorPressure52_prot5 = new RealParameter(
-			"YB52W001#SG12_PRESSURE_3_4", "pressure52x", Pair.of(3.0, 6.0), 4.0); // random cutoff
+			"YB52W001#SG12_PRESSURE_3_4", "pressure52x", Pair.of(2.0, 6.0), 4.0); // random cutoff
 	final static Parameter steamGeneratorPressure15_prot5 = new RealParameter(
-			"YB15W001#SG12_PRESSURE_3_4", "pressure15x", Pair.of(3.0, 6.0), 4.0); // random cutoff
+			"YB15W001#SG12_PRESSURE_3_4", "pressure15x", Pair.of(2.0, 6.0), 4.0); // random cutoff
 	final static Parameter steamGeneratorPressure13_prot5 = new RealParameter(
-			"YB13W001#SG12_PRESSURE_3_4", "pressure13x", Pair.of(3.0, 6.0), 4.0); // random cutoff
+			"YB13W001#SG12_PRESSURE_3_4", "pressure13x", Pair.of(2.0, 6.0), 4.0); // random cutoff
 	final static Parameter steamGeneratorPressure11_prot5 = new RealParameter(
-			"YB11W001#SG12_PRESSURE_3_4", "pressure11x", Pair.of(3.0, 6.0), 4.0); // random cutoff
+			"YB11W001#SG12_PRESSURE_3_4", "pressure11x", Pair.of(2.0, 6.0), 4.0); // random cutoff
 	
 	final static Parameter prot5valve41open = new BoolParameter(
 			"RL41S001_VA1#VO_OPEN", "valve41open");
