@@ -15,7 +15,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.ArrayUtils;
@@ -212,7 +211,7 @@ public class NondetMooreAutomaton {
 				final Parameter param = thresholds.get(i).getRight();
 				conditions.add(param.nusmvCondition("CONT_INPUT_" + paramName, arr[i]));
 			}
-			result.append("        " + String.join(" & ", conditions) + ": plant." + event + ";\n");
+			result.append("    " + event + " := " + String.join(" & ", conditions) + ";\n");
 		} else {
 			final int intervalNum = thresholds.get(index).getRight().valueCount();
 			for (int i = 0; i < intervalNum; i++) {
@@ -224,30 +223,22 @@ public class NondetMooreAutomaton {
     
     public String toNuSMVString(List<String> events, List<String> actions) {
     	events = events.stream().map(s -> "input_" + s).collect(Collectors.toList());
+    	final String inputLine = String.join(", ",
+    			eventThresholds.stream().map(t -> "CONT_INPUT_" + t.getKey())
+    			.collect(Collectors.toList()));
     	final StringBuilder sb = new StringBuilder();
     	sb.append("MODULE main()\n");
     	sb.append("VAR\n");
-    	if (!eventThresholds.isEmpty()) {
-        	sb.append("    plant: PLANT(DISCRETIZED_INPUT);\n");
-    		for (Pair<String, Parameter> entry : eventThresholds) {
-    			final String paramName = entry.getLeft();
-    			final Parameter param = entry.getRight();
-    			sb.append("    CONT_INPUT_" + paramName + ": " + param.nusmvType()
-    					+ ";\n");
-    		}
-    		sb.append("DEFINE\n");
-    		sb.append("    DISCRETIZED_INPUT := case\n");
-			int[] arr = new int[eventThresholds.size()];
-    		nusmvEventDescriptions(arr, 0, sb, eventThresholds, events);
-    		sb.append("        TRUE: 0;\n");
-    		sb.append("    esac;\n");
-    	} else {
-    		sb.append("    input: 0.." + (events.size() - 1) + ";\n");
-        	sb.append("    plant: PLANT(input);\n");
-    	}
+    	sb.append("    plant: PLANT(" + inputLine + ");\n");
+		for (Pair<String, Parameter> entry : eventThresholds) {
+			final String paramName = entry.getLeft();
+			final Parameter param = entry.getRight();
+			sb.append("    CONT_INPUT_" + paramName + ": " + param.nusmvType()
+					+ ";\n");
+		}
     	
     	sb.append("\n");
-    	sb.append("MODULE PLANT(input)\n");
+    	sb.append("MODULE PLANT(" + inputLine + ")\n");
     	sb.append("VAR\n");
     	sb.append("    state: 0.." + (stateCount() - 1) + ";\n");
     	//sb.append("    initial_delay: 0..1;\n");
@@ -266,8 +257,8 @@ public class NondetMooreAutomaton {
         			}
         		}
     			Collections.sort(destinations);
-    			sb.append("        state = " + i + " & next(input) = "
-    					+ event + ": { " +  destinations.toString().replace("[", "").replace("]", "") + " };\n");
+    			sb.append("        state = " + i + " & next(" + event + "): { "
+    					+ destinations.toString().replace("[", "").replace("]", "") + " };\n");
     		}
     	}
     	sb.append("        TRUE: 0;\n");
@@ -283,7 +274,8 @@ public class NondetMooreAutomaton {
     		final String condition = properStates.isEmpty()
     				? "FALSE"
     				: ("state in { " + String.join(", ", properStates) + " }");
-    		final String comment = actionDescriptions.containsKey(action) ? (" -- " + actionDescriptions.get(action)) : "";
+    		final String comment = actionDescriptions.containsKey(action)
+    				? (" -- " + actionDescriptions.get(action)) : "";
     		sb.append("    output_" + action + " := " + condition + ";" + comment + "\n");
     	}
 
@@ -291,22 +283,16 @@ public class NondetMooreAutomaton {
     	for (Pair<String, Parameter> entry : actionThresholds) {
     		final String paramName = entry.getKey();
     		final Parameter param = entry.getValue();
-    		sb.append("\n");
     		sb.append("    CONT_" + paramName + " := case\n");
     		for (int i = 0; i < param.valueCount(); i++) {
     			sb.append("        output_" + paramName + i + ": "
     					+ param.nusmvInterval(i) + ";\n");
     		}
-    		sb.append("        TRUE: " + param.defaultValue() + ";\n");
     		sb.append("    esac;\n");
     	}
+    	// input conversion to discrete values
+		nusmvEventDescriptions(new int[eventThresholds.size()], 0, sb, eventThresholds, events);
 
-		sb.append("\n");
-
-    	for (int i = 0; i < events.size(); i++) {
-    		sb.append("    " + events.get(i) + " := " + i + ";\n");
-    	}
-    	
     	return sb.toString();
     }
     
@@ -340,43 +326,6 @@ public class NondetMooreAutomaton {
     		}
     	}
     	return true;
-    }
-    
-    // copy and remove y by redirecting transitions to x
-    @Deprecated // TODO remove
-    public NondetMooreAutomaton merge(MooreNode x, MooreNode y) {
-    	if (y.number() <= x.number()) {
-    		throw new AssertionError();
-    	}
-    	final Function<Integer, Integer> shift = n -> n < y.number() ? n : (n - 1);
-    	
-    	final List<StringActions> actions = new ArrayList<>();
-    	final List<Boolean> isInitial = new ArrayList<>();
-    	for (MooreNode state : states) {
-    		if (state.number() != y.number()) {
-    			actions.add(state.actions());
-    			isInitial.add(isInitialState(state.number()));
-    		}
-    	}
-		if (isInitialState(y.number())) {
-			isInitial.set(shift.apply(x.number()), true);
-		}
-
-		final NondetMooreAutomaton merged = new NondetMooreAutomaton(states.size() - 1,
-				actions, isInitial);
-
-		for (MooreNode state : states) {
-			final MooreNode src = merged.state(
-					shift.apply((state.number() == y.number() ? x : state).number()));
-			for (MooreTransition t : state.transitions()) {
-				final MooreNode dst = merged.state(shift.apply((t.dst().number() == y.number()
-						? x : t.dst()).number()));
-				if (!src.allDst(t.event()).contains(dst)) {
-					src.addTransition(t.event(), dst);
-				}
-			}
-		}
-		return merged;
     }
     
     public NondetMooreAutomaton copy() {
