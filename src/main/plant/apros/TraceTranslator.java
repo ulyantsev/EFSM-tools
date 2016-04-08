@@ -29,11 +29,11 @@ public class TraceTranslator {
 	final static Parameter busbarVoltage = new RealParameter(
 			"BU_N1#ES_NO_VOLTAGE_REAL", "voltage", Pair.of(0.0, 7000.0), 4800.0);
 	final static Parameter pumpTQ11SpeedSetopint = new RealParameter(
-			"TQ11D001_R01#DC2_OUTPUT_VALUE", "tq11_speed_setpoint", Pair.of(0.0, 100.0), 1.0);
+			"TQ11D001_R01#DC2_OUTPUT_VALUE", "tq11_speed_setpoint", Pair.of(0.0, 100.0), 50.0);
 	final static Parameter pumpTJ11SpeedSetopint = new RealParameter(
-			"TJ11D001_R01#DC2_OUTPUT_VALUE", "tj11_speed_setpoint", Pair.of(0.0, 100.0), 1.0);
+			"TJ11D001_R01#DC2_OUTPUT_VALUE", "tj11_speed_setpoint", Pair.of(0.0, 100.0), 50.0);
 	final static Parameter pumpTH11SpeedSetpoint = new RealParameter(
-			"TH11D001_R01#DC2_OUTPUT_VALUE", "th11_speed_setpoint", Pair.of(0.0, 100.0), 1.0);
+			"TH11D001_R01#DC2_OUTPUT_VALUE", "th11_speed_setpoint", Pair.of(0.0, 100.0), 50.0);
 
 	final static Configuration CONF_PROTECTION1 = new Configuration(
 			1.0, Arrays.asList(
@@ -55,7 +55,7 @@ public class TraceTranslator {
 	final static Parameter steamGeneratorLevel11 = new RealParameter(
 			"YB11W001#SG12_LIQ_LEVEL", "level11x", Pair.of(0.0, 3.0), 1.96);
 	final static Parameter prot7pumpSpeed = new RealParameter(
-			"RL92D001_PU1#P_SPEED_OLD", "prot7_pump_speed", Pair.of(0.0, 100.0), 1.0);
+			"RL92D001_PU1#P_SPEED_OLD", "prot7_pump_speed", Pair.of(0.0, 100.0), 50.0);
 	final static Parameter prot7ValveOpen = new BoolParameter(
 			"RL92S005_VA1#VO_OPEN", "prot7_valve_open");
 	final static Parameter prot7ValveClose = new BoolParameter(

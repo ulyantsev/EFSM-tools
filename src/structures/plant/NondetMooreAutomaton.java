@@ -240,15 +240,15 @@ public class NondetMooreAutomaton {
     	sb.append("\n");
     	sb.append("MODULE PLANT(" + inputLine + ")\n");
     	sb.append("VAR\n");
-    	sb.append("    state: 0.." + (stateCount() - 1) + ";\n");
-    	//sb.append("    initial_delay: 0..1;\n");
-    	sb.append("ASSIGN\n");
-    	//sb.append("    init(initial_delay) := 0;\n");
-    	//sb.append("    next(initial_delay) := 1;\n");
-    	sb.append("    init(state) := { " + initialStates().toString().replace("[", "").replace("]", "") + " };\n");
-    	sb.append("    next(state) := case\n");
-    	//sb.append("        initial_delay = 0 : state;\n");
+    	sb.append("    state: 0.." + (stateCount() - 1) + ";\n");    	
+    	sb.append("INIT\n");
+    	sb.append("    state in { " + initialStates().toString().replace("[", "").replace("]", "") + " }\n");
+    	sb.append("TRANS\n");
+    	// if the output is known, then the next state is constrained, otherwise it is free
+    	sb.append("    (next(" + String.join(") | next(", events) + ")) -> \n");
+    	final List<String> stateConstraints = new ArrayList<>();
     	for (int i = 0; i < stateCount(); i++) {
+        	final List<String> options = new ArrayList<>();
     		for (String event : events) {
     			final List<Integer> destinations = new ArrayList<>();
     			for (MooreTransition t : states.get(i).transitions()) {
@@ -257,12 +257,12 @@ public class NondetMooreAutomaton {
         			}
         		}
     			Collections.sort(destinations);
-    			sb.append("        state = " + i + " & next(" + event + "): { "
-    					+ destinations.toString().replace("[", "").replace("]", "") + " };\n");
+    			options.add("next(" + event + ") & next(state) in { "
+    					+ destinations.toString().replace("[", "").replace("]", "") + " }");
     		}
+    		stateConstraints.add("state = " + i + " -> (\n      " + String.join("\n    | ", options));
     	}
-    	sb.append("        TRUE: 0;\n");
-    	sb.append("    esac;\n");
+    	sb.append("    (" + String.join("\n    )) & (", stateConstraints) + "))\n");
     	sb.append("DEFINE\n");
     	for (String action : actions) {
     		final List<String> properStates = new ArrayList<>();
