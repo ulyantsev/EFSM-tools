@@ -11,18 +11,24 @@ import java.util.Scanner;
 public class Dataset {
 	private final Map<String, Integer> paramIndices = new HashMap<>();
 	final List<List<double[]>> values = new ArrayList<>();
-
+	final Map<String, Double> paramScales;
+	
 	public double get(double[] values, Parameter p) {
 		final Integer index = paramIndices.get(p.aprosName());
 		if (index == null) {
 			throw new RuntimeException("Missing parameter: " + p.aprosName());
 		}
-		final double result = values[paramIndices.get(p.aprosName())];
+		// possible scaling
+		final Double oScale = paramScales.get(p.aprosName());
+		final double scale = oScale == null? 1.0 : oScale;
+		
+		final double result = values[paramIndices.get(p.aprosName())] * scale;
 		p.updateLimits(result);
 		return result;
 	}
 	
-	public Dataset(double intervalSec, String traceLocation) throws FileNotFoundException {
+	public Dataset(double intervalSec, String traceLocation, Map<String, Double> paramScales) throws FileNotFoundException {
+		this.paramScales = paramScales;
 		for (String filename : new File(traceLocation).list()) {
 			if (!filename.endsWith(".txt")) {
 				continue;

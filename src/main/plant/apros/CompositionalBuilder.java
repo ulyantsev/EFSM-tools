@@ -104,7 +104,7 @@ public class CompositionalBuilder {
 	/*******************************************/
 	
 	//final static List<Configuration> CONFS = CONF_STRUCTURE;
-	final static List<Configuration> CONFS = Arrays.asList(TraceTranslator.CONF_PRES_PRES_CONT);
+	final static List<Configuration> CONFS = Arrays.asList(TraceTranslator.CONF_REA_TUR_TRIP);
 	final static int FAST_THRESHOLD = 0;
 	final static boolean ALL_EVENT_COMBINATIONS = false;
 	final static String TRACE_LOCATION = TraceTranslator.INPUT_DIRECTORY;
@@ -420,7 +420,8 @@ public class CompositionalBuilder {
 		
 		// 2. Load the dataset
 		System.out.println("*** LOADING THE DATASET");
-		final Dataset ds = new Dataset(CONFS.get(0).intervalSec, TRACE_LOCATION);
+		final Dataset ds = new Dataset(CONFS.get(0).intervalSec,
+				TRACE_LOCATION, TraceTranslator.PARAM_SCALES);
 		
 		// 3. Build all the basic plants
 		final List<NondetMooreAutomaton> automata = new ArrayList<>();

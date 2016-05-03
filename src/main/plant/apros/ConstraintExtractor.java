@@ -20,7 +20,7 @@ public class ConstraintExtractor {
 	final static boolean CURRENT_NEXT = true;
 	
 	public static void main(String[] args) throws FileNotFoundException {
-		final Dataset ds = new Dataset(CONF.intervalSec, TraceTranslator.INPUT_DIRECTORY);
+		final Dataset ds = new Dataset(CONF.intervalSec, TraceTranslator.INPUT_DIRECTORY, TraceTranslator.PARAM_SCALES);
 		final StringBuilder sb = new StringBuilder();
 		//CONF.inputParameters
 		final String inputLine = String.join(", ",
