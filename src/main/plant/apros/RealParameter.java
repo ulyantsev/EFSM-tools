@@ -76,8 +76,13 @@ public class RealParameter extends Parameter {
 	
 	@Override
 	public String toString() {
+		final ArrayList<Double> thresholds = new ArrayList<>();
+		thresholds.add((double) lowerBound);
+		thresholds.addAll(cutoffs.subList(0, cutoffs.size() - 1));
+		thresholds.add((double) upperBound);
+
 		return "param " + aprosName() + " (" + traceName() + "): REAL"
-				+ cutoffs.subList(0, cutoffs.size() - 1);
+				+ thresholds;
 	}
 
 	@Override

@@ -20,11 +20,11 @@ import java.util.function.Function;
 import org.apache.commons.lang3.tuple.Pair;
 
 public class TraceTranslator {
-	final static String INPUT_DIRECTORY = "evaluation/plant-synthesis/vver-traces-entire-plant";
+	final static String INPUT_DIRECTORY = "evaluation/plant-synthesis/vver-traces-plant-4";
 
-	// scaled x10
+	// scaled x100
 	final static Parameter pressurizerWaterLevel = new RealParameter(
-			"YP10B001#PR11_LIQ_LEVEL", "water_level", Pair.of(0.0, 90.0), 23.0, 28.0);
+			"YP10B001#PR11_LIQ_LEVEL", "water_level", Pair.of(0.0, 850.0), 230.0, 280.0);
 	// scaled x10
 	final static Parameter pressureInLowerPlenum = new RealParameter(
 			"YC00J005#TA11_PRESSURE", "pressure_lower_plenum", Pair.of(0.0, 200.0), 8.0, 35.0, 80.0, 100.0);
@@ -129,6 +129,31 @@ public class TraceTranslator {
 	final static Parameter prot5valve46close = new BoolParameter(
 			"RL46S001_VA1#VO_CLOSE", "valve46close");
 	
+	final static Parameter prot5valve41valveopen = new BoolParameter(
+			"RL41S001_VA1#VO_VALVE_OPEN", "valve41valveopen");
+	final static Parameter prot5valve41valveclose = new BoolParameter(
+			"RL41S001_VA1#VO_VALVE_CLOSE", "valve41valveclose");
+	final static Parameter prot5valve42valveopen = new BoolParameter(
+			"RL42S001_VA1#VO_VALVE_OPEN", "valve42valveopen");
+	final static Parameter prot5valve42valveclose = new BoolParameter(
+			"RL42S001_VA1#VO_VALVE_CLOSE", "valve42valveclose");
+	final static Parameter prot5valve43valveopen = new BoolParameter(
+			"RL43S001_VA1#VO_VALVE_OPEN", "valve43valveopen");
+	final static Parameter prot5valve43valveclose = new BoolParameter(
+			"RL43S001_VA1#VO_VALVE_CLOSE", "valve43valveclose");
+	final static Parameter prot5valve44valveopen = new BoolParameter(
+			"RL44S001_VA1#VO_VALVE_OPEN", "valve44valveopen");
+	final static Parameter prot5valve44valveclose = new BoolParameter(
+			"RL44S001_VA1#VO_VALVE_CLOSE", "valve44valveclose");
+	final static Parameter prot5valve45valveopen = new BoolParameter(
+			"RL45S001_VA1#VO_VALVE_OPEN", "valve45valveopen");
+	final static Parameter prot5valve45valveclose = new BoolParameter(
+			"RL45S001_VA1#VO_VALVE_CLOSE", "valve45valveclose");
+	final static Parameter prot5valve46valveopen = new BoolParameter(
+			"RL46S001_VA1#VO_VALVE_OPEN", "valve46valveopen");
+	final static Parameter prot5valve46valveclose = new BoolParameter(
+			"RL46S001_VA1#VO_VALVE_CLOSE", "valve46valveclose");
+	
 	final static Configuration CONF_PROTECTION5 = new Configuration(
 			1.0, Arrays.asList(
 			steamGeneratorPressure56_prot5,
@@ -138,7 +163,14 @@ public class TraceTranslator {
 			steamGeneratorPressure13_prot5,
 			steamGeneratorPressure11_prot5,
 			prot7toProt5signal64,
-			prot7toProt5signal65), Arrays.asList(
+			prot7toProt5signal65,
+			prot5valve41valveopen, prot5valve41valveclose,
+			prot5valve42valveopen, prot5valve42valveclose,
+			prot5valve43valveopen, prot5valve43valveclose,
+			prot5valve44valveopen, prot5valve44valveclose,
+			prot5valve45valveopen, prot5valve45valveclose,
+			prot5valve46valveopen, prot5valve46valveclose
+			), Arrays.asList(
 			prot5valve41open, prot5valve41close,
 			prot5valve42open, prot5valve42close,
 			prot5valve43open, prot5valve43close,
@@ -146,10 +178,10 @@ public class TraceTranslator {
 			prot5valve45open, prot5valve45close,
 			prot5valve46open, prot5valve46close));
 
-	// scaled x10
+	// scaled x100
 	final static Parameter pressurizerWaterLevel_entirePlant = new RealParameter(
-			"YP10B001#PR11_LIQ_LEVEL", "pressurizer_water_level", Pair.of(0.0, 90.0), 23.0, 28.0,
-			37.05);
+			"YP10B001#PR11_LIQ_LEVEL", "pressurizer_water_level", Pair.of(0.0, 850.0), 230.0, 280.0,
+			370.5);
 	// scaled x10
 	final static Parameter pressureInLowerPlenum_entirePlant = new RealParameter(
 			"YC00J005#TA11_PRESSURE", "pressure_lower_plenum", Pair.of(0.0, 150.0), 35.0, 80.0, 100.0);
@@ -196,7 +228,7 @@ public class TraceTranslator {
 			"YB11W001#SG12_PRESSURE_3_4", "pressure11x", Pair.of(0.0, 60.0));
 	// scaled x10
 	final static Parameter reacRelPower_entirePlant = new RealParameter(
-			"YC00B001#NR1_POWER", "reac_rel_power", Pair.of(0.0, 20.0), 1.0, 9.5, 10.0, 11.0);
+			"YC00B001#NR1_POWER", "reac_rel_power", Pair.of(0.0, 13.0), 1.0, 9.5, 10.0, 11.0);
 	// scaled x10
 	final static Parameter pressureUpperPlenum_entirePlant = new RealParameter(
 			"YC00J030#TA11_PRESSURE", "pressure_upper_plenum", Pair.of(0.0, 200.0), 108.0, 134.0);
@@ -253,10 +285,72 @@ public class TraceTranslator {
 			"RL76S003_VA1#VO_OPEN", "valveL76open");
 	final static Parameter prot6valveL76close = new BoolParameter(
 			"RL76S003_VA1#VO_CLOSE", "valveL76close");
+
+	final static Parameter prot6valveA11valveopen = new BoolParameter(
+			"RA11S003_VA1#VO_VALVE_OPEN", "valveA11valveopen");
+	final static Parameter prot6valveA11valveclose = new BoolParameter(
+			"RA11S003_VA1#VO_VALVE_CLOSE", "valveA11valveclose");
+	final static Parameter prot6valveA52valveopen = new BoolParameter(
+			"RA52S003_VA1#VO_VALVE_OPEN", "valveA52valveopen");
+	final static Parameter prot6valveA52valveclose = new BoolParameter(
+			"RA52S003_VA1#VO_VALVE_CLOSE", "valveA52valveclose");
+	final static Parameter prot6valveA13valveopen = new BoolParameter(
+			"RA13S003_VA1#VO_VALVE_OPEN", "valveA13valveopen");
+	final static Parameter prot6valveA13valveclose = new BoolParameter(
+			"RA13S003_VA1#VO_VALVE_CLOSE", "valveA13valveclose");
+	final static Parameter prot6valveA54valveopen = new BoolParameter(
+			"RA54S003_VA1#VO_VALVE_OPEN", "valveA54valveopen");
+	final static Parameter prot6valveA54valveclose = new BoolParameter(
+			"RA54S003_VA1#VO_VALVE_CLOSE", "valveA54valveclose");
+	final static Parameter prot6valveA15valveopen = new BoolParameter(
+			"RA15S003_VA1#VO_VALVE_OPEN", "valveA15valveopen");
+	final static Parameter prot6valveA15valveclose = new BoolParameter(
+			"RA15S003_VA1#VO_VALVE_CLOSE", "valveA15valveclose");
+	final static Parameter prot6valveA56valveopen = new BoolParameter(
+			"RA56S003_VA1#VO_VALVE_OPEN", "valveA56valveopen");
+	final static Parameter prot6valveA56valveclose = new BoolParameter(
+			"RA56S003_VA1#VO_VALVE_CLOSE", "valveA56valveclose");
+	final static Parameter prot6valveL31valveopen = new BoolParameter(
+			"RL31S003_VA1#VO_VALVE_OPEN", "valveL31valveopen");
+	final static Parameter prot6valveL31valveclose = new BoolParameter(
+			"RL31S003_VA1#VO_VALVE_CLOSE", "valveL31valveclose");
+	final static Parameter prot6valveL72valveopen = new BoolParameter(
+			"RL72S003_VA1#VO_VALVE_OPEN", "valveL72valveopen");
+	final static Parameter prot6valveL72valveclose = new BoolParameter(
+			"RL72S003_VA1#VO_VALVE_CLOSE", "valveL72valveclose");
+	final static Parameter prot6valveL33valveopen = new BoolParameter(
+			"RL33S003_VA1#VO_VALVE_OPEN", "valveL33valveopen");
+	final static Parameter prot6valveL33valveclose = new BoolParameter(
+			"RL33S003_VA1#VO_VALVE_CLOSE", "valveL33valveclose");
+	final static Parameter prot6valveL74valveopen = new BoolParameter(
+			"RL74S003_VA1#VO_VALVE_OPEN", "valveL74valveopen");
+	final static Parameter prot6valveL74valveclose = new BoolParameter(
+			"RL74S003_VA1#VO_VALVE_CLOSE", "valveL74valveclose");
+	final static Parameter prot6valveL35valveopen = new BoolParameter(
+			"RL35S003_VA1#VO_VALVE_OPEN", "valveL35valveopen");
+	final static Parameter prot6valveL35valveclose = new BoolParameter(
+			"RL35S003_VA1#VO_VALVE_CLOSE", "valveL35valveclose");
+	final static Parameter prot6valveL76valveopen = new BoolParameter(
+			"RL76S003_VA1#VO_VALVE_OPEN", "valveL76valveopen");
+	final static Parameter prot6valveL76valveclose = new BoolParameter(
+			"RL76S003_VA1#VO_VALVE_CLOSE", "valveL76valveclose");
 	
 	final static Configuration CONF_PROTECTION6 = new Configuration(
 				1.0, Arrays.asList(
-				liveSteamPressure_entirePlant), Arrays.asList(
+				liveSteamPressure_entirePlant,
+				prot6valveA11valveopen, prot6valveA11valveclose,
+				prot6valveA52valveopen, prot6valveA52valveclose,
+				prot6valveA13valveopen, prot6valveA13valveclose,
+				prot6valveA54valveopen, prot6valveA54valveclose,
+				prot6valveA15valveopen, prot6valveA15valveclose,
+				prot6valveA56valveopen, prot6valveA56valveclose,
+				prot6valveL31valveopen, prot6valveL31valveclose,
+				prot6valveL72valveopen, prot6valveL72valveclose,
+				prot6valveL33valveopen, prot6valveL33valveclose,
+				prot6valveL74valveopen, prot6valveL74valveclose,
+				prot6valveL35valveopen, prot6valveL35valveclose,
+				prot6valveL76valveopen, prot6valveL76valveclose
+				), Arrays.asList(
 				prot6valveA11open, prot6valveA11close,
 				prot6valveA52open, prot6valveA52close,
 				prot6valveA13open, prot6valveA13close,
@@ -304,38 +398,15 @@ public class TraceTranslator {
 	// scaled x100
 	final static Parameter steamGeneratorLevel11_reaTurTrip = new RealParameter(
 			"YB11W001#SG12_LIQ_LEVEL", "level11x", Pair.of(0.0, 300.0), 180.0);
-	// scaled x10
+	// scaled x100
 	final static Parameter pressurizerWaterLevel_reaTurTrip = new RealParameter(
-			"YP10B001#PR11_LIQ_LEVEL", "pressurizer_water_level", Pair.of(0.0, 90.0), 37.05);
+			"YP10B001#PR11_LIQ_LEVEL", "pressurizer_water_level", Pair.of(0.0, 850.0), 370.5);
 	// scaled x10
 	final static Parameter reacRelPower_reaTurTrip = new RealParameter(
-			"YC00B001#NR1_POWER", "reac_rel_power", Pair.of(0.0, 20.0), 11.0);
+			"YC00B001#NR1_POWER", "reac_rel_power", Pair.of(0.0, 13.0), 11.0);
 	// scaled x100
 	final static Parameter liveSteamPressure_reaTurTrip = new RealParameter(
 			"RA00J010#PO11_PRESSURE", "pressure_live_steam", Pair.of(0.0, 500.0), 300.0);
-	
-	// to improve precision in the NuSMV model
-	final static Map<String, Double> PARAM_SCALES = new TreeMap<>();
-	static {
-		PARAM_SCALES.put(pressurizerWaterLevel.aprosName(), 10.0);
-		PARAM_SCALES.put(pressureInLowerPlenum.aprosName(), 10.0);
-		PARAM_SCALES.put(liveSteamPressure.aprosName(), 100.0);
-		PARAM_SCALES.put(steamGeneratorPressure56_prot5.aprosName(), 10.0);
-		PARAM_SCALES.put(steamGeneratorPressure54_prot5.aprosName(), 10.0);
-		PARAM_SCALES.put(steamGeneratorPressure52_prot5.aprosName(), 10.0);
-		PARAM_SCALES.put(steamGeneratorPressure15_prot5.aprosName(), 10.0);
-		PARAM_SCALES.put(steamGeneratorPressure13_prot5.aprosName(), 10.0);
-		PARAM_SCALES.put(steamGeneratorPressure11_prot5.aprosName(), 10.0);
-		PARAM_SCALES.put(steamGeneratorLevel56.aprosName(), 100.0);
-		PARAM_SCALES.put(steamGeneratorLevel54.aprosName(), 100.0);
-		PARAM_SCALES.put(steamGeneratorLevel52.aprosName(), 100.0);
-		PARAM_SCALES.put(steamGeneratorLevel15.aprosName(), 100.0);
-		PARAM_SCALES.put(steamGeneratorLevel13.aprosName(), 100.0);
-		PARAM_SCALES.put(steamGeneratorLevel11.aprosName(), 100.0);
-		PARAM_SCALES.put(pressureUpperPlenum_entirePlant.aprosName(), 10.0);
-		PARAM_SCALES.put(reacRelPower_entirePlant.aprosName(), 10.0);
-		PARAM_SCALES.put(rodPosition.aprosName(), 10.0);
-	}
 	
 	final static Configuration CONF_REA_TUR_TRIP = new Configuration(
 			1.0, Arrays.asList(
@@ -454,14 +525,17 @@ public class TraceTranslator {
 				YA13T001_preslevco, YA13T002_preslevco,
 				YA14T001_preslevco, YA14T002_preslevco,
 				YA15T001_preslevco, YA15T002_preslevco,
-				YA16T001_preslevco, YA16T002_preslevco
+				YA16T001_preslevco, YA16T002_preslevco,
+				pressurizerWaterLevel_entirePlant
 			), Arrays.asList(valveE51_preslevco,
 					valveK52_preslevco, valveK53_preslevco));
 	
+	// scaled x 1/10000
 	final static Parameter pressurizerPressure_prespresco = new RealParameter(
-			"YP10B001_NO8#NO6_PRESSURE", "pressurizer_pressure", Pair.of(0.0, 20e6), 8e6, 9e6, 10e6, 11e6, 12e6, 13e6);
+			"YP10B001_NO8#NO6_PRESSURE", "pressurizer_pressure", Pair.of(0.0, 20e2), 8e2, 9e2, 10e2, 11e2, 12e2, 13e2);
+	// scaled x100
 	final static Parameter power_prespresco = new RealParameter(
-			"YP10B001_HS1#HS_POWER", "power",  Pair.of(0.0, 1.0), 0.5);
+			"YP10B001_HS1#HS_POWER", "power",  Pair.of(0.0, 100.0), 50.0);
 	final static Parameter valve1311_prespresco = new BoolParameter(
 			"YP13S011_VA1#V_POSITION_SET_VALUE", "valve1311");
 	final static Parameter valve1411_prespresco = new BoolParameter(
@@ -493,7 +567,78 @@ public class TraceTranslator {
 					valve1405_prespresco,
 					valve1302_prespresco,
 					valve1402_prespresco));
+	
+	// multiplied x1000
+	final static Parameter level10 = new RealParameter(
+			"RL10B001#TA11_LIQ_LEVEL", "level10",  Pair.of(0.0, 10000.0),
+			1900.0, 2000.0, 2100.0, 2200.0, 2300.0, 2400.0, 2500.0, 2600.0, 2700.0);
+	// multiplied x1000
+	final static Parameter level50 = new RealParameter(
+			"RL50B001#TA11_LIQ_LEVEL", "level50",  Pair.of(0.0, 10000.0),
+			1900.0, 2000.0, 2100.0, 2200.0, 2300.0, 2400.0, 2500.0, 2600.0, 2700.0);
+	
+	// multiplied x100
+	final static Parameter valveRV10S005 = new RealParameter(
+			"RV10S005_R01#DC2_OUTPUT_VALUE", "valveRV10S005",  Pair.of(0.0, 100.0), 50.0);
+	// multiplied x100
+	final static Parameter valveRV12S004 = new RealParameter(
+			"RV12S004_R01#DC2_OUTPUT_VALUE", "valveRV12S004",  Pair.of(0.0, 100.0), 50.0);
+	// multiplied x100
+	final static Parameter valveRL10S008 = new RealParameter(
+			"RL10S008_R01#DC2_OUTPUT_VALUE", "valveRL10S008",  Pair.of(0.0, 100.0), 50.0);
+	// multiplied x100
+	final static Parameter valveRV50S005 = new RealParameter(
+			"RV50S005_R01#DC2_OUTPUT_VALUE", "valveRV50S005",  Pair.of(0.0, 100.0), 50.0);
+	// multiplied x100
+	final static Parameter valveRV52S004 = new RealParameter(
+			"RV52S004_R01#DC2_OUTPUT_VALUE", "valveRV52S004",  Pair.of(0.0, 100.0), 50.0);
+	// multiplied x100
+	final static Parameter valveRL50S008 = new RealParameter(
+			"RL50S008_R01#DC2_OUTPUT_VALUE", "valveRL50S008",  Pair.of(0.0, 100.0), 50.0);
+	
+	final static Configuration CONF_FW_LEVEL_CO = new Configuration(
+			1.0,
+			Arrays.asList(
+				level10, level50	
+			), Arrays.asList(
+				valveRV10S005, valveRV12S004, valveRL10S008,
+				valveRV50S005, valveRV52S004, valveRL50S008
+			));
 
+	// to improve precision in the NuSMV model
+	final static Map<String, Double> PARAM_SCALES = new TreeMap<>();
+	static {
+		PARAM_SCALES.put(pressurizerWaterLevel.aprosName(), 100.0);
+		PARAM_SCALES.put(pressureInLowerPlenum.aprosName(), 10.0);
+		PARAM_SCALES.put(liveSteamPressure.aprosName(), 100.0);
+		PARAM_SCALES.put(steamGeneratorPressure56_prot5.aprosName(), 10.0);
+		PARAM_SCALES.put(steamGeneratorPressure54_prot5.aprosName(), 10.0);
+		PARAM_SCALES.put(steamGeneratorPressure52_prot5.aprosName(), 10.0);
+		PARAM_SCALES.put(steamGeneratorPressure15_prot5.aprosName(), 10.0);
+		PARAM_SCALES.put(steamGeneratorPressure13_prot5.aprosName(), 10.0);
+		PARAM_SCALES.put(steamGeneratorPressure11_prot5.aprosName(), 10.0);
+		PARAM_SCALES.put(steamGeneratorLevel56.aprosName(), 100.0);
+		PARAM_SCALES.put(steamGeneratorLevel54.aprosName(), 100.0);
+		PARAM_SCALES.put(steamGeneratorLevel52.aprosName(), 100.0);
+		PARAM_SCALES.put(steamGeneratorLevel15.aprosName(), 100.0);
+		PARAM_SCALES.put(steamGeneratorLevel13.aprosName(), 100.0);
+		PARAM_SCALES.put(steamGeneratorLevel11.aprosName(), 100.0);
+		PARAM_SCALES.put(pressureUpperPlenum_entirePlant.aprosName(), 10.0);
+		PARAM_SCALES.put(reacRelPower_entirePlant.aprosName(), 10.0);
+		PARAM_SCALES.put(rodPosition.aprosName(), 10.0);
+		PARAM_SCALES.put(power_prespresco.aprosName(), 100.0);
+		PARAM_SCALES.put(pressurizerPressure_prespresco.aprosName(), 1e-4);
+		PARAM_SCALES.put(level10.aprosName(), 1000.0);
+		PARAM_SCALES.put(level50.aprosName(), 1000.0);
+		PARAM_SCALES.put(valveRV10S005.aprosName(), 100.0);
+		PARAM_SCALES.put(valveRV12S004.aprosName(), 100.0);
+		PARAM_SCALES.put(valveRL10S008.aprosName(), 100.0);
+		PARAM_SCALES.put(valveRV50S005.aprosName(), 100.0);
+		PARAM_SCALES.put(valveRV52S004.aprosName(), 100.0);
+		PARAM_SCALES.put(valveRL50S008.aprosName(), 100.0);
+	}
+	
+	
 	private final static Configuration CONFIGURATION = CONF_PROTECTION1;
 
 	private final static String OUTPUT_TRACE_FILENAME = "evaluation/plant-synthesis/vver.sc";

@@ -12,7 +12,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class ConstraintExtractor {
-	final static Configuration CONF = TraceTranslator.CONF_REA_TUR_TRIP;
+	final static Configuration CONF = TraceTranslator.CONF_FW_LEVEL_CO;
 	
 	final static boolean OVERALL_1D = true;
 	final static boolean OVERALL_2D = true;
