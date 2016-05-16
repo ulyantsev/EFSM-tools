@@ -343,6 +343,11 @@ public class NondetMooreAutomaton {
 				src.addTransition(t.event(), copy.state(t.dst().number()));
 			}
 		}
+		
+		copy.actionDescriptions = actionDescriptions;
+		copy.actionThresholds = actionThresholds;
+		copy.eventThresholds = eventThresholds;
+
 		return copy;
     }
     

@@ -104,13 +104,50 @@ public class CompositionalBuilder {
 	/*******************************************/
 	
 	//final static List<Configuration> CONFS = CONF_STRUCTURE;
-	final static List<Configuration> CONFS = Arrays.asList(TraceTranslator.CONF_FW_LEVEL_CO);
+	final static List<Configuration> CONFS =
+			Arrays.asList(TraceTranslator.CONF_FW_LEVEL_CO);
+	
+	/*
+	 * Remove self-loops unless this violates completeness.
+	 */
+	final static boolean REMOVE_LOOPS_WHERE_POSSIBLE = true;
+	
 	final static int FAST_THRESHOLD = 0;
 	final static boolean ALL_EVENT_COMBINATIONS = false;
 	final static String TRACE_LOCATION = TraceTranslator.INPUT_DIRECTORY;
 	final static boolean ENSURE_COMPLETENESS = true;
 	
 	/*******************************************/
+	
+	private static NondetMooreAutomaton removeLoopsWherePossible(NondetMooreAutomaton a) {
+		final NondetMooreAutomaton res = a.copy();
+		int removed = 0;
+		for (MooreNode state : res.states()) {
+			final Map<String, Set<MooreTransition>> transitions = new TreeMap<>();
+			for (MooreTransition t : state.transitions()) {
+				Set<MooreTransition> set = transitions.get(t.event());
+				if (set == null) {
+					set = new HashSet<>();
+					transitions.put(t.event(), set);
+				}
+				set.add(t);
+			}
+			for (Map.Entry<String, Set<MooreTransition>> entry : transitions.entrySet()) {
+				final Set<MooreTransition> set = entry.getValue();
+				if (set.size() > 1) {
+					for (MooreTransition t : set) {
+						if (t.dst() == state) {
+							// remove this self-loop
+							state.removeTransition(t);
+							removed++;
+						}
+					}
+				}
+			}
+		}
+		System.out.println("Self-loops removed: " + removed);
+		return res;
+	}
 	
 	// assuming that we have at most 10 intervals
 	static boolean isProperAction(String action, String prefix) {
@@ -477,6 +514,7 @@ public class CompositionalBuilder {
 			lastAuto = compose(lastAuto, automata.get(i), match,
 					allActionCombinationsSorted);
 			lastConf = composeConfigurations(conf1, conf2, match);
+			
 			dumpAutomaton(lastAuto, lastConf, namePrefix, Collections.emptyMap());
 			System.out.println(lastConf);
 			System.out.println();
@@ -495,11 +533,15 @@ public class CompositionalBuilder {
 	private static void dumpAutomaton(NondetMooreAutomaton a, Configuration conf,
 			String namePrefix, Map<String, String> colorRules) throws FileNotFoundException {
 		conf.annotate(a);
+		
+		final NondetMooreAutomaton effectiveA = REMOVE_LOOPS_WHERE_POSSIBLE
+				? removeLoopsWherePossible(a) : a; 
+		
 		try (PrintWriter pw = new PrintWriter(namePrefix + "gv")) {
-			pw.println(a.toString(colorRules));
+			pw.println(effectiveA.toString(colorRules));
 		}
 		try (PrintWriter pw = new PrintWriter(namePrefix + "smv")) {
-			pw.println(a.toNuSMVString(eventsFromAutomaton(a), conf.actions()));
+			pw.println(effectiveA.toNuSMVString(eventsFromAutomaton(a), conf.actions()));
 		}
 	}
 }
