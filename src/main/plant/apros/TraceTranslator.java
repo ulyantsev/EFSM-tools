@@ -20,14 +20,14 @@ import java.util.function.Function;
 import org.apache.commons.lang3.tuple.Pair;
 
 public class TraceTranslator {
-	final static String INPUT_DIRECTORY = "evaluation/plant-synthesis/vver-traces-plant-4";
+	final static String INPUT_DIRECTORY = "evaluation/plant-synthesis/vver-traces-plant";
 
 	// scaled x100
 	final static Parameter pressurizerWaterLevel = new RealParameter(
 			"YP10B001#PR11_LIQ_LEVEL", "water_level", Pair.of(0.0, 850.0), 230.0, 280.0);
 	// scaled x10
 	final static Parameter pressureInLowerPlenum = new RealParameter(
-			"YC00J005#TA11_PRESSURE", "pressure_lower_plenum", Pair.of(0.0, 200.0), 8.0, 35.0, 80.0, 100.0);
+			"YC00J005#TA11_PRESSURE", "pressure_lower_plenum", Pair.of(0.0, 202.0), 8.0, 35.0, 80.0, 100.0);
 	// scaled x100
 	final static Parameter liveSteamPressure = new RealParameter(
 			"RA00J010#PO11_PRESSURE", "pressure_live_steam", Pair.of(0.0, 510.0), 350.0);
@@ -193,7 +193,7 @@ public class TraceTranslator {
 			370.5);
 	// scaled x10
 	final static Parameter pressureInLowerPlenum_entirePlant = new RealParameter(
-			"YC00J005#TA11_PRESSURE", "pressure_lower_plenum", Pair.of(0.0, 150.0), 35.0, 80.0, 100.0);
+			"YC00J005#TA11_PRESSURE", "pressure_lower_plenum", Pair.of(0.0, 202.0), 35.0, 80.0, 100.0);
 	// scaled x100
 	final static Parameter liveSteamPressure_entirePlant = new RealParameter(
 			"RA00J010#PO11_PRESSURE", "pressure_live_steam", Pair.of(0.0, 510.0), 300.0, 350.0);
@@ -828,7 +828,7 @@ public class TraceTranslator {
 	public static void main(String[] args) throws FileNotFoundException {
 		final long time = System.currentTimeMillis();
 		final Dataset ds = new Dataset(CONFIGURATION.intervalSec,
-				INPUT_DIRECTORY, PARAM_SCALES);
+				INPUT_DIRECTORY, "", PARAM_SCALES);
 		generateScenarios(CONFIGURATION, ds, new HashSet<>(),
 				"automaton.gv", "automaton.smv", true, 10, false);
 		System.out.println("Execution time: " + (System.currentTimeMillis() - time) + " ms");

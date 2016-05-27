@@ -77,7 +77,8 @@ public class CompositionalBuilder {
 			1.0, Arrays.asList(pressureInLowerPlenum, liveSteamPressure),
 			Arrays.asList());
 	
-	final static List<Configuration> CONF_STRUCTURE = Arrays.asList(CONF_PRESSURIZER, CONF_REAC, CONF_MISC);
+	final static List<Configuration> CONF_STRUCTURE =
+			Arrays.asList(CONF_PRESSURIZER, CONF_REAC, CONF_MISC);
 
 	// Control diagram-based composition
 	final static List<Configuration> CONF_NETWORK = Arrays.asList(
@@ -104,8 +105,7 @@ public class CompositionalBuilder {
 	/*******************************************/
 	
 	//final static List<Configuration> CONFS = CONF_STRUCTURE;
-	final static List<Configuration> CONFS =
-			Arrays.asList(TraceTranslator.CONF_FW_LEVEL_CO);
+	final static List<Configuration> CONFS = Arrays.asList(Settings.CONF);
 	
 	/*
 	 * Remove self-loops unless this violates completeness.
@@ -458,7 +458,7 @@ public class CompositionalBuilder {
 		// 2. Load the dataset
 		System.out.println("*** LOADING THE DATASET");
 		final Dataset ds = new Dataset(CONFS.get(0).intervalSec,
-				TRACE_LOCATION, TraceTranslator.PARAM_SCALES);
+				TRACE_LOCATION, "", TraceTranslator.PARAM_SCALES);
 		
 		// 3. Build all the basic plants
 		final List<NondetMooreAutomaton> automata = new ArrayList<>();

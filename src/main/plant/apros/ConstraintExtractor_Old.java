@@ -12,7 +12,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class ConstraintExtractor_Old {
-	final static Configuration CONF = TraceTranslator.CONF_REA_TUR_TRIP;
+	final static Configuration CONF = Settings.CONF;
 	
 	final static boolean OVERALL_1D = true;
 	final static boolean OVERALL_2D = true;
@@ -20,7 +20,8 @@ public class ConstraintExtractor_Old {
 	final static boolean CURRENT_NEXT = true;
 	
 	public static void main(String[] args) throws FileNotFoundException {
-		final Dataset ds = new Dataset(CONF.intervalSec, TraceTranslator.INPUT_DIRECTORY, TraceTranslator.PARAM_SCALES);
+		final Dataset ds = new Dataset(CONF.intervalSec, TraceTranslator.INPUT_DIRECTORY,
+				"", TraceTranslator.PARAM_SCALES);
 		final StringBuilder sb = new StringBuilder();
 		//CONF.inputParameters
 		final String inputLine = String.join(", ",

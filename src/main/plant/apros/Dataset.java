@@ -27,10 +27,10 @@ public class Dataset {
 		return result;
 	}
 	
-	public Dataset(double intervalSec, String traceLocation, Map<String, Double> paramScales) throws FileNotFoundException {
+	public Dataset(double intervalSec, String traceLocation, String traceFilenamePrefix, Map<String, Double> paramScales) throws FileNotFoundException {
 		this.paramScales = paramScales;
 		for (String filename : new File(traceLocation).list()) {
-			if (!filename.endsWith(".txt")) {
+			if (!filename.endsWith(".txt") || !filename.startsWith(traceFilenamePrefix)) {
 				continue;
 			}
 			double timestampToRecord = intervalSec;

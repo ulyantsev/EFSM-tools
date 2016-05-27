@@ -12,17 +12,15 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class ConstraintExtractor {
-	final static Configuration CONF = TraceTranslator.CONF_FW_LEVEL_CO;
+	final static Configuration CONF = Settings.CONF;
 	
 	final static boolean OVERALL_1D = true;
 	final static boolean OVERALL_2D = true;
 	final static boolean INPUT_STATE = true;
 	final static boolean CURRENT_NEXT = true;
 	
-	public static void main(String[] args) throws FileNotFoundException {
-		final Dataset ds = new Dataset(CONF.intervalSec, TraceTranslator.INPUT_DIRECTORY, TraceTranslator.PARAM_SCALES);
+	public static String plantCaption(Configuration conf) {
 		final StringBuilder sb = new StringBuilder();
-		//CONF.inputParameters
 		final String inputLine = String.join(", ",
 				CONF.inputParameters.stream().map(p -> "CONT_INPUT_" + p.traceName())
     			.collect(Collectors.toList()));
@@ -31,7 +29,29 @@ public class ConstraintExtractor {
     	for (Parameter p : CONF.outputParameters) {
     		sb.append("    output_" + p.traceName() + ": 0.." + (p.valueCount() - 1) + ";\n");
     	}
-    	
+    	return sb.toString();
+	}
+	
+	public static String plantConversions(Configuration conf) {
+		final StringBuilder sb = new StringBuilder();
+		sb.append("DEFINE\n");
+    	// output conversion to continuous values
+    	for (Parameter p : CONF.outputParameters) {
+    		sb.append("    CONT_" + p.traceName() + " := case\n");
+    		for (int i = 0; i < p.valueCount(); i++) {
+    			sb.append("        output_" + p.traceName() + " = " + i + ": "
+    					+ p.nusmvInterval(i) + ";\n");
+    		}
+    		sb.append("    esac;\n");
+    	}
+    	return sb.toString();
+	}
+	
+	public static void main(String[] args) throws FileNotFoundException {
+		final Dataset ds = new Dataset(CONF.intervalSec, TraceTranslator.INPUT_DIRECTORY,
+				"", TraceTranslator.PARAM_SCALES);
+		final StringBuilder sb = new StringBuilder();
+		sb.append(plantCaption(CONF));
     	final List<String> initConstraints = new ArrayList<>();
     	final List<String> transConstraints = new ArrayList<>();
     	
@@ -164,17 +184,7 @@ public class ConstraintExtractor {
     	}
     	sb.append("    (" + String.join(")\n  & (", transConstraints) + ")\n");
 		
-    	sb.append("DEFINE\n");
-    	// output conversion to continuous values
-    	for (Parameter p : CONF.outputParameters) {
-    		sb.append("    CONT_" + p.traceName() + " := case\n");
-    		for (int i = 0; i < p.valueCount(); i++) {
-    			sb.append("        output_" + p.traceName() + " = " + i + ": "
-    					+ p.nusmvInterval(i) + ";\n");
-    		}
-    		sb.append("    esac;\n");
-    	}
-    	
+    	sb.append(plantConversions(CONF));
     	System.out.println(sb);
 	}
 	
