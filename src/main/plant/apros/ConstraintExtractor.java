@@ -184,9 +184,11 @@ public class ConstraintExtractor {
     	}
     	sb.append("    (" + String.join(")\n  & (", transConstraints) + ")\n");
 		
+    	sb.append("DEFINE\n");
+    	sb.append("    unsupported := FALSE;\n");
+    	sb.append("    loop_executed := FALSE;\n");
+    	
     	sb.append(plantConversions(CONF));
     	System.out.println(sb);
 	}
-	
-	
 }

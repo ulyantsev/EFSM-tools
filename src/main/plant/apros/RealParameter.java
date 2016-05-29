@@ -10,13 +10,16 @@ public class RealParameter extends Parameter {
 	final List<Double> cutoffs;
 	private int lowerBound = Integer.MIN_VALUE + 1;
 	private int upperBound = Integer.MAX_VALUE;
+	private final Pair<Double, Double> doubleBounds;
 	
 	public RealParameter(String aprosName, String traceName, Double... cutoffs) {
 		this(aprosName, traceName, Pair.of(-Double.MAX_VALUE, Double.MAX_VALUE), cutoffs);
 	}
 	
-	public RealParameter(String aprosName, String traceName, Pair<Double, Double> bounds, Double... cutoffs) {
+	public RealParameter(String aprosName, String traceName,
+			Pair<Double, Double> bounds, Double... cutoffs) {
 		super(aprosName, traceName);
+		this.doubleBounds = bounds;
 		this.cutoffs = new ArrayList<>(Arrays.asList(cutoffs));
 		this.cutoffs.add(Double.POSITIVE_INFINITY);
 		if (bounds.getLeft() > lowerBound) {
@@ -40,18 +43,10 @@ public class RealParameter extends Parameter {
 	public List<String> descriptions() {
 		final List<String> res = new ArrayList<>();
 		for (int j = 0; j < cutoffs.size(); j++) {
-			String s;
-			if (cutoffs.size() == 1) {
-				s = "any " + traceName();
-			} else if (j == 0) {
-				s = traceName() + " < " + cutoffs.get(j);
-			} else if (j == cutoffs.size() - 1) {
-				s = cutoffs.get(j - 1) + " ≤ " + traceName();
-			} else {
-				s = cutoffs.get(j - 1) + " ≤ " + traceName() + " < "
-						+ cutoffs.get(j);
-			}
-			res.add("[" + j + "] " + s);
+			final double lower = j == 0 ? doubleBounds.getLeft() : cutoffs.get(j - 1);
+			final double upper = j == cutoffs.size() - 1
+					? doubleBounds.getRight() : cutoffs.get(j);
+			res.add("[" + j + "] " + lower + " ≤ " + traceName() + " < " + upper);
 		}
 		return res;
 	}
@@ -59,7 +54,8 @@ public class RealParameter extends Parameter {
 	@Override
 	public int traceNameIndex(double value) {
 		if (value < lowerBound || value > upperBound) {
-			throw new RuntimeException("Parameter " + traceName() + ": bounds violated for value " + value);
+			throw new RuntimeException("Parameter " + traceName()
+				+ ": bounds violated for value " + value);
 		}
 		for (int i = 0; i < cutoffs.size(); i++) {
 			if (value < cutoffs.get(i)) {

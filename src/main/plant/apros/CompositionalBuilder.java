@@ -110,7 +110,9 @@ public class CompositionalBuilder {
 	/*
 	 * Remove self-loops unless this violates completeness.
 	 */
-	final static boolean REMOVE_LOOPS_WHERE_POSSIBLE = true;
+	final static boolean REMOVE_LOOPS_WHERE_POSSIBLE = false;
+	
+	final static boolean PROXIMITY_COMPLETION = true;
 	
 	final static int FAST_THRESHOLD = 0;
 	final static boolean ALL_EVENT_COMBINATIONS = false;
@@ -148,6 +150,59 @@ public class CompositionalBuilder {
 		System.out.println("Self-loops removed: " + removed);
 		return res;
 	}
+	
+	private static double proximity(String e1, String e2, Configuration conf) {
+		double sum = 0;
+		for (int i = 0; i < conf.inputParameters.size(); i++) {
+			final int v1 = Integer.parseInt(String.valueOf(e1.charAt(i + 1)));
+			final int v2 = Integer.parseInt(String.valueOf(e2.charAt(i + 1)));
+			final int intDiff = Math.abs(v1 - v2);
+			final double scaledDiff = (double) intDiff / (conf.inputParameters.get(i).valueCount() - 1);
+			sum += scaledDiff;
+		}
+		return sum / conf.inputParameters.size();
+	}
+	
+	private static NondetMooreAutomaton proximityBasedCompletion(NondetMooreAutomaton a, Configuration conf) {
+		final NondetMooreAutomaton res = a.copy();
+		int redirected = 0;
+		for (MooreNode state : res.states()) {
+			final List<MooreTransition> list = new ArrayList<>(state.transitions());
+			for (MooreTransition t : list) {
+				if (res.isUnsupported(t)) {
+					String closestEvent = null;
+					// use the destination of the closest other supported transition
+					double bestProximity = Double.MAX_VALUE;
+					for (MooreTransition tOther : list) {
+						if (!res.isUnsupported(tOther)) {
+							final double p = proximity(t.event(), tOther.event(), conf);
+							if (p < bestProximity) {
+								bestProximity = p;
+								closestEvent = tOther.event();
+							}
+						}
+					}
+					
+					if (closestEvent != null) {
+						res.removeTransition(state, t);
+						res.removeUnsupportedTransition(t);
+						for (MooreTransition tOther : list) {
+							if (tOther.event().equals(closestEvent)) {
+								final MooreTransition tCopy = new MooreTransition(state,
+										tOther.dst(), t.event());
+								res.addTransition(state, tCopy);
+								res.addUnsupportedTransition(tCopy);
+								redirected++;
+							}
+						}
+					}
+				}
+			}
+		}
+		System.out.println("Transitions redirected based on proximity: " + redirected);
+		return res;
+	}
+		
 	
 	// assuming that we have at most 10 intervals
 	static boolean isProperAction(String action, String prefix) {
@@ -534,8 +589,13 @@ public class CompositionalBuilder {
 			String namePrefix, Map<String, String> colorRules) throws FileNotFoundException {
 		conf.annotate(a);
 		
-		final NondetMooreAutomaton effectiveA = REMOVE_LOOPS_WHERE_POSSIBLE
-				? removeLoopsWherePossible(a) : a; 
+		NondetMooreAutomaton effectiveA = a;
+		if (PROXIMITY_COMPLETION) {
+			effectiveA = proximityBasedCompletion(effectiveA, conf);
+		}
+		if (REMOVE_LOOPS_WHERE_POSSIBLE) {
+			effectiveA = removeLoopsWherePossible(effectiveA);
+		}
 		
 		try (PrintWriter pw = new PrintWriter(namePrefix + "gv")) {
 			pw.println(effectiveA.toString(colorRules));

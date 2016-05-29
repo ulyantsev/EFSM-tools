@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.ArrayUtils;
@@ -30,23 +31,31 @@ public class NondetMooreAutomaton {
     
     // optional, for pretty output
     private Map<String, String> actionDescriptions = Collections.emptyMap();
-    
     public void setActionDescriptions(Map<String, String> actionDescriptions) {
     	this.actionDescriptions = actionDescriptions;
     }
     
     // optional, for NuSMV output conversion
     private List<Pair<String, Parameter>> actionThresholds = Collections.emptyList();
-    
     public void setActionThresholds(List<Pair<String, Parameter>> actionThresholds) {
     	this.actionThresholds = actionThresholds;
     }
     
     // optional, for NuSMV input conversion
     private List<Pair<String, Parameter>> eventThresholds = Collections.emptyList();
-    
     public void setEventThresholds(List<Pair<String, Parameter>> eventThresholds) {
     	this.eventThresholds = eventThresholds;
+    }
+    
+    private Set<MooreTransition> unsupportedTransitions = new HashSet<>();
+    public void addUnsupportedTransition(MooreTransition t) {
+    	unsupportedTransitions.add(t);
+    }
+    public void removeUnsupportedTransition(MooreTransition t) {
+    	unsupportedTransitions.remove(t);
+    }
+    public boolean isUnsupported(MooreTransition t) {
+    	return unsupportedTransitions.contains(t);
     }
     
     public static NondetMooreAutomaton readGV(String filename) throws FileNotFoundException {
@@ -110,9 +119,9 @@ public class NondetMooreAutomaton {
 		return a;
 	}
 	
-    public NondetMooreAutomaton(List<MooreNode> states, List<Boolean> isStart) {
+    public NondetMooreAutomaton(List<MooreNode> states, List<Boolean> isInitial) {
     	this.states.addAll(states);
-        this.isInitial.addAll(isStart);
+        this.isInitial.addAll(isInitial);
     }
     
     public NondetMooreAutomaton(int statesCount, List<StringActions> actions, List<Boolean> isInitial) {
@@ -240,15 +249,20 @@ public class NondetMooreAutomaton {
     	sb.append("\n");
     	sb.append("MODULE PLANT(" + inputLine + ")\n");
     	sb.append("VAR\n");
+    	sb.append("    unsupported: boolean;\n");
+    	sb.append("    loop_executed: boolean;\n");
     	sb.append("    state: 0.." + (stateCount() - 1) + ";\n");    	
     	sb.append("INIT\n");
     	sb.append("    state in { " + initialStates().toString().replace("[", "").replace("]", "") + " }\n");
     	sb.append("TRANS\n");
     	// if the output is known, then the next state is constrained, otherwise it is free
-    	sb.append("    (next(" + String.join(") | next(", events) + ")) -> \n");
+    	
+    	sb.append("    next(known_input) -> \n");
     	final List<String> stateConstraints = new ArrayList<>();
     	for (int i = 0; i < stateCount(); i++) {
         	final List<String> options = new ArrayList<>();
+        	
+        	final Map<List<Integer>, Set<String>> map = new LinkedHashMap<>();
     		for (String event : events) {
     			final List<Integer> destinations = new ArrayList<>();
     			for (MooreTransition t : states.get(i).transitions()) {
@@ -257,13 +271,51 @@ public class NondetMooreAutomaton {
         			}
         		}
     			Collections.sort(destinations);
-    			options.add("next(" + event + ") & next(state) in { "
+    			Set<String> correspondingEvents = map.get(destinations);
+    			if (correspondingEvents == null) {
+    				correspondingEvents = new TreeSet<>();
+    				map.put(destinations, correspondingEvents);
+    			}
+    			correspondingEvents.add(event);
+    		}
+    		
+    		for (Map.Entry<List<Integer>, Set<String>> entry : map.entrySet()) {
+    			final List<Integer> destinations = entry.getKey();
+    			final Set<String> correspondingEvents = entry.getValue();
+    			
+    			options.add("(" + String.join(" | ", correspondingEvents.stream()
+    					.map(s -> "next(" + s + ")")
+        				.collect(Collectors.toList())) + ") & next(state) in { "
     					+ destinations.toString().replace("[", "").replace("]", "") + " }");
     		}
+    		
     		stateConstraints.add("state = " + i + " -> (\n      " + String.join("\n    | ", options));
     	}
     	sb.append("    (" + String.join("\n    )) & (", stateConstraints) + "))\n");
+    	
+    	// marking that there was a transition unsupported by traces
+    	sb.append("ASSIGN\n");
+    	sb.append("    init(unsupported) := FALSE;\n");
+    	final List<String> unsupported = new ArrayList<>();
+    	unsupported.add("unsupported | !next(known_input)");
+    	for (int i = 0; i < stateCount(); i++) {
+    		final Set<String> unsupportedInputs = new TreeSet<>();
+    		for (MooreTransition t : states.get(i).transitions()) {
+    			if (unsupportedTransitions.contains(t)) {
+    				unsupportedInputs.add("input_" + t.event());
+    			}
+    		}
+    		if (!unsupportedInputs.isEmpty()) {
+    			unsupported.add("state = " + i + " & (" + String.join(" | ", unsupportedInputs) + ")");
+    		}
+    	}
+    	sb.append("    next(unsupported) := " + String.join("\n        | ", unsupported) + ";\n");
+    	sb.append("    init(loop_executed) := FALSE;\n");
+    	sb.append("    next(loop_executed) := loop_executed | (state = next(state));\n");
+    	
     	sb.append("DEFINE\n");
+    	sb.append("    known_input := " + String.join(" | ", events) + ";\n");
+
     	for (String action : actions) {
     		final List<String> properStates = new ArrayList<>();
     		for (int i = 0; i < stateCount(); i++) {
@@ -340,7 +392,12 @@ public class NondetMooreAutomaton {
 		for (MooreNode state : states) {
 			final MooreNode src = copy.state(state.number());
 			for (MooreTransition t : state.transitions()) {
-				src.addTransition(t.event(), copy.state(t.dst().number()));
+				final MooreTransition tNew
+					= new MooreTransition(src, copy.state(t.dst().number()), t.event());
+				src.addTransition(tNew);
+				if (unsupportedTransitions.contains(t)) {
+					copy.unsupportedTransitions.add(tNew);
+				}
 			}
 		}
 		

@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
+import org.apache.commons.lang3.tuple.Pair;
+
 public class TraceModelGenerator {
 	final static Configuration CONF = Settings.CONF;
 	final static String FILENAME_PREFIX = "correct_recorded_";
@@ -25,14 +27,15 @@ public class TraceModelGenerator {
 		
 		sb.append(ConstraintExtractor.plantCaption(CONF));
 		sb.append("    step: 0.." + (maxLength - 1) + ";\n");
-		sb.append("    in_loop: boolean;\n");
+		sb.append("    unsupported: boolean;\n");
 		sb.append("FROZENVAR\n    trace: 0.." + (ds.values.size() - 1) + ";\n");
 		sb.append("ASSIGN\n");
 		sb.append("    init(step) := 0;\n");
 		sb.append("    next(step) := step < " + (maxLength - 1)
 				+ " ? step + 1 : " + (maxLength - 1) + ";\n");
-		sb.append("    init(in_loop) := FALSE;\n");
-		sb.append("    next(in_loop) := step = " + (maxLength - 1) + ";\n");
+		sb.append("    init(unsupported) := FALSE;\n");
+		sb.append("    next(unsupported) := step = " + (maxLength - 1) + ";\n");
+
 		for (Parameter p : CONF.outputParameters) {
 			sb.append("    output_" + p.traceName() + " := case\n");
 			for (int traceIndex = 0; traceIndex < ds.values.size(); traceIndex++) {
@@ -46,17 +49,34 @@ public class TraceModelGenerator {
 					final int res = p.traceNameIndex(value);
 					valuesToSteps.get(res).add(step);
 				}
+				
+				// more compact representation
+				final List<Pair<Integer, Set<Integer>>> pairs = new ArrayList<>();
 				for (int i = 0; i < p.valueCount(); i++) {
 					if (!valuesToSteps.get(i).isEmpty()) {
-						sb.append("            step in "
-								+ valuesToSteps.get(i).toString().replace("[", "{ ").replace("]", " }")
-								+ ": " + i + ";\n");
+						pairs.add(Pair.of(i, valuesToSteps.get(i)));
 					}
+				}
+				
+				pairs.sort((v1, v2) -> Integer.compare(v2.getRight().size(),
+						v1.getRight().size()));
+				pairs.add(pairs.remove(0)); // shift
+				
+				for (int i = 0; i < pairs.size(); i++) {
+					final String condition = i == pairs.size() - 1 ? "TRUE"
+							: ("step in " + pairs.get(i).getRight().toString()
+								.replace("[", "{ ").replace("]", " }"));
+					sb.append("            " + condition + ": "
+							+ pairs.get(i).getLeft() + ";\n");
+
 				}
 				sb.append("        esac;\n");
 			}
 			sb.append("    esac;\n");
 		}
+		
+    	sb.append("DEFINE\n");
+    	sb.append("    loop_executed := unsupported;\n");
 		
 		sb.append(ConstraintExtractor.plantConversions(CONF));
 		
