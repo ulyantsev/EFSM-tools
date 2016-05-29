@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -64,8 +65,7 @@ public class TraceModelGenerator {
 				
 				for (int i = 0; i < pairs.size(); i++) {
 					final String condition = i == pairs.size() - 1 ? "TRUE"
-							: ("step in " + pairs.get(i).getRight().toString()
-								.replace("[", "{ ").replace("]", " }"));
+							: ("step in " + expressWithIntervals(pairs.get(i).getRight()));
 					sb.append("            " + condition + ": "
 							+ pairs.get(i).getLeft() + ";\n");
 
@@ -84,5 +84,26 @@ public class TraceModelGenerator {
 			pw.println(sb);
 		}
 		System.out.println("Done.");
+	}
+	
+	private static String expressWithIntervals(Set<Integer> values) {
+		final List<Pair<Integer, Integer>> intervals = new ArrayList<>();
+		Integer min = null;
+		Integer max = null;
+		for (int value : values) {
+			if (min == null) {
+				min = max = value;
+			} else if (value == max + 1) {
+				max = value;
+			} else if (value <= max) {
+				throw new AssertionError("Input set must contain increasing values.");
+			} else {
+				intervals.add(Pair.of(min, max));
+				min = max = value;
+			}
+		}
+		intervals.add(Pair.of(min, max));
+		return String.join(" union ", intervals.stream().map(p -> p.getLeft() + ".." + p.getRight())
+				.collect(Collectors.toList()));
 	}
 }
