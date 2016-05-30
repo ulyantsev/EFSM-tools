@@ -22,6 +22,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
 import main.plant.apros.Parameter;
+import main.plant.apros.TraceModelGenerator;
 import scenario.StringActions;
 import scenario.StringScenario;
 
@@ -231,6 +232,7 @@ public class NondetMooreAutomaton {
 	}
     
     public String toNuSMVString(List<String> events, List<String> actions) {
+    	final List<String> unmodifiedEvents = events;
     	events = events.stream().map(s -> "input_" + s).collect(Collectors.toList());
     	final String inputLine = String.join(", ",
     			eventThresholds.stream().map(t -> "CONT_INPUT_" + t.getKey())
@@ -253,7 +255,7 @@ public class NondetMooreAutomaton {
     	sb.append("    loop_executed: boolean;\n");
     	sb.append("    state: 0.." + (stateCount() - 1) + ";\n");    	
     	sb.append("INIT\n");
-    	sb.append("    state in { " + initialStates().toString().replace("[", "").replace("]", "") + " }\n");
+    	sb.append("    state in " + TraceModelGenerator.expressWithIntervals(initialStates()) + "\n");
     	sb.append("TRANS\n");
     	// if the output is known, then the next state is constrained, otherwise it is free
     	
@@ -285,8 +287,8 @@ public class NondetMooreAutomaton {
     			
     			options.add("(" + String.join(" | ", correspondingEvents.stream()
     					.map(s -> "next(" + s + ")")
-        				.collect(Collectors.toList())) + ") & next(state) in { "
-    					+ destinations.toString().replace("[", "").replace("]", "") + " }");
+        				.collect(Collectors.toList())) + ") & next(state) in "
+    					+ TraceModelGenerator.expressWithIntervals(destinations));
     		}
     		
     		stateConstraints.add("state = " + i + " -> (\n      " + String.join("\n    | ", options));
@@ -298,7 +300,23 @@ public class NondetMooreAutomaton {
     	sb.append("    init(unsupported) := FALSE;\n");
     	final List<String> unsupported = new ArrayList<>();
     	unsupported.add("unsupported | !next(known_input)");
-    	for (int i = 0; i < stateCount(); i++) {
+    	for (String e : unmodifiedEvents) {
+    		final Set<Integer> sourceStates = new TreeSet<>();
+    		for (int i = 0; i < stateCount(); i++) {
+    			for (MooreTransition t : states.get(i).transitions()) {
+    				if (t.event().equals(e) && unsupportedTransitions.contains(t)) {
+    					sourceStates.add(i);
+    					break;
+    				}
+    			}
+    		}
+    		if (!sourceStates.isEmpty()) {
+    			unsupported.add("input_" + e + " & state in "
+    					+ TraceModelGenerator.expressWithIntervals(sourceStates));
+    		}	
+    	}
+    	
+    	/*for (int i = 0; i < stateCount(); i++) {
     		final Set<String> unsupportedInputs = new TreeSet<>();
     		for (MooreTransition t : states.get(i).transitions()) {
     			if (unsupportedTransitions.contains(t)) {
@@ -308,24 +326,24 @@ public class NondetMooreAutomaton {
     		if (!unsupportedInputs.isEmpty()) {
     			unsupported.add("state = " + i + " & (" + String.join(" | ", unsupportedInputs) + ")");
     		}
-    	}
+    	}*/
     	sb.append("    next(unsupported) := " + String.join("\n        | ", unsupported) + ";\n");
     	sb.append("    init(loop_executed) := FALSE;\n");
-    	sb.append("    next(loop_executed) := loop_executed | (state = next(state));\n");
+    	sb.append("    next(loop_executed) := loop_executed | state = next(state);\n");
     	
     	sb.append("DEFINE\n");
     	sb.append("    known_input := " + String.join(" | ", events) + ";\n");
 
     	for (String action : actions) {
-    		final List<String> properStates = new ArrayList<>();
+    		final List<Integer> properStates = new ArrayList<>();
     		for (int i = 0; i < stateCount(); i++) {
     			if (ArrayUtils.contains(states.get(i).actions().getActions(), action)) {
-    				properStates.add(String.valueOf(i));
+    				properStates.add(i);
     			}
     		}
     		final String condition = properStates.isEmpty()
     				? "FALSE"
-    				: ("state in { " + String.join(", ", properStates) + " }");
+    				: ("state in " + TraceModelGenerator.expressWithIntervals(properStates));
     		final String comment = actionDescriptions.containsKey(action)
     				? (" -- " + actionDescriptions.get(action)) : "";
     		sb.append("    output_" + action + " := " + condition + ";" + comment + "\n");

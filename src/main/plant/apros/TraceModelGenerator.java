@@ -3,10 +3,10 @@ package main.plant.apros;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -86,7 +86,7 @@ public class TraceModelGenerator {
 		System.out.println("Done.");
 	}
 	
-	private static String expressWithIntervals(Set<Integer> values) {
+	public static String expressWithIntervals(Collection<Integer> values) {
 		final List<Pair<Integer, Integer>> intervals = new ArrayList<>();
 		Integer min = null;
 		Integer max = null;
@@ -103,7 +103,19 @@ public class TraceModelGenerator {
 			}
 		}
 		intervals.add(Pair.of(min, max));
-		return String.join(" union ", intervals.stream().map(p -> p.getLeft() + ".." + p.getRight())
-				.collect(Collectors.toList()));
+		final List<String> stringIntervals = new ArrayList<>();
+		final Set<Integer> separate = new TreeSet<>();
+		for (Pair<Integer, Integer> interval : intervals) {
+			if (interval.getLeft() + 1 >= interval.getRight()) {
+				separate.add(interval.getLeft());
+				separate.add(interval.getRight());
+			} else {
+				stringIntervals.add(interval.getLeft() + ".." + interval.getRight());
+			}
+		}
+		if (!separate.isEmpty()) {
+			stringIntervals.add(separate.toString().replace("[", "{ ").replace("]", " }"));
+		}
+		return String.join(" union ", stringIntervals);
 	}
 }
