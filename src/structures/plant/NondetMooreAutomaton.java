@@ -231,7 +231,7 @@ public class NondetMooreAutomaton {
 		}
 	}
     
-    public String toNuSMVString(List<String> events, List<String> actions) {
+    public String toNuSMVString(List<String> events, List<String> actions, List<List<Integer>> generatedStateSets) {
     	final List<String> unmodifiedEvents = events;
     	events = events.stream().map(s -> "input_" + s).collect(Collectors.toList());
     	final String inputLine = String.join(", ",
@@ -256,6 +256,7 @@ public class NondetMooreAutomaton {
     	sb.append("    state: 0.." + (stateCount() - 1) + ";\n");    	
     	sb.append("INIT\n");
     	sb.append("    state in " + TraceModelGenerator.expressWithIntervals(initialStates()) + "\n");
+    	generatedStateSets.add(initialStates());
     	sb.append("TRANS\n");
     	// if the output is known, then the next state is constrained, otherwise it is free
     	
@@ -289,6 +290,8 @@ public class NondetMooreAutomaton {
     					.map(s -> "next(" + s + ")")
         				.collect(Collectors.toList())) + ") & next(state) in "
     					+ TraceModelGenerator.expressWithIntervals(destinations));
+    	    	generatedStateSets.add(destinations);
+
     		}
     		
     		stateConstraints.add("state = " + i + " -> (\n      " + String.join("\n    | ", options));
@@ -313,20 +316,10 @@ public class NondetMooreAutomaton {
     		if (!sourceStates.isEmpty()) {
     			unsupported.add("input_" + e + " & state in "
     					+ TraceModelGenerator.expressWithIntervals(sourceStates));
+    			generatedStateSets.add(new ArrayList<>(sourceStates));
     		}	
     	}
     	
-    	/*for (int i = 0; i < stateCount(); i++) {
-    		final Set<String> unsupportedInputs = new TreeSet<>();
-    		for (MooreTransition t : states.get(i).transitions()) {
-    			if (unsupportedTransitions.contains(t)) {
-    				unsupportedInputs.add("input_" + t.event());
-    			}
-    		}
-    		if (!unsupportedInputs.isEmpty()) {
-    			unsupported.add("state = " + i + " & (" + String.join(" | ", unsupportedInputs) + ")");
-    		}
-    	}*/
     	sb.append("    next(unsupported) := " + String.join("\n        | ", unsupported) + ";\n");
     	sb.append("    init(loop_executed) := FALSE;\n");
     	sb.append("    next(loop_executed) := loop_executed | state = next(state);\n");
@@ -344,6 +337,7 @@ public class NondetMooreAutomaton {
     		final String condition = properStates.isEmpty()
     				? "FALSE"
     				: ("state in " + TraceModelGenerator.expressWithIntervals(properStates));
+    		generatedStateSets.add(properStates);
     		final String comment = actionDescriptions.containsKey(action)
     				? (" -- " + actionDescriptions.get(action)) : "";
     		sb.append("    output_" + action + " := " + condition + ";" + comment + "\n");
@@ -423,6 +417,33 @@ public class NondetMooreAutomaton {
 		copy.actionThresholds = actionThresholds;
 		copy.eventThresholds = eventThresholds;
 
+		return copy;
+    }
+    
+    public NondetMooreAutomaton swapStates(int[] permutation) {
+		final NondetMooreAutomaton copy = copy();
+		
+		for (int i = 0; i < isInitial.size(); i++) {
+			copy.isInitial.set(i, isInitial.get(permutation[i]));
+		}
+		
+		copy.states.clear();
+		for (int i = 0; i < states.size(); i++) {
+			copy.states.add(new MooreNode(i, states.get(permutation[i]).actions()));
+		}
+	
+		for (MooreNode state : states) {
+			final MooreNode src = copy.state(permutation[state.number()]);
+			for (MooreTransition t : state.transitions()) {
+				final MooreNode dst = copy.state(permutation[t.dst().number()]);				
+				final MooreTransition tNew = new MooreTransition(src, dst, t.event());
+				src.addTransition(tNew);
+				if (unsupportedTransitions.contains(t)) {
+					copy.unsupportedTransitions.add(tNew);
+				}
+			}
+		}
+		
 		return copy;
     }
     

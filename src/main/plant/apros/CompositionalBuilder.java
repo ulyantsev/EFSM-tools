@@ -118,6 +118,7 @@ public class CompositionalBuilder {
 	final static boolean ALL_EVENT_COMBINATIONS = false;
 	final static String TRACE_LOCATION = TraceTranslator.INPUT_DIRECTORY;
 	final static boolean ENSURE_COMPLETENESS = true;
+	final static boolean EVOLUTIONARY_NUSMV_OPTIMIZATION = false;
 	
 	/*******************************************/
 	
@@ -596,12 +597,18 @@ public class CompositionalBuilder {
 		if (REMOVE_LOOPS_WHERE_POSSIBLE) {
 			effectiveA = removeLoopsWherePossible(effectiveA);
 		}
+		if (EVOLUTIONARY_NUSMV_OPTIMIZATION) {
+			effectiveA = new EvolutionaryNuSMVOptimizer(effectiveA,
+					eventsFromAutomaton(effectiveA), conf.actions()).run();
+		}
 		
 		try (PrintWriter pw = new PrintWriter(namePrefix + "gv")) {
 			pw.println(effectiveA.toString(colorRules));
 		}
+		
 		try (PrintWriter pw = new PrintWriter(namePrefix + "smv")) {
-			pw.println(effectiveA.toNuSMVString(eventsFromAutomaton(a), conf.actions()));
+			pw.println(effectiveA.toNuSMVString(eventsFromAutomaton(a),
+					conf.actions(), new ArrayList<>()));
 		}
 	}
 }

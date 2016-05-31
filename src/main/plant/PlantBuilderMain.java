@@ -309,7 +309,7 @@ public class PlantBuilderMain {
 				
 				if (nusmvFilePath != null) {
 					try (PrintWriter pw = new PrintWriter(new File(nusmvFilePath))) {
-						pw.println(resultAutomaton.get().toNuSMVString(events, actions));
+						pw.println(resultAutomaton.get().toNuSMVString(events, actions, new ArrayList<>()));
 					} catch (FileNotFoundException e) {
 						logger.warning("File " + nusmvFilePath + " not found: " + e.getMessage());
 					}

@@ -86,12 +86,12 @@ public class TraceModelGenerator {
 		System.out.println("Done.");
 	}
 	
-	public static String expressWithIntervals(Collection<Integer> values) {
+	public static List<Pair<Integer, Integer>> intervals(Collection<Integer> values) {
 		final List<Pair<Integer, Integer>> intervals = new ArrayList<>();
-		Integer min = null;
-		Integer max = null;
+		int min = -1;
+		int max = -1;
 		for (int value : values) {
-			if (min == null) {
+			if (min == -1) {
 				min = max = value;
 			} else if (value == max + 1) {
 				max = value;
@@ -103,6 +103,11 @@ public class TraceModelGenerator {
 			}
 		}
 		intervals.add(Pair.of(min, max));
+		return intervals;
+	}
+	
+	public static String expressWithIntervals(Collection<Integer> values) {
+		final List<Pair<Integer, Integer>> intervals = intervals(values);
 		final List<String> stringIntervals = new ArrayList<>();
 		final Set<Integer> separate = new TreeSet<>();
 		for (Pair<Integer, Integer> interval : intervals) {
