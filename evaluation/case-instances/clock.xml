@@ -1,6 +1,8 @@
 <program xmlns:xsi = "http://www.w3.org/2001/XMLSchema-instance"
          xsi:noNamespaceSchemaLocation = "resources/program.xsd">
 
+    <!-- For input and output explanations, see the second page of http://rain.ifmo.ru/~chivdan/papers/2012/2012-GECCO12-Chivilikhin-Ulyantsev-Tsarev.pdf -->
+
     <parameters>
         <populationSize>2000</populationSize>
         <desiredFitness>0.0086</desiredFitness>

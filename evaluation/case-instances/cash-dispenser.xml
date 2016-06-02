@@ -3,40 +3,40 @@
 
     <!--
         Events:
-        IC - карта вставлена
-        EC - извлечь карту
-        A  - введен пин, запрос авторизации
-        AE - пин неверный
-        AS - пин верный
+        IC - card inserted
+        EC - card removal request
+        A  - authorization request
+        AE - invalid PIN
+        AS - authorization success
 
-        C  - запрос баланса
-        CR - сервер возвратил баланс
-        CP - запрос чека с балансом
+        C  - balance query
+        CR - balance returned
+        CP - balance statement request
 
-        M  - запрос денег
-        MR - запросить деньги у сервера
-        MS - денег достаточно
-        ME - денег не хватает
-        MP - запрос чека
+        M  - cash request
+        MR - request money from server
+        MS - sufficient funds
+        ME - insufficient funds
+        MP - receipt request
 
-        CNL - отмена/вернуться в меню
+        CNL - cancel / return to menu
 
         Actions:
-        z1  - спросить пин
-        z2  - извлечь карту
-        z3  - послать пин серверу
-        z4  - показать главное меню (там запрос баланса, снатие, возврат карты)
+        z1  - request PIN
+        z2  - remove card
+        z3  - send PIN to the server
+        z4  - show main menu (with balance, cash, card removal requests)
 
-        z5  - запросить баланс у сервера
-        z6  - показать страницу с балансов
-        z7  - печать чека с балансом
+        z5  - request balance from the server
+        z6  - show balance
+        z7  - print balance statement
 
-        z8  - показать поле для вводы суммы
-        z9  - послать серверу запрос
-        z10 - спросить про чек
-        z11 - возврат денег
-        z12 - послать серверу что деньги снялись
-        z13 - печать чека со снятой суммой
+        z8  - ask about cash amount
+        z9  - send query to the server
+        z10 - ask about receipt
+        z11 - return cash
+        z12 - acknowledge money withdrawal to the server
+        z13 - print receipt
     -->
 
     <parameters>

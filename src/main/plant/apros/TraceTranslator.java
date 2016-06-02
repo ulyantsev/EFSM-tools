@@ -544,6 +544,10 @@ public class TraceTranslator {
 			), Arrays.asList(valveE51_preslevco,
 					valveK52_preslevco, valveK53_preslevco));
 	
+	// scaled x100
+	final static Parameter pressurizerWaterLevel_prespresco = new RealParameter(
+			"YP10B001#PR11_LIQ_LEVEL", "pressurizer_water_level", Pair.of(0.0, 850.0),
+			231.0);
 	// scaled x 1/10000
 	final static Parameter pressurizerPressure_prespresco = new RealParameter(
 			"YP10B001_NO8#NO6_PRESSURE", "pressurizer_pressure", Pair.of(0.0, 20e2),
@@ -571,7 +575,7 @@ public class TraceTranslator {
 	final static Configuration CONF_PRES_PRES_CONT = new Configuration(
 			1.0,
 			Arrays.asList(
-					pressurizerWaterLevel_preslevco,
+					pressurizerWaterLevel_prespresco,
 					pressurizerPressure_prespresco
 			), Arrays.asList(power_prespresco,
 					valve1311_prespresco,

@@ -2,13 +2,13 @@
          xsi:noNamespaceSchemaLocation = "resources/program.xsd">
 
     <!--
-        e11 - открыть двери
-        e12 - закрыть двери
-        e2 - успешное отктрытие или закрытие дверей
-        e3 - припядсвие мешает закрыть двери
-        e4 - двери сломались
-        z1/z2 запуск открытия/закрытия дверей
-        z3 - звонок в аварийную службу
+        e11 - open doors
+        e12 - close doors
+        e2 - successfully closed or opened doors
+        e3 - obstacle prevents closing doors
+        e4 - door manfunction
+        z1/z2 open/close doors
+        z3 - call emergency service
     -->
 
     <parameters>

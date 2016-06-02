@@ -1,3 +1,0 @@
-G(!(action(g0) && action(g1)))
-!G(F(!variable(x0)) && F(!variable(x1))) || G(!variable(x0) || F(action(g0)))
-!G(F(!variable(x0)) && F(!variable(x1))) || G(!variable(x1) || F(action(g1)))
