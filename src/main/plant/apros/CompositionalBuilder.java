@@ -1,6 +1,7 @@
 package main.plant.apros;
 
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -116,7 +117,6 @@ public class CompositionalBuilder {
 	
 	final static int FAST_THRESHOLD = 0;
 	final static boolean ALL_EVENT_COMBINATIONS = false;
-	final static String TRACE_LOCATION = TraceTranslator.INPUT_DIRECTORY;
 	final static boolean ENSURE_COMPLETENESS = true;
 	final static boolean EVOLUTIONARY_NUSMV_OPTIMIZATION = false;
 	
@@ -498,7 +498,7 @@ public class CompositionalBuilder {
 		}
 	}
 	
-	public static void main(String[] args) throws FileNotFoundException {		
+	public static void main(String[] args) throws IOException {		
 		// 1. Unification of all configuration pairs:
 		System.out.println("*** UNIFICATION");
 		for (int i = 0; i < CONFS.size(); i++) {
@@ -513,8 +513,7 @@ public class CompositionalBuilder {
 		
 		// 2. Load the dataset
 		System.out.println("*** LOADING THE DATASET");
-		final Dataset ds = new Dataset(CONFS.get(0).intervalSec,
-				TRACE_LOCATION, "", TraceTranslator.PARAM_SCALES);
+		final Dataset ds = Dataset.load("");
 		
 		// 3. Build all the basic plants
 		final List<NondetMooreAutomaton> automata = new ArrayList<>();

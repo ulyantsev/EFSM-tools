@@ -1,6 +1,6 @@
 package main.plant.apros;
 
-import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -47,9 +47,8 @@ public class ConstraintExtractor {
     	return sb.toString();
 	}
 	
-	public static void main(String[] args) throws FileNotFoundException {
-		final Dataset ds = new Dataset(CONF.intervalSec, TraceTranslator.INPUT_DIRECTORY,
-				"", TraceTranslator.PARAM_SCALES);
+	public static void main(String[] args) throws IOException {
+		final Dataset ds = Dataset.load("");
 		final StringBuilder sb = new StringBuilder();
 		sb.append(plantCaption(CONF));
     	final List<String> initConstraints = new ArrayList<>();

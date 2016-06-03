@@ -1,17 +1,32 @@
 package main.plant.apros;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 
-public class Dataset {
+public class Dataset implements Serializable {
 	private final Map<String, Integer> paramIndices = new HashMap<>();
 	final List<List<double[]>> values = new ArrayList<>();
 	final Map<String, Double> paramScales;
+	
+	public final static long serialVersionUID = 1L;
+	
+	public static Dataset load(String traceFilenamePrefix) throws IOException {
+		try (ObjectInputStream in = new ObjectInputStream(
+				new FileInputStream("dataset_" + traceFilenamePrefix + ".bin"))) {
+			return (Dataset) in.readObject();
+		} catch (ClassNotFoundException e) {
+			throw new RuntimeException();
+		}
+	}
 	
 	public double get(double[] values, Parameter p) {
 		final Integer index = paramIndices.get(p.aprosName());

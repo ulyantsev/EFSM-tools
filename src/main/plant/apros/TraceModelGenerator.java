@@ -1,6 +1,6 @@
 package main.plant.apros;
 
-import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -12,11 +12,9 @@ import org.apache.commons.lang3.tuple.Pair;
 
 public class TraceModelGenerator {
 	final static Configuration CONF = Settings.CONF;
-	final static String FILENAME_PREFIX = "correct_recorded_";
 
-	public static void main(String[] args) throws FileNotFoundException {		
-		final Dataset ds = new Dataset(CONF.intervalSec,
-				TraceTranslator.INPUT_DIRECTORY, FILENAME_PREFIX, TraceTranslator.PARAM_SCALES);
+	public static void main(String[] args) throws IOException {		
+		final Dataset ds = Dataset.load(Settings.CORRECT_CONTROLLER_TRACE_PREFIX);
 		
 		final StringBuilder sb = new StringBuilder();
 		final int maxLength = ds.values.stream().mapToInt(v -> v.size()).max().getAsInt();
