@@ -258,13 +258,10 @@ public class NondetMooreAutomaton {
     	sb.append("    state in " + TraceModelGenerator.expressWithIntervals(initialStates()) + "\n");
     	generatedStateSets.add(initialStates());
     	sb.append("TRANS\n");
-    	// if the output is known, then the next state is constrained, otherwise it is free
     	
-    	sb.append("    next(known_input) -> \n");
     	final List<String> stateConstraints = new ArrayList<>();
     	for (int i = 0; i < stateCount(); i++) {
         	final List<String> options = new ArrayList<>();
-        	
         	final Map<List<Integer>, Set<String>> map = new LinkedHashMap<>();
     		for (String event : events) {
     			final List<Integer> destinations = new ArrayList<>();
@@ -279,21 +276,31 @@ public class NondetMooreAutomaton {
     				correspondingEvents = new TreeSet<>();
     				map.put(destinations, correspondingEvents);
     			}
-    			correspondingEvents.add(event);
+    			correspondingEvents.add("next(" + event + ")");
     		}
-    		
+        	final Set<Integer> allSuccStates = new TreeSet<>();
+        	for (MooreTransition t : states.get(i).transitions()) {
+        		allSuccStates.add(t.dst().number());
+        	}
+        	{
+            	// if the input is unknown, then the choice for the next state is wide
+	        	final List<Integer> allSuccStatesList = new ArrayList<>(allSuccStates);
+	        	Set<String> correspondingEvents = map.get(allSuccStatesList);
+				if (correspondingEvents == null) {
+					correspondingEvents = new TreeSet<>();
+					map.put(allSuccStatesList, correspondingEvents);
+				}
+				correspondingEvents.add("!next(known_input)");
+        	}
     		for (Map.Entry<List<Integer>, Set<String>> entry : map.entrySet()) {
     			final List<Integer> destinations = entry.getKey();
     			final Set<String> correspondingEvents = entry.getValue();
     			
-    			options.add("(" + String.join(" | ", correspondingEvents.stream()
-    					.map(s -> "next(" + s + ")")
-        				.collect(Collectors.toList())) + ") & next(state) in "
+    			options.add("(" + String.join(" | ", correspondingEvents) + ") & next(state) in "
     					+ TraceModelGenerator.expressWithIntervals(destinations));
     	    	generatedStateSets.add(destinations);
-
     		}
-    		
+
     		stateConstraints.add("state = " + i + " -> (\n      " + String.join("\n    | ", options));
     	}
     	sb.append("    (" + String.join("\n    )) & (", stateConstraints) + "))\n");
