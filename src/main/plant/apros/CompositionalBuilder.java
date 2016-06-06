@@ -3,18 +3,7 @@ package main.plant.apros;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Deque;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
@@ -170,12 +159,12 @@ public class CompositionalBuilder {
 		for (MooreNode state : res.states()) {
 			final List<MooreTransition> list = new ArrayList<>(state.transitions());
 			for (MooreTransition t : list) {
-				if (res.isUnsupported(t)) {
+				if (res.unsupportedTransitions().contains(t)) {
 					String closestEvent = null;
 					// use the destination of the closest other supported transition
 					double bestProximity = Double.MAX_VALUE;
 					for (MooreTransition tOther : list) {
-						if (!res.isUnsupported(tOther)) {
+						if (!res.unsupportedTransitions().contains(tOther)) {
 							final double p = proximity(t.event(), tOther.event(), conf);
 							if (p < bestProximity) {
 								bestProximity = p;
@@ -186,13 +175,13 @@ public class CompositionalBuilder {
 					
 					if (closestEvent != null) {
 						res.removeTransition(state, t);
-						res.removeUnsupportedTransition(t);
+						res.unsupportedTransitions().remove(t);
 						for (MooreTransition tOther : list) {
 							if (tOther.event().equals(closestEvent)) {
 								final MooreTransition tCopy = new MooreTransition(state,
 										tOther.dst(), t.event());
 								res.addTransition(state, tCopy);
-								res.addUnsupportedTransition(tCopy);
+								res.unsupportedTransitions().add(tCopy);
 								redirected++;
 							}
 						}
@@ -587,8 +576,6 @@ public class CompositionalBuilder {
 	
 	private static void dumpAutomaton(NondetMooreAutomaton a, Configuration conf,
 			String namePrefix, Map<String, String> colorRules) throws FileNotFoundException {
-		conf.annotate(a);
-		
 		NondetMooreAutomaton effectiveA = a;
 		if (PROXIMITY_COMPLETION) {
 			effectiveA = proximityBasedCompletion(effectiveA, conf);
@@ -598,16 +585,16 @@ public class CompositionalBuilder {
 		}
 		if (EVOLUTIONARY_NUSMV_OPTIMIZATION) {
 			effectiveA = new EvolutionaryNuSMVOptimizer(effectiveA,
-					eventsFromAutomaton(effectiveA), conf.actions()).run();
+					eventsFromAutomaton(effectiveA), conf).run();
 		}
 		
 		try (PrintWriter pw = new PrintWriter(namePrefix + "gv")) {
-			pw.println(effectiveA.toString(colorRules));
+			pw.println(effectiveA.toString(colorRules, Optional.of(conf)));
 		}
 		
 		try (PrintWriter pw = new PrintWriter(namePrefix + "smv")) {
 			pw.println(effectiveA.toNuSMVString(eventsFromAutomaton(a),
-					conf.actions(), new ArrayList<>()));
+					conf.actions(), new ArrayList<>(), Optional.of(conf)));
 		}
 	}
 }

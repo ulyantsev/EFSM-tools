@@ -117,7 +117,7 @@ public class TraceModelGenerator {
 			}
 		}
 		if (!separate.isEmpty()) {
-			stringIntervals.add(separate.toString().replace("[", "{ ").replace("]", " }"));
+			stringIntervals.add(separate.toString().replace("[", "{").replace("]", "}"));
 		}
 		return String.join(" union ", stringIntervals);
 	}

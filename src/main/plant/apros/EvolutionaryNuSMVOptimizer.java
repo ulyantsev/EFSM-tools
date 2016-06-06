@@ -1,9 +1,7 @@
 package main.plant.apros;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import structures.plant.NondetMooreAutomaton;
 
@@ -20,17 +18,14 @@ public class EvolutionaryNuSMVOptimizer {
 
 	private final static Random RND = new Random(215);
 	
-	public EvolutionaryNuSMVOptimizer(NondetMooreAutomaton automaton, List<String> events, List<String> actions) {
+	public EvolutionaryNuSMVOptimizer(NondetMooreAutomaton automaton, List<String> events,
+                                      Configuration conf) {
 		this.automaton = automaton;
 		final List<List<Integer>> initialSets = new ArrayList<>();
-		automaton.toNuSMVString(events, actions, initialSets);
-		final List<List<Integer>> initialSetsFiltered = new ArrayList<>();
-		for (List<Integer> s : initialSets) {
-			if (s.size() > 2) {
-				initialSetsFiltered.add(s);
-			}
-		}
-		this.initialSets = new int[initialSetsFiltered.size()][];
+		automaton.toNuSMVString(events, conf.actions(), initialSets, Optional.of(conf));
+		final List<List<Integer>> initialSetsFiltered = initialSets.stream()
+                .filter(s -> s.size() > 2).collect(Collectors.toList());
+        this.initialSets = new int[initialSetsFiltered.size()][];
 		for (int i = 0; i < this.initialSets.length; i++) {
 			final List<Integer> l = initialSetsFiltered.get(i);
 			this.initialSets[i] = new int[l.size()];

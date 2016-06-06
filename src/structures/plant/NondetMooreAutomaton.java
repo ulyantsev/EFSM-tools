@@ -2,22 +2,10 @@ package structures.plant;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Deque;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Scanner;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.stream.Collectors;
 
+import main.plant.apros.Configuration;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -30,33 +18,10 @@ public class NondetMooreAutomaton {
     private final List<Boolean> isInitial = new ArrayList<>();
     private final List<MooreNode> states = new ArrayList<>();
     
-    // optional, for pretty output
-    private Map<String, String> actionDescriptions = Collections.emptyMap();
-    public void setActionDescriptions(Map<String, String> actionDescriptions) {
-    	this.actionDescriptions = actionDescriptions;
-    }
-    
-    // optional, for NuSMV output conversion
-    private List<Pair<String, Parameter>> actionThresholds = Collections.emptyList();
-    public void setActionThresholds(List<Pair<String, Parameter>> actionThresholds) {
-    	this.actionThresholds = actionThresholds;
-    }
-    
-    // optional, for NuSMV input conversion
-    private List<Pair<String, Parameter>> eventThresholds = Collections.emptyList();
-    public void setEventThresholds(List<Pair<String, Parameter>> eventThresholds) {
-    	this.eventThresholds = eventThresholds;
-    }
-    
     private Set<MooreTransition> unsupportedTransitions = new HashSet<>();
-    public void addUnsupportedTransition(MooreTransition t) {
-    	unsupportedTransitions.add(t);
-    }
-    public void removeUnsupportedTransition(MooreTransition t) {
-    	unsupportedTransitions.remove(t);
-    }
-    public boolean isUnsupported(MooreTransition t) {
-    	return unsupportedTransitions.contains(t);
+
+    public Set<MooreTransition> unsupportedTransitions() {
+        return unsupportedTransitions;
     }
     
     public static NondetMooreAutomaton readGV(String filename) throws FileNotFoundException {
@@ -166,11 +131,14 @@ public class NondetMooreAutomaton {
         state.removeTransition(transition);
     }
 
-    public String toString(Map<String, String> colorRules) {
+    public String toString(Map<String, String> colorRules, Optional<Configuration> conf) {
     	final StringBuilder sb = new StringBuilder();
     	sb.append("# generated file; view: dot -Tpng <filename> > filename.png\n"
         	+ "digraph Automaton {\n");
-    	
+
+        final Map<String, String> actionDescriptions = conf.isPresent()
+                ? conf.get().extendedActionDescriptions() : new HashMap<>();
+
     	final String initNodes = String.join(", ", initialStates().stream().map(s -> "init" + s).collect(Collectors.toList()));
     	
 		sb.append("    " + initNodes + " [shape=point, width=0.01, height=0.01, label=\"\", color=white];\n");
@@ -205,7 +173,7 @@ public class NondetMooreAutomaton {
     
     @Override
     public String toString() {
-    	return toString(Collections.emptyMap());
+        return toString(Collections.emptyMap(), Optional.empty());
     }
 
     private static void nusmvEventDescriptions(int[] arr, int index, StringBuilder result,
@@ -231,10 +199,18 @@ public class NondetMooreAutomaton {
 		}
 	}
     
-    public String toNuSMVString(List<String> events, List<String> actions, List<List<Integer>> generatedStateSets) {
+    public String toNuSMVString(List<String> events, List<String> actions,
+                                List<List<Integer>> generatedStateSets,
+                                Optional<Configuration> conf) {
     	final List<String> unmodifiedEvents = events;
     	events = events.stream().map(s -> "input_" + s).collect(Collectors.toList());
-    	final String inputLine = String.join(", ",
+    	final List<Pair<String, Parameter>> eventThresholds = conf.isPresent()
+                ? conf.get().eventThresholds() : new ArrayList<>();
+        final List<Pair<String, Parameter>> actionThresholds = conf.isPresent()
+                ? conf.get().actionThresholds() : new ArrayList<>();
+        final Map<String, String> actionDescriptions = conf.isPresent()
+                ? conf.get().extendedActionDescriptions() : new HashMap<>();
+        final String inputLine = String.join(", ",
     			eventThresholds.stream().map(t -> "CONT_INPUT_" + t.getKey())
     			.collect(Collectors.toList()));
     	final StringBuilder sb = new StringBuilder();
@@ -330,7 +306,6 @@ public class NondetMooreAutomaton {
     	sb.append("    next(unsupported) := " + String.join("\n        | ", unsupported) + ";\n");
     	sb.append("    init(loop_executed) := FALSE;\n");
     	sb.append("    next(loop_executed) := loop_executed | state = next(state);\n");
-    	
     	sb.append("DEFINE\n");
     	sb.append("    known_input := " + String.join(" | ", events) + ";\n");
 
@@ -409,20 +384,16 @@ public class NondetMooreAutomaton {
 				new ArrayList<>(this.isInitial));
 
 		for (MooreNode state : states) {
-			final MooreNode src = copy.state(state.number());
-			for (MooreTransition t : state.transitions()) {
-				final MooreTransition tNew
-					= new MooreTransition(src, copy.state(t.dst().number()), t.event());
-				src.addTransition(tNew);
-				if (unsupportedTransitions.contains(t)) {
-					copy.unsupportedTransitions.add(tNew);
-				}
-			}
-		}
-		
-		copy.actionDescriptions = actionDescriptions;
-		copy.actionThresholds = actionThresholds;
-		copy.eventThresholds = eventThresholds;
+            final MooreNode src = copy.state(state.number());
+            for (MooreTransition t : state.transitions()) {
+                final MooreTransition tNew
+                        = new MooreTransition(src, copy.state(t.dst().number()), t.event());
+                src.addTransition(tNew);
+                if (unsupportedTransitions.contains(t)) {
+                    copy.unsupportedTransitions.add(tNew);
+                }
+            }
+        }
 
 		return copy;
     }

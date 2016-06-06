@@ -29,6 +29,16 @@ public class Configuration {
 		}
 		return result;
 	}
+
+    public Map<String, String> extendedActionDescriptions() {
+        final Map<String, String> descriptions = new LinkedHashMap<>();
+        final List<String> actions = actions();
+        final List<String> actionDescriptions = actionDescriptions();
+        for (int i = 0; i < actions.size(); i++) {
+            descriptions.put(actions.get(i), actionDescriptions.get(i));
+        }
+        return descriptions;
+    }
 	
 	public List<String> actions() {
 		final List<String> result = new ArrayList<>();
@@ -37,29 +47,23 @@ public class Configuration {
 		}
 		return result;
 	}
-	
-	public void annotate(NondetMooreAutomaton a) {
-		final Map<String, String> descriptions = new LinkedHashMap<>();
-		final List<String> actions = actions();
-		final List<String> actionDescriptions = actionDescriptions();
-		for (int i = 0; i < actions.size(); i++) {
-			descriptions.put(actions.get(i), actionDescriptions.get(i));
-		}
-		a.setActionDescriptions(descriptions);
 
-		final List<Pair<String, Parameter>> actionThresholds = new ArrayList<>();
-		for (Parameter p : outputParameters) {
-			actionThresholds.add(Pair.of(p.traceName(), p));
-		}
-		a.setActionThresholds(actionThresholds);
-		
-		final List<Pair<String, Parameter>> eventThresholds = new ArrayList<>();
-		for (Parameter p : inputParameters) {
-			eventThresholds.add(Pair.of(p.traceName(), p));
-		}	
-		a.setEventThresholds(eventThresholds);
-	}
-	
+    public List<Pair<String, Parameter>> actionThresholds() {
+        final List<Pair<String, Parameter>> actionThresholds = new ArrayList<>();
+        for (Parameter p : outputParameters) {
+            actionThresholds.add(Pair.of(p.traceName(), p));
+        }
+        return actionThresholds;
+    }
+
+    public List<Pair<String, Parameter>> eventThresholds() {
+        final List<Pair<String, Parameter>> eventThresholds = new ArrayList<>();
+        for (Parameter p : inputParameters) {
+            eventThresholds.add(Pair.of(p.traceName(), p));
+        }
+        return eventThresholds;
+    }
+
 	public Configuration(double intervalSec,
 			List<Parameter> outputParameters,
 			List<Parameter> inputParameters) {

@@ -78,7 +78,7 @@ public class FastAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 		if (complete) {
 			// add other transitions
 			for (Assignment a : ass.stream()
-					.filter(a -> a.value && a.var.name.startsWith("y_"))
+					.filter(a_ -> a_.value && a_.var.name.startsWith("y_"))
 					.collect(Collectors.toList())) {
 				String[] tokens = a.var.name.split("_");
 				assert tokens.length == 4;

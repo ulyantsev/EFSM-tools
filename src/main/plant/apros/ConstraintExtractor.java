@@ -1,13 +1,7 @@
 package main.plant.apros;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -46,7 +40,21 @@ public class ConstraintExtractor {
     	}
     	return sb.toString();
 	}
-	
+
+	private static String interval(Collection<Integer> values, Parameter p, boolean next) {
+        final String range = TraceModelGenerator.expressWithIntervals(values);
+        if (!range.contains("{") && !range.contains("union")) {
+            final String[] tokens = range.split("\\.\\.");
+            final int first = Integer.parseInt(tokens[0]);
+            final int second = Integer.parseInt(tokens[1]);
+            if (first == 0 && second == p.valueCount() - 1) {
+                return "TRUE";
+            }
+        }
+        return (next ? "next(" : "") + "output_" + p.traceName()
+                + (next ? ")" : "") + " in " + range;
+    }
+
 	public static void main(String[] args) throws IOException {
 		final Dataset ds = Dataset.load("");
 		final StringBuilder sb = new StringBuilder();
@@ -64,10 +72,8 @@ public class ConstraintExtractor {
 						indices.add(index);
 	        		}
 	    		}
-	    		final String range = " in "
-	    				+ indices.toString().replace("[", "{").replace("]", "}");
-	    		initConstraints.add("output_" + p.traceName() + range);
-	    		transConstraints.add("next(output_" + p.traceName() + ")" + range);
+	    		initConstraints.add(interval(indices, p, false));
+	    		transConstraints.add(interval(indices, p, true));
 			}
     	}
     	// 2. overall 2-dimensional constraints
@@ -101,10 +107,10 @@ public class ConstraintExtractor {
 	        			final List<String> optionList = new ArrayList<>();
 	    	    		for (Map.Entry<Integer, Set<Integer>> implication : indexPairs.entrySet()) {
 	    	    			final int index1 = implication.getKey();
-	    	    			optionList.add(varName.apply(pi)
-	    						+ " = " + index1 + " & " + varName.apply(pj) + " in "
-	    						+ implication.getValue().toString().replace("[", "{").replace("]", "}"));
+	    	    			optionList.add(varName.apply(pi) + " = " + index1 + " & "
+                                    + interval(implication.getValue(), pj, false));
 	    	    		}
+
 	    	    		list.add(String.join(" | ", optionList));
 	        		}
 	        	}
@@ -134,10 +140,10 @@ public class ConstraintExtractor {
 					for (int index1 = 0; index1 < pi.valueCount(); index1++) {
 		    			optionList.add("CONT_INPUT_" + pi.traceName()
 							+ " in " + pi.nusmvInterval(index1)
-							+ (indexPairs.get(index1).isEmpty() ? "" : (" & next(output_"
-							+ po.traceName() + ") in "
-							+ indexPairs.get(index1).toString().replace("[", "{").replace("]", "}"))));
+							+ (indexPairs.get(index1).isEmpty() ? ""
+                                : (" & " + interval(indexPairs.get(index1), po, true))));
 		    		}
+
 					transConstraints.add(String.join(" | ", optionList));
 	    		}
     		}
@@ -164,9 +170,7 @@ public class ConstraintExtractor {
 	    			final int index1 = implication.getKey();
 	    			optionList.add("output_" + p.traceName()
 						+ " = " + index1
-						+ " & next(output_" + p.traceName()
-						+ ") in "
-						+ implication.getValue().toString().replace("[", "{").replace("]", "}"));
+						+ (" & " + interval(indexPairs.get(index1), p, true)));
 	    		}
 				transConstraints.add(String.join(" | ", optionList));
     		}

@@ -68,7 +68,7 @@ public class RapidPlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 				if (!state.hasTransition(event)) {
 					final MooreTransition t = new MooreTransition(state, state, event);
 					state.addTransition(t);
-					automaton.addUnsupportedTransition(t);
+					automaton.unsupportedTransitions().add(t);
 				}
 			}
 		}
