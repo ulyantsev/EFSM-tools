@@ -245,9 +245,7 @@ public class CompositionalBuilder {
 		};
 		c1.outputParameters.forEach(process);
 		c2.outputParameters.forEach(process);
-		for (String prefix : match.badActionPrefixes) {
-			traceNameToParam.remove(prefix);
-		}
+        match.badActionPrefixes.forEach(traceNameToParam::remove);
 		final List<Parameter> outputs = new ArrayList<>(traceNameToParam.values());
 		
 		// inputs
@@ -341,7 +339,7 @@ public class CompositionalBuilder {
 
 					// **** The event must be consistent with the NEXT state
 					// **** If it is required to be consistent with the FIRST state,
-					// **** then there are some semantical problems
+					// **** then there are some semantic problems
 					
 					// internal connection consistency
 					final String event = joinEvents(e1, e2, match);

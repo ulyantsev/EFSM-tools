@@ -410,7 +410,7 @@ public class TraceTranslator {
 			"YP10B001#PR11_LIQ_LEVEL", "pressurizer_water_level", Pair.of(0.0, 850.0), 370.5);
 	// scaled x10
 	final static Parameter reacRelPower_reaTurTrip = new RealParameter(
-			"YC00B001#NR1_POWER", "reac_rel_power", Pair.of(0.0, 13.0), 1.0, 3.0, 5.0, 7.0, 9.0, 11.0);
+			"YC00B001#NR1_POWER", "reac_rel_power", Pair.of(0.0, 13.0), 1.0, 5.0, 9.0, 11.0);
 	// scaled x100
 	final static Parameter liveSteamPressure_reaTurTrip = new RealParameter(
 			"RA00J010#PO11_PRESSURE", "pressure_live_steam", Pair.of(0.0, 510.0), 300.0);

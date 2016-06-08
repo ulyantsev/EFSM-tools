@@ -43,7 +43,9 @@ public class ConstraintExtractor {
 
 	private static String interval(Collection<Integer> values, Parameter p, boolean next) {
         final String range = TraceModelGenerator.expressWithIntervals(values);
-        if (!range.contains("{") && !range.contains("union")) {
+        if (p.valueCount() == 2 && range.equals("{0, 1}")) {
+            return "TRUE";
+        } else if (!range.contains("{") && !range.contains("union")) {
             final String[] tokens = range.split("\\.\\.");
             final int first = Integer.parseInt(tokens[0]);
             final int second = Integer.parseInt(tokens[1]);
@@ -59,6 +61,7 @@ public class ConstraintExtractor {
 		final Dataset ds = Dataset.load("");
 		final StringBuilder sb = new StringBuilder();
 		sb.append(plantCaption(CONF));
+        sb.append("    loop_executed: boolean;\n");
     	final List<String> initConstraints = new ArrayList<>();
     	final List<String> transConstraints = new ArrayList<>();
     	
@@ -186,12 +189,17 @@ public class ConstraintExtractor {
     		transConstraints.add("TRUE");
     	}
     	sb.append("    (" + String.join(")\n  & (", transConstraints) + ")\n");
-		
-    	sb.append("DEFINE\n");
-    	sb.append("    unsupported := FALSE;\n");
-    	sb.append("    loop_executed := FALSE;\n");
-    	
-    	sb.append(plantConversions(CONF));
+
+        sb.append("ASSIGN\n");
+        sb.append("    init(loop_executed) := FALSE;\n");
+        sb.append("    next(loop_executed) := loop_executed | " + String.join(" & ",
+                CONF.outputParameters.stream()
+                .map(p -> "output_" + p.traceName() + " = next(output_" + p.traceName() + ")")
+                .collect(Collectors.toList())) + ";\n");
+        sb.append("DEFINE\n");
+        sb.append("    unsupported := FALSE;\n");
+
+        sb.append(plantConversions(CONF));
     	System.out.println(sb);
 	}
 }
