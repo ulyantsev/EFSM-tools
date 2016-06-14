@@ -585,8 +585,12 @@ public class CompositionalBuilder {
 			effectiveA = new EvolutionaryNuSMVOptimizer(effectiveA,
 					eventsFromAutomaton(effectiveA), conf).run();
 		}
-		
-		try (PrintWriter pw = new PrintWriter(namePrefix + "gv")) {
+
+        System.out.printf("Fraction of loops in the automaton: %.2f\n", effectiveA.loopFraction());
+        System.out.printf("Fraction of unsupported transitions in the automaton: %.2f\n",
+                effectiveA.unsupportedTransitionFraction());
+
+        try (PrintWriter pw = new PrintWriter(namePrefix + "gv")) {
 			pw.println(effectiveA.toString(colorRules, Optional.of(conf)));
 		}
 		

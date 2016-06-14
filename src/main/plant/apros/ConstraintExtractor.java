@@ -64,7 +64,7 @@ public class ConstraintExtractor {
         sb.append("    loop_executed: boolean;\n");
     	final List<String> initConstraints = new ArrayList<>();
     	final List<String> transConstraints = new ArrayList<>();
-    	
+
     	// 1. overall 1-dimensional constraints
     	if (OVERALL_1D) {
 	    	for (Parameter p : CONF.outputParameters) {
@@ -180,6 +180,7 @@ public class ConstraintExtractor {
     	}
     	
     	sb.append("INIT\n");
+        final int num = initConstraints.size() + transConstraints.size();
     	if (initConstraints.isEmpty()) {
         	initConstraints.add("TRUE");
     	}
@@ -192,7 +193,7 @@ public class ConstraintExtractor {
 
         sb.append("ASSIGN\n");
         sb.append("    init(loop_executed) := FALSE;\n");
-        sb.append("    next(loop_executed) := loop_executed | " + String.join(" & ",
+        sb.append("    next(loop_executed) := " + String.join(" & ",
                 CONF.outputParameters.stream()
                 .map(p -> "output_" + p.traceName() + " = next(output_" + p.traceName() + ")")
                 .collect(Collectors.toList())) + ";\n");
@@ -201,5 +202,7 @@ public class ConstraintExtractor {
 
         sb.append(plantConversions(CONF));
     	System.out.println(sb);
+        System.out.println();
+        System.out.println("-- Constraints generated: " + num);
 	}
 }

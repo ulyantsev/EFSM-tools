@@ -3,6 +3,7 @@ package structures.plant;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import main.plant.apros.Configuration;
@@ -23,7 +24,29 @@ public class NondetMooreAutomaton {
     public Set<MooreTransition> unsupportedTransitions() {
         return unsupportedTransitions;
     }
-    
+
+    public double transitionFraction(Predicate<MooreTransition> p) {
+        int matched = 0;
+        int all = 0;
+        for (MooreNode state : states) {
+            for (MooreTransition t : state.transitions()) {
+                all++;
+                if (p.test(t)) {
+                    matched++;
+                }
+            }
+        }
+        return (double) matched / all;
+    }
+
+    public double unsupportedTransitionFraction() {
+        return transitionFraction(unsupportedTransitions::contains);
+    }
+
+    public double loopFraction() {
+        return transitionFraction(t -> t.dst() == t.src());
+    }
+
     public static NondetMooreAutomaton readGV(String filename) throws FileNotFoundException {
 		final Map<String, List<String>> actionRelation = new LinkedHashMap<>();
 		final Map<String, List<Pair<Integer, String>>> transitionRelation = new LinkedHashMap<>();
@@ -214,7 +237,7 @@ public class NondetMooreAutomaton {
     			eventThresholds.stream().map(t -> "CONT_INPUT_" + t.getKey())
     			.collect(Collectors.toList()));
     	final StringBuilder sb = new StringBuilder();
-    	sb.append("MODULE main()\n");
+    	/*sb.append("MODULE main()\n");
     	sb.append("VAR\n");
     	sb.append("    plant: PLANT(" + inputLine + ");\n");
 		for (Pair<String, Parameter> entry : eventThresholds) {
@@ -224,7 +247,7 @@ public class NondetMooreAutomaton {
 					+ ";\n");
 		}
     	
-    	sb.append("\n");
+    	sb.append("\n");*/
     	sb.append("MODULE PLANT(" + inputLine + ")\n");
     	sb.append("VAR\n");
     	sb.append("    unsupported: boolean;\n");
@@ -305,8 +328,8 @@ public class NondetMooreAutomaton {
     	
     	sb.append("    next(unsupported) := " + String.join("\n        | ", unsupported) + ";\n");
     	sb.append("    init(loop_executed) := FALSE;\n");
-    	sb.append("    next(loop_executed) := loop_executed | state = next(state);\n");
-    	sb.append("DEFINE\n");
+    	sb.append("    next(loop_executed) := state = next(state);\n");
+        sb.append("DEFINE\n");
     	sb.append("    known_input := " + String.join(" | ", events) + ";\n");
 
     	for (String action : actions) {
