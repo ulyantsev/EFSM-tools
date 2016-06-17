@@ -1,14 +1,11 @@
 package main.plant.apros;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.tuple.Pair;
-
-import structures.plant.NondetMooreAutomaton;
 
 public class Configuration {
 	final double intervalSec;
@@ -72,8 +69,59 @@ public class Configuration {
 		this.inputParameters = inputParameters;
 	}
 
-	public void addColorRule(Parameter param, int index, String color) {
-		colorRules.add(param.traceName(index) + "->" + color);
+    public static Configuration load(String filename) {
+        final double intervalSec = 1.0;
+        final List<Parameter> outputParameters = new ArrayList<>();
+        final List<Parameter> inputParameters = new ArrayList<>();
+        final List<String[]> colorRules = new ArrayList<>();
+        try (Scanner sc = new Scanner(new File(Settings.CONF_LOCATION + filename))) {
+            while (sc.hasNextLine()) {
+                final String line = sc.nextLine().trim();
+                if (line.isEmpty() || line.startsWith("#")) {
+                    continue;
+                }
+                final String[] tokens = line.split(" ");
+                final String operation = tokens[0];
+                if (operation.equals("color_rule")) {
+                    colorRules.add(tokens);
+                } else if (operation.equals("in") || operation.equals("out")) {
+                    final String type = tokens[1];
+                    final String aprosName = tokens[2];
+                    final String traceName = tokens[3];
+                    final Parameter p;
+                    if (type.equals("real")) {
+                        final double lowerBound = Double.parseDouble(tokens[4]);
+                        final Double[] thresholds = new Double[tokens.length - 6];
+                        for (int i = 5; i < tokens.length - 1; i++) {
+                            thresholds[i - 5] = Double.parseDouble(tokens[i]);
+                        }
+                        final double upperBound = Double.parseDouble(tokens[tokens.length - 1]);
+                        p = new RealParameter(aprosName, traceName, Pair.of(lowerBound, upperBound), thresholds);
+                    } else if (type.equals("bool")) {
+                        p = new BoolParameter(aprosName, traceName);
+                    } else {
+                        throw new RuntimeException("Invalid parameter type: " + type);
+                    }
+                    (operation.equals("out") ? outputParameters : inputParameters).add(p);
+                } else {
+                    throw new RuntimeException("Invalid operation type: " + operation);
+                }
+            }
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+        final Configuration c = new Configuration(intervalSec, outputParameters, inputParameters);
+        for (String[] tokens : colorRules) {
+            final String traceName = tokens[1];
+            final int index = Integer.parseInt(tokens[2]);
+            final String color = tokens[3];
+            c.addColorRule(traceName, index, color);
+        }
+        return c;
+    }
+
+	public void addColorRule(String traceName, int index, String color) {
+		colorRules.add(traceName + index + "->" + color);
 	}
 	
 	@Override

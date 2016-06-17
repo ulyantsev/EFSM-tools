@@ -5,6 +5,7 @@ import java.util.stream.Collectors;
 
 import structures.plant.NondetMooreAutomaton;
 
+@Deprecated
 public class EvolutionaryNuSMVOptimizer {
 	private final NondetMooreAutomaton automaton;
 	private final int[][] initialSets;

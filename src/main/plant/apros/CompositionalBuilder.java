@@ -15,132 +15,27 @@ import structures.plant.MooreTransition;
 import structures.plant.NondetMooreAutomaton;
 
 public class CompositionalBuilder {
-	final static Pair<Double, Double> POSITIVE = Pair.of(0.0, Double.POSITIVE_INFINITY);
-	
 	// Block-based composition
-	final static Parameter reacRelPower = new RealParameter(
-			"YC00B001#NR1_POWER", "reac_rel_power", POSITIVE, 0.1, 0.5, 0.95, 1.0, 1.1);
-	final static Parameter trip = new BoolParameter(
-			"YZ10U404FL01#FF_OUTPUT_VALUE", "trip");
-	final static Parameter rodPosition2 = new RealParameter(
-			"YC00B001_RA1#RA_RE_RODP2", "rod_position2_", Pair.of(0.0, 2.5), 1.0, 2.0);
-	final static Parameter rodPosition1 = new RealParameter(
-			"YC00B001_RA1#RA_RE_RODP", "rod_position1_", Pair.of(0.0, 2.5), 1.0, 2.0);
-	
-	final static Configuration CONF_REAC = new Configuration(
-			1.0, Arrays.asList(reacRelPower),
-			Arrays.asList(trip/*, rodPosition1, rodPosition2*/));
-	
-	final static Parameter pressurizerWaterLevel = new RealParameter(
-			"YP10B001#PR11_LIQ_LEVEL", "pressurizer_water_level", POSITIVE, 2.8, 3.705);
-	final static Parameter pressurizerPressure = new RealParameter(
-			"YP10B001_NO8#NO6_PRESSURE", "pressurizer_pressure", POSITIVE, 9e6, 11e6, 13e6);
-	final static Parameter valveE51_preslevco = new BoolParameter(
-			"TE51S002_VA1#V_POSITION_SET_VALUE", "valveE51");
-	final static Parameter valveK52_preslevco = new BoolParameter(
-			"TK52S002_VA1#V_POSITION_SET_VALUE", "valveK52");
-	final static Parameter valveK53_preslevco = new BoolParameter(
-			"TK53S002_VA1#V_POSITION_SET_VALUE", "valveK53");
-	
-	final static Configuration CONF_PRESSURIZER = new Configuration(
-			1.0, Arrays.asList(pressurizerWaterLevel, pressurizerPressure),
-			Arrays.asList(valveE51_preslevco, valveK52_preslevco, valveK53_preslevco));
-
-	static {
-		CONF_PRESSURIZER.addColorRule(pressurizerPressure, 0, "green");
-		CONF_PRESSURIZER.addColorRule(pressurizerPressure, 1, "yellow");
-		CONF_PRESSURIZER.addColorRule(pressurizerPressure, 2, "orange");
-		CONF_PRESSURIZER.addColorRule(pressurizerPressure, 3, "red");
-		CONF_REAC.addColorRule(reacRelPower, 0, "#0000ff");
-		CONF_REAC.addColorRule(reacRelPower, 1, "#4444ff");
-		CONF_REAC.addColorRule(reacRelPower, 2, "#9999ff");
-		CONF_REAC.addColorRule(reacRelPower, 3, "green");
-		CONF_REAC.addColorRule(reacRelPower, 4, "red");
-	}
-	
-	final static Parameter pressureInLowerPlenum = new RealParameter(
-			"YC00J005#TA11_PRESSURE", "pressure_lower_plenum", POSITIVE, 3.5, 8.0, 10.0);
-	final static Parameter liveSteamPressure = new RealParameter(
-			"RA00J010#PO11_PRESSURE", "pressure_live_steam", POSITIVE, 3.5);
-	
-	final static Configuration CONF_MISC = new Configuration(
-			1.0, Arrays.asList(pressureInLowerPlenum, liveSteamPressure),
-			Arrays.asList());
-	
+	final static Configuration CONF_REAC = Configuration.load("reactor.conf");
+	final static Configuration CONF_PRESSURIZER = Configuration.load("pressurizer.conf");
+    final static Configuration CONF_MISC = Configuration.load("misc.conf");
 	final static List<Configuration> CONF_STRUCTURE =
 			Arrays.asList(CONF_PRESSURIZER, CONF_REAC, CONF_MISC);
 
 	// Control diagram-based composition
 	final static List<Configuration> CONF_NETWORK = Arrays.asList(
-			TraceTranslator.CONF_PROTECTION1,
-			TraceTranslator.CONF_PROTECTION5,
-			TraceTranslator.CONF_PROTECTION7);
-	
-	final static Configuration CONF1 = new Configuration(
-			1.0, Arrays.asList(
-			TraceTranslator.pressureInLowerPlenum,
-			TraceTranslator.prot5valve43open),
-			Arrays.asList(TraceTranslator.tripSignal));
-	
-	final static Configuration CONF2 = new Configuration(
-			1.0, Arrays.asList(TraceTranslator.pressurizerWaterLevel),
-			Arrays.asList(TraceTranslator.tripSignal));
-	
-	final static Configuration CONF3 = new Configuration(
-			1.0, Arrays.asList(TraceTranslator.reacRelPower_entirePlant),
-			Arrays.asList(TraceTranslator.prot5valve41open));
-	
-	final static List<Configuration> CONF_TEST = Arrays.asList(CONF1, CONF2, CONF3);
-	
-	/*******************************************/
+			TraceTranslator.CONF_S1,
+			TraceTranslator.CONF_S2,
+			TraceTranslator.CONF_S4);
 	
 	//final static List<Configuration> CONFS = CONF_STRUCTURE;
 	final static List<Configuration> CONFS = Arrays.asList(Settings.CONF);
-	
-	/*
-	 * Remove self-loops unless this violates completeness.
-	 */
-	final static boolean REMOVE_LOOPS_WHERE_POSSIBLE = false;
-	
+
 	final static boolean PROXIMITY_COMPLETION = true;
-	
 	final static int FAST_THRESHOLD = 0;
 	final static boolean ALL_EVENT_COMBINATIONS = false;
 	final static boolean ENSURE_COMPLETENESS = true;
-	final static boolean EVOLUTIONARY_NUSMV_OPTIMIZATION = false;
-	
-	/*******************************************/
-	
-	private static NondetMooreAutomaton removeLoopsWherePossible(NondetMooreAutomaton a) {
-		final NondetMooreAutomaton res = a.copy();
-		int removed = 0;
-		for (MooreNode state : res.states()) {
-			final Map<String, Set<MooreTransition>> transitions = new TreeMap<>();
-			for (MooreTransition t : state.transitions()) {
-				Set<MooreTransition> set = transitions.get(t.event());
-				if (set == null) {
-					set = new HashSet<>();
-					transitions.put(t.event(), set);
-				}
-				set.add(t);
-			}
-			for (Map.Entry<String, Set<MooreTransition>> entry : transitions.entrySet()) {
-				final Set<MooreTransition> set = entry.getValue();
-				if (set.size() > 1) {
-					for (MooreTransition t : set) {
-						if (t.dst() == state) {
-							// remove this self-loop
-							state.removeTransition(t);
-							removed++;
-						}
-					}
-				}
-			}
-		}
-		System.out.println("Self-loops removed: " + removed);
-		return res;
-	}
-	
+
 	private static double proximity(String e1, String e2, Configuration conf) {
 		double sum = 0;
 		for (int i = 0; i < conf.inputParameters.size(); i++) {
@@ -578,15 +473,13 @@ public class CompositionalBuilder {
 		if (PROXIMITY_COMPLETION) {
 			effectiveA = proximityBasedCompletion(effectiveA, conf);
 		}
-		if (REMOVE_LOOPS_WHERE_POSSIBLE) {
-			effectiveA = removeLoopsWherePossible(effectiveA);
-		}
-		if (EVOLUTIONARY_NUSMV_OPTIMIZATION) {
+		/*if (EVOLUTIONARY_NUSMV_OPTIMIZATION) {
 			effectiveA = new EvolutionaryNuSMVOptimizer(effectiveA,
 					eventsFromAutomaton(effectiveA), conf).run();
-		}
+		}*/
 
-        System.out.printf("Fraction of loops in the automaton: %.2f\n", effectiveA.loopFraction());
+        System.out.printf("Fraction of loops in the automaton: %.2f\n",
+                effectiveA.loopFraction());
         System.out.printf("Fraction of unsupported transitions in the automaton: %.2f\n",
                 effectiveA.unsupportedTransitionFraction());
 

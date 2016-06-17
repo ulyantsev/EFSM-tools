@@ -29,6 +29,7 @@ import verification.verifier.Counterexample;
 import verification.verifier.Verifier;
 import algorithms.automaton_builders.ScenarioAndLtlAutomatonBuilder;
 
+@Deprecated
 public class EvolutionaryPlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 	private static double fitness(NondetMooreAutomaton automaton, Verifier verifier) {
 		final List<Counterexample> ces = verifier.verifyNondetMoore(automaton);

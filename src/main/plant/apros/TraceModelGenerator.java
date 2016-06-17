@@ -20,8 +20,7 @@ public class TraceModelGenerator {
 		final int maxLength = ds.values.stream().mapToInt(v -> v.size()).max().getAsInt();
 		final int minLength = ds.values.stream().mapToInt(v -> v.size()).min().getAsInt();
 		if (maxLength != minLength) {
-			throw new AssertionError();
-			// ASSUMES THAT EACH TRACE HAS EQUAL LENGTH
+			throw new AssertionError("All traces are currently assumed to have equal lengths.");
 		}
 
         writeTraceModel(ds, maxLength, 0, ds.values.size(), "trace-model.smv");

@@ -99,9 +99,8 @@ public class PlantBuilderMain {
     private String nusmvFilePath;
 
     @Option(name = "--fast", handler = BooleanOptionHandler.class,
-            usage = "use the fast but inprecise way of model generation "
-                    + "(size, negative scenarios and action specifications are ignored, "
-                    + "LTL formulae are partially ignored)")
+            usage = "use the fast but inprecise way of model generation: "
+                    + "size, negative scenarios, LTL formulae and action specifications are ignored")
     private boolean fast;
 
     private Optional<NondetMooreAutomaton> resultAutomaton = null;
@@ -234,19 +233,10 @@ public class PlantBuilderMain {
 
             logger.info("Started building automaton.");
 
-            if (fast && strFormulae.isEmpty()) {
-                resultAutomaton = RapidPlantAutomatonBuilder.build(positiveForest, events);
-            } else if (fast) {
-                final Verifier usualVerifier = new Verifier(logger, strFormulae, events, actions, varNumber);
-                resultAutomaton
-                        //= StateMergingPlantAutomatonBuilder.build(logger, positiveForest,
-                        //	ltlFilePath, formulae, events, actions, usualVerifier, finishTime);
-                        = EvolutionaryPlantAutomatonBuilder.build(logger, positiveForest,
-                        ltlFilePath, formulae, events, actions, usualVerifier, finishTime);
-            } else {
-                resultAutomaton = PlantAutomatonBuilder.build(logger, positiveForest, negativeForest, size,
-                        actionspecFilePath, formulae, events, actions, verifier, finishTime);
-            }
+            resultAutomaton = fast
+                    ? RapidPlantAutomatonBuilder.build(positiveForest, events)
+                    : PlantAutomatonBuilder.build(logger, positiveForest, negativeForest, size,
+                    actionspecFilePath, formulae, events, actions, verifier, finishTime);
 
             final double executionTime = (System.currentTimeMillis() - startTime) / 1000.;
 
