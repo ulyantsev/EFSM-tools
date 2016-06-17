@@ -13,41 +13,40 @@ import java.util.function.Function;
 import org.apache.commons.lang3.tuple.Pair;
 
 public class TraceTranslator {
-    final static Configuration CONF_S1 = Configuration.load("s1.conf");
-    final static Configuration CONF_S2 = Configuration.load("s2.conf");
-    final static Configuration CONF_S3 = Configuration.load("s3.conf");
-    final static Configuration CONF_S4 = Configuration.load("s4.conf");
-    final static Configuration CONF_S5 = Configuration.load("s5.conf");
-    final static Configuration CONF_S6 = Configuration.load("s6.conf");
-    final static Configuration CONF_S7 = Configuration.load("s7.conf");
-    final static Configuration CONF_S8 = Configuration.load("s8.conf");
+    /*final static Configuration CONF_S1 = Configuration.load(Settings.CONF_LOCATION + "s1.conf");
+    final static Configuration CONF_S2 = Configuration.load(Settings.CONF_LOCATION + "s2.conf");
+    final static Configuration CONF_S3 = Configuration.load(Settings.CONF_LOCATION + "s3.conf");
+    final static Configuration CONF_S4 = Configuration.load(Settings.CONF_LOCATION + "s4.conf");
+    final static Configuration CONF_S5 = Configuration.load(Settings.CONF_LOCATION + "s5.conf");
+    final static Configuration CONF_S6 = Configuration.load(Settings.CONF_LOCATION + "s6.conf");
+    final static Configuration CONF_S7 = Configuration.load(Settings.CONF_LOCATION + "s7.conf");
+    final static Configuration CONF_S8 = Configuration.load(Settings.CONF_LOCATION + "s8.conf");
 
-    final static Configuration CONF_PLANT = Configuration.load("plant.conf");
+    final static Configuration CONF_PLANT = Configuration.load("plant.conf");*/
 
 	// to improve precision in the NuSMV model
-	final static Map<String, Double> PARAM_SCALES = new TreeMap<>();
-	static {
-        try (Scanner sc = new Scanner(new File(Settings.CONF_LOCATION + "scaling.txt"))) {
+    public static Map<String, Double> paramScales(String filename) {
+        final Map<String, Double> paramScales = new TreeMap<>();
+        try (Scanner sc = new Scanner(new File(filename))) {
             while (sc.hasNextLine()) {
                 final String line = sc.nextLine().trim();
-                if (line.isEmpty()) {
+                if (line.isEmpty() || line.startsWith("#")) {
                     continue;
                 }
                 final String[] tokens = line.split(" ");
                 final String aprosName = tokens[0];
                 final double scale = Double.parseDouble(tokens[1]);
-                PARAM_SCALES.put(aprosName, scale);
+                paramScales.put(aprosName, scale);
             }
         } catch (FileNotFoundException e) {
             throw new RuntimeException(e);
         }
-	}
+        return paramScales;
+    }
 
-	private final static Configuration CONFIGURATION = CONF_S1;
-
-	private final static String OUTPUT_TRACE_FILENAME = "evaluation/plant-synthesis/vver.sc";
-	private final static String OUTPUT_ACTIONSPEC_FILENAME = "evaluation/plant-synthesis/vver.actionspec";
-	private final static String OUTPUT_LTL_FILENAME = "evaluation/plant-synthesis/vver.ltl";
+	private final static String OUTPUT_TRACE_FILENAME = "apros.sc";
+	private final static String OUTPUT_ACTIONSPEC_FILENAME = "apros.actionspec";
+	private final static String OUTPUT_LTL_FILENAME = "apros.ltl";
 	
 	private static void allEventCombinations(char[] arr, int index, Set<String> result, List<Parameter> parameters) {
 		if (index == arr.length) {
@@ -62,7 +61,7 @@ public class TraceTranslator {
 	}
 	
 	public static List<String> generateScenarios(Configuration conf, Dataset ds, Set<List<String>> allActionCombinations,
-			String gvOutput, String smvOutput, boolean addActionDescriptions, int sizeThreshold,
+			String gvOutput, String smvOutput, boolean addActionDescriptions, boolean satBased,
 			boolean allEventCombinations, boolean coverageFiltering) throws FileNotFoundException {
 		// traces
 		final Set<String> allEvents = new TreeSet<>();
@@ -174,14 +173,14 @@ public class TraceTranslator {
 		builderArgs.add(String.join(",", allEvents));
 		builderArgs.add("--eventNumber");
 		builderArgs.add(String.valueOf(allEvents.size()));
-		if (recommendedSize > sizeThreshold) {
-			builderArgs.add("--fast");
-			System.out.println("# LTL disabled: estimated state number is too large");
-		} else {
-			builderArgs.add("--ltl");
-			builderArgs.add(OUTPUT_LTL_FILENAME);
-		}
-		builderArgs.add("--actionspec");
+        if (satBased) {
+            builderArgs.add("--ltl");
+            builderArgs.add(OUTPUT_LTL_FILENAME);
+        } else {
+            builderArgs.add("--fast");
+            System.out.println("# LTL disabled");
+        }
+        builderArgs.add("--actionspec");
 		builderArgs.add(OUTPUT_ACTIONSPEC_FILENAME);
 		builderArgs.add("--size");
 		builderArgs.add(String.valueOf(recommendedSize));
@@ -220,14 +219,5 @@ public class TraceTranslator {
 				100.0 * outputCovered.size() / totalOutputValues));
 		
 		return builderArgs;
-	}
-	
-	public static void main(String[] args) throws FileNotFoundException {
-		final long time = System.currentTimeMillis();
-		final Dataset ds = new Dataset(CONFIGURATION.intervalSec,
-				Settings.TRACE_LOCATION, "", PARAM_SCALES);
-		generateScenarios(CONFIGURATION, ds, new HashSet<>(),
-				"automaton.gv", "automaton.smv", true, 10, false, false);
-		System.out.println("Execution time: " + (System.currentTimeMillis() - time) + " ms");
 	}
 }

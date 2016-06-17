@@ -1,5 +1,9 @@
 package main.plant.apros;
 
+/**
+ * (c) Igor Buzhinsky
+ */
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.*;
@@ -74,7 +78,7 @@ public class Configuration {
         final List<Parameter> outputParameters = new ArrayList<>();
         final List<Parameter> inputParameters = new ArrayList<>();
         final List<String[]> colorRules = new ArrayList<>();
-        try (Scanner sc = new Scanner(new File(Settings.CONF_LOCATION + filename))) {
+        try (Scanner sc = new Scanner(new File(filename))) {
             while (sc.hasNextLine()) {
                 final String line = sc.nextLine().trim();
                 if (line.isEmpty() || line.startsWith("#")) {

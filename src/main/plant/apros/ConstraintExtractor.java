@@ -1,13 +1,17 @@
 package main.plant.apros;
 
+/**
+ * (c) Igor Buzhinsky
+ */
+
+import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class ConstraintExtractor {
-	final static Configuration CONF = Settings.CONF;
-	
 	final static boolean OVERALL_1D = true;
 	final static boolean OVERALL_2D = true;
 	final static boolean INPUT_STATE = true;
@@ -16,11 +20,11 @@ public class ConstraintExtractor {
 	public static String plantCaption(Configuration conf) {
 		final StringBuilder sb = new StringBuilder();
 		final String inputLine = String.join(", ",
-				CONF.inputParameters.stream().map(p -> "CONT_INPUT_" + p.traceName())
+				conf.inputParameters.stream().map(p -> "CONT_INPUT_" + p.traceName())
     			.collect(Collectors.toList()));
 		sb.append("MODULE PLANT(" + inputLine + ")\n");
     	sb.append("VAR\n");
-    	for (Parameter p : CONF.outputParameters) {
+    	for (Parameter p : conf.outputParameters) {
     		sb.append("    output_" + p.traceName() + ": 0.." + (p.valueCount() - 1) + ";\n");
     	}
     	return sb.toString();
@@ -30,7 +34,7 @@ public class ConstraintExtractor {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("DEFINE\n");
     	// output conversion to continuous values
-    	for (Parameter p : CONF.outputParameters) {
+    	for (Parameter p : conf.outputParameters) {
     		sb.append("    CONT_" + p.traceName() + " := case\n");
     		for (int i = 0; i < p.valueCount(); i++) {
     			sb.append("        output_" + p.traceName() + " = " + i + ": "
@@ -57,17 +61,17 @@ public class ConstraintExtractor {
                 + (next ? ")" : "") + " in " + range;
     }
 
-	public static void main(String[] args) throws IOException {
-		final Dataset ds = Dataset.load("");
+	public static void run(Configuration conf, String datasetFilename) throws IOException {
+		final Dataset ds = Dataset.load(datasetFilename);
 		final StringBuilder sb = new StringBuilder();
-		sb.append(plantCaption(CONF));
+		sb.append(plantCaption(conf));
         sb.append("    loop_executed: boolean;\n");
     	final List<String> initConstraints = new ArrayList<>();
     	final List<String> transConstraints = new ArrayList<>();
 
     	// 1. overall 1-dimensional constraints
     	if (OVERALL_1D) {
-	    	for (Parameter p : CONF.outputParameters) {
+	    	for (Parameter p : conf.outputParameters) {
 	    		final Set<Integer> indices = new TreeSet<>();
 	    		for (List<double[]> trace : ds.values) {
 	        		for (double[] snapshot : trace) {
@@ -81,10 +85,10 @@ public class ConstraintExtractor {
     	}
     	// 2. overall 2-dimensional constraints
     	if (OVERALL_2D) {
-	    	for (int i = 0; i < CONF.outputParameters.size(); i++) {
-				final Parameter pi = CONF.outputParameters.get(i);
+	    	for (int i = 0; i < conf.outputParameters.size(); i++) {
+				final Parameter pi = conf.outputParameters.get(i);
 	    		for (int j = 0; j < i; j++) {
-	    			final Parameter pj = CONF.outputParameters.get(j);
+	    			final Parameter pj = conf.outputParameters.get(j);
 		    		final Map<Integer, Set<Integer>> indexPairs = new TreeMap<>();
 	        		for (List<double[]> trace : ds.values) {
 	            		for (double[] snapshot : trace) {
@@ -126,8 +130,8 @@ public class ConstraintExtractor {
     	// FIXME do something with potential deadlocks, when unknown
     	// input combinations require non-intersecting actions
     	if (INPUT_STATE) {
-    		for (Parameter pi : CONF.inputParameters) {
-	    		for (Parameter po : CONF.outputParameters) {
+    		for (Parameter pi : conf.inputParameters) {
+	    		for (Parameter po : conf.outputParameters) {
 		    		final Map<Integer, Set<Integer>> indexPairs = new TreeMap<>();
 		    		for (int index1 = 0; index1 < pi.valueCount(); index1++) {
 		    			indexPairs.put(index1, new TreeSet<>());
@@ -154,7 +158,7 @@ public class ConstraintExtractor {
     	
     	// 2. 2-dimensional constraints "current state -> next state"
     	if (CURRENT_NEXT) {
-    		for (Parameter p : CONF.outputParameters) {
+    		for (Parameter p : conf.outputParameters) {
 	    		final Map<Integer, Set<Integer>> indexPairs = new TreeMap<>();
 	    		for (List<double[]> trace : ds.values) {
 	        		for (int i = 0; i < trace.size() - 1; i++) {
@@ -194,15 +198,19 @@ public class ConstraintExtractor {
         sb.append("ASSIGN\n");
         sb.append("    init(loop_executed) := FALSE;\n");
         sb.append("    next(loop_executed) := " + String.join(" & ",
-                CONF.outputParameters.stream()
+                conf.outputParameters.stream()
                 .map(p -> "output_" + p.traceName() + " = next(output_" + p.traceName() + ")")
                 .collect(Collectors.toList())) + ";\n");
         sb.append("DEFINE\n");
         sb.append("    unsupported := FALSE;\n");
+        sb.append(plantConversions(conf));
 
-        sb.append(plantConversions(CONF));
-    	System.out.println(sb);
-        System.out.println();
-        System.out.println("-- Constraints generated: " + num);
+        final String outFilename = "plant-constraints.smv";
+        try (PrintWriter pw = new PrintWriter(new File(outFilename))) {
+            pw.println(sb);
+        }
+
+        System.out.println("Done; model has been written to: " + outFilename);
+        System.out.println("Constraints generated: " + num);
 	}
 }

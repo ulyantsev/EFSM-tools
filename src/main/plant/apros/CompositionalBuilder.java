@@ -1,5 +1,9 @@
 package main.plant.apros;
 
+/**
+ * (c) Igor Buzhinsky
+ */
+
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -16,9 +20,9 @@ import structures.plant.NondetMooreAutomaton;
 
 public class CompositionalBuilder {
 	// Block-based composition
-	final static Configuration CONF_REAC = Configuration.load("reactor.conf");
-	final static Configuration CONF_PRESSURIZER = Configuration.load("pressurizer.conf");
-    final static Configuration CONF_MISC = Configuration.load("misc.conf");
+	/*final static Configuration CONF_REAC = Configuration.load(Settings.CONF_LOCATION + "reactor.conf");
+	final static Configuration CONF_PRESSURIZER = Configuration.load(Settings.CONF_LOCATION + "pressurizer.conf");
+    final static Configuration CONF_MISC = Configuration.load(Settings.CONF_LOCATION + "misc.conf");
 	final static List<Configuration> CONF_STRUCTURE =
 			Arrays.asList(CONF_PRESSURIZER, CONF_REAC, CONF_MISC);
 
@@ -30,12 +34,11 @@ public class CompositionalBuilder {
 	
 	//final static List<Configuration> CONFS = CONF_STRUCTURE;
 	final static List<Configuration> CONFS = Arrays.asList(Settings.CONF);
+*/
 
 	final static boolean PROXIMITY_COMPLETION = true;
-	final static int FAST_THRESHOLD = 10000;
 	final static boolean ALL_EVENT_COMBINATIONS = false;
 	final static boolean ENSURE_COMPLETENESS = true;
-    final static boolean COVERAGE_FILTERING = true;
 
 	private static double proximity(String e1, String e2, Configuration conf) {
 		double sum = 0;
@@ -381,35 +384,37 @@ public class CompositionalBuilder {
 		}
 	}
 	
-	public static void main(String[] args) throws IOException {		
-		// 1. Unification of all configuration pairs:
+	public static void run(List<Configuration> confs, String datasetFilename, boolean satBased) throws IOException {
+		final boolean coverageFiltering = satBased;
+
+        // 1. Unification of all configuration pairs:
 		System.out.println("*** UNIFICATION");
-		for (int i = 0; i < CONFS.size(); i++) {
+		for (int i = 0; i < confs.size(); i++) {
 			for (int j = 0; j < i; j++) {
-				new Match(CONFS.get(i), CONFS.get(j));
+				new Match(confs.get(i), confs.get(j));
 			}
 		}
-		if (CONFS.stream().map(s -> s.intervalSec).distinct().count() > 1) {
+		if (confs.stream().map(s -> s.intervalSec).distinct().count() > 1) {
 			System.err.println("Incompatible intervals, stopping.");
 			return;
 		}
 		
 		// 2. Load the dataset
 		System.out.println("*** LOADING THE DATASET");
-		final Dataset ds = Dataset.load("");
+		final Dataset ds = Dataset.load(datasetFilename);
 		
 		// 3. Build all the basic plants
 		final List<NondetMooreAutomaton> automata = new ArrayList<>();
-		for (int i = 0; i < CONFS.size(); i++) {
+		for (int i = 0; i < confs.size(); i++) {
 			System.out.println("*** BUILDING BASIC PLANTS, STAGE " + (i + 1));
-			final Configuration conf = CONFS.get(i);
+			final Configuration conf = confs.get(i);
 			System.out.println(conf);
 			System.out.println();
 			final String namePrefix = "automaton" + i + ".";
 			
 			final List<String> params = TraceTranslator.generateScenarios(conf,
 					ds, new HashSet<>(), namePrefix + "gv", namePrefix + "smv",
-					false, FAST_THRESHOLD, ALL_EVENT_COMBINATIONS, COVERAGE_FILTERING);
+					false, satBased, ALL_EVENT_COMBINATIONS, coverageFiltering);
 			System.out.println();
 			final PlantBuilderMain builder = new PlantBuilderMain();
 			builder.run(params.toArray(new String[params.size()]));
@@ -425,20 +430,20 @@ public class CompositionalBuilder {
 		}
 		
 		// 4. Iteratively compose automata
-		Configuration lastConf = CONFS.get(0);
+		Configuration lastConf = confs.get(0);
 		NondetMooreAutomaton lastAuto = automata.get(0);
-		for (int i = 1; i < CONFS.size(); i++) {
+		for (int i = 1; i < confs.size(); i++) {
 			System.out.println("*** COMPOSING, STAGE " + i);
 			final Configuration conf1 = lastConf;
-			final Configuration conf2 = CONFS.get(i);
+			final Configuration conf2 = confs.get(i);
 			final Match match = new Match(conf1, conf2);
 			final String namePrefix = "automaton_comp" + i + ".";
 			
 			// Obtain the set of all possible composite actions
 			final Set<List<String>> allActionCombinations = new HashSet<>();
 			TraceTranslator.generateScenarios(outputConfigurationComposition(conf1, conf2),
-					ds, allActionCombinations, "", "", false, FAST_THRESHOLD,
-					ALL_EVENT_COMBINATIONS, COVERAGE_FILTERING);
+					ds, allActionCombinations, "", "", false, satBased,
+					ALL_EVENT_COMBINATIONS, coverageFiltering);
 			final Set<List<String>> allActionCombinationsSorted = new HashSet<>();
 			for (List<String> actionCombination : allActionCombinations) {
 				final List<String> copy = new ArrayList<>(actionCombination);

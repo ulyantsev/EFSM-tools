@@ -1,4 +1,9 @@
 package main;
+
+/**
+ * (c) Igor Buzhinsky
+ */
+
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -20,30 +25,38 @@ import verification.verifier.Verifier;
 import algorithms.AutomatonGVLoader;
 
 public class VerifierMain {
-	@Option(name = "--eventNumber", aliases = { "-en" }, usage = "number of events", metaVar = "<eventNumber>", required = true)
+	@Option(name = "--eventNumber", aliases = { "-en" },
+            usage = "number of events", metaVar = "<eventNumber>", required = true)
 	private int eventNumber;
 	
-	@Option(name = "--eventNames", aliases = { "-enm" }, usage = "optional comma-separated event names (default: A, B, C, ...)",
+	@Option(name = "--eventNames", aliases = { "-enm" },
+            usage = "optional comma-separated event names (default: A, B, C, ...)",
 			metaVar = "<eventNames>")
 	private String eventNames;
 	
-	@Option(name = "--actionNumber", aliases = { "-an" }, usage = "number of actions", metaVar = "<actionNumber>", required = true)
+	@Option(name = "--actionNumber", aliases = { "-an" },
+            usage = "number of actions", metaVar = "<actionNumber>", required = true)
 	private int actionNumber;
 	
-	@Option(name = "--actionNames", aliases = { "-anm" }, usage = "optional comma-separated action names (default: z0, z1, z2, ...)",
+	@Option(name = "--actionNames", aliases = { "-anm" },
+            usage = "optional comma-separated action names (default: z0, z1, z2, ...)",
 			metaVar = "<actionNames>")
 	private String actionNames;
 	
-	@Option(name = "--varNumber", aliases = { "-vn" }, usage = "number of variables (x0, x1, ...)", metaVar = "<varNumber>")
+	@Option(name = "--varNumber", aliases = { "-vn" },
+            usage = "number of variables (x0, x1, ...)", metaVar = "<varNumber>")
 	private int varNumber = 0;
 	
-	@Option(name = "--ltl", aliases = { "-lt" }, usage = "file with LTL properties", metaVar = "<file>", required = true)
+	@Option(name = "--ltl", aliases = { "-lt" },
+            usage = "file with LTL properties", metaVar = "<file>", required = true)
 	private String ltlFilePath;
 
-	@Option(name = "--automaton", aliases = { "-au" }, usage = "automaton to verify", metaVar = "<file>", required = true)
+	@Option(name = "--automaton", aliases = { "-au" },
+            usage = "automaton to verify", metaVar = "<file>", required = true)
 	private String automatonPath;
 	
-	@Option(name = "--plantModel", aliases = { "-pm" }, handler = BooleanOptionHandler.class, usage = "the supplied automaton is a plant model")
+	@Option(name = "--plantModel", aliases = { "-pm" }, handler = BooleanOptionHandler.class,
+            usage = "the supplied automaton is a plant model")
 	private boolean plantModel;
 	
 	private void launcher(String[] args) throws IOException, ParseException {

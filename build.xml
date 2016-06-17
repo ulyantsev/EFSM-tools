@@ -57,6 +57,9 @@
     <property name="fast.automaton.generator.main" value="main/FastAutomatonBuilderMain"/>
     <property name="fast.automaton.generator.jar" value="fast-automaton-generator.jar"/>
 
+    <property name="apros.builder.main" value="main/plant/AprosBuilderMain"/>
+    <property name="apros.builder.jar" value="apros-builder.jar"/>
+    
     <target name="all" 
             depends="consistency-jar, 
                      isomorphism-jar, 
@@ -73,7 +76,8 @@
                      plant-generator-jar,
                      verifier-jar,
                      plant-scenario-generator-jar,
-                     fast-automaton-generator-jar">
+                     fast-automaton-generator-jar,
+                     apros-builder-jar">
     </target>
 
     <target name="minizinc-generator-jar">
@@ -433,6 +437,31 @@
 
             <zipfileset src="${args4j.path}" excludes="meta-inf/*.sf"/>
             <zipfileset src="${commons.lang3.path}" excludes="meta-inf/*.sf"/>
+            <zipfileset src="${javassist.path}" excludes="meta-inf/*.sf"/>
+            <zipfileset src="${ltl2ba.path}" excludes="meta-inf/*.sf"/>
+            <zipfileset src="${ognl.path}" excludes="meta-inf/*.sf"/>
+        </jar>
+
+        <delete dir="${bin.dir}"/>
+    </target>
+    
+    <target name="apros-builder-jar">
+        <mkdir dir="${bin.dir}"/>
+    
+        <javac srcdir="${src.dir}"
+               destdir="${bin.dir}"
+               classpath="${args4j.path}:${commons.lang3.path}:${javassist.path}:${ltl2ba.path}:${ognl.path}"
+               includeantruntime="false">
+            <include name="${apros.builder.main}.java"/>
+        </javac>
+
+        <jar destfile="${jars.dir}/${apros.builder.jar}"
+             basedir="${bin.dir}">
+            <manifest>
+                <attribute name="Main-Class" value="${apros.builder.main}"/>
+            </manifest>
+            <zipfileset src="${args4j.path}" excludes="META-INF/*.SF"/>
+            <zipfileset src="${commons.lang3.path}" excludes="META-INF/*.SF"/>
             <zipfileset src="${javassist.path}" excludes="meta-inf/*.sf"/>
             <zipfileset src="${ltl2ba.path}" excludes="meta-inf/*.sf"/>
             <zipfileset src="${ognl.path}" excludes="meta-inf/*.sf"/>

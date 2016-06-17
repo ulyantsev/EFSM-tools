@@ -1,5 +1,10 @@
 package main.plant.apros;
 
+/**
+ * (c) Igor Buzhinsky
+ */
+
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -12,10 +17,8 @@ import java.util.TreeSet;
 import org.apache.commons.lang3.tuple.Pair;
 
 public class TraceModelGenerator {
-	final static Configuration CONF = Settings.CONF;
-
-	public static void main(String[] args) throws IOException {		
-		final Dataset ds = Dataset.load(Settings.CORRECT_CONTROLLER_TRACE_PREFIX);
+	public static void run(Configuration conf, String datasetFilename) throws IOException {
+		final Dataset ds = Dataset.load(datasetFilename);
 		
 		final int maxLength = ds.values.stream().mapToInt(v -> v.size()).max().getAsInt();
 		final int minLength = ds.values.stream().mapToInt(v -> v.size()).min().getAsInt();
@@ -23,19 +26,24 @@ public class TraceModelGenerator {
 			throw new AssertionError("All traces are currently assumed to have equal lengths.");
 		}
 
-        writeTraceModel(ds, maxLength, 0, ds.values.size(), "trace-model.smv");
+        final String outFilename = "trace-model.smv";
+        final String individualTraceDir = "individual-trace-models";
+        new File(individualTraceDir).mkdir();
+
+        writeTraceModel(conf, ds, maxLength, 0, ds.values.size(), outFilename);
         for (int i = 0; i < ds.values.size(); i++) {
-            writeTraceModel(ds, maxLength, i, i + 1,
-                    "individual-trace-models/trace-model-" + i + ".smv");
+            writeTraceModel(conf, ds, maxLength, i, i + 1,
+                    individualTraceDir + "/trace-model-" + i + ".smv");
         }
 
-		System.out.println("Done.");
+		System.out.println("Done; the model has been written to: " + outFilename);
+        System.out.println("Individual trace models have been written to: " + individualTraceDir);
 	}
 
-    private static void writeTraceModel(Dataset ds, int maxLength, int indexFrom, int indexTo,
+    private static void writeTraceModel(Configuration conf, Dataset ds, int maxLength, int indexFrom, int indexTo,
                                         String filename) throws FileNotFoundException {
         final StringBuilder sb = new StringBuilder();
-        sb.append(ConstraintExtractor.plantCaption(CONF));
+        sb.append(ConstraintExtractor.plantCaption(conf));
         sb.append("    step: 0.." + (maxLength - 1) + ";\n");
         sb.append("    unsupported: boolean;\n");
         sb.append("FROZENVAR\n    trace: " + indexFrom + ".." + (indexTo - 1) + ";\n");
@@ -46,7 +54,7 @@ public class TraceModelGenerator {
         sb.append("    init(unsupported) := FALSE;\n");
         sb.append("    next(unsupported) := step = " + (maxLength - 1) + ";\n");
 
-        for (Parameter p : CONF.outputParameters) {
+        for (Parameter p : conf.outputParameters) {
             sb.append("    output_" + p.traceName() + " := case\n");
             for (int traceIndex = indexFrom; traceIndex < indexTo; traceIndex++) {
                 sb.append("        trace = " + traceIndex + ": case\n");
@@ -68,8 +76,7 @@ public class TraceModelGenerator {
                     }
                 }
 
-                pairs.sort((v1, v2) -> Integer.compare(v2.getRight().size(),
-                        v1.getRight().size()));
+                pairs.sort((v1, v2) -> Integer.compare(v2.getRight().size(), v1.getRight().size()));
                 pairs.add(pairs.remove(0)); // shift
 
                 for (int i = 0; i < pairs.size(); i++) {
@@ -87,7 +94,7 @@ public class TraceModelGenerator {
         sb.append("DEFINE\n");
         sb.append("    loop_executed := unsupported;\n");
 
-        sb.append(ConstraintExtractor.plantConversions(CONF));
+        sb.append(ConstraintExtractor.plantConversions(conf));
 
         try (PrintWriter pw = new PrintWriter(filename)) {
             pw.println(sb);

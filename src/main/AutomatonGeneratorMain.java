@@ -30,7 +30,7 @@ public class AutomatonGeneratorMain {
 	@Option(name = "--maxActions", aliases = { "-maxa" }, usage = "maximum transition actions count", metaVar = "<cnt>")
 	private int maxActionsCount = 2;
 
-	@Option(name = "--transitionsPersent", aliases = { "-p" }, usage = "transitions persent", metaVar = "<persent>")
+	@Option(name = "--transitionsPersent", aliases = { "-p" }, usage = "transitions percentage", metaVar = "<percentage>")
 	private int transitionsPersent = 50;
 
 	@Option(name = "--randseed", aliases = { "-rs" }, usage = "random seed", metaVar = "<seed>")
@@ -40,7 +40,6 @@ public class AutomatonGeneratorMain {
 	private String filepath;
 
 	private void launcher(String[] args) {
-
 		CmdLineParser parser = new CmdLineParser(this);
 		try {
 			parser.parseArgument(args);
@@ -54,14 +53,9 @@ public class AutomatonGeneratorMain {
 			return;
 		}
 
-		Random random;
-		if (randseed == 0) {
-			random = new Random();
-		} else {
-			random = new Random(randseed);
-		}
+		final Random random = randseed == 0 ? new Random() : new Random(randseed);
 
-		Automaton automaton = AutomatonGenerator.generate(size, eventsCount, actionsCount, minActionsCount,
+		final Automaton automaton = AutomatonGenerator.generate(size, eventsCount, actionsCount, minActionsCount,
 				maxActionsCount, varsCount, transitionsPersent / 100., random);
 
 		if (filepath != null) {

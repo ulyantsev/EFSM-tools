@@ -1,5 +1,9 @@
 package main.plant.apros;
 
+/**
+ * (c) Igor Buzhinsky
+ */
+
 import java.util.Arrays;
 import java.util.List;
 

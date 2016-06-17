@@ -1,5 +1,9 @@
 package main.plant.apros;
 
+/**
+ * (c) Igor Buzhinsky
+ */
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -19,9 +23,8 @@ public class Dataset implements Serializable {
 	
 	public final static long serialVersionUID = 1L;
 	
-	public static Dataset load(String traceFilenamePrefix) throws IOException {
-		try (ObjectInputStream in = new ObjectInputStream(
-				new FileInputStream("dataset_" + traceFilenamePrefix + ".bin"))) {
+	public static Dataset load(String filename) throws IOException {
+		try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(filename))) {
 			return (Dataset) in.readObject();
 		} catch (ClassNotFoundException e) {
 			throw new RuntimeException();
@@ -42,7 +45,8 @@ public class Dataset implements Serializable {
 		return result;
 	}
 	
-	public Dataset(double intervalSec, String traceLocation, String traceFilenamePrefix, Map<String, Double> paramScales) throws FileNotFoundException {
+	public Dataset(double intervalSec, String traceLocation, String traceFilenamePrefix,
+                   Map<String, Double> paramScales) throws FileNotFoundException {
 		this.paramScales = paramScales;
 		for (String filename : new File(traceLocation).list()) {
 			if (!filename.endsWith(".txt") || !filename.startsWith(traceFilenamePrefix)) {
