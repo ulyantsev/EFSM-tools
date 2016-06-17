@@ -24,19 +24,6 @@ public class TraceTranslator {
 
     final static Configuration CONF_PLANT = Configuration.load("plant.conf");
 
-	final static Parameter pressurizerWaterLevel = new RealParameter(
-			"YP10B001#PR11_LIQ_LEVEL", "water_level", Pair.of(0.0, 850.0), 230.0, 280.0);
-	final static Parameter pressureInLowerPlenum = new RealParameter(
-			"YC00J005#TA11_PRESSURE", "pressure_lower_plenum", Pair.of(0.0, 202.0), 8.0, 35.0, 80.0, 100.0);
-	final static Parameter prot5valve41open = new BoolParameter(
-			"RL41S001_VA1#VO_OPEN", "valve41open");
-	final static Parameter prot5valve43open = new BoolParameter(
-			"RL43S001_VA1#VO_OPEN", "valve43open");
-	final static Parameter reacRelPower_entirePlant = new RealParameter(
-			"YC00B001#NR1_POWER", "reac_rel_power", Pair.of(0.0, 13.0), 1.0, 9.0, 10.0, 11.0);
-	final static Parameter tripSignal = new BoolParameter(
-			"YZ10U404FL01#FF_OUTPUT_VALUE", "trip");
-
 	// to improve precision in the NuSMV model
 	final static Map<String, Double> PARAM_SCALES = new TreeMap<>();
 	static {
@@ -76,7 +63,7 @@ public class TraceTranslator {
 	
 	public static List<String> generateScenarios(Configuration conf, Dataset ds, Set<List<String>> allActionCombinations,
 			String gvOutput, String smvOutput, boolean addActionDescriptions, int sizeThreshold,
-			boolean allEventCombinations) throws FileNotFoundException {
+			boolean allEventCombinations, boolean coverageFiltering) throws FileNotFoundException {
 		// traces
 		final Set<String> allEvents = new TreeSet<>();
 		if (allEventCombinations) {
@@ -97,9 +84,12 @@ public class TraceTranslator {
 		for (Parameter p : conf.outputParameters) {
 			totalOutputValues += p.valueCount();
 		}
-		
+
+        int addedTraces = 0;
 		try (PrintWriter pw = new PrintWriter(new File(OUTPUT_TRACE_FILENAME))) {
 			for (List<double[]> trace : ds.values) {
+                final int initialCoveredItems = inputCovered.size() + outputCovered.size();
+
 				final List<String> events = new ArrayList<>();
 				final List<String> actions = new ArrayList<>();
 
@@ -126,11 +116,15 @@ public class TraceTranslator {
 					allActionCombinations.add(thisActions);
 					allEvents.add(event.toString());
 				}
-				
-				events.add(0, "");
-				events.remove(events.size() - 1);
-				pw.println(String.join("; ", events));
-				pw.println(String.join("; ", actions));
+
+                final int finalCoveredItems = inputCovered.size() + outputCovered.size();
+                if (!coverageFiltering || finalCoveredItems > initialCoveredItems) {
+                    events.add(0, "");
+                    events.remove(events.size() - 1);
+                    pw.println(String.join("; ", events));
+                    pw.println(String.join("; ", actions));
+                    addedTraces++;
+                }
 			}
 		}
 
@@ -143,6 +137,7 @@ public class TraceTranslator {
 				}
 			}
 		}
+        System.out.println("Traces: " + addedTraces);
 
 		// temporal properties
 		try (PrintWriter pw = new PrintWriter(new File(OUTPUT_LTL_FILENAME))) {
@@ -232,7 +227,7 @@ public class TraceTranslator {
 		final Dataset ds = new Dataset(CONFIGURATION.intervalSec,
 				Settings.TRACE_LOCATION, "", PARAM_SCALES);
 		generateScenarios(CONFIGURATION, ds, new HashSet<>(),
-				"automaton.gv", "automaton.smv", true, 10, false);
+				"automaton.gv", "automaton.smv", true, 10, false, false);
 		System.out.println("Execution time: " + (System.currentTimeMillis() - time) + " ms");
 	}
 }

@@ -32,9 +32,10 @@ public class CompositionalBuilder {
 	final static List<Configuration> CONFS = Arrays.asList(Settings.CONF);
 
 	final static boolean PROXIMITY_COMPLETION = true;
-	final static int FAST_THRESHOLD = 0;
+	final static int FAST_THRESHOLD = 10000;
 	final static boolean ALL_EVENT_COMBINATIONS = false;
 	final static boolean ENSURE_COMPLETENESS = true;
+    final static boolean COVERAGE_FILTERING = true;
 
 	private static double proximity(String e1, String e2, Configuration conf) {
 		double sum = 0;
@@ -408,7 +409,7 @@ public class CompositionalBuilder {
 			
 			final List<String> params = TraceTranslator.generateScenarios(conf,
 					ds, new HashSet<>(), namePrefix + "gv", namePrefix + "smv",
-					false, FAST_THRESHOLD, ALL_EVENT_COMBINATIONS);
+					false, FAST_THRESHOLD, ALL_EVENT_COMBINATIONS, COVERAGE_FILTERING);
 			System.out.println();
 			final PlantBuilderMain builder = new PlantBuilderMain();
 			builder.run(params.toArray(new String[params.size()]));
@@ -437,7 +438,7 @@ public class CompositionalBuilder {
 			final Set<List<String>> allActionCombinations = new HashSet<>();
 			TraceTranslator.generateScenarios(outputConfigurationComposition(conf1, conf2),
 					ds, allActionCombinations, "", "", false, FAST_THRESHOLD,
-					ALL_EVENT_COMBINATIONS);
+					ALL_EVENT_COMBINATIONS, COVERAGE_FILTERING);
 			final Set<List<String>> allActionCombinationsSorted = new HashSet<>();
 			for (List<String> actionCombination : allActionCombinations) {
 				final List<String> copy = new ArrayList<>(actionCombination);
