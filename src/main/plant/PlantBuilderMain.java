@@ -28,7 +28,6 @@ import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 import org.kohsuke.args4j.spi.BooleanOptionHandler;
 
-import algorithms.plant.EvolutionaryPlantAutomatonBuilder;
 import algorithms.plant.PlantAutomatonBuilder;
 import algorithms.plant.RapidPlantAutomatonBuilder;
 import scenario.StringScenario;

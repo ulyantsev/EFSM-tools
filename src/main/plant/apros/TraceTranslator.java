@@ -9,21 +9,11 @@ import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.util.*;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.tuple.Pair;
 
 public class TraceTranslator {
-    /*final static Configuration CONF_S1 = Configuration.load(Settings.CONF_LOCATION + "s1.conf");
-    final static Configuration CONF_S2 = Configuration.load(Settings.CONF_LOCATION + "s2.conf");
-    final static Configuration CONF_S3 = Configuration.load(Settings.CONF_LOCATION + "s3.conf");
-    final static Configuration CONF_S4 = Configuration.load(Settings.CONF_LOCATION + "s4.conf");
-    final static Configuration CONF_S5 = Configuration.load(Settings.CONF_LOCATION + "s5.conf");
-    final static Configuration CONF_S6 = Configuration.load(Settings.CONF_LOCATION + "s6.conf");
-    final static Configuration CONF_S7 = Configuration.load(Settings.CONF_LOCATION + "s7.conf");
-    final static Configuration CONF_S8 = Configuration.load(Settings.CONF_LOCATION + "s8.conf");
-
-    final static Configuration CONF_PLANT = Configuration.load("plant.conf");*/
-
 	// to improve precision in the NuSMV model
     public static Map<String, Double> paramScales(String filename) {
         final Map<String, Double> paramScales = new TreeMap<>();
@@ -62,7 +52,8 @@ public class TraceTranslator {
 	
 	public static List<String> generateScenarios(Configuration conf, Dataset ds, Set<List<String>> allActionCombinations,
 			String gvOutput, String smvOutput, boolean addActionDescriptions, boolean satBased,
-			boolean allEventCombinations, boolean coverageFiltering) throws FileNotFoundException {
+			boolean allEventCombinations, int traceIncludeEach)
+            throws FileNotFoundException {
 		// traces
 		final Set<String> allEvents = new TreeSet<>();
 		if (allEventCombinations) {
@@ -84,15 +75,21 @@ public class TraceTranslator {
 			totalOutputValues += p.valueCount();
 		}
 
+        // for smoothness LTL properties
+        final Map<Parameter, Integer> smoothnessLevels = new HashMap<>();
+        for (Parameter p : conf.outputParameters) {
+            smoothnessLevels.put(p, 1);
+        }
+
         int addedTraces = 0;
 		try (PrintWriter pw = new PrintWriter(new File(OUTPUT_TRACE_FILENAME))) {
-			for (List<double[]> trace : ds.values) {
-                final int initialCoveredItems = inputCovered.size() + outputCovered.size();
-
+            for (int i = 0; i < ds.values.size(); i++) {
+                final List<double[]> trace = ds.values.get(i);
 				final List<String> events = new ArrayList<>();
-				final List<String> actions = new ArrayList<>();
+				final List<List<String>> actionCombinations = new ArrayList<>();
 
-				for (double[] snapshot : trace) {
+                for (int j = 0; j < trace.size(); j++) {
+                    final double[] snapshot = trace.get(j);
 					final StringBuilder event = new StringBuilder("A");
 					final List<String> thisActions = new ArrayList<>();
 					
@@ -108,16 +105,28 @@ public class TraceTranslator {
 						final int index = p.traceNameIndex(value);
 						outputCovered.add(Pair.of(p.aprosName(), index));
 						thisActions.add(p.traceName(value));
+
+                        if (satBased && j > 1) {
+                            final int lastTraceIndex = p.traceNameIndex(ds.get(trace.get(j - 1), p));
+                            final int smoothnessLevel = Math.abs(lastTraceIndex - index);
+                            if (smoothnessLevel > smoothnessLevels.get(p)) {
+                                smoothnessLevels.put(p, smoothnessLevel);
+                            }
+                        }
 					}
-					
+
 					events.add(event.toString());
-					actions.add(String.join(", ", thisActions));
-					allActionCombinations.add(thisActions);
-					allEvents.add(event.toString());
+                    actionCombinations.add(thisActions);
 				}
 
-                final int finalCoveredItems = inputCovered.size() + outputCovered.size();
-                if (!coverageFiltering || finalCoveredItems > initialCoveredItems) {
+                boolean skip = i % traceIncludeEach != 0;
+                if (!skip) {
+                    allActionCombinations.addAll(actionCombinations);
+                    allEvents.addAll(events);
+                    final List<String> actions = actionCombinations.stream()
+                            .map(l -> String.join(", ", l))
+                            .collect(Collectors.toList());
+
                     events.add(0, "");
                     events.remove(events.size() - 1);
                     pw.println(String.join("; ", events));
@@ -127,25 +136,26 @@ public class TraceTranslator {
 			}
 		}
 
-		// actionspec
-		try (PrintWriter pw = new PrintWriter(new File(
-				OUTPUT_ACTIONSPEC_FILENAME))) {
-			for (Parameter p : conf.outputParameters) {
-				for (String str : p.actionspec()) {
-					pw.println(str);
-				}
-			}
-		}
         System.out.println("Traces: " + addedTraces);
 
-		// temporal properties
-		try (PrintWriter pw = new PrintWriter(new File(OUTPUT_LTL_FILENAME))) {
-			for (Parameter p : conf.outputParameters) {
-				for (String str : p.temporalProperties()) {
-					pw.println(str);
-				}
-			}
-		}
+        if (satBased) {
+            // actionspec
+            try (PrintWriter pw = new PrintWriter(new File(
+                    OUTPUT_ACTIONSPEC_FILENAME))) {
+                for (Parameter p : conf.outputParameters) {
+                    p.actionspec().forEach(pw::println);
+                }
+            }
+
+            // smoothness temporal properties
+            try (PrintWriter pw = new PrintWriter(new File(OUTPUT_LTL_FILENAME))) {
+                for (Parameter p : conf.outputParameters) {
+                    final int smoothnessLevel = smoothnessLevels.get(p);
+                    System.out.println("smoothness(" + p.traceName() + ") = " + smoothnessLevel);
+                    p.smoothnessTemporalProperties(smoothnessLevel).forEach(pw::println);
+                }
+            }
+        }
 
 		// all actions
 		final List<String> allActions = conf.actions();

@@ -103,20 +103,25 @@ public abstract class Parameter {
 
 	// assuming that this is an input parameter
 	// smooth changes
-	public List<String> temporalProperties() {
+	public List<String> smoothnessTemporalProperties(int smoothnessLevel) {
 		final List<String> res = new ArrayList<>();
-		if (valueCount() < 3) {
+		if (valueCount() <= 1 + smoothnessLevel) {
 			return res;
 		}
 		for (int i = 0; i < valueCount(); i++) {
 			List<String> vicinity = new ArrayList<>();
 			vicinity.add(traceName(i));
-			if (i > 0) {
-				vicinity.add(traceName(i - 1));
-			}
-			if (i < valueCount() - 1) {
-				vicinity.add(traceName(i + 1));
-			}
+
+            for (int j = 1; j <= smoothnessLevel; j++) {
+                int smallIndex = i - j;
+                if (smallIndex >= 0) {
+                    vicinity.add(traceName(smallIndex));
+                }
+                int largeIndex = i + j;
+                if (largeIndex < valueCount()) {
+                    vicinity.add(traceName(largeIndex));
+                }
+            }
 			vicinity = vicinity.stream().map(s -> "action(" + s + ")")
 					.collect(Collectors.toList());
 			res.add("G(!" + vicinity.get(0) + " || X("

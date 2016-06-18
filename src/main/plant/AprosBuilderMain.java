@@ -43,6 +43,10 @@ public class AprosBuilderMain {
             metaVar = "<file>")
     private String datasetFilename;
 
+    @Option(name = "--traceIncludeEach", aliases = {"-ti"}, usage = "use only each k-th trace in the dataset",
+            metaVar = "<k>")
+    private int traceIncludeEach = 1;
+
     private void launcher(String[] args) throws IOException {
         Locale.setDefault(Locale.US);
         final long startTime = System.currentTimeMillis();
@@ -83,9 +87,9 @@ public class AprosBuilderMain {
             if (Objects.equals(type, "constraint-based")) {
                 ConstraintExtractor.run(conf, datasetFilename);
             } else if (Objects.equals(type, "explicit-state")) {
-                CompositionalBuilder.run(Arrays.asList(conf), datasetFilename, false);
+                CompositionalBuilder.run(Arrays.asList(conf), datasetFilename, false, traceIncludeEach);
             } else if (Objects.equals(type, "sat-based")) {
-                CompositionalBuilder.run(Arrays.asList(conf), datasetFilename, true);
+                CompositionalBuilder.run(Arrays.asList(conf), datasetFilename, true, traceIncludeEach);
             } else if (Objects.equals(type, "traces")) {
                 TraceModelGenerator.run(conf, datasetFilename);
             } else {

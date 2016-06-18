@@ -384,9 +384,8 @@ public class CompositionalBuilder {
 		}
 	}
 	
-	public static void run(List<Configuration> confs, String datasetFilename, boolean satBased) throws IOException {
-		final boolean coverageFiltering = satBased;
-
+	public static void run(List<Configuration> confs, String datasetFilename, boolean satBased,
+                           int traceIncludeEach) throws IOException {
         // 1. Unification of all configuration pairs:
 		System.out.println("*** UNIFICATION");
 		for (int i = 0; i < confs.size(); i++) {
@@ -414,7 +413,7 @@ public class CompositionalBuilder {
 			
 			final List<String> params = TraceTranslator.generateScenarios(conf,
 					ds, new HashSet<>(), namePrefix + "gv", namePrefix + "smv",
-					false, satBased, ALL_EVENT_COMBINATIONS, coverageFiltering);
+					false, satBased, ALL_EVENT_COMBINATIONS, traceIncludeEach);
 			System.out.println();
 			final PlantBuilderMain builder = new PlantBuilderMain();
 			builder.run(params.toArray(new String[params.size()]));
@@ -443,7 +442,7 @@ public class CompositionalBuilder {
 			final Set<List<String>> allActionCombinations = new HashSet<>();
 			TraceTranslator.generateScenarios(outputConfigurationComposition(conf1, conf2),
 					ds, allActionCombinations, "", "", false, satBased,
-					ALL_EVENT_COMBINATIONS, coverageFiltering);
+					ALL_EVENT_COMBINATIONS, traceIncludeEach);
 			final Set<List<String>> allActionCombinationsSorted = new HashSet<>();
 			for (List<String> actionCombination : allActionCombinations) {
 				final List<String> copy = new ArrayList<>(actionCombination);
