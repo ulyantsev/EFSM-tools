@@ -41,8 +41,7 @@ public class ScenariosGeneratorMain {
 	private boolean cover;
 
 	private void launcher(String[] args) {
-
-		CmdLineParser parser = new CmdLineParser(this);
+		final CmdLineParser parser = new CmdLineParser(this);
 		try {
 			parser.parseArgument(args);
 		} catch (CmdLineException e) {
@@ -55,14 +54,9 @@ public class ScenariosGeneratorMain {
 			return;
 		}
 
-		Random random;
-		if (randseed == 0) {
-			random = new Random();
-		} else {
-			random = new Random(randseed);
-		}
+        final Random random = randseed == 0 ? new Random() : new Random(randseed);
 
-		Automaton automaton;
+        Automaton automaton;
 		try {
 			automaton = AutomatonGVLoader.load(automatonFilepath);
 		} catch (IOException e) {

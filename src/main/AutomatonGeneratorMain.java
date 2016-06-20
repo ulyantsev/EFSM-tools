@@ -40,7 +40,7 @@ public class AutomatonGeneratorMain {
 	private String filepath;
 
 	private void launcher(String[] args) {
-		CmdLineParser parser = new CmdLineParser(this);
+		final CmdLineParser parser = new CmdLineParser(this);
 		try {
 			parser.parseArgument(args);
 		} catch (CmdLineException e) {

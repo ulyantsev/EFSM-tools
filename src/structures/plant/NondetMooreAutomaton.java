@@ -365,8 +365,11 @@ public class NondetMooreAutomaton {
     	return sb.toString();
     }
     
-    public boolean isCompliantWithScenarios(List<StringScenario> scenarios, boolean positive) {
-    	for (StringScenario sc : scenarios) {
+    public boolean isCompliantWithScenarios(List<StringScenario> scenarios, boolean positive,
+                                            boolean markUnsupportedTransitions) {
+    	final Set<MooreTransition> supported = new HashSet<>();
+
+        for (StringScenario sc : scenarios) {
         	boolean[] curStates = new boolean[states.size()];
         	final StringActions firstActions = sc.getActions(0);
     		for (int i = 0; i < states.size(); i++) {
@@ -377,14 +380,15 @@ public class NondetMooreAutomaton {
     		for (int i = 1; i < sc.size(); i++) {
     			final String event = sc.getEvents(i).get(0);
     			final StringActions actions = sc.getActions(i);
-    			boolean[] newStates = new boolean[states.size()];
+    			final boolean[] newStates = new boolean[states.size()];
     			for (int j = 0; j < states.size(); j++) {
     				if (curStates[j]) {
-    					for (MooreNode dst : states.get(j).allDst(event)) {
-    						if (dst.actions().setEquals(actions)) {
-    							newStates[dst.number()] = true;
-    						}
-    					}
+                        for (MooreTransition t : states.get(j).transitions()) {
+                            if (t.event().equals(event) && t.dst().actions().setEquals(actions)) {
+                                newStates[t.dst().number()] = true;
+                                supported.add(t);
+                            }
+                        }
     				}
     			}
     			curStates = newStates;
@@ -394,6 +398,17 @@ public class NondetMooreAutomaton {
     			return false;
     		}
     	}
+
+        if (markUnsupportedTransitions) {
+            for (MooreNode state : states) {
+                for (MooreTransition t : state.transitions()) {
+                    if (!supported.contains(t)) {
+                        unsupportedTransitions.add(t);
+                    }
+                }
+            }
+        }
+
     	return true;
     }
     

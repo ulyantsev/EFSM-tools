@@ -144,7 +144,7 @@ public class QbfBuilderMain {
 	private void launcher(String[] args) throws IOException {
 		Locale.setDefault(Locale.US);
 
-		CmdLineParser parser = new CmdLineParser(this);
+		final CmdLineParser parser = new CmdLineParser(this);
 		try {
 			parser.parseArgument(args);
 		} catch (CmdLineException e) {

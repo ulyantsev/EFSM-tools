@@ -108,7 +108,7 @@ public class FastAutomatonBuilderMain {
 	private void launcher(String[] args) throws IOException {
 		Locale.setDefault(Locale.US);
 
-		CmdLineParser parser = new CmdLineParser(this);
+		final CmdLineParser parser = new CmdLineParser(this);
 		try {
 			parser.parseArgument(args);
 		} catch (CmdLineException e) {
@@ -121,7 +121,7 @@ public class FastAutomatonBuilderMain {
 			return;
 		}
 		
-		Logger logger = Logger.getLogger("Logger");
+		final Logger logger = Logger.getLogger("Logger");
 		if (logFilePath != null) {
 			try {
 				final FileHandler fh = new FileHandler(logFilePath, false);

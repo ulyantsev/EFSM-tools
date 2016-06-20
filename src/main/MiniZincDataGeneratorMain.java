@@ -39,7 +39,7 @@ public class MiniZincDataGeneratorMain {
     private void launcher(String[] args) {
         Locale.setDefault(Locale.US);
 
-        CmdLineParser parser = new CmdLineParser(this);
+        final CmdLineParser parser = new CmdLineParser(this);
         try {
             parser.parseArgument(args);
         } catch (CmdLineException e) {
@@ -52,7 +52,7 @@ public class MiniZincDataGeneratorMain {
             return;
         }
 
-        Logger logger = Logger.getLogger("Logger");
+        final Logger logger = Logger.getLogger("Logger");
         if (logFilePath != null) {
             try {
                 FileHandler fh = new FileHandler(logFilePath, false);
@@ -68,7 +68,7 @@ public class MiniZincDataGeneratorMain {
             }
         }
 
-        ScenarioTree tree = new ScenarioTree();
+        final ScenarioTree tree = new ScenarioTree();
         for (String filePath : arguments) {
             try {
                 tree.load(filePath);
@@ -80,12 +80,10 @@ public class MiniZincDataGeneratorMain {
             }
         }
 
-        Map<Node, Set<Node>> adjacent = AdjacencyCalculator.getAdjacent(tree);
+        final Map<Node, Set<Node>> adjacent = AdjacencyCalculator.getAdjacent(tree);
 
-        try {
-            PrintWriter pw = new PrintWriter(resultFilePath);
+        try (PrintWriter pw = new PrintWriter(resultFilePath)) {
             pw.println(getDataString(tree, adjacent));
-            pw.close();
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
@@ -94,12 +92,12 @@ public class MiniZincDataGeneratorMain {
     private String getDataString(ScenarioTree tree, Map<Node, Set<Node>> adjacent) {
         Transition[] incomingTransition = new Transition[tree.nodeCount()];
 
-        List<String> eventOrder = new ArrayList<String>();
-        List<String> eventExprOrder = new ArrayList<String>();
-        List<String> actionsOrder = new ArrayList<String>();
-        List<Integer> eventExprToEvent = new ArrayList<Integer>();
-        //List<Integer> eventExprVarsCount = new ArrayList<Integer>();
-        List<Integer> eventExprSatCount = new ArrayList<Integer>();
+        List<String> eventOrder = new ArrayList<>();
+        List<String> eventExprOrder = new ArrayList<>();
+        List<String> actionsOrder = new ArrayList<>();
+        List<Integer> eventExprToEvent = new ArrayList<>();
+        //List<Integer> eventExprVarsCount = new ArrayList<>();
+        List<Integer> eventExprSatCount = new ArrayList<>();
 
         for (Node node : tree.nodes()) {
             for (Transition t : node.transitions()) {

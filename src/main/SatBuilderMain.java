@@ -46,7 +46,7 @@ public class SatBuilderMain {
 	private void launcher(String[] args) throws IOException {
 		Locale.setDefault(Locale.US);
 
-		CmdLineParser parser = new CmdLineParser(this);
+		final CmdLineParser parser = new CmdLineParser(this);
 		try {
 			parser.parseArgument(args);
 		} catch (CmdLineException e) {
@@ -67,7 +67,7 @@ public class SatBuilderMain {
 			return;
 		}
 
-		Logger logger = Logger.getLogger("Logger");
+		final Logger logger = Logger.getLogger("Logger");
 		if (logFilePath != null) {
 			try {
 				FileHandler fh = new FileHandler(logFilePath, false);

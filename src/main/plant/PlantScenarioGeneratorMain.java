@@ -43,7 +43,7 @@ public class PlantScenarioGeneratorMain {
 	private int maxLength;
 
 	private void launcher(String[] args) {
-		CmdLineParser parser = new CmdLineParser(this);
+		final CmdLineParser parser = new CmdLineParser(this);
 		try {
 			parser.parseArgument(args);
 		} catch (CmdLineException e) {
@@ -56,12 +56,7 @@ public class PlantScenarioGeneratorMain {
 			return;
 		}
 
-		final Random random;
-		if (randseed == 0) {
-			random = new Random();
-		} else {
-			random = new Random(randseed);
-		}
+		final Random random = randseed == 0 ? new Random() : new Random(randseed);
 
 		NondetMooreAutomaton automaton;
 		try {

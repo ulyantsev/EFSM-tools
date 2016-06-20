@@ -46,55 +46,70 @@ public class PlantBuilderMain {
     @Argument(usage = "paths to files with scenarios", metaVar = "files", required = true)
     private List<String> arguments = new ArrayList<>();
 
-    @Option(name = "--size", aliases = {"-s"}, usage = "automaton size", metaVar = "<size>", required = true)
+    @Option(name = "--size", aliases = {"-s"},
+            usage = "automaton size", metaVar = "<size>", required = true)
     private int size;
 
-    @Option(name = "--eventNumber", aliases = {"-en"}, usage = "number of events", metaVar = "<eventNumber>", required = true)
+    @Option(name = "--eventNumber", aliases = {"-en"},
+            usage = "number of events", metaVar = "<eventNumber>", required = true)
     private int eventNumber;
 
-    @Option(name = "--eventNames", aliases = {"-enm"}, usage = "optional comma-separated event names (default: A, B, C, ...)",
+    @Option(name = "--eventNames", aliases = {"-enm"},
+            usage = "optional comma-separated event names (default: A, B, C, ...)",
             metaVar = "<eventNames>")
     private String eventNames;
 
-    @Option(name = "--actionNumber", aliases = {"-an"}, usage = "number of actions", metaVar = "<actionNumber>", required = true)
+    @Option(name = "--actionNumber", aliases = {"-an"},
+            usage = "number of actions", metaVar = "<actionNumber>", required = true)
     private int actionNumber;
 
-    @Option(name = "--actionNames", aliases = {"-anm"}, usage = "optional comma-separated action names (default: z0, z1, z2, ...)",
+    @Option(name = "--actionNames", aliases = {"-anm"},
+            usage = "optional comma-separated action names (default: z0, z1, z2, ...)",
             metaVar = "<actionNames>")
     private String actionNames;
 
-    @Option(name = "--colorRules", usage = "comma-separated state coloring rules for GV output, each in the form action->color",
+    @Option(name = "--colorRules",
+            usage = "comma-separated state coloring rules for GV output, each in the form action->color",
             metaVar = "<colorRules>")
     private String colorRules;
 
-    @Option(name = "--varNumber", aliases = {"-vn"}, usage = "number of variables (x0, x1, ...)", metaVar = "<varNumber>")
+    @Option(name = "--varNumber", aliases = {"-vn"},
+            usage = "number of variables (x0, x1, ...)", metaVar = "<varNumber>")
     private int varNumber = 0;
 
-    @Option(name = "--log", aliases = {"-l"}, usage = "write log to this file", metaVar = "<file>")
+    @Option(name = "--log", aliases = {"-l"},
+            usage = "write log to this file", metaVar = "<file>")
     private String logFilePath;
 
-    @Option(name = "--result", aliases = {"-r"}, usage = "write the obtained automaton in the GV format to this file",
+    @Option(name = "--result", aliases = {"-r"},
+            usage = "write the obtained automaton in the GV format to this file",
             metaVar = "<file>")
     private String resultFilePath = "automaton.gv";
 
-    @Option(name = "--tree", aliases = {"-t"}, usage = "write the obtained scenario tree in the GV format to this file",
+    @Option(name = "--tree", aliases = {"-t"},
+            usage = "write the obtained scenario tree in the GV format to this file",
             metaVar = "<file>")
     private String treeFilePath;
 
-    @Option(name = "--ltl", aliases = {"-lt"}, usage = "file with LTL properties (optional)", metaVar = "<file>")
+    @Option(name = "--ltl", aliases = {"-lt"},
+            usage = "file with LTL properties (optional)", metaVar = "<file>")
     private String ltlFilePath;
 
-    @Option(name = "--actionspec", aliases = {"-as"}, usage = "file with action propositional formulae", metaVar = "<file>")
+    @Option(name = "--actionspec", aliases = {"-as"},
+            usage = "file with action propositional formulae", metaVar = "<file>")
     private String actionspecFilePath;
 
-    @Option(name = "--negsc", aliases = {"-ns"}, usage = "file with negative scenarios (optional)",
+    @Option(name = "--negsc", aliases = {"-ns"},
+            usage = "file with negative scenarios (optional)",
             metaVar = "<file>")
     private String negscFilePath;
 
-    @Option(name = "--timeout", aliases = {"-to"}, usage = "solver timeout (sec)", metaVar = "<timeout>")
+    @Option(name = "--timeout", aliases = {"-to"},
+            usage = "solver timeout (sec)", metaVar = "<timeout>")
     private int timeout = 60 * 60 * 24;
 
-    @Option(name = "--nusmv", usage = "file for NuSMV output (optional)", metaVar = "<file>")
+    @Option(name = "--nusmv",
+            usage = "file for NuSMV output (optional)", metaVar = "<file>")
     private String nusmvFilePath;
 
     @Option(name = "--fast", handler = BooleanOptionHandler.class,
@@ -130,7 +145,7 @@ public class PlantBuilderMain {
             return;
         }
 
-        Logger logger = Logger.getLogger("Logger");
+        final Logger logger = Logger.getLogger("Logger");
         if (logFilePath != null) {
             try {
                 final FileHandler fh = new FileHandler(logFilePath, false);
@@ -158,9 +173,7 @@ public class PlantBuilderMain {
             }
             logger.info("Loaded scenarios from " + scenarioPath);
         }
-        for (StringScenario sc : scenarios) {
-            positiveForest.addScenario(sc);
-        }
+        scenarios.forEach(positiveForest::addScenario);
         logger.info("Scenario tree size: " + positiveForest.nodeCount());
 
         if (treeFilePath != null) {
@@ -247,13 +260,13 @@ public class PlantBuilderMain {
                         + " states WAS FOUND!");
                 logger.info("Automaton builder execution time: " + executionTime);
 
-                if (resultAutomaton.get().isCompliantWithScenarios(scenarios, true)) {
+                if (resultAutomaton.get().isCompliantWithScenarios(scenarios, true, true)) {
                     logger.info("COMPLIES WITH SCENARIOS");
                 } else {
                     logger.severe("NOT COMPLIES WITH SCENARIOS");
                 }
 
-                if (resultAutomaton.get().isCompliantWithScenarios(negativeScenarios, false)) {
+                if (resultAutomaton.get().isCompliantWithScenarios(negativeScenarios, false, false)) {
                     logger.info("COMPLIES WITH NEGATIVE SCENARIOS");
                 } else {
                     logger.severe("NOT COMPLIES WITH NEGATIVE SCENARIOS");

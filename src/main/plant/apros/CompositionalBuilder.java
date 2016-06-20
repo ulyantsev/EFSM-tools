@@ -25,16 +25,13 @@ public class CompositionalBuilder {
     final static Configuration CONF_MISC = Configuration.load(Settings.CONF_LOCATION + "misc.conf");
 	final static List<Configuration> CONF_STRUCTURE =
 			Arrays.asList(CONF_PRESSURIZER, CONF_REAC, CONF_MISC);
-
 	// Control diagram-based composition
 	final static List<Configuration> CONF_NETWORK = Arrays.asList(
 			TraceTranslator.CONF_S1,
 			TraceTranslator.CONF_S2,
 			TraceTranslator.CONF_S4);
-	
 	//final static List<Configuration> CONFS = CONF_STRUCTURE;
-	final static List<Configuration> CONFS = Arrays.asList(Settings.CONF);
-*/
+	final static List<Configuration> CONFS = Arrays.asList(Settings.CONF);*/
 
 	final static boolean PROXIMITY_COMPLETION = true;
 	final static boolean ALL_EVENT_COMBINATIONS = false;
@@ -91,7 +88,6 @@ public class CompositionalBuilder {
 		System.out.println("Transitions redirected based on proximity: " + redirected);
 		return res;
 	}
-		
 	
 	// assuming that we have at most 10 intervals
 	static boolean isProperAction(String action, String prefix) {

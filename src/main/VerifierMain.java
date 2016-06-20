@@ -62,7 +62,7 @@ public class VerifierMain {
 	private void launcher(String[] args) throws IOException, ParseException {
 		Locale.setDefault(Locale.US);
 
-		CmdLineParser parser = new CmdLineParser(this);
+		final CmdLineParser parser = new CmdLineParser(this);
 		try {
 			parser.parseArgument(args);
 		} catch (CmdLineException e) {

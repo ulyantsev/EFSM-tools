@@ -22,38 +22,48 @@ import scenario.StringActions;
 import structures.plant.NondetMooreAutomaton;
 
 public class PlantAutomatonGeneratorMain {
-	@Option(name = "--size", aliases = { "-s" }, usage = "size", metaVar = "<size>", required = true)
+	@Option(name = "--size", aliases = { "-s" },
+            usage = "size", metaVar = "<size>", required = true)
 	private int size;
 
-	@Option(name = "--eventNumber", aliases = { "-en" }, usage = "used events number", metaVar = "<num>", required = true)
+	@Option(name = "--eventNumber", aliases = { "-en" },
+            usage = "used events number", metaVar = "<num>", required = true)
 	private int eventNumber;
 
-	@Option(name = "--actionNumber", aliases = { "-an" }, usage = "used actions number", metaVar = "<num>", required = true)
+	@Option(name = "--actionNumber", aliases = { "-an" },
+            usage = "used actions number", metaVar = "<num>", required = true)
 	private int actionNumber;
 
-	@Option(name = "--initialPercentage", aliases = { "-ip" }, usage = "initial state percentage", metaVar = "<num>")
+	@Option(name = "--initialPercentage", aliases = { "-ip" },
+            usage = "initial state percentage", metaVar = "<num>")
 	private int initialPercentage = 25;
 
-	@Option(name = "--minActions", aliases = { "-mina" }, usage = "minumum number of actions in a state", metaVar = "<num>")
+	@Option(name = "--minActions", aliases = { "-mina" },
+            usage = "minumum number of actions in a state", metaVar = "<num>")
 	private int minActions = 0;
 
-	@Option(name = "--maxActions", aliases = { "-maxa" }, usage = "maximum number of actions in a state", metaVar = "<num>")
+	@Option(name = "--maxActions", aliases = { "-maxa" },
+            usage = "maximum number of actions in a state", metaVar = "<num>")
 	private int maxActions = 1;
 	
-	@Option(name = "--minTransitions", aliases = { "-mint" }, usage = "minumum number of transitions from each state for each event", metaVar = "<num>")
+	@Option(name = "--minTransitions", aliases = { "-mint" },
+            usage = "minumum number of transitions from each state for each event", metaVar = "<num>")
 	private int minTrans = 1;
 	
-	@Option(name = "--maxTransitions", aliases = { "-maxt" }, usage = "maximum number transitions from each state for each event", metaVar = "<num>")
+	@Option(name = "--maxTransitions", aliases = { "-maxt" },
+            usage = "maximum number transitions from each state for each event", metaVar = "<num>")
 	private int maxTrans = 1;
 
-	@Option(name = "--randseed", aliases = { "-rs" }, usage = "random seed", metaVar = "<seed>")
+	@Option(name = "--randseed", aliases = { "-rs" },
+            usage = "random seed", metaVar = "<seed>")
 	private int randseed;
 
-	@Option(name = "--output", aliases = { "-o" }, usage = "filepath to write the automaton in the GV format", metaVar = "<filepath>")
+	@Option(name = "--output", aliases = { "-o" },
+            usage = "filepath to write the automaton in the GV format", metaVar = "<filepath>")
 	private String filepath;
 
 	private void launcher(String[] args) {
-		CmdLineParser parser = new CmdLineParser(this);
+        final CmdLineParser parser = new CmdLineParser(this);
 		try {
 			parser.parseArgument(args);
 		} catch (CmdLineException e) {

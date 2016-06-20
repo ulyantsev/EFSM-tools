@@ -18,12 +18,14 @@ import structures.plant.NondetMooreAutomaton;
 
 public class WaterLevelGenerator {
 	private static StringActions toStringActions(String action) {
-		return new StringActions(action + (action.equals("aboveh") || action.equals("abovehh") ? ",sensorwet" : ",sensordry"));
+		return new StringActions(action + (action.equals("aboveh") || action.equals("abovehh")
+                ? ",sensorwet" : ",sensordry"));
 	}
 	
 	public static void main(String[] args) throws FileNotFoundException {
-		final List<String> allActions = Arrays.asList("abovehh", "aboveh", "aboveth",
-				"abovesp", "belowsp", "belowth", "belowl", "belowll");
+		final List<String> allActions = Arrays.asList(
+                "abovehh", "aboveh", "aboveth", "abovesp",
+                "belowsp", "belowth", "belowl", "belowll");
 		final Random rnd = new Random();
 		for (int k = 1; k <= 10; k++) {
 			// generate the model
@@ -47,7 +49,7 @@ public class WaterLevelGenerator {
 				}
 			}
 			
-			final String dir = "qbf/plant-synthesis/";
+			final String dir = "evaluation/plant-synthesis/";
 			final String prefix = dir + "water-level-" + k;
 			
 			try (PrintWriter pw = new PrintWriter(new File(prefix + ".dot"))) {

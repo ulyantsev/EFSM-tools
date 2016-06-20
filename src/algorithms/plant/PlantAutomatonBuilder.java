@@ -162,7 +162,7 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 				? null
 				: ("(" + String.join(")&(", additionalFormulae) + ")");
 	}
-	
+
 	public static Optional<NondetMooreAutomaton> build(Logger logger, PositivePlantScenarioForest positiveForest,
 			NegativePlantScenarioForest negativeForest, int size,
 			String actionspecFilePath, List<LtlNode> formulae,

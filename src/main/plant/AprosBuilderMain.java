@@ -64,7 +64,7 @@ public class AprosBuilderMain {
             return;
         }
 
-        Logger logger = Logger.getLogger("Logger");
+        final Logger logger = Logger.getLogger("Logger");
         if (logFilePath != null) {
             try {
                 final FileHandler fh = new FileHandler(logFilePath, false);
