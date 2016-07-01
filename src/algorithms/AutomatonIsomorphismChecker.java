@@ -15,19 +15,19 @@ public class AutomatonIsomorphismChecker {
 	}
 
 	public static boolean isIsomorphic(Automaton first, Automaton second) {
-		int[] firstToSecond = new int[first.stateCount()];
+		final int[] firstToSecond = new int[first.stateCount()];
 		Arrays.fill(firstToSecond, -1);
 		firstToSecond[first.startState().number()] = second.startState().number();
 		
-		List<Node> order = new ArrayList<Node>();
+		final List<Node> order = new ArrayList<>();
 		order.add(first.startState());
 		for (int i = 0; i < first.stateCount(); i++) {
 			if (i >= order.size()) {
 				break;
 			}
-			Node firstNode = order.get(i);
-			int secondNodeNumber = firstToSecond[firstNode.number()];
-			Node secondNode = second.state(secondNodeNumber);
+			final Node firstNode = order.get(i);
+            final int secondNodeNumber = firstToSecond[firstNode.number()];
+            final Node secondNode = second.state(secondNodeNumber);
 			if (firstNode.transitionCount() != secondNode.transitionCount()) {
 				return false;
 			}

@@ -11,6 +11,7 @@ import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
+import meta.Author;
 import org.apache.commons.lang3.tuple.Pair;
 
 import main.plant.PlantBuilderMain;
@@ -412,7 +413,7 @@ public class CompositionalBuilder {
 					false, satBased, ALL_EVENT_COMBINATIONS, traceIncludeEach);
 			System.out.println();
 			final PlantBuilderMain builder = new PlantBuilderMain();
-			builder.run(params.toArray(new String[params.size()]));
+			builder.run(params.toArray(new String[params.size()]), Author.IB, "");
 			if (!builder.resultAutomaton().isPresent()) {
 				System.err.println("Basic plant model constuction failed; "
 						+ "is the number of states sufficient?");
@@ -487,6 +488,11 @@ public class CompositionalBuilder {
         try (PrintWriter pw = new PrintWriter(namePrefix + "gv")) {
 			pw.println(effectiveA.toString(colorRules, Optional.of(conf)));
 		}
+
+        // reduced GV file with transitions merged for different inputs
+        try (PrintWriter pw = new PrintWriter(namePrefix + "reduced." + "gv")) {
+            pw.println(effectiveA.simplify().toString(colorRules, Optional.of(conf)));
+        }
 		
 		try (PrintWriter pw = new PrintWriter(namePrefix + "smv")) {
 			pw.println(effectiveA.toNuSMVString(eventsFromAutomaton(a),

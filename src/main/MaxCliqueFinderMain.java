@@ -11,34 +11,33 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import meta.Author;
+import meta.MainBase;
+import org.kohsuke.args4j.Argument;
 import structures.Node;
 import structures.ScenarioTree;
 import algorithms.AdjacencyCalculator;
 
-public class MaxCliqueFinderMain {
-	public static void main(String[] args) throws IOException {
-		if (args.length < 1 || args.length > 2) {
-            System.out.println("Greedy max-clique finder for a given scenario file");
-            System.out.println("Author: Igor Buzhinsky, igor.buzhinsky@gmail.com\n");
-            System.out.println("Usage: java -jar max-clique-finder.jar <scenarios.sc> [<varNumber> (default 0)]");
-            return;
-        }
+public class MaxCliqueFinderMain extends MainBase {
+    @Argument(usage = "scenario file path", metaVar = "<scenarios>", required = true, index = 0)
+    private String sc;
 
-		final String filename = args[0];
-		final int varNumber = args.length == 1 ? 0 : Integer.parseInt(args[1]);
-		
-		try {
-			final ScenarioTree tree = new ScenarioTree();
-			tree.load(filename, varNumber);
-			final Map<Node, Set<Node>> adjacent = AdjacencyCalculator.getAdjacent(tree);
-			final Set<Node> clique = findClique(tree.root(), adjacent);
-			checkClique(clique, adjacent);
-			System.out.println("MAX-CLIQUE SIZE: " + clique.size());
-			System.out.println("NODES: " + clique.stream().map(node -> node.number()).sorted().collect(Collectors.toList()));
-		} catch (IOException | ParseException e) {
-			e.printStackTrace();
-			return;
-		}
+    @Argument(usage = "number of variables", metaVar = "<varNumber (default 0)>", required = false, index = 1)
+    private int varNumber = 0;
+
+    public static void main(String[] args) {
+        new MaxCliqueFinderMain().run(args, Author.IB, "Greedy max-clique finder for a given scenario file");
+    }
+
+    @Override
+    protected void launcher() throws IOException, ParseException {
+        final ScenarioTree tree = new ScenarioTree();
+        tree.load(sc, varNumber);
+        final Map<Node, Set<Node>> adjacent = AdjacencyCalculator.getAdjacent(tree);
+        final Set<Node> clique = findClique(tree.root(), adjacent);
+        checkClique(clique, adjacent);
+        System.out.println("MAX-CLIQUE SIZE: " + clique.size());
+        System.out.println("NODES: " + clique.stream().map(Node::number).sorted().collect(Collectors.toList()));
 	}
 	
 	private static void checkClique(Set<Node> clique, Map<Node, Set<Node>> adjacent) {
@@ -70,11 +69,11 @@ public class MaxCliqueFinderMain {
 		Node last = maxV;
 		if (last != null) {
 			clique.add(last);
-			Node anotherOne = findNeighborWithHighestDegree(clique, last, adjacent);
+			Node anotherOne = neighborWithHighestDegree(clique, last, adjacent);
 			while (anotherOne != null) {
 				clique.add(anotherOne);
 				last = anotherOne;
-				anotherOne = findNeighborWithHighestDegree(clique, last, adjacent);
+				anotherOne = neighborWithHighestDegree(clique, last, adjacent);
 			}
 		} else {
 			clique.add(root);
@@ -83,7 +82,7 @@ public class MaxCliqueFinderMain {
 		return clique;
 	}
 
-	private static Node findNeighborWithHighestDegree(Set<Node> cur, Node v, Map<Node, Set<Node>> adjacent) {
+	private static Node neighborWithHighestDegree(Set<Node> cur, Node v, Map<Node, Set<Node>> adjacent) {
 		int maxDegree = 0;
 		Node maxNeighbour = null;
 		for (Node u : adjacent.get(v)) {

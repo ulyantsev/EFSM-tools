@@ -75,7 +75,7 @@ public class Automaton {
         return null;
     }
     
-    public boolean isCompliantWithScenario(StringScenario scenario) {
+    public boolean compliesWith(StringScenario scenario) {
         Node node = startState;
         for (int pos = 0; pos < scenario.size(); pos++) {
         	List<Node> newNodes = new ArrayList<>();

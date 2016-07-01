@@ -3,33 +3,22 @@ import java.io.IOException;
 import java.text.ParseException;
 
 import algorithms.AutomatonCompletenessChecker;
-import algorithms.AutomatonGVLoader;
+import meta.Author;
+import meta.MainBase;
+import org.kohsuke.args4j.Argument;
 import structures.Automaton;
 
-public class CompletenessCheckerMain {
+public class CompletenessCheckerMain extends MainBase {
+    @Argument(usage = "path to EFSM in Graphviz format", metaVar = "<efsm.gv>", required = true)
+    private String efsm;
 
 	public static void main(String[] args) {
-    	if (args.length != 1) {
-            System.out.println("Tool for checking EFSM variables completeness");
-            System.out.println("Author: Vladimir Ulyantsev, ulyantsev@rain.ifmo.ru\n");
-            System.out.println("Usage: java -jar checker.jar <efsm.gv>");
-            return;
-        }
-
-        Automaton automaton;
-        try {
-            automaton = AutomatonGVLoader.load(args[0]);
-        } catch (IOException e) {
-            System.err.println("Can't open file " + args[0]);
-            e.printStackTrace();
-            return;
-        } catch (ParseException e) {
-            System.err.println("Can't read EFSM from file " + args[0]);
-            e.printStackTrace();
-            return;
-        }
-
-        System.out.println(AutomatonCompletenessChecker.checkCompleteness(automaton));       
+        new CompletenessCheckerMain().run(args, Author.VU, "Tool for checking EFSM variable completeness");
 	}
 
+    @Override
+    protected void launcher() throws IOException, ParseException {
+        final Automaton automaton = loadAutomaton(efsm);
+        System.out.println(AutomatonCompletenessChecker.checkCompleteness(automaton));
+    }
 }

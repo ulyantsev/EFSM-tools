@@ -1,4 +1,5 @@
 package main.misc;
+
 /**
  * (c) Igor Buzhinsky
  */
@@ -11,36 +12,28 @@ import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import algorithms.AutomatonGVLoader;
+import meta.Author;
+import meta.MainBase;
+import org.kohsuke.args4j.Argument;
 import structures.Automaton;
 import structures.Node;
 import structures.Transition;
 
-public class SafetyLTLGeneratorMain {
+public class SafetyLTLGeneratorMain extends MainBase {
+    @Argument(usage = "path to EFSM in Graphviz format", metaVar = "<efsm.gv>", required = true)
+    private String efsm;
+
 	public static void main(String[] args) {
-    	if (args.length != 1) {
-            System.out.println("Generator of safety LTL formulae for a given FSM");
-            System.out.println("Author: Igor Buzhinsky, igor.buzhinsky@gmail.com\n");
-            System.out.println("Usage: java -jar safety-ltl-generator.jar <efsm.gv>");
-            return;
-        }
+        new SafetyLTLGeneratorMain().run(args, Author.IB, "Generator of safety LTL formulae for a given FSM");
+	}
 
-        Automaton automaton;
-        try {
-            automaton = AutomatonGVLoader.load(args[0]);
-        } catch (IOException e) {
-            System.err.println("Can't open file " + args[0]);
-            e.printStackTrace();
-            return;
-        } catch (ParseException e) {
-            System.err.println("Can't read EFSM from file " + args[0]);
-            e.printStackTrace();
-            return;
-        }
-
+    @Override
+    protected void launcher() throws IOException, ParseException {
+        final Automaton automaton = AutomatonGVLoader.load(efsm);
         generateX(automaton);
         generateGFuture(automaton);
         generateGPast(automaton);
-	}
+    }
 
 	private static void generateX(Automaton automaton) {
 		//final Set<String> allEvents = allEvents(automaton);
@@ -58,15 +51,15 @@ public class SafetyLTLGeneratorMain {
 				}
 			}
 			//if (!events.equals(allEvents)) {
-				final StringBuilder sb = new StringBuilder();
-				for (int j = 0; j < i; j++) {
-					sb.append("X(");
-				}
-				sb.append(joinEvents(events));
-				for (int j = 0; j < i; j++) {
-					sb.append(")");
-				}
-				System.out.println(sb.toString());
+            final StringBuilder sb = new StringBuilder();
+            for (int j = 0; j < i; j++) {
+                sb.append("X(");
+            }
+            sb.append(joinEvents(events));
+            for (int j = 0; j < i; j++) {
+                sb.append(")");
+            }
+            System.out.println(sb.toString());
 			//}
 			possibleStates = newStates;
 		}
@@ -100,7 +93,7 @@ public class SafetyLTLGeneratorMain {
 				}
 			}
 			//if (!nextEvents.equals(allEvents)) {
-				System.out.println("G(!(wasEvent(ep." + event + ")) || X(" + joinEvents(nextEvents) + "))");
+            System.out.println("G(!(wasEvent(ep." + event + ")) || X(" + joinEvents(nextEvents) + "))");
 			//}
 		}
 	}
@@ -123,7 +116,7 @@ public class SafetyLTLGeneratorMain {
 				}
 			}
 			//if (!prevEvents.equals(allEvents)) {
-				System.out.println("G(!(X(wasEvent(ep." + event + "))) || " + joinEvents(prevEvents) + ")");
+            System.out.println("G(!(X(wasEvent(ep." + event + "))) || " + joinEvents(prevEvents) + ")");
 			//}
 		}
 	}

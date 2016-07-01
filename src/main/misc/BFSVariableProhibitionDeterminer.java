@@ -36,13 +36,15 @@ public class BFSVariableProhibitionDeterminer {
 				int effectiveEventNum = Math.max(2, Math.min(eventNum, statesNum - 2));
 				Map<String, Boolean> res = allRes.get(Pair.of(statesNum, effectiveEventNum));
 				if (res == null) {
-					BFSVariableProhibitionDeterminer d = new BFSVariableProhibitionDeterminer(statesNum, effectiveEventNum);
+					BFSVariableProhibitionDeterminer d = new BFSVariableProhibitionDeterminer(statesNum,
+                            effectiveEventNum);
 					Logger logger = Logger.getLogger("Logger");
 					logger.setUseParentHandlers(false);
 					res = d.check(logger);
 					allRes.put(Pair.of(statesNum, eventNum), res);
 				}
-				try (PrintWriter pw = new PrintWriter(new File(QbfAutomatonBuilder.PRECOMPUTED_DIR_NAME + "/" + statesNum + "_" + eventNum))) {
+				try (PrintWriter pw = new PrintWriter(new File(QbfAutomatonBuilder.PRECOMPUTED_DIR_NAME
+                        + "/" + statesNum + "_" + eventNum))) {
 					for (Map.Entry<String, Boolean> e : res.entrySet()) {
 						if (!e.getValue()) {
 							pw.println(e.getKey());

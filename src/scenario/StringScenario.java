@@ -73,9 +73,7 @@ public class StringScenario {
     boolean isPositive;
     
     private List<List<String>> events = new ArrayList<>();
-    
     private List<MyBooleanExpression> expressions = new ArrayList<>();
-    
     private List<StringActions> actions = new ArrayList<>();
     
     public StringScenario(boolean isPositive,

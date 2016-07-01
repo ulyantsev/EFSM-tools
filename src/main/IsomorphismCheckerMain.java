@@ -2,48 +2,28 @@ package main;
 import java.io.IOException;
 import java.text.ParseException;
 
-import algorithms.AutomatonGVLoader;
 import algorithms.AutomatonIsomorphismChecker;
+import meta.Author;
+import meta.MainBase;
+import org.kohsuke.args4j.Argument;
 import structures.Automaton;
 
+public class IsomorphismCheckerMain extends MainBase {
+    @Argument(usage = "path to EFSM in Graphviz format", metaVar = "<first.gv>", required = true, index = 0)
+    private String efsm1;
 
-public class IsomorphismCheckerMain {
+    @Argument(usage = "path to EFSM in Graphviz format", metaVar = "<second.gv>", required = true, index = 1)
+    private String efsm2;
 
 	public static void main(String[] args) {
-		if (args.length != 2) {
-			System.out.println("Tool for EFSM isomorphism checking");
-			System.out.println("Author: Vladimir Ulyantsev, ulyantsev@rain.ifmo.ru\n");
-			System.out.println("Usage: java -jar checker.jar <first.gv> <second.gv>");
-			return;
-		}
-		
-		Automaton first, second;
-		try {
-			first = AutomatonGVLoader.load(args[0]);
-		} catch (IOException e) {
-			System.err.println("Can't open file " + args[0]);
-			e.printStackTrace();
-			return;
-		} catch (ParseException e) {
-			System.err.println("Can't read EFSM from file " + args[0]);
-			e.printStackTrace();
-			return;
-		}
-		
-		try {
-			second = AutomatonGVLoader.load(args[1]);
-		} catch (IOException e) {
-			System.err.println("Can't open file " + args[1]);
-			e.printStackTrace();
-			return;
-		} catch (ParseException e) {
-			System.err.println("Can't read EFSM from file " + args[1]);
-			e.printStackTrace();
-			return;
-		}
-		
-		boolean ans = AutomatonIsomorphismChecker.isIsomorphic(first, second);		
-		System.out.println(ans ? "ISOMORPHIC" : "NOT ISOMORPHIC");
-	}
+        new IsomorphismCheckerMain().run(args, Author.VU, "Tool for EFSM isomorphism checking");
+    }
 
+    @Override
+    protected void launcher() throws IOException, ParseException {
+        final Automaton a1 = loadAutomaton(efsm1);
+        final Automaton a2 = loadAutomaton(efsm2);
+        final boolean ans = AutomatonIsomorphismChecker.isIsomorphic(a1, a2);
+        System.out.println(ans ? "ISOMORPHIC" : "NOT ISOMORPHIC");
+    }
 }

@@ -15,7 +15,7 @@ import structures.Transition;
 public class AutomatonCompletenessChecker {
 	public static String checkCompleteness(Automaton automaton) {
 		for (Node node : automaton.states()) {
-			Map<String, Set<String>> eventVars = new TreeMap<>();
+			final Map<String, Set<String>> eventVars = new TreeMap<>();
 			for (Transition t : node.transitions()) {
 				String event = t.event();
 				if (!eventVars.containsKey(event)) {
@@ -24,7 +24,7 @@ public class AutomatonCompletenessChecker {
 				eventVars.get(event).addAll(Arrays.asList(t.expr().getVariables()));				
 			}
 
-			Map<String, Integer> eventSetsCount = new TreeMap<>();
+			final Map<String, Integer> eventSetsCount = new TreeMap<>();
 			for (Transition t : node.transitions()) {
 				String event = t.event();
 				MyBooleanExpression expr = t.expr();
@@ -36,8 +36,7 @@ public class AutomatonCompletenessChecker {
 				int setsCount = expr.getSatisfiabilitySetsCount() * coefficient;
 				eventSetsCount.put(event, eventSetsCount.get(event) + setsCount);
 			}
-			
-			
+
 			for (String event : eventSetsCount.keySet()) {
 				if (1 << eventVars.get(event).size() != eventSetsCount.get(event)) {
 					return "INCOMPLETE\nNode " + node.number() + "\nEvent " + event;

@@ -1,69 +1,47 @@
 package main;
-import java.io.FileNotFoundException;
+
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.List;
-import java.util.Locale;
 
-import algorithms.AutomatonGVLoader;
+import meta.Author;
+import meta.MainBase;
+import org.kohsuke.args4j.Argument;
 import scenario.StringScenario;
 import structures.Automaton;
 
-public class ConsistencyCheckerMain {
+public class ConsistencyCheckerMain extends MainBase {
+    @Argument(usage = "path to EFSM in Graphviz format", metaVar = "<efsm.gv>", required = true, index = 0)
+    private String efsm;
+
+    @Argument(usage = "scenario file path", metaVar = "<scenarios>", required = true, index = 1)
+    private String sc;
+
     public static void main(String[] args) {
-        Locale.setDefault(Locale.US);
-        
-        if (args.length != 2) {
-            System.out.println("Tool for checking EFSM and scenarios set consistency");
-            System.out.println("Author: Vladimir Ulyantsev, ulyantsev@rain.ifmo.ru\n");
-            System.out.println("Usage: java -jar checker.jar <efsm.gv> <scenarios>");
-            return;
-        }
-        
-        Automaton automaton;
-        try {
-            automaton = AutomatonGVLoader.load(args[0]);
-        } catch (IOException e) {
-            System.err.println("Can't open file " + args[0]);
-            e.printStackTrace();
-            return;
-        } catch (ParseException e) {
-            System.err.println("Can't read EFSM from file " + args[0]);
-            e.printStackTrace();
-            return;
-        }
-        
-        
-        List<StringScenario> scenarios;
-        try {
-            scenarios = StringScenario.loadScenarios(args[1]);
-        } catch (FileNotFoundException e) {
-            System.err.println("Can't open file " + args[1]);
-            e.printStackTrace();
-            return;
-        } catch (ParseException e) {
-            System.err.println("Can't read scenarios from file " + args[1]);
-            e.printStackTrace();
-            return;
-        }
-        
+        new ConsistencyCheckerMain().run(args, Author.VU, "Tool for checking EFSM and scenarios set consistency");
+    }
+
+    @Override
+    protected void launcher() throws IOException, ParseException {
+        final Automaton automaton = loadAutomaton(efsm);
+        final List<StringScenario> scenarios = loadScenarios(sc, -1);
+
         int faultCount = 0;
         int actionsMistakes = 0;
         int scenariosSumLength = 0;
         for (StringScenario scenario : scenarios) {
-            faultCount += automaton.isCompliantWithScenario(scenario) ? 0 : 1;
+            faultCount += automaton.compliesWith(scenario) ? 0 : 1;
             actionsMistakes += automaton.calcMissedActions(scenario);
             scenariosSumLength += scenario.size();
         }
-        
+
         System.out.println("Total scenarios count: " + scenarios.size());
         System.out.println("Total scenarios length: " + scenariosSumLength);
         System.out.println("Complies with: " + (scenarios.size() - faultCount));
         System.out.println("Incomplies with: " + faultCount);
         System.out.printf("Complies percent: %.2f\n\n", 100. * (scenarios.size() - faultCount) / scenarios.size());
         System.out.println("Total actions mistakes done: " + actionsMistakes);
-        System.out.printf("Actions mistakes percent: %.2f\n", 
-                                100. * actionsMistakes / scenariosSumLength);
-        
+        System.out.printf("Actions mistakes percent: %.2f\n",
+                100. * actionsMistakes / scenariosSumLength);
     }
 }

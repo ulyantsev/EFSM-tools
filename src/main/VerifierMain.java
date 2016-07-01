@@ -6,14 +6,10 @@ package main;
 
 import java.io.IOException;
 import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Locale;
-import java.util.logging.Logger;
 
-import org.kohsuke.args4j.CmdLineException;
-import org.kohsuke.args4j.CmdLineParser;
+import meta.Author;
+import meta.MainBase;
 import org.kohsuke.args4j.Option;
 import org.kohsuke.args4j.spi.BooleanOptionHandler;
 
@@ -24,7 +20,7 @@ import verification.verifier.Counterexample;
 import verification.verifier.Verifier;
 import algorithms.AutomatonGVLoader;
 
-public class VerifierMain {
+public class VerifierMain extends MainBase {
 	@Option(name = "--eventNumber", aliases = { "-en" },
             usage = "number of events", metaVar = "<eventNumber>", required = true)
 	private int eventNumber;
@@ -58,90 +54,37 @@ public class VerifierMain {
 	@Option(name = "--plantModel", aliases = { "-pm" }, handler = BooleanOptionHandler.class,
             usage = "the supplied automaton is a plant model")
 	private boolean plantModel;
-	
-	private void launcher(String[] args) throws IOException, ParseException {
-		Locale.setDefault(Locale.US);
 
-		final CmdLineParser parser = new CmdLineParser(this);
-		try {
-			parser.parseArgument(args);
-		} catch (CmdLineException e) {
-			System.out.println("Interface to the built-in automaton verifier");
-			System.out.println("Authors: Igor Buzhinsky (igor.buzhinsky@gmail.com)\n");
-			System.out.print("Usage: ");
-			parser.printSingleLineUsage(System.out);
-			System.out.println();
-			parser.printUsage(System.out);
-			return;
-		}
+    @Override
+    protected void launcher() throws IOException {
+        initializeLogger(null);
+        final List<String> eventnames = eventNames(eventNames, eventNumber);
+        final List<String> events = events(eventnames, eventNumber, varNumber);
+        final List<String> actions = actions(actionNames, actionNumber);
 		
-		final Logger logger = Logger.getLogger("Logger");
-		
-		List<String> eventnames;
-		if (eventNames != null) {
-			eventnames = Arrays.asList(eventNames.split(","));
-			if (eventnames.size() != eventNumber) {
-				logger.warning("The number of events in <eventNames> does not correspond to <eventNumber>!");
-				return;
-			}
-		} else {
-			eventnames = new ArrayList<>();
-			for (int i = 0; i < eventNumber; i++) {
-				eventnames.add(String.valueOf((char) ('A' +  i)));
-			}
-		}
-		
-		final List<String> events = new ArrayList<>();
-		for (int i = 0; i < eventNumber; i++) {
-			final String event = eventnames.get(i);
-			for (int j = 0; j < 1 << varNumber; j++) {
-				final StringBuilder sb = new StringBuilder(event);
-				for (int pos = 0; pos < varNumber; pos++) {
-					sb.append(((j >> pos) & 1) == 1 ? 1 : 0);
-				}
-				events.add(sb.toString());
-			}
-		}
-		
-		List<String> actions;
-		if (actionNames != null) {
-			actions = Arrays.asList(actionNames.split(","));
-			if (actions.size() != actionNumber) {
-				logger.warning("The number of actions in <actionNames> does not correspond to <actionNumber>!");
-				return;
-			}
-		} else {
-			actions = new ArrayList<>();
-			for (int i = 0; i < actionNumber; i++) {
-				actions.add("z" + i);
-			}
-		}
-		
-		final Verifier verifier = new Verifier(logger, LtlParser.load(ltlFilePath, varNumber, events),
+		final Verifier verifier = new Verifier(logger(), LtlParser.load(ltlFilePath, varNumber, events),
 				events, actions, varNumber);
 		final List<Counterexample> counterexamples;
 		if (plantModel) {
 			final NondetMooreAutomaton a = NondetMooreAutomaton.readGV(automatonPath);
 			counterexamples = verifier.verifyNondetMoore(a);
 		} else {
-			final Automaton a = AutomatonGVLoader.load(automatonPath);
-			counterexamples = verifier.verifyWithCounterexamplesWithNoDeadEndRemoval(a);
+            try {
+                final Automaton a = AutomatonGVLoader.load(automatonPath);
+                counterexamples = verifier.verifyWithCounterexamplesWithNoDeadEndRemoval(a);
+            } catch (ParseException e) {
+                System.err.println("Can't read EFSM from file " + automatonPath);
+                e.printStackTrace();
+                return;
+            }
 		}
 		for (Counterexample ce : counterexamples) {
 			System.out.println(ce.isEmpty() ? "PASS" : ("FAIL " + ce));
 		}
 	}
-	
-	public void run(String[] args) {
-		try {
-			launcher(args);
-		} catch (IOException | ParseException e) {
-			e.printStackTrace();
-			System.exit(1);
-		}
-	}
 
 	public static void main(String[] args) {
-		new VerifierMain().run(args);
+        new VerifierMain().run(args, Author.IB,
+                "Interface to the built-in automaton verifier");
 	}
 }

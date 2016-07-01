@@ -5,16 +5,13 @@ package main.plant;
  */
 
 import main.plant.apros.*;
-import org.kohsuke.args4j.CmdLineException;
-import org.kohsuke.args4j.CmdLineParser;
+import meta.Author;
+import meta.MainBase;
 import org.kohsuke.args4j.Option;
 import java.io.IOException;
 import java.util.*;
-import java.util.logging.FileHandler;
-import java.util.logging.Logger;
-import java.util.logging.SimpleFormatter;
 
-public class AprosBuilderMain {
+public class AprosBuilderMain extends MainBase {
     @Option(name = "--type", aliases = {"-t"},
             usage = "model type: explicit-state, constraint-based, traces, sat-based, prepare-dataset",
             metaVar = "<type>", required = true)
@@ -47,39 +44,13 @@ public class AprosBuilderMain {
             metaVar = "<k>")
     private int traceIncludeEach = 1;
 
-    private void launcher(String[] args) throws IOException {
-        Locale.setDefault(Locale.US);
-        final long startTime = System.currentTimeMillis();
+    public static void main(String[] args) {
+        new AprosBuilderMain().run(args, Author.IB, "Toolset for NuSMV model generation from Apros traces");
+    }
 
-        final CmdLineParser parser = new CmdLineParser(this);
-        try {
-            parser.parseArgument(args);
-        } catch (CmdLineException e) {
-            System.out.println("Toolset for NuSMV model generation from Apros traces");
-            System.out.println("Author: Igor Buzhinsky (igor.buzhinsky@gmail.com)\n");
-            System.out.print("Usage: ");
-            parser.printSingleLineUsage(System.out);
-            System.out.println();
-            parser.printUsage(System.out);
-            return;
-        }
-
-        final Logger logger = Logger.getLogger("Logger");
-        if (logFilePath != null) {
-            try {
-                final FileHandler fh = new FileHandler(logFilePath, false);
-                logger.addHandler(fh);
-                final SimpleFormatter formatter = new SimpleFormatter();
-                fh.setFormatter(formatter);
-
-                logger.setUseParentHandlers(false);
-                System.out.println("Log redirected to " + logFilePath);
-            } catch (Exception e) {
-                System.err.println("Can't work with file " + logFilePath + ": " + e.getMessage());
-                return;
-            }
-        }
-
+    @Override
+    protected void launcher() throws IOException {
+        initializeLogger(logFilePath);
         if (Objects.equals(type, "prepare-dataset")) {
             DatasetSerializer.run(traceLocation, traceFilenamePrefix, paramScaleFilename);
         } else {
@@ -97,21 +68,6 @@ public class AprosBuilderMain {
                 return;
             }
         }
-
-        final double executionTime = (System.currentTimeMillis() - startTime) / 1000.;
-        logger.info("Execution time: " + executionTime);
-    }
-
-    public void run(String[] args) {
-        try {
-            launcher(args);
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.exit(1);
-        }
-    }
-
-    public static void main(String[] args) {
-        new AprosBuilderMain().run(args);
+        logger().info("Execution time: " + executionTime());
     }
 }

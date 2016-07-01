@@ -462,7 +462,25 @@ public class NondetMooreAutomaton {
 		
 		return copy;
     }
-    
+
+    public NondetMooreAutomaton simplify() {
+        final NondetMooreAutomaton copy = copy();
+
+        for (MooreNode state : states) {
+            final Set<Integer> destinations = state.transitions().stream()
+                    .map(MooreTransition::dst).map(MooreNode::number)
+                    .collect(Collectors.toCollection(TreeSet::new));
+            final MooreNode copyState = copy.state(state.number());
+            new HashSet<>(copyState.transitions()).forEach(copyState::removeTransition);
+            for (Integer dst : destinations) {
+                copyState.addTransition(" ", copy.state(dst));
+            }
+        }
+
+        return copy;
+    }
+
+
     public void removeDeadlocks() {
     	Map<MooreNode, Set<MooreTransition>> reversedTransitions = null;
     	final Set<MooreNode> allDeadlockStates = new HashSet<>();

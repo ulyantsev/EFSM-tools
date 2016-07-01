@@ -4,27 +4,17 @@ package main.plant;
  * (c) Igor Buzhinsky
  */
 
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
-import java.util.logging.FileHandler;
-import java.util.logging.Logger;
-import java.util.logging.SimpleFormatter;
 
+import meta.Author;
+import meta.MainBase;
 import org.kohsuke.args4j.Argument;
-import org.kohsuke.args4j.CmdLineException;
-import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 import org.kohsuke.args4j.spi.BooleanOptionHandler;
 
@@ -42,7 +32,7 @@ import verification.verifier.Counterexample;
 import verification.verifier.NondetMooreVerifierPair;
 import verification.verifier.Verifier;
 
-public class PlantBuilderMain {
+public class PlantBuilderMain extends MainBase {
     @Argument(usage = "paths to files with scenarios", metaVar = "files", required = true)
     private List<String> arguments = new ArrayList<>();
 
@@ -128,219 +118,121 @@ public class PlantBuilderMain {
         return colorRuleMap;
     }
 
-    private void launcher(String[] args) throws IOException {
-        Locale.setDefault(Locale.US);
-        final long startTime = System.currentTimeMillis();
+    public static void main(String[] args) {
+        new PlantBuilderMain().run(args, Author.IB, "Plant automaton builder from scenarios and LTL formulae");
+    }
 
-        final CmdLineParser parser = new CmdLineParser(this);
-        try {
-            parser.parseArgument(args);
-        } catch (CmdLineException e) {
-            System.out.println("Plant automaton builder from scenarios and LTL formulae");
-            System.out.println("Author: Igor Buzhinsky (igor.buzhinsky@gmail.com)\n");
-            System.out.print("Usage: ");
-            parser.printSingleLineUsage(System.out);
-            System.out.println();
-            parser.printUsage(System.out);
-            return;
-        }
-
-        final Logger logger = Logger.getLogger("Logger");
-        if (logFilePath != null) {
-            try {
-                final FileHandler fh = new FileHandler(logFilePath, false);
-                logger.addHandler(fh);
-                final SimpleFormatter formatter = new SimpleFormatter();
-                fh.setFormatter(formatter);
-
-                logger.setUseParentHandlers(false);
-                System.out.println("Log redirected to " + logFilePath);
-            } catch (Exception e) {
-                System.err.println("Can't work with file " + logFilePath + ": " + e.getMessage());
-                return;
-            }
-        }
+    @Override
+    protected void launcher() throws IOException, ParseException {
+        initializeLogger(logFilePath);
 
         final PositivePlantScenarioForest positiveForest = new PositivePlantScenarioForest();
         final List<StringScenario> scenarios = new ArrayList<>();
         for (String scenarioPath : arguments) {
-            try {
-                scenarios.addAll(StringScenario.loadScenarios(scenarioPath, varNumber));
-            } catch (IOException | ParseException e) {
-                logger.warning("Can't load scenarios from file " + scenarioPath);
-                e.printStackTrace();
-                return;
-            }
-            logger.info("Loaded scenarios from " + scenarioPath);
+            scenarios.addAll(loadScenarios(scenarioPath, varNumber));
+            logger().info("Loaded scenarios from " + scenarioPath);
         }
         scenarios.forEach(positiveForest::addScenario);
-        logger.info("Scenario tree size: " + positiveForest.nodeCount());
+        logger().info("Scenario tree size: " + positiveForest.nodeCount());
+        saveScenarioTree(positiveForest, treeFilePath);
+        final List<String> eventnames = eventNames(eventNames, eventNumber);
+        final List<String> events = events(eventnames, eventNumber, varNumber);
+        final List<String> actions = actions(actionNames, actionNumber);
 
-        if (treeFilePath != null) {
-            try (PrintWriter pw = new PrintWriter(new File(treeFilePath))) {
-                pw.println(positiveForest);
-                logger.info("Scenarios tree saved to " + treeFilePath);
-            } catch (Exception e) {
-                logger.warning("Can't save scenarios tree to " + treeFilePath);
-            }
-        }
-
-        List<String> eventnames;
-        if (eventNames != null) {
-            eventnames = Arrays.asList(eventNames.split(","));
-            if (eventnames.size() != eventNumber) {
-                logger.warning("The number of events in <eventNames> does not correspond to <eventNumber>!");
-                return;
-            }
-        } else {
-            eventnames = new ArrayList<>();
-            for (int i = 0; i < eventNumber; i++) {
-                eventnames.add(String.valueOf((char) ('A' + i)));
-            }
-        }
-
-        final List<String> events = new ArrayList<>();
-        for (int i = 0; i < eventNumber; i++) {
-            final String event = eventnames.get(i);
-            for (int j = 0; j < 1 << varNumber; j++) {
-                StringBuilder sb = new StringBuilder(event);
-                for (int pos = 0; pos < varNumber; pos++) {
-                    sb.append(((j >> pos) & 1) == 1 ? 1 : 0);
-                }
-                events.add(sb.toString());
-            }
-        }
-
-        List<String> actions;
-        if (actionNames != null) {
-            actions = actionNames.isEmpty() ? Collections.emptyList()
-                    : Arrays.asList(actionNames.split(","));
-            if (actions.size() != actionNumber) {
-                logger.warning("The number of actions in <actionNames> does not correspond to <actionNumber>!");
-                return;
-            }
-        } else {
-            actions = new ArrayList<>();
-            for (int i = 0; i < actionNumber; i++) {
-                actions.add("z" + i);
-            }
-        }
-
+        final List<String> strFormulae = LtlParser.load(ltlFilePath, varNumber, eventnames);
+        List<LtlNode> formulae;
         try {
-            final List<String> strFormulae = LtlParser.load(ltlFilePath, varNumber, eventnames);
-            final List<LtlNode> formulae = LtlParser.parse(strFormulae);
-            logger.info("LTL formula from " + ltlFilePath);
-
-            final List<StringScenario> negativeScenarios = new ArrayList<>();
-            final NegativePlantScenarioForest negativeForest = new NegativePlantScenarioForest();
-            if (negscFilePath != null) {
-                negativeScenarios.addAll(StringScenario.loadScenarios(negscFilePath, varNumber));
-                negativeForest.load(negscFilePath, varNumber);
-            }
-
-            logger.info("Initializing the verifier...");
-
-            final NondetMooreVerifierPair verifier = new NondetMooreVerifierPair(logger, strFormulae, events, actions, varNumber);
-            final long finishTime = System.currentTimeMillis() + timeout * 1000;
-
-            logger.info("Started building automaton.");
-
-            resultAutomaton = fast
-                    ? RapidPlantAutomatonBuilder.build(positiveForest, events)
-                    : PlantAutomatonBuilder.build(logger, positiveForest, negativeForest, size,
-                    actionspecFilePath, formulae, events, actions, verifier, finishTime);
-
-            final double executionTime = (System.currentTimeMillis() - startTime) / 1000.;
-
-            if (!resultAutomaton.isPresent()) {
-                logger.info("Automaton with " + size + " states NOT FOUND!");
-                logger.info("Automaton builder execution time: " + executionTime);
-            } else {
-                logger.info("Automaton with " + resultAutomaton.get().stateCount()
-                        + " states WAS FOUND!");
-                logger.info("Automaton builder execution time: " + executionTime);
-
-                if (resultAutomaton.get().isCompliantWithScenarios(scenarios, true, true)) {
-                    logger.info("COMPLIES WITH SCENARIOS");
-                } else {
-                    logger.severe("NOT COMPLIES WITH SCENARIOS");
-                }
-
-                if (resultAutomaton.get().isCompliantWithScenarios(negativeScenarios, false, false)) {
-                    logger.info("COMPLIES WITH NEGATIVE SCENARIOS");
-                } else {
-                    logger.severe("NOT COMPLIES WITH NEGATIVE SCENARIOS");
-                }
-
-                if (colorRules != null) {
-                    final String[] tokens = colorRules.split(",");
-                    // linked, since the order is important
-                    for (String token : tokens) {
-                        final String[] parts = token.split("->");
-                        if (parts.length != 2 || !actions.contains(parts[0])) {
-                            logger.warning("Invalid color rule " + token + "!");
-                        } else {
-                            colorRuleMap.put(parts[0], parts[1]);
-                        }
-                    }
-                }
-
-                // writing to a file
-                try (PrintWriter pw = new PrintWriter(new File(resultFilePath))) {
-                    pw.println(resultAutomaton.get().toString(colorRuleMap, Optional.empty()));
-                } catch (FileNotFoundException e) {
-                    logger.warning("File " + resultFilePath + " not found: " + e.getMessage());
-                }
-
-                if (nusmvFilePath != null) {
-                    try (PrintWriter pw = new PrintWriter(new File(nusmvFilePath))) {
-                        pw.println(resultAutomaton.get().toNuSMVString(events, actions,
-                                new ArrayList<>(), Optional.empty()));
-                    } catch (FileNotFoundException e) {
-                        logger.warning("File " + nusmvFilePath + " not found: " + e.getMessage());
-                    }
-                }
-
-                final Verifier usualVerifier = new Verifier(logger, strFormulae, events, actions, varNumber);
-                final List<Counterexample> counterexamples =
-                        usualVerifier.verifyNondetMoore(resultAutomaton.get());
-                if (counterexamples.stream().allMatch(Counterexample::isEmpty)) {
-                    logger.info("VERIFIED");
-                } else {
-                    logger.severe("NOT VERIFIED");
-                }
-
-                // completeness check
-                boolean complete = true;
-                for (MooreNode s : resultAutomaton.get().states()) {
-                    for (String event : events) {
-                        if (!s.transitions().stream().anyMatch(t -> t.event().endsWith(event))) {
-                            complete = false;
-                        }
-                    }
-                }
-                if (complete) {
-                    logger.info("COMPLETE");
-                } else {
-                    logger.severe("INCOMPLETE");
-                }
-            }
-        } catch (ParseException | LtlParseException e) {
-            logger.warning("Can't get LTL formula from " + treeFilePath);
+            formulae = LtlParser.parse(strFormulae);
+        } catch (LtlParseException e) {
+            logger().warning("Can't get LTL formula from " + treeFilePath);
             throw new RuntimeException(e);
         }
-    }
 
-    public void run(String[] args) {
-        try {
-            launcher(args);
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.exit(1);
+        logger().info("LTL formula from " + ltlFilePath);
+
+        final List<StringScenario> negativeScenarios = new ArrayList<>();
+        final NegativePlantScenarioForest negativeForest = new NegativePlantScenarioForest();
+        if (negscFilePath != null) {
+            negativeScenarios.addAll(StringScenario.loadScenarios(negscFilePath, varNumber));
+            negativeForest.load(negscFilePath, varNumber);
         }
-    }
 
-    public static void main(String[] args) {
-        new PlantBuilderMain().run(args);
+        logger().info("Initializing the verifier...");
+
+        final NondetMooreVerifierPair verifier = new NondetMooreVerifierPair(logger(), strFormulae,
+                events, actions, varNumber);
+        final long finishTime = System.currentTimeMillis() + timeout * 1000;
+
+        logger().info("Started building automaton.");
+
+        resultAutomaton = fast
+                ? RapidPlantAutomatonBuilder.build(positiveForest, events)
+                : PlantAutomatonBuilder.build(logger(), positiveForest, negativeForest, size,
+                actionspecFilePath, formulae, events, actions, verifier, finishTime);
+
+        if (!resultAutomaton.isPresent()) {
+            logger().info("Automaton with " + size + " states NOT FOUND!");
+            logger().info("Automaton builder execution time: " + executionTime());
+        } else {
+            logger().info("Automaton with " + resultAutomaton.get().stateCount()
+                    + " states WAS FOUND!");
+            logger().info("Automaton builder execution time: " + executionTime());
+
+            if (resultAutomaton.get().isCompliantWithScenarios(scenarios, true, true)) {
+                logger().info("COMPLIES WITH SCENARIOS");
+            } else {
+                logger().severe("NOT COMPLIES WITH SCENARIOS");
+            }
+
+            if (resultAutomaton.get().isCompliantWithScenarios(negativeScenarios, false, false)) {
+                logger().info("COMPLIES WITH NEGATIVE SCENARIOS");
+            } else {
+                logger().severe("NOT COMPLIES WITH NEGATIVE SCENARIOS");
+            }
+
+            if (colorRules != null) {
+                final String[] tokens = colorRules.split(",");
+                // linked, since the order is important
+                for (String token : tokens) {
+                    final String[] parts = token.split("->");
+                    if (parts.length != 2 || !actions.contains(parts[0])) {
+                        logger().warning("Invalid color rule " + token + "!");
+                    } else {
+                        colorRuleMap.put(parts[0], parts[1]);
+                    }
+                }
+            }
+
+            saveToFile(resultAutomaton.get().toString(colorRuleMap, Optional.empty()), resultFilePath);
+
+            if (nusmvFilePath != null) {
+                saveToFile(resultAutomaton.get().toNuSMVString(events, actions,
+                        new ArrayList<>(), Optional.empty()), nusmvFilePath);
+            }
+
+            final Verifier usualVerifier = new Verifier(logger(), strFormulae, events, actions, varNumber);
+            final List<Counterexample> counterexamples =
+                    usualVerifier.verifyNondetMoore(resultAutomaton.get());
+            if (counterexamples.stream().allMatch(Counterexample::isEmpty)) {
+                logger().info("VERIFIED");
+            } else {
+                logger().severe("NOT VERIFIED");
+            }
+
+            // completeness check
+            boolean complete = true;
+            for (MooreNode s : resultAutomaton.get().states()) {
+                for (String event : events) {
+                    if (!s.transitions().stream().anyMatch(t -> t.event().endsWith(event))) {
+                        complete = false;
+                    }
+                }
+            }
+            if (complete) {
+                logger().info("COMPLETE");
+            } else {
+                logger().severe("INCOMPLETE");
+            }
+        }
     }
 }
