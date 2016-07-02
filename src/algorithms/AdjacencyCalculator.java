@@ -5,20 +5,20 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
-import structures.Node;
+import structures.MealyNode;
 import structures.ScenarioTree;
 import structures.Transition;
 
 public class AdjacencyCalculator {
-    public static Map<Node, Set<Node>> getAdjacent(ScenarioTree tree) {
-        Map<Node, Set<Node>> ans = new HashMap<>();
+    public static Map<MealyNode, Set<MealyNode>> getAdjacent(ScenarioTree tree) {
+        Map<MealyNode, Set<MealyNode>> ans = new HashMap<>();
         calcNode(tree, tree.root(), ans);
         return ans;
     }
     
-    private static void calcNode(ScenarioTree tree, Node node, Map<Node, Set<Node>> ans) {
+    private static void calcNode(ScenarioTree tree, MealyNode node, Map<MealyNode, Set<MealyNode>> ans) {
         if (!ans.containsKey(node)) {
-            Set<Node> adjacentSet = new LinkedHashSet<>();
+            Set<MealyNode> adjacentSet = new LinkedHashSet<>();
             ans.put(node, adjacentSet);
             if (node.transitionCount() == 0) {
                 return;
@@ -27,7 +27,7 @@ public class AdjacencyCalculator {
             for (Transition t1 : node.transitions()) {
                 // calculating for children
                 calcNode(tree, t1.dst(), ans);
-                for (Node other : tree.nodes()) {
+                for (MealyNode other : tree.nodes()) {
                     if (other != node) {
                         for (Transition t2 : other.transitions()) {
                             if (t1.event().equals(t2.event())) {

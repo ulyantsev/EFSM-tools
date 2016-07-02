@@ -55,6 +55,10 @@ public class VerifierMain extends MainBase {
             usage = "the supplied automaton is a plant model")
 	private boolean plantModel;
 
+    public static void main(String[] args) {
+        new VerifierMain().run(args, Author.IB, "Interface to the built-in automaton verifier");
+    }
+
     @Override
     protected void launcher() throws IOException {
         initializeLogger(null);
@@ -81,10 +85,5 @@ public class VerifierMain extends MainBase {
 		for (Counterexample ce : counterexamples) {
 			System.out.println(ce.isEmpty() ? "PASS" : ("FAIL " + ce));
 		}
-	}
-
-	public static void main(String[] args) {
-        new VerifierMain().run(args, Author.IB,
-                "Interface to the built-in automaton verifier");
 	}
 }

@@ -167,7 +167,8 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
                                                        NegativePlantScenarioForest negativeForest, int size,
                                                        String actionspecFilePath, List<String> events,
                                                        List<String> actions, NondetMooreVerifierPair verifier,
-                                                       long finishTime, SatSolver solver) throws IOException {
+                                                       long finishTime, SatSolver solver, boolean deterministic,
+                                                       boolean bfsConstraints, boolean complete) throws IOException {
 		deleteTrash();
 		SimpleVerifier.setLoopWeight(size);
 		
@@ -176,8 +177,8 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 		SolverInterface inf = null;
 		
 		for (int iteration = 0; System.currentTimeMillis() < finishTime; iteration++) {
-			final PlantFormulaBuilder builder = new PlantFormulaBuilder(size, positiveForest,
-					negativeForest, globalNegativeForest, events, actions);
+			final PlantFormulaBuilder builder = new PlantFormulaBuilder(size, positiveForest, negativeForest,
+                    globalNegativeForest, events, actions, deterministic, bfsConstraints, complete);
 			builder.createVars();
 			final int secondsLeft = timeLeftForSolver(finishTime);
 			if (iteration == 0) {

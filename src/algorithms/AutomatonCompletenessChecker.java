@@ -9,12 +9,12 @@ import java.util.TreeSet;
 import bool.MyBooleanExpression;
 
 import structures.Automaton;
-import structures.Node;
+import structures.MealyNode;
 import structures.Transition;
 
 public class AutomatonCompletenessChecker {
 	public static String checkCompleteness(Automaton automaton) {
-		for (Node node : automaton.states()) {
+		for (MealyNode node : automaton.states()) {
 			final Map<String, Set<String>> eventVars = new TreeMap<>();
 			for (Transition t : node.transitions()) {
 				String event = t.event();

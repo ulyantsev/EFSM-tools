@@ -14,7 +14,7 @@ import java.util.Set;
 import scenario.StringActions;
 import bool.MyBooleanExpression;
 
-public class NegativeNode extends Node {
+public class NegativeNode extends MealyNode {
     private final List<Transition> transitionList;
     private Set<NegativeNode> loops = null;
     
@@ -48,7 +48,7 @@ public class NegativeNode extends Node {
     }
     
     @Override
-    public void addTransition(String event, MyBooleanExpression expr, StringActions actions, Node dst) {
+    public void addTransition(String event, MyBooleanExpression expr, StringActions actions, MealyNode dst) {
     	throw new AssertionError();
     }
     

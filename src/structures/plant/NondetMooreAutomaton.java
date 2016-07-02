@@ -59,27 +59,28 @@ public class NondetMooreAutomaton {
 		try (Scanner sc = new Scanner(new File(filename))) {
 			while (sc.hasNextLine()) {
 				final String line = sc.nextLine();
+                if (!line.contains(";") || line.startsWith("#")) {
+                    continue;
+                }
 				final String tokens[] = line.split(" +");
-				if (!line.contains(";")) {
-					continue;
-				}
 				if (line.contains("->")) {
 					final String from = tokens[1];
+                    // the replacement is needed for initial state declarations as transitions from init_n:
 					final Integer to = Integer.parseInt(tokens[3].replaceAll(";", ""));
-					if (from.equals("init")) {
+					if (from.equals("init" + to)) {
 						initial.add(to);
 					} else {
-						final String event = tokens[6].replaceAll("[;\\]\"]", "");
+						final String event = tokens[5];
 						transitionRelation.get(from).add(Pair.of(to, event));
 						events.add(event);
 					}
 				} else {
 					final String from = tokens[1];
+                    if (from.startsWith("init") || from.equals("node")) {
+                        continue;
+                    }
 					transitionRelation.put(from, new ArrayList<>());
-					if (from.equals("init") || from.equals("node")) {
-						continue;
-					}
-					final List<String> theseActions = Arrays.asList(line.split("\"")[1].split(":")[1].trim().split(", "));
+					final List<String> theseActions = Arrays.asList(line.split("\"")[1].split("\\\\n")[1].trim().split(", "));
 					actionRelation.put(from, theseActions);
 					actions.addAll(theseActions);
 				}
@@ -101,7 +102,7 @@ public class NondetMooreAutomaton {
 		
 		final NondetMooreAutomaton a = new NondetMooreAutomaton(maxState + 1, actionVector, initialVector);
 		for (int i = 0; i <= maxState; i++) {
-			for (Pair<Integer, String> p : transitionRelation.get(i + "")) {
+			for (Pair<Integer, String> p : transitionRelation.get(String.valueOf(i))) {
 				a.state(i).addTransition(p.getRight(), a.state(p.getLeft()));
 			}
 		}

@@ -18,7 +18,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import sat_solving.Assignment;
 import scenario.StringActions;
 import structures.Automaton;
-import structures.Node;
+import structures.MealyNode;
 import structures.ScenarioTree;
 import structures.Transition;
 import algorithms.AutomatonCompleter.CompletenessType;
@@ -58,7 +58,7 @@ public abstract class ScenarioAndLtlAutomatonBuilder {
 		Automaton ans = new Automaton(colorSize);
 		for (int i = 0; i < tree.nodeCount(); i++) {
 			int color = nodeColors[i];
-			Node state = ans.state(color);
+			MealyNode state = ans.state(color);
 			for (Transition t : tree.nodes().get(i).transitions()) {
 				if (!state.hasTransition(t.event(), t.expr())) {
 					int childColor = nodeColors[t.dst().number()];
@@ -79,7 +79,7 @@ public abstract class ScenarioAndLtlAutomatonBuilder {
 				int to = Integer.parseInt(tokens[2]);
 				String event = tokens[3];
 	
-				Node state = ans.state(from);
+				MealyNode state = ans.state(from);
 	
 				if (state.hasTransition(event, MyBooleanExpression.getTautology())) {
 					filteredYVars.add(a.var);

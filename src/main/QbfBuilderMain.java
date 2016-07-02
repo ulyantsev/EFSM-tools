@@ -26,7 +26,7 @@ import sat_solving.SolvingStrategy;
 import scenario.StringScenario;
 import structures.Automaton;
 import structures.NegativeScenarioTree;
-import structures.Node;
+import structures.MealyNode;
 import structures.ScenarioTree;
 import structures.Transition;
 import verification.ltl.LtlParseException;
@@ -256,14 +256,14 @@ public class QbfBuilderMain extends MainBase {
 				boolean complete = true;
 				switch (completenesstype) {
 				case NORMAL:
-					for (Node s : resultAutomaton.get().states()) {
+					for (MealyNode s : resultAutomaton.get().states()) {
 						if (s.transitionCount() != events.size()) {
 							complete = false;
 						}
 					}
 					break;
 				case NO_DEAD_ENDS:
-					for (Node s : resultAutomaton.get().states()) {
+					for (MealyNode s : resultAutomaton.get().states()) {
 						if (s.transitionCount() == 0) {
 							complete = false;
 						}

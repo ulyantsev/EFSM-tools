@@ -10,7 +10,7 @@ import java.util.regex.Pattern;
 import bool.MyBooleanExpression;
 import scenario.StringActions;
 import structures.Automaton;
-import structures.Node;
+import structures.MealyNode;
 import structures.Transition;
 
 public class AutomatonGVLoader {
@@ -53,7 +53,7 @@ public class AutomatonGVLoader {
         
         Automaton res = new Automaton(maxNum + 1);
         for (int i = 0; i < srcList.size(); i++) {
-            Node src = res.state(srcList.get(i)), dst = res.state(dstList.get(i));
+            MealyNode src = res.state(srcList.get(i)), dst = res.state(dstList.get(i));
             Transition transition = new Transition(src, dst, eventsList.get(i), guardConditionsList.get(i),
                     actionsList.get(i));
             res.addTransition(src, transition);

@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import structures.Node;
+import structures.MealyNode;
 import structures.ScenarioTree;
 import structures.Transition;
 import algorithms.AdjacencyCalculator;
@@ -68,7 +68,7 @@ public abstract class FormulaBuilder {
 	
 	protected void addColorVars() {
 		// color variables x_#node_color
-		for (Node node : tree.nodes()) {
+		for (MealyNode node : tree.nodes()) {
 			for (int color = 0; color < colorSize; color++) {
 				existVars.add(new BooleanVariable("x", node.number(), color));
 			}
@@ -97,7 +97,7 @@ public abstract class FormulaBuilder {
 	 */
 	private BooleanFormula eachNodeHasColorConstraints() {
 		FormulaList constraints = new FormulaList(BinaryOperations.AND);
-		for (Node node : tree.nodes()) {
+		for (MealyNode node : tree.nodes()) {
 			List<BooleanFormula> terms = new ArrayList<>();
 			for (int color = 0; color < colorSize; color++) {
 				terms.add(xVar(node.number(), color));
@@ -112,7 +112,7 @@ public abstract class FormulaBuilder {
 	 */
 	private BooleanFormula eachNodeHasOnlyColorConstraints() {
 		FormulaList constraints = new FormulaList(BinaryOperations.AND);
-		for (Node node : tree.nodes()) {
+		for (MealyNode node : tree.nodes()) {
 			for (int color1 = 0; color1 < colorSize; color1++) {
 				for (int color2 = 0; color2 < color1; color2++) {
 					BooleanVariable v1 = xVar(node.number(), color1);
@@ -128,7 +128,7 @@ public abstract class FormulaBuilder {
 	private BooleanFormula actionScenarioConsistencyConstraints() {
 		FormulaList constraints = new FormulaList(BinaryOperations.AND);
 		
-		for (Node node : tree.nodes()) {
+		for (MealyNode node : tree.nodes()) {
 			FormulaList options = new FormulaList(BinaryOperations.OR);
 			for (int i = 0; i < colorSize; i++) {
 				FormulaList zConstraints = new FormulaList(BinaryOperations.AND);
@@ -153,8 +153,8 @@ public abstract class FormulaBuilder {
 	
 	private BooleanFormula consistencyConstraints() {
 		FormulaList constraints = new FormulaList(BinaryOperations.AND);
-		final Map<Node, Set<Node>> adjacent = AdjacencyCalculator.getAdjacent(tree);
-		for (Node node : tree.nodes()) {
+		final Map<MealyNode, Set<MealyNode>> adjacent = AdjacencyCalculator.getAdjacent(tree);
+		for (MealyNode node : tree.nodes()) {
 			adjacent.get(node).stream()
 				.filter(other -> other.number() < node.number())
 				.forEach(other -> {
@@ -186,7 +186,7 @@ public abstract class FormulaBuilder {
 
 	private BooleanFormula transitionConstraints() {
 		FormulaList constraints = new FormulaList(BinaryOperations.AND);
-		for (Node node : tree.nodes()) {
+		for (MealyNode node : tree.nodes()) {
 			for (Transition t : node.transitions()) {
 				for (int nodeColor = 0; nodeColor < colorSize; nodeColor++) {
 					final BooleanVariable nodeVar = xVar(node.number(), nodeColor);

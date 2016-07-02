@@ -48,7 +48,7 @@ public class ScenariosGeneratorMain extends MainBase {
 		String scenarios = null;
 		if (cover) {
 			if (scenarioNumber != 0 || minLength != 0 || maxLength != 0) {
-				System.err.println("With --cover option on --count, --minLength, --maxLength options not available");
+				System.err.println("With --cover option on, --count, --minLength, --maxLength options are not available");
 				return;
 			}
 
@@ -57,7 +57,7 @@ public class ScenariosGeneratorMain extends MainBase {
                     : ScenarioGenerator.generateScenariosWithBFS(automaton, sumLength, random());
 		} else {
 			if (scenarioNumber == 0) {
-				System.err.println("With --cover option OFF --count option must be defined");
+				System.err.println("With --cover option OFF, --count option must be defined");
 				return;				
 			}
 			

@@ -25,13 +25,13 @@ import scenario.StringActions;
 import scenario.StringScenario;
 import structures.Automaton;
 import structures.NegativeScenarioTree;
-import structures.Node;
+import structures.MealyNode;
 import structures.ScenarioTree;
 import structures.Transition;
 import verification.verifier.Counterexample;
 import verification.verifier.Verifier;
 import algorithms.AutomatonCompleter.CompletenessType;
-import algorithms.formula_builders.FastAutomatonFormulaBuilder;
+import algorithms.formula_builders.MealyFormulaBuilder;
 import bnf_formulae.BinaryOperations;
 import bnf_formulae.BooleanVariable;
 import bnf_formulae.FormulaList;
@@ -62,7 +62,7 @@ public class FastAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 		final Automaton ans = new Automaton(colorSize);
 		for (int i = 0; i < tree.nodeCount(); i++) {
 			final int color = nodeColors[i];
-			final Node state = ans.state(color);
+			final MealyNode state = ans.state(color);
 			for (Transition t : tree.nodes().get(i).transitions()) {
 				if (!state.hasTransition(t.event(), t.expr())) {
 					int childColor = nodeColors[t.dst().number()];
@@ -84,7 +84,7 @@ public class FastAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 				final int eventIndex = Integer.parseInt(tokens[3]);
 				final String event = eventList.get(eventIndex);
 	
-				Node state = ans.state(from);
+				MealyNode state = ans.state(from);
 	
 				if (state.hasTransition(event, MyBooleanExpression.getTautology())) {
 					filteredYVars.add(a.var);
@@ -226,7 +226,7 @@ public class FastAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 		SolverInterface inf = null;
 		
 		for (int iteration = 0; System.currentTimeMillis() < finishTime; iteration++) {
-			final FastAutomatonFormulaBuilder builder = new FastAutomatonFormulaBuilder(size, positiveTree,
+			final MealyFormulaBuilder builder = new MealyFormulaBuilder(size, positiveTree,
 					negativeTree, globalTree, events, actions, complete, bfsConstraints);
 			builder.createVars();
 			final int secondsLeft = timeLeftForSolver(finishTime);

@@ -111,6 +111,18 @@ public class PlantBuilderMain extends MainBase {
             metaVar = "<solver>")
     private String strSolver = SatSolver.INCREMENTAL_CRYPTOMINISAT.name();
 
+    @Option(name = "--bfsConstraints", handler = BooleanOptionHandler.class,
+            usage = "BFS symmetry breaking (only with --deterministic)")
+    private boolean bfsConstraints;
+
+    @Option(name = "--deterministic", handler = BooleanOptionHandler.class,
+            usage = "produce a deterministic Moore machine (i.e. for a controller, not for a plant)")
+    private boolean deterministic;
+
+    @Option(name = "--incomplete", handler = BooleanOptionHandler.class,
+            usage = "disable completeness")
+    private boolean incomplete;
+
     private Optional<NondetMooreAutomaton> resultAutomaton = null;
     private final Map<String, String> colorRuleMap = new LinkedHashMap<>();
 
@@ -169,8 +181,8 @@ public class PlantBuilderMain extends MainBase {
 
         resultAutomaton = fast
                 ? RapidPlantAutomatonBuilder.build(positiveForest, events)
-                : PlantAutomatonBuilder.build(logger(), positiveForest, negativeForest, size,
-                actionspecFilePath, events, actions, verifier, finishTime, solver);
+                : PlantAutomatonBuilder.build(logger(), positiveForest, negativeForest, size, actionspecFilePath,
+                events, actions, verifier, finishTime, solver, deterministic, bfsConstraints, !incomplete);
 
         if (!resultAutomaton.isPresent()) {
             logger().info("Automaton with " + size + " states NOT FOUND!");
@@ -223,11 +235,15 @@ public class PlantBuilderMain extends MainBase {
 
             // completeness check
             boolean complete = true;
-            for (MooreNode s : resultAutomaton.get().states()) {
-                for (String event : events) {
-                    if (!s.transitions().stream().anyMatch(t -> t.event().endsWith(event))) {
-                        complete = false;
+            if (!incomplete) {
+                for (MooreNode s : resultAutomaton.get().states()) {
+                    for (String event : events) {
+                        complete &= s.transitions().stream().anyMatch(t -> t.event().endsWith(event));
                     }
+                }
+            } else {
+                for (MooreNode s : resultAutomaton.get().states()) {
+                    complete &= s.transitions().size() != 0;
                 }
             }
             if (complete) {

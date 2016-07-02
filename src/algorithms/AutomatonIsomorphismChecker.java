@@ -5,7 +5,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import structures.Automaton;
-import structures.Node;
+import structures.MealyNode;
 import structures.Transition;
 
 public class AutomatonIsomorphismChecker {
@@ -19,21 +19,21 @@ public class AutomatonIsomorphismChecker {
 		Arrays.fill(firstToSecond, -1);
 		firstToSecond[first.startState().number()] = second.startState().number();
 		
-		final List<Node> order = new ArrayList<>();
+		final List<MealyNode> order = new ArrayList<>();
 		order.add(first.startState());
 		for (int i = 0; i < first.stateCount(); i++) {
 			if (i >= order.size()) {
 				break;
 			}
-			final Node firstNode = order.get(i);
+			final MealyNode firstNode = order.get(i);
             final int secondNodeNumber = firstToSecond[firstNode.number()];
-            final Node secondNode = second.state(secondNodeNumber);
+            final MealyNode secondNode = second.state(secondNodeNumber);
 			if (firstNode.transitionCount() != secondNode.transitionCount()) {
 				return false;
 			}
 			
 			for (Transition firstTransition : firstNode.transitions()) {
-				Node firstDst = firstTransition.dst();
+				MealyNode firstDst = firstTransition.dst();
 				Transition secondTransition = null;
 				for (Transition t : secondNode.transitions()) {
 					if (transitionsEquals(firstTransition, t)) {

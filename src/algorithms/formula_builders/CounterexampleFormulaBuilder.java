@@ -14,7 +14,7 @@ import org.apache.commons.lang3.ArrayUtils;
 
 import structures.NegativeNode;
 import structures.NegativeScenarioTree;
-import structures.Node;
+import structures.MealyNode;
 import structures.ScenarioTree;
 import structures.Transition;
 import algorithms.AutomatonCompleter.CompletenessType;
@@ -47,7 +47,7 @@ public class CounterexampleFormulaBuilder extends FormulaBuilder {
 	}
 
 	public void addNegativeScenarioVars() {
-		for (Node node : negativeTree.nodes()) {
+		for (MealyNode node : negativeTree.nodes()) {
 			for (int color = 0; color <= colorSize; color++) {
 				if (!BooleanVariable.byName("xx", node.number(), color).isPresent()) {
 					existVars.add(new BooleanVariable("xx", node.number(), color));
@@ -145,7 +145,7 @@ public class CounterexampleFormulaBuilder extends FormulaBuilder {
 	private void invalidDefinitionConstraints(List<BooleanFormula> constraints) {
 		for (NegativeNode parent : negativeTree.nodes()) {
 			for (Transition t : parent.transitions()) {
-				Node child = t.dst();
+				MealyNode child = t.dst();
 				String event = t.event();
 				FormulaList options = new FormulaList(BinaryOperations.OR);
 				options.add(invalid(parent));
@@ -176,7 +176,7 @@ public class CounterexampleFormulaBuilder extends FormulaBuilder {
 		}
 	}
 	
-	private BooleanVariable invalid(Node n) {
+	private BooleanVariable invalid(MealyNode n) {
 		return xxVar(n.number(), colorSize);
 	}
 	

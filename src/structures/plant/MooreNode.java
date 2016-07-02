@@ -19,7 +19,7 @@ public class MooreNode {
         this.number = number;
         this.actions = actions;
     }
-    
+
     public int number() {
         return number;
     }

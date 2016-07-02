@@ -7,10 +7,10 @@ public class Transition {
     private final String event;
 	private final MyBooleanExpression expr;
 	private final StringActions actions;
-	private final Node src;
-	private final Node dst;
+	private final MealyNode src;
+	private final MealyNode dst;
 
-	public Transition(Node src, Node dst, String event, MyBooleanExpression expr, StringActions actions) {
+	public Transition(MealyNode src, MealyNode dst, String event, MyBooleanExpression expr, StringActions actions) {
 		this.src = src;
 		this.dst = dst;
 		this.event = event;
@@ -22,11 +22,11 @@ public class Transition {
 		return event;
 	}
 
-	public Node src() {
+	public MealyNode src() {
 		return src;
 	}
 
-	public Node dst() {
+	public MealyNode dst() {
 		return dst;
 	}
 

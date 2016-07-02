@@ -9,7 +9,7 @@ import java.util.Random;
 import bool.MyBooleanExpression;
 import scenario.StringActions;
 import structures.Automaton;
-import structures.Node;
+import structures.MealyNode;
 import structures.Transition;
 
 /**
@@ -62,8 +62,8 @@ public class AutomatonGenerator {
 			for (int eventNum = 0; eventNum < eventsCount; eventNum++) {
 
 				for (int i = 0; i < dst[stateNum][eventNum].length; i++) {
-					Node srcNode = ans.state(stateNum);
-					Node dstNode = ans.state(dst[stateNum][eventNum][i]);
+					MealyNode srcNode = ans.state(stateNum);
+					MealyNode dstNode = ans.state(dst[stateNum][eventNum][i]);
 					String event = events.get(eventNum);
 					MyBooleanExpression expr = null;
 					try {

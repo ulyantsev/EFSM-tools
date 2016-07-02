@@ -93,7 +93,6 @@ public class EvolutionaryPlantAutomatonBuilder extends ScenarioAndLtlAutomatonBu
 	
 	public static Optional<NondetMooreAutomaton> build(PositivePlantScenarioForest positiveForest, List<String> events,
                                                        Verifier verifier) throws IOException {
-		
 		final Map<StringActions, Set<MooreNode>> map = new LinkedHashMap<>();
 		final Map<MooreNode, Integer> nodeToState = new HashMap<>();
 		final Map<StringActions, Integer> actionsToState = new HashMap<>();

@@ -5,7 +5,7 @@ import meta.MainBase;
 import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.Option;
 
-import structures.Node;
+import structures.MealyNode;
 import structures.ScenarioTree;
 import structures.Transition;
 
@@ -42,11 +42,11 @@ public class MiniZincDataGeneratorMain extends MainBase {
     protected void launcher() throws IOException, ParseException {
         initializeLogger(logFilePath);
         final ScenarioTree tree = loadScenarioTree(arguments, -1);
-        final Map<Node, Set<Node>> adjacent = AdjacencyCalculator.getAdjacent(tree);
+        final Map<MealyNode, Set<MealyNode>> adjacent = AdjacencyCalculator.getAdjacent(tree);
         saveToFile(getDataString(tree, adjacent), resultFilePath);
     }
 
-    private String getDataString(ScenarioTree tree, Map<Node, Set<Node>> adjacent) {
+    private String getDataString(ScenarioTree tree, Map<MealyNode, Set<MealyNode>> adjacent) {
         final Transition[] incomingTransition = new Transition[tree.nodeCount()];
 
         final List<String> eventOrder = new ArrayList<>();
@@ -56,7 +56,7 @@ public class MiniZincDataGeneratorMain extends MainBase {
         //List<Integer> eventExprVarsCount = new ArrayList<>();
         final List<Integer> eventExprSatCount = new ArrayList<>();
 
-        for (Node node : tree.nodes()) {
+        for (MealyNode node : tree.nodes()) {
             for (Transition t : node.transitions()) {
                 if (!eventOrder.contains(t.event())) {
                     eventOrder.add(t.event());
@@ -81,7 +81,7 @@ public class MiniZincDataGeneratorMain extends MainBase {
         }
 
         int adjacentPairs = 0;
-        for (Set<Node> set : adjacent.values()) {
+        for (Set<MealyNode> set : adjacent.values()) {
             adjacentPairs += set.size();
         }
 
@@ -98,8 +98,8 @@ public class MiniZincDataGeneratorMain extends MainBase {
 
         final int[] edgeSrc = new int[adjacentPairs], edgeDst = new int[adjacentPairs];
         int pos = 0;
-        for (Node src : adjacent.keySet()) {
-            for (Node dst : adjacent.get(src)) {
+        for (MealyNode src : adjacent.keySet()) {
+            for (MealyNode dst : adjacent.get(src)) {
                 edgeSrc[pos] = src.number();
                 edgeDst[pos] = dst.number();
                 pos++;

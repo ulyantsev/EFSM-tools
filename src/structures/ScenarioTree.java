@@ -9,16 +9,16 @@ import scenario.StringActions;
 import scenario.StringScenario;
 
 public class ScenarioTree {
-    private final Node root;
-    private final List<Node> nodes;
+    private final MealyNode root;
+    private final List<MealyNode> nodes;
 
     public ScenarioTree() {
-        this.root = new Node(0);
+        this.root = new MealyNode(0);
         this.nodes = new ArrayList<>();
         this.nodes.add(root);
     }
 
-    public Node root() {
+    public MealyNode root() {
         return root;
     }
 
@@ -36,7 +36,7 @@ public class ScenarioTree {
     }
 
     public void addScenario(StringScenario scenario) throws ParseException {
-        Node node = root;
+        MealyNode node = root;
         for (int i = 0; i < scenario.size(); i++) {
             addTransitions(node, scenario.getEvents(i), scenario.getExpr(i), scenario.getActions(i));
             node = node.dst(scenario.getEvents(i).get(0), scenario.getExpr(i));
@@ -46,10 +46,10 @@ public class ScenarioTree {
     /*
      * If events.size() > 1, will add multiple edges towards the same destination.
      */
-    private void addTransitions(Node src, List<String> events, MyBooleanExpression expr,
-    		StringActions actions) throws ParseException {
+    private void addTransitions(MealyNode src, List<String> events, MyBooleanExpression expr,
+                                StringActions actions) throws ParseException {
     	assert !events.isEmpty();
-    	Node dst = null;
+    	MealyNode dst = null;
     	for (String e : events) {
 	        if (src.hasTransition(e, expr)) {
 	            Transition t = src.transition(e, expr);
@@ -60,7 +60,7 @@ public class ScenarioTree {
 	            }
 	        } else {
 	        	if (dst == null) {
-	        		dst = new Node(nodes.size());
+	        		dst = new MealyNode(nodes.size());
 	        		nodes.add(dst);
 	        	}
 	            src.addTransition(e, expr, actions, dst);
@@ -68,7 +68,7 @@ public class ScenarioTree {
     	}
     }
 
-    public List<Node> nodes() {
+    public List<MealyNode> nodes() {
         return nodes;
     }
 
@@ -78,7 +78,7 @@ public class ScenarioTree {
 
     public String[] events() {
         Set<String> events = new HashSet<>();
-        for (Node node : nodes) {
+        for (MealyNode node : nodes) {
             for (Transition transition : node.transitions()) {
                 events.add(transition.event());
             }
@@ -88,7 +88,7 @@ public class ScenarioTree {
     
     public List<String> actions() {
         Set<String> actions = new TreeSet<>();
-        for (Node node : nodes) {
+        for (MealyNode node : nodes) {
             for (Transition transition : node.transitions()) {
             	for (String action : transition.actions().getActions()) {
             		actions.add(action);
@@ -104,7 +104,7 @@ public class ScenarioTree {
         
     public String[] variables() {
         Set<String> variables = new HashSet<>();
-        for (Node node : nodes) {
+        for (MealyNode node : nodes) {
             for (Transition transition : node.transitions()) {
                 String[] transitionVars = transition.expr().getVariables();
                 variables.addAll(Arrays.asList(transitionVars));
@@ -119,7 +119,7 @@ public class ScenarioTree {
     
     public Map<String, List<MyBooleanExpression>> pairsEventExpression() {
         Map<String, List<MyBooleanExpression>> ans = new HashMap<>();
-        for (Node node : nodes) {
+        for (MealyNode node : nodes) {
             for (Transition transition : node.transitions()) {
                 String event = transition.event();
                 MyBooleanExpression expr = transition.expr();
@@ -140,7 +140,7 @@ public class ScenarioTree {
     
     public Collection<MyBooleanExpression> expressions() {
         List<MyBooleanExpression> ans = new ArrayList<>();
-        for (Node node : this.nodes) {
+        for (MealyNode node : this.nodes) {
             for (Transition t : node.transitions()) {
                 if (!ans.contains(t.expr())) {
                     ans.add(t.expr());
@@ -156,7 +156,7 @@ public class ScenarioTree {
         sb.append("# command: dot -Tpng <filename> > tree.png\n");
         sb.append("digraph ScenariosTree {\n    node [shape = circle];\n");
 
-        for (Node node : nodes) {
+        for (MealyNode node : nodes) {
             for (Transition t : node.transitions()) {
                 sb.append("    " + t.src().number() + " -> " + t.dst().number());
                 sb.append(" [label = \"" + t.event() + " [" + t.expr().toString() + "] ("

@@ -25,7 +25,7 @@ import java.util.logging.SimpleFormatter;
 import scenario.StringActions;
 import scenario.StringScenario;
 import structures.Automaton;
-import structures.Node;
+import structures.MealyNode;
 import structures.Transition;
 import verification.ltl.LtlParseException;
 import verification.ltl.LtlParser;
@@ -594,7 +594,7 @@ public class UnbeastTransformer {
 					}
 					final StringActions actions = new StringActions(output
 							.toString().replace("[", "").replace("]", ""));
-					final Node dst = a.state(s.transitions.get(i).number);
+					final MealyNode dst = a.state(s.transitions.get(i).number);
 					a.state(s.number).addTransition(input, MyBooleanExpression.getTautology(),
 							actions, dst);
 				}

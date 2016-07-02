@@ -32,11 +32,12 @@ public class PlantAutomatonGeneratorMain extends MainBase {
 	private int actionNumber;
 
 	@Option(name = "--initialPercentage", aliases = { "-ip" },
-            usage = "initial state percentage", metaVar = "<num>")
+            usage = "initial state percentage (even if set to 0, at least one state will always be initial",
+            metaVar = "<num>")
 	private int initialPercentage = 25;
 
 	@Option(name = "--minActions", aliases = { "-mina" },
-            usage = "minumum number of actions in a state", metaVar = "<num>")
+            usage = "minimum number of actions in a state", metaVar = "<num>")
 	private int minActions = 0;
 
 	@Option(name = "--maxActions", aliases = { "-maxa" },

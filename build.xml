@@ -59,6 +59,8 @@
 
     <property name="apros.builder.main" value="main/plant/AprosBuilderMain"/>
     <property name="apros.builder.jar" value="apros-builder.jar"/>
+
+    <property name="debug" value="false"/>
     
     <target name="all" 
             depends="consistency-jar, 
@@ -82,16 +84,13 @@
 
     <target name="minizinc-generator-jar">
         <mkdir dir="${bin.dir}"/>
-    
         <javac srcdir="${src.dir}"
                destdir="${bin.dir}"
                includeantruntime="false"
-               debug="true"
-               classpath="${args4j.path}"
-               debuglevel="lines,vars,source">
+               debug="${debug}"
+               classpath="${args4j.path}">
             <include name="${minizinc.generator.main}.java"/>
         </javac>
-
         <jar destfile="${jars.dir}/${minizinc.generator.jar}"
              basedir="${bin.dir}">
             <manifest>
@@ -99,23 +98,18 @@
             </manifest>
             <zipfileset src="${args4j.path}" excludes="META-INF/*.SF"/> 
         </jar>
-
         <delete dir="${bin.dir}"/>
     </target>
 
-
     <target name="isomorphism-jar">
         <mkdir dir="${bin.dir}"/>
-    
         <javac srcdir="${src.dir}"
                destdir="${bin.dir}"
                includeantruntime="false"
                classpath="${args4j.path}"
-               debug="true"
-               debuglevel="lines,vars,source">
+               debug="${debug}">
             <include name="${isomorphism.main}.java"/>
         </javac>
-
         <jar destfile="${jars.dir}/${isomorphism.jar}"
              basedir="${bin.dir}">
             <manifest>
@@ -123,20 +117,18 @@
             </manifest>
             <zipfileset src="${args4j.path}" excludes="META-INF/*.SF"/> 
         </jar>
-
         <delete dir="${bin.dir}"/>
     </target>
 
     <target name="completeness-jar">
         <mkdir dir="${bin.dir}"/>
-    
         <javac srcdir="${src.dir}"
                destdir="${bin.dir}"
                classpath="${args4j.path}"
-               includeantruntime="false">
+               includeantruntime="false"
+               debug="${debug}">
             <include name="${completeness.main}.java"/>
         </javac>
-
         <jar destfile="${jars.dir}/${completeness.jar}"
              basedir="${bin.dir}">
             <manifest>
@@ -144,47 +136,38 @@
             </manifest>
             <zipfileset src="${args4j.path}" excludes="META-INF/*.SF"/>            
         </jar>
-
         <delete dir="${bin.dir}"/>
     </target>
 
     <target name="builder-jar">
         <mkdir dir="${bin.dir}"/>
-        
         <javac srcdir="${src.dir}"
                destdir="${bin.dir}"
                classpath="${choco.path}:${args4j.path}"
                includeantruntime="false"
-               debug="true"
-               debuglevel="lines,vars,source">
+               debug="${debug}">
             <include name="${builder.main}.java"/>
         </javac>
-
         <jar destfile="${jars.dir}/${builder.jar}"
              basedir="${bin.dir}">
             <manifest>
                 <attribute name="Main-Class" value="${builder.main}"/>
             </manifest>
-
             <zipfileset src="${choco.path}" excludes="META-INF/*.SF"/>
             <zipfileset src="${args4j.path}" excludes="META-INF/*.SF"/>
         </jar>
-
         <delete dir="${bin.dir}"/>
     </target>
 
     <target name="sat-builder-jar">
         <mkdir dir="${bin.dir}"/>
-        
         <javac srcdir="${src.dir}"
                destdir="${bin.dir}"
                classpath="${choco.path}:${args4j.path}"
                includeantruntime="false"
-               debug="true"
-               debuglevel="lines,vars,source">
+               debug="${debug}">
             <include name="${sat-builder.main}.java"/>
         </javac>
-
         <jar destfile="${jars.dir}/${sat-builder.jar}"
              basedir="${bin.dir}">
             <manifest>
@@ -192,20 +175,18 @@
             </manifest>
             <zipfileset src="${args4j.path}" excludes="META-INF/*.SF"/>
         </jar>
-
         <delete dir="${bin.dir}"/>
     </target>
 
     <target name="automaton-generator-jar">
         <mkdir dir="${bin.dir}"/>
-    
         <javac srcdir="${src.dir}"
                destdir="${bin.dir}"
                classpath="${args4j.path}"
-               includeantruntime="false">
+               includeantruntime="false"
+               debug="${debug}">
             <include name="${automaton.generator.main}.java"/>
         </javac>
-
         <jar destfile="${jars.dir}/${automaton.generator.jar}"
              basedir="${bin.dir}">
             <manifest>
@@ -213,42 +194,37 @@
             </manifest>
             <zipfileset src="${args4j.path}" excludes="META-INF/*.SF"/>
         </jar>
-
         <delete dir="${bin.dir}"/>
     </target>
 
     <target name="scenarios-generator-jar">
         <mkdir dir="${bin.dir}"/>
-    
         <javac srcdir="${src.dir}"
                destdir="${bin.dir}"
                classpath="${args4j.path}"
-               includeantruntime="false">
+               includeantruntime="false"
+               debug="${debug}">
             <include name="${scenarios.generator.main}.java"/>
         </javac>
-
         <jar destfile="${jars.dir}/${scenarios.generator.jar}"
              basedir="${bin.dir}">
             <manifest>
                 <attribute name="Main-Class" value="${scenarios.generator.main}"/>
             </manifest>
-
             <zipfileset src="${args4j.path}" excludes="META-INF/*.SF"/>
         </jar>
-
         <delete dir="${bin.dir}"/>
     </target>
 
     <target name="consistency-jar">
         <mkdir dir="${bin.dir}"/>
-    
         <javac srcdir="${src.dir}"
                destdir="${bin.dir}"
                classpath="${args4j.path}"
-               includeantruntime="false">
+               includeantruntime="false"
+               debug="${debug}">
             <include name="${consistency.main}.java"/>
         </javac>
-
         <jar destfile="${jars.dir}/${consistency.jar}"
              basedir="${bin.dir}">
             <manifest>
@@ -256,7 +232,6 @@
             </manifest>
             <zipfileset src="${args4j.path}" excludes="META-INF/*.SF"/>            
         </jar>
-
         <delete dir="${bin.dir}"/>
     </target>
 
@@ -266,24 +241,20 @@
                destdir="${bin.dir}"
                classpath="${args4j.path}:${commons.lang3.path}:${javassist.path}:${ltl2ba.path}:${ognl.path}"
                includeantruntime="false"
-               debug="true"
-               debuglevel="lines,vars,source">
+               debug="${debug}">
             <include name="${qbf.automaton.generator.main}.java"/>
         </javac>
-
         <jar destfile="${jars.dir}/${qbf.automaton.generator.jar}"
              basedir="${bin.dir}">
             <manifest>
                 <attribute name="main-class" value="${qbf.automaton.generator.main}"/>
             </manifest>
-
             <zipfileset src="${args4j.path}" excludes="meta-inf/*.sf"/>
             <zipfileset src="${commons.lang3.path}" excludes="meta-inf/*.sf"/>
             <zipfileset src="${javassist.path}" excludes="meta-inf/*.sf"/>
             <zipfileset src="${ltl2ba.path}" excludes="meta-inf/*.sf"/>
             <zipfileset src="${ognl.path}" excludes="meta-inf/*.sf"/>
         </jar>
-
         <delete dir="${bin.dir}"/>
     </target>
 
@@ -293,24 +264,20 @@
                destdir="${bin.dir}"
                classpath="${args4j.path}:${commons.lang3.path}:${javassist.path}:${ltl2ba.path}:${ognl.path}"
                includeantruntime="false"
-               debug="true"
-               debuglevel="lines,vars,source">
+               debug="${debug}">
             <include name="${plant.automaton.generator.main}.java"/>
         </javac>
-
         <jar destfile="${jars.dir}/${plant.automaton.generator.jar}"
              basedir="${bin.dir}">
             <manifest>
                 <attribute name="main-class" value="${plant.automaton.generator.main}"/>
             </manifest>
-
             <zipfileset src="${args4j.path}" excludes="meta-inf/*.sf"/>
             <zipfileset src="${commons.lang3.path}" excludes="meta-inf/*.sf"/>
             <zipfileset src="${javassist.path}" excludes="meta-inf/*.sf"/>
             <zipfileset src="${ltl2ba.path}" excludes="meta-inf/*.sf"/>
             <zipfileset src="${ognl.path}" excludes="meta-inf/*.sf"/>
         </jar>
-
         <delete dir="${bin.dir}"/>
     </target>
 
@@ -320,11 +287,9 @@
                destdir="${bin.dir}"
                classpath="${args4j.path}"
                includeantruntime="false"
-               debug="true"
-               debuglevel="lines,vars,source">
+               debug="${debug}">
             <include name="${safety.ltl.generator.main}.java"/>
         </javac>
-
         <jar destfile="${jars.dir}/${safety.ltl.generator.jar}"
              basedir="${bin.dir}">
             <manifest>
@@ -332,7 +297,6 @@
             </manifest>
             <zipfileset src="${args4j.path}" excludes="META-INF/*.SF"/> 
         </jar>
-
         <delete dir="${bin.dir}"/>
     </target>
 
@@ -342,11 +306,9 @@
                destdir="${bin.dir}"
                classpath="${args4j.path}"
                includeantruntime="false"
-               debug="true"
-               debuglevel="lines,vars,source">
+               debug="${debug}">
             <include name="${max.clique.finder.main}.java"/>
         </javac>
-
         <jar destfile="${jars.dir}/${max.clique.finder.jar}"
              basedir="${bin.dir}">
             <manifest>
@@ -354,20 +316,18 @@
             </manifest>
             <zipfileset src="${args4j.path}" excludes="META-INF/*.SF"/> 
         </jar>
-
         <delete dir="${bin.dir}"/>
     </target>
 
     <target name="plant-generator-jar">
         <mkdir dir="${bin.dir}"/>
-    
         <javac srcdir="${src.dir}"
                destdir="${bin.dir}"
                classpath="${args4j.path}:${commons.lang3.path}"
-               includeantruntime="false">
+               includeantruntime="false"
+               debug="${debug}">
             <include name="${plant.generator.main}.java"/>
         </javac>
-
         <jar destfile="${jars.dir}/${plant.generator.jar}"
              basedir="${bin.dir}">
             <manifest>
@@ -376,20 +336,18 @@
             <zipfileset src="${args4j.path}" excludes="META-INF/*.SF"/>
             <zipfileset src="${commons.lang3.path}" excludes="META-INF/*.SF"/>
         </jar>
-
         <delete dir="${bin.dir}"/>
     </target>
 
     <target name="verifier-jar">
         <mkdir dir="${bin.dir}"/>
-    
         <javac srcdir="${src.dir}"
                destdir="${bin.dir}"
                classpath="${args4j.path}:${commons.lang3.path}:${ognl.path}:${ltl2ba.path}"
-               includeantruntime="false">
+               includeantruntime="false"
+               debug="${debug}">
             <include name="${verifier.main}.java"/>
         </javac>
-
         <jar destfile="${jars.dir}/${verifier.jar}"
              basedir="${bin.dir}">
             <manifest>
@@ -400,20 +358,18 @@
             <zipfileset src="${ognl.path}" excludes="META-INF/*.SF"/>
             <zipfileset src="${ltl2ba.path}" excludes="META-INF/*.SF"/>
         </jar>
-
         <delete dir="${bin.dir}"/>
     </target>
 
     <target name="plant-scenario-generator-jar">
         <mkdir dir="${bin.dir}"/>
-    
         <javac srcdir="${src.dir}"
                destdir="${bin.dir}"
                classpath="${args4j.path}:${commons.lang3.path}"
-               includeantruntime="false">
+               includeantruntime="false"
+               debug="${debug}">
             <include name="${plant.scenario.generator.main}.java"/>
         </javac>
-
         <jar destfile="${jars.dir}/${plant.scenario.generator.jar}"
              basedir="${bin.dir}">
             <manifest>
@@ -422,7 +378,6 @@
             <zipfileset src="${args4j.path}" excludes="META-INF/*.SF"/>
             <zipfileset src="${commons.lang3.path}" excludes="META-INF/*.SF"/>
         </jar>
-
         <delete dir="${bin.dir}"/>
     </target>
 
@@ -432,37 +387,32 @@
                destdir="${bin.dir}"
                classpath="${args4j.path}:${commons.lang3.path}:${javassist.path}:${ltl2ba.path}:${ognl.path}"
                includeantruntime="false"
-               debug="true"
-               debuglevel="lines,vars,source">
+               debug="${debug}">
             <include name="${fast.automaton.generator.main}.java"/>
         </javac>
-
         <jar destfile="${jars.dir}/${fast.automaton.generator.jar}"
              basedir="${bin.dir}">
             <manifest>
                 <attribute name="main-class" value="${fast.automaton.generator.main}"/>
             </manifest>
-
             <zipfileset src="${args4j.path}" excludes="meta-inf/*.sf"/>
             <zipfileset src="${commons.lang3.path}" excludes="meta-inf/*.sf"/>
             <zipfileset src="${javassist.path}" excludes="meta-inf/*.sf"/>
             <zipfileset src="${ltl2ba.path}" excludes="meta-inf/*.sf"/>
             <zipfileset src="${ognl.path}" excludes="meta-inf/*.sf"/>
         </jar>
-
         <delete dir="${bin.dir}"/>
     </target>
     
     <target name="apros-builder-jar">
         <mkdir dir="${bin.dir}"/>
-    
         <javac srcdir="${src.dir}"
                destdir="${bin.dir}"
                classpath="${args4j.path}:${commons.lang3.path}:${javassist.path}:${ltl2ba.path}:${ognl.path}"
-               includeantruntime="false">
+               includeantruntime="false"
+               debug="${debug}">
             <include name="${apros.builder.main}.java"/>
         </javac>
-
         <jar destfile="${jars.dir}/${apros.builder.jar}"
              basedir="${bin.dir}">
             <manifest>
@@ -474,7 +424,6 @@
             <zipfileset src="${ltl2ba.path}" excludes="meta-inf/*.sf"/>
             <zipfileset src="${ognl.path}" excludes="meta-inf/*.sf"/>
         </jar>
-
         <delete dir="${bin.dir}"/>
     </target>
     

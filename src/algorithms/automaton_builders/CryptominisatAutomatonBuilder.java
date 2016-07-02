@@ -8,7 +8,7 @@ import java.io.PrintWriter;
 
 import algorithms.formula_builders.DimacsCnfBuilder;
 import structures.Automaton;
-import structures.Node;
+import structures.MealyNode;
 import structures.ScenarioTree;
 import structures.Transition;
 
@@ -66,7 +66,7 @@ public class CryptominisatAutomatonBuilder {
 			Automaton ans = new Automaton(k);
 			for (int i = 0; i < tree.nodeCount(); i++) {
 				int color = nodesColors[i];
-				Node state = ans.state(color);
+				MealyNode state = ans.state(color);
 				for (Transition t : tree.nodes().get(i).transitions()) {
 					if (!state.hasTransition(t.event(), t.expr())) {
 						int childColor = nodesColors[t.dst().number()];

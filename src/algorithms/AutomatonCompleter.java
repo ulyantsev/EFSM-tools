@@ -11,7 +11,7 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import scenario.StringActions;
 import structures.Automaton;
-import structures.Node;
+import structures.MealyNode;
 import structures.Transition;
 import verification.verifier.Verifier;
 import algorithms.exception.AutomatonFoundException;
@@ -73,7 +73,7 @@ public class AutomatonCompleter {
 	 */
 	private List<Pair<Integer, String>> missingTransitions() {
 		final List<Pair<Integer, String>> missing = new ArrayList<>();
-		for (Node s : automaton.states()) {
+		for (MealyNode s : automaton.states()) {
 			if (completenessType == CompletenessType.NO_DEAD_ENDS && !s.transitions().isEmpty()) {
 				continue;
 			}
@@ -104,7 +104,7 @@ public class AutomatonCompleter {
 		
 		final Pair<Integer, String> missing = missingTransitions.get(missingTransitions.size() - 1);
 		
-		final Node stateFrom = automaton.state(missing.getLeft());
+		final MealyNode stateFrom = automaton.state(missing.getLeft());
 		final String e = missing.getRight();
 		
 		final List<Pair<Integer, String>> removedFromMissing = new ArrayList<>();

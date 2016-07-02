@@ -8,7 +8,7 @@ import java.util.Random;
 import scenario.StringActions;
 import scenario.StringScenario;
 import structures.Automaton;
-import structures.Node;
+import structures.MealyNode;
 import structures.Transition;
 import bool.MyBooleanExpression;
 
@@ -20,12 +20,12 @@ public class ScenarioGenerator {
     	@SuppressWarnings("unchecked")
 		ArrayList<Transition>[] shortestPaths = new ArrayList[size];
     	
-    	ArrayList<Node> order = new ArrayList<>();
+    	ArrayList<MealyNode> order = new ArrayList<>();
     	order.add(automaton.startState());
     	shortestPaths[automaton.startState().number()] = new ArrayList<>();
     	
     	for (int i = 0; i < size; i++) {
-    		Node current = order.get(i);
+    		MealyNode current = order.get(i);
     		ArrayList<Transition> path = shortestPaths[current.number()];
     		
     		for (Transition t : current.transitions()) {
@@ -80,7 +80,7 @@ public class ScenarioGenerator {
 			int randomPathNum = random.nextInt(paths.size());
 			ArrayList<Transition> randomPath = paths.get(randomPathNum);
 			
-			Node lastNode = randomPath.get(randomPath.size() - 1).dst();
+			MealyNode lastNode = randomPath.get(randomPath.size() - 1).dst();
 			int randomTransitionNumber = random.nextInt(lastNode.transitionCount());
 			Transition randomTransition = lastNode.transitions().toArray(new Transition[0])[randomTransitionNumber];
 			randomPath.add(randomTransition);
@@ -121,7 +121,7 @@ public class ScenarioGenerator {
                                            List<Collection<Transition>> visitedTransitions, Random random) {
         String events = "", actions = "";
 
-        Node curNode = automaton.startState();
+        MealyNode curNode = automaton.startState();
         for (int i = 0; i < length; i++) {
             if (i > 0) {
                 events += "; ";

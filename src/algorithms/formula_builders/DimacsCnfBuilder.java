@@ -3,20 +3,20 @@ package algorithms.formula_builders;
 import java.util.*;
 
 import algorithms.AdjacencyCalculator;
-import structures.Node;
+import structures.MealyNode;
 import structures.ScenarioTree;
 import structures.Transition;
 
 public class DimacsCnfBuilder {
     public static String getCnf(ScenarioTree tree, int k) {
         Map<String, Integer> vars = new HashMap<>();
-        for (Node node : tree.nodes()) {
+        for (MealyNode node : tree.nodes()) {
             for (int color = 0; color < k; color++) {
                 vars.put("x_" + node.number() + "_" + color, vars.size() + 1);
             }
         }
         
-        for (Node node : tree.nodes()) {
+        for (MealyNode node : tree.nodes()) {
             for (Transition t : node.transitions()) {
                 String key = "y_" + t.event() + "_" + t.expr().toString() + "_0_0";
                 if (!vars.containsKey(key)) {
@@ -34,7 +34,7 @@ public class DimacsCnfBuilder {
         String initClause = vars.get("x_0_0") + "";
         clauses.add(initClause);
         
-        for (Node node : tree.nodes()) {
+        for (MealyNode node : tree.nodes()) {
             String clause = "";
             for (int color = 0; color < k; color++) {
                 clause += vars.get("x_" + node.number() + "_" + color) + " "; 
@@ -42,7 +42,7 @@ public class DimacsCnfBuilder {
             clauses.add(clause);
         }
         
-        for (Node node : tree.nodes()) {
+        for (MealyNode node : tree.nodes()) {
             for (int c1 = 0; c1 < k; c1++) {
                 for (int c2 = 0; c2 < c1; c2++) {
                     int v1 = vars.get("x_" + node.number() + "_" + c1);
@@ -52,9 +52,9 @@ public class DimacsCnfBuilder {
             }
         }
         
-        Map<Node, Set<Node>> adjacent = AdjacencyCalculator.getAdjacent(tree);
-        for (Node node : tree.nodes()) {
-            for (Node other : adjacent.get(node)) {
+        Map<MealyNode, Set<MealyNode>> adjacent = AdjacencyCalculator.getAdjacent(tree);
+        for (MealyNode node : tree.nodes()) {
+            for (MealyNode other : adjacent.get(node)) {
                 if (other.number() < node.number()) {
                     for (int color = 0; color < k; color++) {
                         int v1 = vars.get("x_" + node.number() + "_" + color);
@@ -66,7 +66,7 @@ public class DimacsCnfBuilder {
         }
         
         Set<String> was = new HashSet<>();
-        for (Node node : tree.nodes()) {
+        for (MealyNode node : tree.nodes()) {
             for (Transition t : node.transitions()) {
                 String key = t.event() + "_" + t.expr();
                 if (!was.contains(key)) {
@@ -84,7 +84,7 @@ public class DimacsCnfBuilder {
             }
         }
         
-        for (Node node : tree.nodes()) {
+        for (MealyNode node : tree.nodes()) {
             for (Transition t : node.transitions()) {
                 for (int nodeColor = 0; nodeColor < k; nodeColor++) {
                     for (int childColor = 0; childColor < k; childColor++) {
@@ -103,7 +103,7 @@ public class DimacsCnfBuilder {
         // BFS order clauses
         {
             List<String> eventExprOrder = new ArrayList<String>();
-            for (Node node : tree.nodes()) {
+            for (MealyNode node : tree.nodes()) {
                 for (Transition t : node.transitions()) {
                     String eventExpr = t.event() + "_" + t.expr().toString();
                     if (!eventExprOrder.contains(eventExpr)) {

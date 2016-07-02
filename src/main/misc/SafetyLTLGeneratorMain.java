@@ -16,7 +16,7 @@ import meta.Author;
 import meta.MainBase;
 import org.kohsuke.args4j.Argument;
 import structures.Automaton;
-import structures.Node;
+import structures.MealyNode;
 import structures.Transition;
 
 public class SafetyLTLGeneratorMain extends MainBase {
@@ -71,7 +71,7 @@ public class SafetyLTLGeneratorMain extends MainBase {
 	
 	private static Set<String> allEvents(Automaton automaton) {
 		final Set<String> events = new TreeSet<>();
-		for (Node node : automaton.states()) {
+		for (MealyNode node : automaton.states()) {
 			for (Transition t : node.transitions()) {
 				events.add(t.event());
 			}
@@ -83,7 +83,7 @@ public class SafetyLTLGeneratorMain extends MainBase {
 		//final Set<String> allEvents = allEvents(automaton);
 		for (String event : allEvents(automaton)) {
 			final Set<String> nextEvents = new TreeSet<>();
-			for (Node node : automaton.states()) {
+			for (MealyNode node : automaton.states()) {
 				for (Transition t : node.transitions()) {
 					if (t.event().equals(event)) {
 						for (Transition nextT : t.dst().transitions()) {
@@ -102,10 +102,10 @@ public class SafetyLTLGeneratorMain extends MainBase {
 		//final Set<String> allEvents = allEvents(automaton);
 		for (String event : allEvents(automaton)) {
 			final Set<String> prevEvents = new TreeSet<>();
-			for (Node node : automaton.states()) {
+			for (MealyNode node : automaton.states()) {
 				for (Transition t : node.transitions()) {
 					if (t.event().equals(event)) {
-						for (Node prevNode : automaton.states()) {
+						for (MealyNode prevNode : automaton.states()) {
 							for (Transition prevT : prevNode.transitions()) {
 								if (prevT.dst() == node) {
 									prevEvents.add(prevT.event());

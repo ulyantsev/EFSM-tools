@@ -341,8 +341,8 @@ public class APTA {
 			final int src = node.getKey();
 			for (Map.Entry<String, Integer> t : node.getValue().entrySet()) {
 				final int dst = t.getValue();
-				final Node from = auto.state(src);
-				final Node to = auto.state(dst);
+				final MealyNode from = auto.state(src);
+				final MealyNode to = auto.state(dst);
 				auto.addTransition(from, new Transition(from, to, t.getKey(),
 						MyBooleanExpression.getTautology(), new StringActions("")));
 			}

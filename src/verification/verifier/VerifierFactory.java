@@ -14,7 +14,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
 import structures.Automaton;
-import structures.Node;
+import structures.MealyNode;
 import structures.Transition;
 import structures.plant.MooreNode;
 import structures.plant.MooreTransition;
@@ -79,7 +79,7 @@ public class VerifierFactory {
                     automaton.startState().number() == i && !verifyFromAllStates);
 		}
 		for (int i = 0; i < automaton.stateCount(); i++) {
-			final Node currentState = automaton.state(i);
+			final MealyNode currentState = automaton.state(i);
 			for (Transition t : currentState.transitions()) {
 				final StateTransition out = new StateTransition(
                         extractEvent(t.event()), statesArr[t.dst().number()]);

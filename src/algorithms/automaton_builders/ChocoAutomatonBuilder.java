@@ -10,7 +10,7 @@ import java.util.Set;
 import java.util.TreeMap;
 
 import structures.Automaton;
-import structures.Node;
+import structures.MealyNode;
 import structures.ScenarioTree;
 import structures.Transition;
 import algorithms.AdjacencyCalculator;
@@ -75,18 +75,18 @@ public class ChocoAutomatonBuilder {
     private static Constraint[] getCompleteConstraints(CPModel model, int size, ScenarioTree tree,
                                                        IntegerVariable[] nodesColorsVars, boolean isWeakCompleteness) {
 
-        Map<String, Map<String, List<Node>>> eventExprToNodes = new TreeMap<>();
+        Map<String, Map<String, List<MealyNode>>> eventExprToNodes = new TreeMap<>();
 
         Map<String, List<MyBooleanExpression>> pairs = tree.pairsEventExpression();
         for (String event : pairs.keySet()) {
-            Map<String, List<Node>> exprMap = new TreeMap<>();
+            Map<String, List<MealyNode>> exprMap = new TreeMap<>();
             eventExprToNodes.put(event, exprMap);
             for (MyBooleanExpression expr : pairs.get(event)) {
                 exprMap.put(expr.toString(), new ArrayList<>());
             }
         }
 
-        for (Node node : tree.nodes()) {
+        for (MealyNode node : tree.nodes()) {
             for (Transition t : node.transitions()) {
                 eventExprToNodes.get(t.event()).get(t.expr().toString()).add(node);
             }
@@ -124,11 +124,11 @@ public class ChocoAutomatonBuilder {
 
         for (String event : pairs.keySet()) {
             for (MyBooleanExpression expr : pairs.get(event)) {
-                List<Node> nodes = eventExprToNodes.get(event).get(expr.toString());
+                List<MealyNode> nodes = eventExprToNodes.get(event).get(expr.toString());
                 IntegerVariable[] vars = used.get(event).get(expr.toString());
                 for (int color = 0; color < size; color++) {
                     List<Constraint> orClauses = new ArrayList<>();
-                    for (Node node : nodes) {
+                    for (MealyNode node : nodes) {
                         Constraint clause = Choco.eq(nodesColorsVars[node.number()], color);
                         orClauses.add(clause);
                     }
@@ -188,10 +188,10 @@ public class ChocoAutomatonBuilder {
 
     private static Constraint[] getAdjacentConstraints(ScenarioTree tree, IntegerVariable[] nodesColorsVars) {
         ArrayList<Constraint> ans = new ArrayList<>();
-        Map<Node, Set<Node>> adjacent = AdjacencyCalculator.getAdjacent(tree);
+        Map<MealyNode, Set<MealyNode>> adjacent = AdjacencyCalculator.getAdjacent(tree);
 
-        for (Node node : tree.nodes()) {
-            for (Node other : adjacent.get(node)) {
+        for (MealyNode node : tree.nodes()) {
+            for (MealyNode other : adjacent.get(node)) {
                 if (other.number() < node.number()) {
                     IntegerVariable nodeColor = nodesColorsVars[node.number()];
                     IntegerVariable otherColor = nodesColorsVars[other.number()];
@@ -208,7 +208,7 @@ public class ChocoAutomatonBuilder {
         List<Constraint> ans = new ArrayList<>();
 
         Map<String, IntegerVariable[]> transitionsVars = new HashMap<>();
-        for (Node node : tree.nodes()) {
+        for (MealyNode node : tree.nodes()) {
             for (Transition t : node.transitions()) {
                 String key = t.event() + "[" + t.expr().toString() + "]";
                 if (!transitionsVars.containsKey(key)) {
@@ -234,7 +234,7 @@ public class ChocoAutomatonBuilder {
         List<Constraint> ans = new ArrayList<>();
 
         List<String> eventExprOrder = new ArrayList<>();
-        for (Node node : tree.nodes()) {
+        for (MealyNode node : tree.nodes()) {
             for (Transition t : node.transitions()) {
                 String eventExpr = t.event() + "[" + t.expr().toString() + "]";
                 if (!eventExprOrder.contains(eventExpr)) {
@@ -403,7 +403,7 @@ public class ChocoAutomatonBuilder {
             Automaton automaton = new Automaton(size);
             for (int i = 0; i < tree.nodeCount(); i++) {
                 int color = solver.getVar(nodesColorsVars[i]).getVal();
-                Node state = automaton.state(color);
+                MealyNode state = automaton.state(color);
                 for (Transition t : tree.nodes().get(i).transitions()) {
                     if (!state.hasTransition(t.event(), t.expr())) {
                         int childColor = solver.getVar(nodesColorsVars[t.dst().number()]).getVal();
@@ -441,7 +441,7 @@ public class ChocoAutomatonBuilder {
             ans = new Automaton(size);
             for (int i = 0; i < tree.nodeCount(); i++) {
                 int color = solver.getVar(nodesColorsVars[i]).getVal();
-                Node state = ans.state(color);
+                MealyNode state = ans.state(color);
                 for (Transition t : tree.nodes().get(i).transitions()) {
                     if (!state.hasTransition(t.event(), t.expr())) {
                         int childColor = solver.getVar(nodesColorsVars[t.dst().number()]).getVal();

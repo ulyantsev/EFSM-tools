@@ -20,7 +20,7 @@ import sat_solving.SatSolver;
 import scenario.StringScenario;
 import structures.Automaton;
 import structures.NegativeScenarioTree;
-import structures.Node;
+import structures.MealyNode;
 import structures.ScenarioTree;
 import verification.ltl.LtlParser;
 import verification.verifier.Verifier;
@@ -177,16 +177,12 @@ public class FastAutomatonBuilderMain extends MainBase {
                 // completeness check
                 boolean isComplete = true;
                 if (complete) {
-                    for (Node s : resultAutomaton.get().states()) {
-                        if (s.transitionCount() != events.size()) {
-                            isComplete = false;
-                        }
+                    for (MealyNode s : resultAutomaton.get().states()) {
+                        isComplete &= s.transitionCount() == events.size();
                     }
                 } else {
-                    for (Node s : resultAutomaton.get().states()) {
-                        if (s.transitionCount() == 0) {
-                            isComplete = false;
-                        }
+                    for (MealyNode s : resultAutomaton.get().states()) {
+                        isComplete &= s.transitionCount() != 0;
                     }
                 }
                 if (isComplete) {

@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 import meta.Author;
 import meta.MainBase;
 import org.kohsuke.args4j.Argument;
-import structures.Node;
+import structures.MealyNode;
 import structures.ScenarioTree;
 import algorithms.AdjacencyCalculator;
 
@@ -33,16 +33,16 @@ public class MaxCliqueFinderMain extends MainBase {
     protected void launcher() throws IOException, ParseException {
         final ScenarioTree tree = new ScenarioTree();
         tree.load(sc, varNumber);
-        final Map<Node, Set<Node>> adjacent = AdjacencyCalculator.getAdjacent(tree);
-        final Set<Node> clique = findClique(tree.root(), adjacent);
+        final Map<MealyNode, Set<MealyNode>> adjacent = AdjacencyCalculator.getAdjacent(tree);
+        final Set<MealyNode> clique = findClique(tree.root(), adjacent);
         checkClique(clique, adjacent);
         System.out.println("MAX-CLIQUE SIZE: " + clique.size());
-        System.out.println("NODES: " + clique.stream().map(Node::number).sorted().collect(Collectors.toList()));
+        System.out.println("NODES: " + clique.stream().map(MealyNode::number).sorted().collect(Collectors.toList()));
 	}
 	
-	private static void checkClique(Set<Node> clique, Map<Node, Set<Node>> adjacent) {
-		for (Node u : clique) {
-			for (Node v : clique) {
+	private static void checkClique(Set<MealyNode> clique, Map<MealyNode, Set<MealyNode>> adjacent) {
+		for (MealyNode u : clique) {
+			for (MealyNode v : clique) {
 				if (u != v) {
 					if (!adjacent.get(u).contains(v)) {
 						throw new AssertionError();
@@ -52,13 +52,13 @@ public class MaxCliqueFinderMain extends MainBase {
 		}
 	}
 	
-	private static Set<Node> findClique(Node root, Map<Node, Set<Node>> adjacent) {
+	private static Set<MealyNode> findClique(MealyNode root, Map<MealyNode, Set<MealyNode>> adjacent) {
 		int maxDegree = 0;
-		Node maxV = null;
-		final Set<Node> clique = new LinkedHashSet<>();
+		MealyNode maxV = null;
+		final Set<MealyNode> clique = new LinkedHashSet<>();
 		
-		for (Map.Entry<Node, Set<Node>> pair : adjacent.entrySet()) {
-			Node candidate = pair.getKey();
+		for (Map.Entry<MealyNode, Set<MealyNode>> pair : adjacent.entrySet()) {
+			MealyNode candidate = pair.getKey();
 			int candidateDegree = pair.getValue().size();
 			if (candidateDegree > maxDegree) {
 				maxDegree = candidateDegree;
@@ -66,10 +66,10 @@ public class MaxCliqueFinderMain extends MainBase {
 			}
 		}
 		
-		Node last = maxV;
+		MealyNode last = maxV;
 		if (last != null) {
 			clique.add(last);
-			Node anotherOne = neighborWithHighestDegree(clique, last, adjacent);
+			MealyNode anotherOne = neighborWithHighestDegree(clique, last, adjacent);
 			while (anotherOne != null) {
 				clique.add(anotherOne);
 				last = anotherOne;
@@ -82,12 +82,12 @@ public class MaxCliqueFinderMain extends MainBase {
 		return clique;
 	}
 
-	private static Node neighborWithHighestDegree(Set<Node> cur, Node v, Map<Node, Set<Node>> adjacent) {
+	private static MealyNode neighborWithHighestDegree(Set<MealyNode> cur, MealyNode v, Map<MealyNode, Set<MealyNode>> adjacent) {
 		int maxDegree = 0;
-		Node maxNeighbour = null;
-		for (Node u : adjacent.get(v)) {
+		MealyNode maxNeighbour = null;
+		for (MealyNode u : adjacent.get(v)) {
 			boolean uInClique = true;
-			for (Node w : cur) {
+			for (MealyNode w : cur) {
 				if (w != v) {
 					if (!adjacent.get(w).contains(u)) {
 						uInClique = false;

@@ -20,7 +20,7 @@ import sat_solving.SolverResult.SolverResults;
 import scenario.StringActions;
 import scenario.StringScenario;
 import structures.Automaton;
-import structures.Node;
+import structures.MealyNode;
 import structures.ScenarioTree;
 import structures.Transition;
 import verification.ltl.grammar.LtlNode;
@@ -115,7 +115,7 @@ public class BacktrackingAutomatonBuilder {
 			
 			Transition t = frontier.get(0);
 			// further edges should be added from this state:
-			final Node stateFrom = automaton.state(coloring[t.src().number()]);
+			final MealyNode stateFrom = automaton.state(coloring[t.src().number()]);
 			final String event = t.event();
 			final MyBooleanExpression expression = t.expr();
 			final StringActions stringActions = t.actions();
@@ -189,7 +189,7 @@ public class BacktrackingAutomatonBuilder {
 					if (!transitions.stream().allMatch(t -> t.dst().number() == autoDst)) {
 						return false;
 					}
-					final Node scDst = tList.get(0).dst();
+					final MealyNode scDst = tList.get(0).dst();
 					currentFrontier.addAll(groupByDst(scDst.transitions()));
 					coloring[scDst.number()] = autoDst;
 				} else {
@@ -206,7 +206,7 @@ public class BacktrackingAutomatonBuilder {
 			
 			final List<Transition> tList = frontier.get(0);
 			// further edges should be added from this state:
-			final Node stateFrom = automaton.state(coloring[tList.get(0).src().number()]);
+			final MealyNode stateFrom = automaton.state(coloring[tList.get(0).src().number()]);
 			final StringActions stringActions = tList.get(0).actions();
 			for (int dst = 0; dst < colorSize; dst++) {
 				if (dst > 1 && incomingTransitionNumbers[dst - 1] == 0) {
@@ -288,7 +288,7 @@ public class BacktrackingAutomatonBuilder {
 					if (!transitions.stream().allMatch(t -> t.dst().number() == autoDst)) {
 						return false;
 					}
-					final Node scDst = tList.get(0).dst();
+					final MealyNode scDst = tList.get(0).dst();
 					currentFrontier.addAll(groupByDst(scDst.transitions()));
 					coloring[scDst.number()] = autoDst;
 				} else {
@@ -305,7 +305,7 @@ public class BacktrackingAutomatonBuilder {
 			
 			final List<Transition> tList = frontier.get(0);
 			// further edges should be added from this state:
-			final Node stateFrom = automaton.state(coloring[tList.get(0).src().number()]);
+			final MealyNode stateFrom = automaton.state(coloring[tList.get(0).src().number()]);
 			final StringActions stringActions = tList.get(0).actions();
 			for (int dst = 0; dst < colorSize; dst++) {
 				if (dst > 1 && incomingTransitionNumbers[dst - 1] == 0) {
@@ -484,7 +484,7 @@ public class BacktrackingAutomatonBuilder {
 				}
 			}
 			for (StringScenario sc : scenarios) {
-				Node state = automaton.startState();
+				MealyNode state = automaton.startState();
 				for (int i = 0; i < sc.size(); i++) {
 					final Transition t = state.transition(sc.getEvents(i).get(0), tautology());
 					if (t == null) {
@@ -518,7 +518,7 @@ public class BacktrackingAutomatonBuilder {
 			checkTimeLimit();
 			
 			final FrontierElement elem = frontier.get(0);
-			final Node stateFrom = automaton.state(elem.coloring());
+			final MealyNode stateFrom = automaton.state(elem.coloring());
 			for (int dst = 0; dst < colorSize; dst++) {
 				if (dst > 1 && incomingTransitionNumbers[dst - 1] == 0) {
 					break;

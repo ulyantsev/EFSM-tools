@@ -9,27 +9,27 @@ import scenario.StringActions;
 import scenario.StringScenario;
 
 public class Automaton {
-    private final Node startState;
-    private final List<Node> states;
+    private final MealyNode startState;
+    private final List<MealyNode> states;
 
     public Automaton(int statesCount) {
-        this.startState = new Node(0);
+        this.startState = new MealyNode(0);
         this.states = new ArrayList<>();
         this.states.add(startState);
         for (int i = 1; i < statesCount; i++) {
-            this.states.add(new Node(i));
+            this.states.add(new MealyNode(i));
         }
     }
 
-    public Node startState() {
+    public MealyNode startState() {
         return startState;
     }
 
-    public Node state(int i) {
+    public MealyNode state(int i) {
         return states.get(i);
     }
 
-    public List<Node> states() {
+    public List<MealyNode> states() {
         return states;
     }
 
@@ -37,15 +37,15 @@ public class Automaton {
         return states.size();
     }
 
-    public void addTransition(Node state, Transition transition) {
+    public void addTransition(MealyNode state, Transition transition) {
         state.addTransition(transition.event(), transition.expr(), transition.actions(), transition.dst());
     }
     
-    public void removeTransition(Node state, Transition transition) {
+    public void removeTransition(MealyNode state, Transition transition) {
         state.removeTransition(transition);
     }
     
-    private Node nextNode(Node node, String event, MyBooleanExpression expr) {
+    private MealyNode nextNode(MealyNode node, String event, MyBooleanExpression expr) {
         for (Transition tr : node.transitions()) {
             if (tr.event().equals(event) && tr.expr() == expr) {
                 return tr.dst();
@@ -54,7 +54,7 @@ public class Automaton {
         return null;
     }
 
-    private StringActions nextActions(Node node, String event, MyBooleanExpression expr) {
+    private StringActions nextActions(MealyNode node, String event, MyBooleanExpression expr) {
         for (Transition tr : node.transitions()) {
             if (tr.event().equals(event) && tr.expr() == expr) {
                 return tr.actions();
@@ -63,7 +63,7 @@ public class Automaton {
         return null;        
     }
     
-    private Node next(Node node, String event, MyBooleanExpression expr, StringActions actions) {
+    private MealyNode next(MealyNode node, String event, MyBooleanExpression expr, StringActions actions) {
         for (Transition tr : node.transitions()) {
             boolean eventsEq = tr.event().equals(event);
             boolean exprEq = tr.expr() == expr;
@@ -76,12 +76,12 @@ public class Automaton {
     }
     
     public boolean compliesWith(StringScenario scenario) {
-        Node node = startState;
+        MealyNode node = startState;
         for (int pos = 0; pos < scenario.size(); pos++) {
-        	List<Node> newNodes = new ArrayList<>();
+        	List<MealyNode> newNodes = new ArrayList<>();
         	// multi-edge support
         	for (String e : scenario.getEvents(pos)) {
-	            Node newNode = next(node, e, scenario.getExpr(pos), scenario.getActions(pos));
+	            MealyNode newNode = next(node, e, scenario.getExpr(pos), scenario.getActions(pos));
 	            if (newNode == null) {
 	                return false;
 	            }
@@ -96,7 +96,7 @@ public class Automaton {
     }
 
     public int calcMissedActions(StringScenario scenario) {
-        Node node = startState;
+        MealyNode node = startState;
         int missed = 0;
         for (int pos = 0; pos < scenario.size(); pos++) {
             StringActions nextActions = nextActions(node, scenario.getEvents(pos).get(0), scenario.getExpr(pos));
@@ -120,7 +120,7 @@ public class Automaton {
         	+ "    node [shape = circle];\n"
         	+ "    0 [style = \"bold\"];\n");
 
-        for (Node state : states) {
+        for (MealyNode state : states) {
             for (Transition t : state.transitions()) {
                 sb.append("    " + t.src().number() + " -> " + t.dst().number());
                 sb.append(" [label = \"" + t.event() + " [" + t.expr().toString()
