@@ -196,6 +196,7 @@ public class MyBooleanExpression {
         return res;
     }
 
+    @Override
     public String toString() {
         return repr;
     }

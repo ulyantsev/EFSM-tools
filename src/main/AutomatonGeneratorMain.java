@@ -5,7 +5,7 @@ import meta.MainBase;
 import org.kohsuke.args4j.Option;
 
 import algorithms.AutomatonGenerator;
-import structures.Automaton;
+import structures.mealy.MealyAutomaton;
 
 public class AutomatonGeneratorMain extends MainBase {
 	@Option(name = "--size", aliases = { "-s" },
@@ -51,7 +51,7 @@ public class AutomatonGeneratorMain extends MainBase {
     @Override
 	protected void launcher() {
         initializeRandom(randseed);
-		final Automaton automaton = AutomatonGenerator.generate(
+		final MealyAutomaton automaton = AutomatonGenerator.generate(
                 size, eventsCount, actionsCount, minActionsCount,
 				maxActionsCount, varsCount, transitionsPercentage / 100., random());
         if (filepath == null) {

@@ -7,18 +7,18 @@ import java.util.Random;
 
 import scenario.StringActions;
 import scenario.StringScenario;
-import structures.Automaton;
-import structures.MealyNode;
-import structures.Transition;
+import structures.mealy.MealyAutomaton;
+import structures.mealy.MealyNode;
+import structures.mealy.MealyTransition;
 import bool.MyBooleanExpression;
 
 public class ScenarioGenerator {
-    static public ArrayList<ArrayList<Transition>> getBFSPaths(Automaton automaton) {
-    	ArrayList<ArrayList<Transition>> ans = new ArrayList<>();
+    static public ArrayList<ArrayList<MealyTransition>> getBFSPaths(MealyAutomaton automaton) {
+    	ArrayList<ArrayList<MealyTransition>> ans = new ArrayList<>();
     	
     	int size = automaton.stateCount();
     	@SuppressWarnings("unchecked")
-		ArrayList<Transition>[] shortestPaths = new ArrayList[size];
+		ArrayList<MealyTransition>[] shortestPaths = new ArrayList[size];
     	
     	ArrayList<MealyNode> order = new ArrayList<>();
     	order.add(automaton.startState());
@@ -26,10 +26,10 @@ public class ScenarioGenerator {
     	
     	for (int i = 0; i < size; i++) {
     		MealyNode current = order.get(i);
-    		ArrayList<Transition> path = shortestPaths[current.number()];
+    		ArrayList<MealyTransition> path = shortestPaths[current.number()];
     		
-    		for (Transition t : current.transitions()) {
-    			ArrayList<Transition> newPath = new ArrayList<>(path);
+    		for (MealyTransition t : current.transitions()) {
+    			ArrayList<MealyTransition> newPath = new ArrayList<>(path);
     			newPath.add(t);
     			ans.add(newPath);
     			
@@ -43,12 +43,12 @@ public class ScenarioGenerator {
     	return ans;
     }
 	
-    static public String pathToScenario(ArrayList<Transition> path) {
+    static public String pathToScenario(ArrayList<MealyTransition> path) {
     	ArrayList<String> events = new ArrayList<>();
     	ArrayList<MyBooleanExpression> expressions = new ArrayList<>();
     	ArrayList<StringActions> actions = new ArrayList<>();
     	
-    	for (Transition t : path) {
+    	for (MealyTransition t : path) {
     		events.add(t.event());
     		expressions.add(t.expr());
     		actions.add(t.actions());
@@ -56,20 +56,20 @@ public class ScenarioGenerator {
     	return new StringScenario(true, events, expressions, actions).toString();
     }
     
-    static public String generateScenariosWithBFS(Automaton automaton) {
-		ArrayList<ArrayList<Transition>> paths = getBFSPaths(automaton);
+    static public String generateScenariosWithBFS(MealyAutomaton automaton) {
+		ArrayList<ArrayList<MealyTransition>> paths = getBFSPaths(automaton);
 		int lenBFS = 0;
-		for (ArrayList<Transition> path : paths) {
+		for (ArrayList<MealyTransition> path : paths) {
 			lenBFS += path.size();
 		}
  
     	return generateScenariosWithBFS(automaton, lenBFS, null);
     }
     
-	static public String generateScenariosWithBFS(Automaton automaton, int sumLength, Random random) {
-		ArrayList<ArrayList<Transition>> paths = getBFSPaths(automaton);
+	static public String generateScenariosWithBFS(MealyAutomaton automaton, int sumLength, Random random) {
+		ArrayList<ArrayList<MealyTransition>> paths = getBFSPaths(automaton);
 		int lenBFS = 0;
-		for (ArrayList<Transition> path : paths) {
+		for (ArrayList<MealyTransition> path : paths) {
 			lenBFS += path.size();
 		}
 		if (lenBFS > sumLength) {
@@ -78,11 +78,11 @@ public class ScenarioGenerator {
 		
 		for (int i = lenBFS; i < sumLength; i++) {
 			int randomPathNum = random.nextInt(paths.size());
-			ArrayList<Transition> randomPath = paths.get(randomPathNum);
+			ArrayList<MealyTransition> randomPath = paths.get(randomPathNum);
 			
 			MealyNode lastNode = randomPath.get(randomPath.size() - 1).dst();
 			int randomTransitionNumber = random.nextInt(lastNode.transitionCount());
-			Transition randomTransition = lastNode.transitions().toArray(new Transition[0])[randomTransitionNumber];
+			MealyTransition randomTransition = lastNode.transitions().toArray(new MealyTransition[0])[randomTransitionNumber];
 			randomPath.add(randomTransition);
 		}
 		
@@ -97,11 +97,11 @@ public class ScenarioGenerator {
     	return sb.toString();
     }
 	
-	static public String generateScenarios(Automaton automaton, int scenariosCount, int minLength, int maxLength,
-            int sumLength, Random random) {
+	static public String generateScenarios(MealyAutomaton automaton, int scenariosCount, int minLength, int maxLength,
+                                           int sumLength, Random random) {
     	int[] length = getRandomLength(scenariosCount, minLength, maxLength, sumLength, random);
 
-    	List<Collection<Transition>> visitedTransitions = new ArrayList<>(); 
+    	List<Collection<MealyTransition>> visitedTransitions = new ArrayList<>();
     	for (int i = 0; i < automaton.states().size(); i++) {
     		visitedTransitions.add(new ArrayList<>());
     	}
@@ -117,8 +117,8 @@ public class ScenarioGenerator {
         
     }
 
-    static private String generateScenario(Automaton automaton, int length,
-                                           List<Collection<Transition>> visitedTransitions, Random random) {
+    static private String generateScenario(MealyAutomaton automaton, int length,
+                                           List<Collection<MealyTransition>> visitedTransitions, Random random) {
         String events = "", actions = "";
 
         MealyNode curNode = automaton.startState();
@@ -132,15 +132,15 @@ public class ScenarioGenerator {
                 throw new RuntimeException("There is no outcoming transitions from node number " + curNode.number());
             }
                         
-            Transition transition = null;
-            Collection<Transition> currentVisited = visitedTransitions.get(curNode.number());
+            MealyTransition transition = null;
+            Collection<MealyTransition> currentVisited = visitedTransitions.get(curNode.number());
             if (currentVisited.size() == curNode.transitions().size()) {
             	int transitionNum = random.nextInt(curNode.transitions().size());
-            	transition = curNode.transitions().toArray(new Transition[0])[transitionNum];
+            	transition = curNode.transitions().toArray(new MealyTransition[0])[transitionNum];
             } else {
-            	for (Transition unvisited : curNode.transitions()) {
+            	for (MealyTransition unvisited : curNode.transitions()) {
             		boolean was = false;
-            		for (Transition visited : currentVisited) {
+            		for (MealyTransition visited : currentVisited) {
             			if (unvisited == visited) {
             				was = true;
             			}

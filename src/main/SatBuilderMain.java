@@ -13,9 +13,9 @@ import org.kohsuke.args4j.Option;
 import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.spi.BooleanOptionHandler;
 
-import algorithms.automaton_builders.CryptominisatAutomatonBuilder;
-import structures.Automaton;
-import structures.ScenarioTree;
+import automaton_builders.CryptominisatAutomatonBuilder;
+import structures.mealy.MealyAutomaton;
+import structures.mealy.ScenarioTree;
 
 public class SatBuilderMain extends MainBase {
 	@Argument(usage = "paths to files with scenarios", metaVar = "files", required = true)
@@ -75,7 +75,7 @@ public class SatBuilderMain extends MainBase {
 		}
 
 		logger().info("Start building automaton with CryptoMiniSat");
-		final Automaton resultAutomaton;
+		final MealyAutomaton resultAutomaton;
 
 		if (modelPrintWriter == null) {
 			resultAutomaton = CryptominisatAutomatonBuilder.build(tree, size);

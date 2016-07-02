@@ -6,7 +6,7 @@ import algorithms.AutomatonCompletenessChecker;
 import meta.Author;
 import meta.MainBase;
 import org.kohsuke.args4j.Argument;
-import structures.Automaton;
+import structures.mealy.MealyAutomaton;
 
 public class CompletenessCheckerMain extends MainBase {
     @Argument(usage = "path to EFSM in Graphviz format", metaVar = "<efsm.gv>", required = true)
@@ -18,7 +18,7 @@ public class CompletenessCheckerMain extends MainBase {
 
     @Override
     protected void launcher() throws IOException, ParseException {
-        final Automaton automaton = loadAutomaton(efsm);
+        final MealyAutomaton automaton = loadAutomaton(efsm);
         System.out.println(AutomatonCompletenessChecker.checkCompleteness(automaton));
     }
 }

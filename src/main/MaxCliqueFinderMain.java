@@ -14,8 +14,8 @@ import java.util.stream.Collectors;
 import meta.Author;
 import meta.MainBase;
 import org.kohsuke.args4j.Argument;
-import structures.MealyNode;
-import structures.ScenarioTree;
+import structures.mealy.MealyNode;
+import structures.mealy.ScenarioTree;
 import algorithms.AdjacencyCalculator;
 
 public class MaxCliqueFinderMain extends MainBase {

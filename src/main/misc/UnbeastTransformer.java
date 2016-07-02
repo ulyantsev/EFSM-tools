@@ -24,9 +24,9 @@ import java.util.logging.SimpleFormatter;
 
 import scenario.StringActions;
 import scenario.StringScenario;
-import structures.Automaton;
-import structures.MealyNode;
-import structures.Transition;
+import structures.mealy.MealyAutomaton;
+import structures.mealy.MealyNode;
+import structures.mealy.MealyTransition;
 import verification.ltl.LtlParseException;
 import verification.ltl.LtlParser;
 import verification.ltl.grammar.BinaryOperator;
@@ -108,13 +108,13 @@ public class UnbeastTransformer {
 			}
 			final Game game = new Game(inputScanner, writer, p.actions, p.events,
 					p.incomplete);
-			final Automaton a = game.reconstructAutomaton(logger);
+			final MealyAutomaton a = game.reconstructAutomaton(logger);
 			unbeast.destroy();
 			
 			if (!checkAutomaton(a, p, v, scenarios)) {
 				logger.severe("Compliance check failed!");
 			} else {
-				final Automaton minimizedA = minimizeAutomaton(a, p, v, scenarios, logger);
+				final MealyAutomaton minimizedA = minimizeAutomaton(a, p, v, scenarios, logger);
 				logger.info(minimizedA.toString());
 				try (PrintWriter pw = new PrintWriter(new File(automatonPath))) {
 					pw.println(minimizedA);
@@ -124,20 +124,20 @@ public class UnbeastTransformer {
 		}
 	}
 
-	private static Automaton minimizeAutomaton(Automaton a, Problem p, Verifier v,
-			List<StringScenario> scenarios, Logger logger) {
+	private static MealyAutomaton minimizeAutomaton(MealyAutomaton a, Problem p, Verifier v,
+                                                    List<StringScenario> scenarios, Logger logger) {
 		final Set<Integer> remainingStates = new TreeSet<>();
 		for (int i = 0; i < a.stateCount(); i++) {
 			remainingStates.add(i);
 		}
-		Automaton current = a;
+		MealyAutomaton current = a;
 		l: while (true) {
 			for (int n1 : remainingStates) {
 				for (int n2 : remainingStates) {
 					if (n1 >= n2) {
 						continue;
 					}
-					final Automaton merged = mergeNodes(n1, n2, current);
+					final MealyAutomaton merged = mergeNodes(n1, n2, current);
 					if (!checkAutomaton(merged, p, v, scenarios)) {
 						continue;
 					}
@@ -155,14 +155,14 @@ public class UnbeastTransformer {
 	/*
 	 * Removes transitions to and from node n2.
 	 */
-	private static Automaton mergeNodes(int n1, int n2, Automaton a) {
-		final Automaton result = new Automaton(a.stateCount());
+	private static MealyAutomaton mergeNodes(int n1, int n2, MealyAutomaton a) {
+		final MealyAutomaton result = new MealyAutomaton(a.stateCount());
 		for (int i = 0; i < a.stateCount(); i++) {
 			if (i == n2) {
 				continue;
 			}
-			for (Transition t : a.state(i).transitions()) {
-				final Transition newT = new Transition(result.state(t.src().number()),
+			for (MealyTransition t : a.state(i).transitions()) {
+				final MealyTransition newT = new MealyTransition(result.state(t.src().number()),
 						result.state(t.dst().number() == n2 ? n1 : t.dst().number()),
 						t.event(), t.expr(), t.actions());
 				result.addTransition(result.state(i), newT);
@@ -171,12 +171,12 @@ public class UnbeastTransformer {
 		return result;
 	}
 	
-	private static boolean checkAutomaton(Automaton a, Problem p, Verifier v, List<StringScenario> scenarios) {
+	private static boolean checkAutomaton(MealyAutomaton a, Problem p, Verifier v, List<StringScenario> scenarios) {
 		return v.verify(a) && checkScenarioCompliance(a, p, scenarios);
 	}
 	
 	// will not work in the presence of variables
-	private static boolean checkScenarioCompliance(Automaton a, Problem p, List<StringScenario> scenarios) {
+	private static boolean checkScenarioCompliance(MealyAutomaton a, Problem p, List<StringScenario> scenarios) {
 		for (StringScenario sc : scenarios) {
 			final List<String> events = new ArrayList<>();
 			final List<MyBooleanExpression> expressions = new ArrayList<>();
@@ -550,7 +550,7 @@ public class UnbeastTransformer {
 			return elements;
 		}
 		
-		Automaton reconstructAutomaton(Logger logger) throws IOException {
+		MealyAutomaton reconstructAutomaton(Logger logger) throws IOException {
 			final List<String> firstStateData = step(0);
 			final Map<String, GameState> states = new LinkedHashMap<>();
 			final Deque<GameState> unprocessedStates = new LinkedList<>();
@@ -583,7 +583,7 @@ public class UnbeastTransformer {
 				}
 			}
 			
-			final Automaton a = new Automaton(states.size());
+			final MealyAutomaton a = new MealyAutomaton(states.size());
 			
 			for (GameState s : states.values()) {
 				for (int i = 0; i < s.transitions.size(); i++) {

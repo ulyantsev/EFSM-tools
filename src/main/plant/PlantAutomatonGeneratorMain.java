@@ -16,7 +16,7 @@ import meta.MainBase;
 import org.kohsuke.args4j.Option;
 
 import scenario.StringActions;
-import structures.plant.NondetMooreAutomaton;
+import structures.moore.NondetMooreAutomaton;
 
 public class PlantAutomatonGeneratorMain extends MainBase {
 	@Option(name = "--size", aliases = { "-s" },

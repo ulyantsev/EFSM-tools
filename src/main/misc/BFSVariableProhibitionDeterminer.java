@@ -24,7 +24,7 @@ import bnf_formulae.BooleanVariable;
 import bnf_formulae.FormulaList;
 import sat_solving.Assignment;
 import sat_solving.SatSolver;
-import algorithms.automaton_builders.QbfAutomatonBuilder;
+import automaton_builders.QbfAutomatonBuilder;
 
 public class BFSVariableProhibitionDeterminer {
 	public static void main(String[] args) throws ParseException, IOException {

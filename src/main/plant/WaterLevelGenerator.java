@@ -14,7 +14,7 @@ import java.util.Random;
 import java.util.Scanner;
 
 import scenario.StringActions;
-import structures.plant.NondetMooreAutomaton;
+import structures.moore.NondetMooreAutomaton;
 
 public class WaterLevelGenerator {
 	private static StringActions toStringActions(String action) {

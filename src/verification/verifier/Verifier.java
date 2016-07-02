@@ -12,9 +12,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import structures.Automaton;
-import structures.Transition;
-import structures.plant.NondetMooreAutomaton;
+import structures.mealy.MealyAutomaton;
+import structures.mealy.MealyTransition;
+import structures.moore.NondetMooreAutomaton;
 import verification.ltl.LtlParseException;
 import verification.ltl.buchi.translator.TranslationException;
 
@@ -93,11 +93,11 @@ public class Verifier {
 		}
 	}
 	
-	private static Automaton removeDeadEnds(Automaton automaton) {
-		Automaton currentA = automaton;
+	private static MealyAutomaton removeDeadEnds(MealyAutomaton automaton) {
+		MealyAutomaton currentA = automaton;
 		while (true) {
 			boolean changed = false;
-			Automaton newA = new Automaton(automaton.stateCount());
+			MealyAutomaton newA = new MealyAutomaton(automaton.stateCount());
 			boolean[] deadEnd = new boolean[automaton.stateCount()];
 			for (int i = 0; i < automaton.stateCount(); i++) {
 				if (currentA.state(i).transitions().isEmpty()) {
@@ -105,9 +105,9 @@ public class Verifier {
 				}
 			}
 			for (int i = 0; i < automaton.stateCount(); i++) {
-				for (Transition t : currentA.state(i).transitions()) {
+				for (MealyTransition t : currentA.state(i).transitions()) {
 					if (!deadEnd[t.dst().number()]) {
-						newA.addTransition(newA.state(i), new Transition(newA.state(i),
+						newA.addTransition(newA.state(i), new MealyTransition(newA.state(i),
 								newA.state(t.dst().number()), t.event(),
 								t.expr(), t.actions()));
 					} else {
@@ -122,15 +122,15 @@ public class Verifier {
 		}
 	}
 	
-	public boolean verify(Automaton a) {
+	public boolean verify(MealyAutomaton a) {
 		return verifyWithCounterexamples(a).stream().allMatch(Counterexample::isEmpty);
 	}
 	
-	public List<Counterexample> verifyWithCounterexamples(Automaton a) {
+	public List<Counterexample> verifyWithCounterexamples(MealyAutomaton a) {
 		return verifyWithCounterexamplesWithNoDeadEndRemoval(removeDeadEnds(a));
 	}
 	
-	public List<Counterexample> verifyWithCounterexamplesWithNoDeadEndRemoval(Automaton a) {
+	public List<Counterexample> verifyWithCounterexamplesWithNoDeadEndRemoval(MealyAutomaton a) {
 		verifier.configureDetMealyMachine(a);
 		return verifier.verify();
 	}

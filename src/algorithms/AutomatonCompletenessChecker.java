@@ -8,15 +8,15 @@ import java.util.TreeSet;
 
 import bool.MyBooleanExpression;
 
-import structures.Automaton;
-import structures.MealyNode;
-import structures.Transition;
+import structures.mealy.MealyAutomaton;
+import structures.mealy.MealyNode;
+import structures.mealy.MealyTransition;
 
 public class AutomatonCompletenessChecker {
-	public static String checkCompleteness(Automaton automaton) {
+	public static String checkCompleteness(MealyAutomaton automaton) {
 		for (MealyNode node : automaton.states()) {
 			final Map<String, Set<String>> eventVars = new TreeMap<>();
-			for (Transition t : node.transitions()) {
+			for (MealyTransition t : node.transitions()) {
 				String event = t.event();
 				if (!eventVars.containsKey(event)) {
 					eventVars.put(event, new TreeSet<>());
@@ -25,7 +25,7 @@ public class AutomatonCompletenessChecker {
 			}
 
 			final Map<String, Integer> eventSetsCount = new TreeMap<>();
-			for (Transition t : node.transitions()) {
+			for (MealyTransition t : node.transitions()) {
 				String event = t.event();
 				MyBooleanExpression expr = t.expr();
 				if (!eventSetsCount.containsKey(event)) {

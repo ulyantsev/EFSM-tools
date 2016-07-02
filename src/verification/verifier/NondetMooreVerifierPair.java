@@ -7,7 +7,7 @@ import java.util.logging.Logger;
 
 import org.apache.commons.lang3.tuple.Pair;
 
-import structures.plant.NondetMooreAutomaton;
+import structures.moore.NondetMooreAutomaton;
 
 public class NondetMooreVerifierPair {
 	private final Verifier ordinaryVerifier;

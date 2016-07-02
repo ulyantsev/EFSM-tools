@@ -238,5 +238,4 @@ public class TruthTable {
 	public Map<Map<String, Boolean>, Map<BooleanExpression, Boolean>> getResults() {
 		return results;
 	}
-
 }

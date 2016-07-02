@@ -1,12 +1,11 @@
 package meta;
 
-import algorithms.AutomatonCompletenessChecker;
 import algorithms.AutomatonGVLoader;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import scenario.StringScenario;
-import structures.Automaton;
-import structures.ScenarioTree;
+import structures.mealy.MealyAutomaton;
+import structures.mealy.ScenarioTree;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -136,7 +135,7 @@ public abstract class MainBase {
         }
     }
 
-    protected Automaton loadAutomaton(String filename) throws IOException, ParseException {
+    protected MealyAutomaton loadAutomaton(String filename) throws IOException, ParseException {
         try {
             return AutomatonGVLoader.load(filename);
         } catch (IOException e) {

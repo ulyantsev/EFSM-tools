@@ -15,8 +15,8 @@ import org.kohsuke.args4j.Option;
 
 import scenario.StringActions;
 import scenario.StringScenario;
-import structures.plant.MooreTransition;
-import structures.plant.NondetMooreAutomaton;
+import structures.moore.MooreTransition;
+import structures.moore.NondetMooreAutomaton;
 import bool.MyBooleanExpression;
 
 public class PlantScenarioGeneratorMain extends MainBase {

@@ -7,7 +7,7 @@ import meta.MainBase;
 import org.kohsuke.args4j.Option;
 import org.kohsuke.args4j.spi.BooleanOptionHandler;
 
-import structures.Automaton;
+import structures.mealy.MealyAutomaton;
 import algorithms.ScenarioGenerator;
 
 public class ScenariosGeneratorMain extends MainBase {
@@ -43,7 +43,7 @@ public class ScenariosGeneratorMain extends MainBase {
     @Override
     protected void launcher() throws IOException, ParseException {
         initializeRandom(randseed);
-        final Automaton automaton = loadAutomaton(automatonFilepath);
+        final MealyAutomaton automaton = loadAutomaton(automatonFilepath);
 
 		String scenarios = null;
 		if (cover) {

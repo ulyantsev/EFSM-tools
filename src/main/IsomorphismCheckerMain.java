@@ -6,7 +6,7 @@ import algorithms.AutomatonIsomorphismChecker;
 import meta.Author;
 import meta.MainBase;
 import org.kohsuke.args4j.Argument;
-import structures.Automaton;
+import structures.mealy.MealyAutomaton;
 
 public class IsomorphismCheckerMain extends MainBase {
     @Argument(usage = "path to EFSM in Graphviz format", metaVar = "<first.gv>", required = true, index = 0)
@@ -21,8 +21,8 @@ public class IsomorphismCheckerMain extends MainBase {
 
     @Override
     protected void launcher() throws IOException, ParseException {
-        final Automaton a1 = loadAutomaton(efsm1);
-        final Automaton a2 = loadAutomaton(efsm2);
+        final MealyAutomaton a1 = loadAutomaton(efsm1);
+        final MealyAutomaton a2 = loadAutomaton(efsm2);
         final boolean ans = AutomatonIsomorphismChecker.isIsomorphic(a1, a2);
         System.out.println(ans ? "ISOMORPHIC" : "NOT ISOMORPHIC");
     }

@@ -13,9 +13,9 @@ import org.kohsuke.args4j.Option;
 import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.spi.BooleanOptionHandler;
 
-import algorithms.automaton_builders.ChocoAutomatonBuilder;
-import structures.Automaton;
-import structures.ScenarioTree;
+import automaton_builders.ChocoAutomatonBuilder;
+import structures.mealy.MealyAutomaton;
+import structures.mealy.ScenarioTree;
 
 public class Main extends MainBase {
     @Argument(usage = "paths to files with scenarios", metaVar = "files", required = true)
@@ -80,7 +80,7 @@ public class Main extends MainBase {
 
         if (!solveAll) {
             logger().info("Start building automaton with Choco CSP solver");
-            Automaton resultAutomaton;
+            MealyAutomaton resultAutomaton;
             if (modelPrintWriter == null) {
                 resultAutomaton = ChocoAutomatonBuilder.build(tree, size, isComplete, isWeakCompleteness);
             } else {
@@ -98,14 +98,14 @@ public class Main extends MainBase {
             logger().info("Choco automaton builder execution time: " + executionTime());
         } else {
             logger().info("Start building all feasible automatons with Choco CSP solver");
-            final List<Automaton> result =
+            final List<MealyAutomaton> result =
                     ChocoAutomatonBuilder.buildAll(tree, size, isComplete, isWeakCompleteness, modelPrintWriter);
             if (modelPrintWriter != null) {
                 modelPrintWriter.close();
             }
 
             logger().info(result.size() + " solutions found");
-            for (Automaton automaton : result) {
+            for (MealyAutomaton automaton : result) {
                 saveToFile(automaton, resultFilePath);
             }
             logger().info("Choco execution time for all solutions: " + executionTime());

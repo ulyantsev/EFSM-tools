@@ -4,7 +4,7 @@ package main.plant;
  * (c) Igor Buzhinsky
  */
 
-import main.plant.apros.*;
+import apros.*;
 import meta.Author;
 import meta.MainBase;
 import org.kohsuke.args4j.Option;

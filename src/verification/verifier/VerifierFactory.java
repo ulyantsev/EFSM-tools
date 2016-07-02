@@ -13,12 +13,12 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
-import structures.Automaton;
-import structures.MealyNode;
-import structures.Transition;
-import structures.plant.MooreNode;
-import structures.plant.MooreTransition;
-import structures.plant.NondetMooreAutomaton;
+import structures.mealy.MealyAutomaton;
+import structures.mealy.MealyNode;
+import structures.mealy.MealyTransition;
+import structures.moore.MooreNode;
+import structures.moore.MooreTransition;
+import structures.moore.NondetMooreAutomaton;
 import verification.ltl.GrammarConverter;
 import verification.ltl.LtlParseException;
 import verification.ltl.LtlParser;
@@ -63,7 +63,7 @@ public class VerifierFactory {
         		 .collect(Collectors.toList()));
     }
         
-    public void configureDetMealyMachine(Automaton automaton) {
+    public void configureDetMealyMachine(MealyAutomaton automaton) {
     	final StateMachine machine = new StateMachine();
 
     	final SimpleState nondetInit = verifyFromAllStates
@@ -80,7 +80,7 @@ public class VerifierFactory {
 		}
 		for (int i = 0; i < automaton.stateCount(); i++) {
 			final MealyNode currentState = automaton.state(i);
-			for (Transition t : currentState.transitions()) {
+			for (MealyTransition t : currentState.transitions()) {
 				final StateTransition out = new StateTransition(
                         extractEvent(t.event()), statesArr[t.dst().number()]);
 				Arrays.stream(t.actions().getActions()).forEach(out::addAction);

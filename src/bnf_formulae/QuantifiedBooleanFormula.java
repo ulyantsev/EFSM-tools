@@ -24,7 +24,7 @@ import sat_solving.Assignment;
 import sat_solving.QbfSolver;
 import sat_solving.SolverResult;
 import sat_solving.SolverResult.SolverResults;
-import algorithms.exception.TimeLimitExceededException;
+import exception.TimeLimitExceededException;
 import bnf_formulae.BooleanFormula.DimacsConversionInfo;
 
 public class QuantifiedBooleanFormula {
@@ -51,8 +51,8 @@ public class QuantifiedBooleanFormula {
 	
 	@Override
 	public String toString() {
-		List<BooleanVariable> e = existVars.stream().sorted().collect(Collectors.toList());
-		List<BooleanVariable> a = forallVars.stream().sorted().collect(Collectors.toList());
+		final List<BooleanVariable> e = existVars.stream().sorted().collect(Collectors.toList());
+        final List<BooleanVariable> a = forallVars.stream().sorted().collect(Collectors.toList());
 		return "EXIST\n" + e + "\nFORALL\n" + a + "\n" + formula();
 	}
 	
@@ -67,7 +67,7 @@ public class QuantifiedBooleanFormula {
 	}
 	
 	private String otherVars(DimacsConversionInfo info) {
-		List<Integer> nums = new ArrayList<>();
+        final List<Integer> nums = new ArrayList<>();
 		for (int i = 1; i <= info.varNumber(); i++) {
 			if (!info.toLimbooleNumber(i).isPresent()) {
 				nums.add(i);
@@ -77,8 +77,8 @@ public class QuantifiedBooleanFormula {
 	}
 	
 	public QdimacsConversionInfo toQdimacs(Logger logger) throws IOException {
-		StringBuilder sb = new StringBuilder();
-		DimacsConversionInfo info = formula().toDimacs(logger, BooleanFormula.DIMACS_FILENAME);
+        final StringBuilder sb = new StringBuilder();
+        final DimacsConversionInfo info = formula().toDimacs(logger, BooleanFormula.DIMACS_FILENAME);
 		
 		sb.append(info.title() + "\n");
 		sb.append("e " + varsToNumbers(existVars, info) + " 0\n");
@@ -93,7 +93,7 @@ public class QuantifiedBooleanFormula {
 	}
 	
 	private String varsToNumbers(List<BooleanVariable> vars, DimacsConversionInfo info) {
-		List<Integer> nums = new ArrayList<>();
+        final List<Integer> nums = new ArrayList<>();
 		vars.forEach(v -> {
 			Optional<Integer> dimacsNumber = info.toDimacsNumber(v.number);
 			dimacsNumber.map(nums::add);

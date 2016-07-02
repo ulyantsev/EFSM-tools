@@ -24,20 +24,20 @@ import sat_solving.QbfSolver;
 import sat_solving.SatSolver;
 import sat_solving.SolvingStrategy;
 import scenario.StringScenario;
-import structures.Automaton;
-import structures.NegativeScenarioTree;
-import structures.MealyNode;
-import structures.ScenarioTree;
-import structures.Transition;
+import structures.mealy.MealyAutomaton;
+import structures.mealy.NegativeScenarioTree;
+import structures.mealy.MealyNode;
+import structures.mealy.ScenarioTree;
+import structures.mealy.MealyTransition;
 import verification.ltl.LtlParseException;
 import verification.ltl.LtlParser;
 import verification.ltl.grammar.LtlNode;
 import verification.verifier.Verifier;
 import algorithms.AutomatonCompleter.CompletenessType;
-import algorithms.automaton_builders.BacktrackingAutomatonBuilder;
-import algorithms.automaton_builders.CounterexampleAutomatonBuilder;
-import algorithms.automaton_builders.QbfAutomatonBuilder;
-import algorithms.automaton_builders.StateMergingAutomatonBuilder;
+import automaton_builders.BacktrackingAutomatonBuilder;
+import automaton_builders.CounterexampleAutomatonBuilder;
+import automaton_builders.QbfAutomatonBuilder;
+import automaton_builders.StateMergingAutomatonBuilder;
 import bool.MyBooleanExpression;
 
 public class QbfBuilderMain extends MainBase {
@@ -193,7 +193,7 @@ public class QbfBuilderMain extends MainBase {
 			
 			logger().info("Start building automaton");
 			
-			Optional<Automaton> resultAutomaton = null;
+			Optional<MealyAutomaton> resultAutomaton = null;
 			final Verifier verifier = new Verifier(logger(), strFormulae, events, actions);
 			final long finishTime = startTime() + timeout * 1000;
 			switch (ss) {
@@ -285,7 +285,7 @@ public class QbfBuilderMain extends MainBase {
 		}
 	}
 
-	static boolean checkBfs(Automaton a, List<String> events, Logger logger) {
+	static boolean checkBfs(MealyAutomaton a, List<String> events, Logger logger) {
 		final Deque<Integer> queue = new ArrayDeque<>();
 		final boolean[] visited = new boolean[a.stateCount()];
 		visited[a.startState().number()] = true;
@@ -295,7 +295,7 @@ public class QbfBuilderMain extends MainBase {
 			final int stateNum = queue.pollFirst();
 			dequedStates.add(stateNum);
 			for (String e : events) {
-				Transition t = a.state(stateNum).transition(e, MyBooleanExpression.getTautology());
+				MealyTransition t = a.state(stateNum).transition(e, MyBooleanExpression.getTautology());
 				if (t != null) {
 					final int dst = t.dst().number();
 					if (!visited[dst]) {

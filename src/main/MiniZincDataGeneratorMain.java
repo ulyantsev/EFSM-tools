@@ -5,9 +5,9 @@ import meta.MainBase;
 import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.Option;
 
-import structures.MealyNode;
-import structures.ScenarioTree;
-import structures.Transition;
+import structures.mealy.MealyNode;
+import structures.mealy.ScenarioTree;
+import structures.mealy.MealyTransition;
 
 import java.io.IOException;
 import java.text.ParseException;
@@ -47,7 +47,7 @@ public class MiniZincDataGeneratorMain extends MainBase {
     }
 
     private String getDataString(ScenarioTree tree, Map<MealyNode, Set<MealyNode>> adjacent) {
-        final Transition[] incomingTransition = new Transition[tree.nodeCount()];
+        final MealyTransition[] incomingTransition = new MealyTransition[tree.nodeCount()];
 
         final List<String> eventOrder = new ArrayList<>();
         final List<String> eventExprOrder = new ArrayList<>();
@@ -57,7 +57,7 @@ public class MiniZincDataGeneratorMain extends MainBase {
         final List<Integer> eventExprSatCount = new ArrayList<>();
 
         for (MealyNode node : tree.nodes()) {
-            for (Transition t : node.transitions()) {
+            for (MealyTransition t : node.transitions()) {
                 if (!eventOrder.contains(t.event())) {
                     eventOrder.add(t.event());
                 }
@@ -88,7 +88,7 @@ public class MiniZincDataGeneratorMain extends MainBase {
         final int[] events = new int[tree.nodeCount() - 1], actions = new int[tree.nodeCount() - 1],
                 parents = new int[tree.nodeCount() - 1];
         for (int nodeNum = 1; nodeNum < tree.nodeCount(); nodeNum++) {
-            Transition t = incomingTransition[nodeNum];
+            MealyTransition t = incomingTransition[nodeNum];
 
             String eventExpr = t.event() + "[" + t.expr().toString() + "]";
             events[nodeNum - 1] = eventExprOrder.indexOf(eventExpr) + 1;

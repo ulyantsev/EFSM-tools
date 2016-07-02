@@ -15,9 +15,9 @@ import algorithms.AutomatonGVLoader;
 import meta.Author;
 import meta.MainBase;
 import org.kohsuke.args4j.Argument;
-import structures.Automaton;
-import structures.MealyNode;
-import structures.Transition;
+import structures.mealy.MealyAutomaton;
+import structures.mealy.MealyNode;
+import structures.mealy.MealyTransition;
 
 public class SafetyLTLGeneratorMain extends MainBase {
     @Argument(usage = "path to EFSM in Graphviz format", metaVar = "<efsm.gv>", required = true)
@@ -29,13 +29,13 @@ public class SafetyLTLGeneratorMain extends MainBase {
 
     @Override
     protected void launcher() throws IOException, ParseException {
-        final Automaton automaton = AutomatonGVLoader.load(efsm);
+        final MealyAutomaton automaton = AutomatonGVLoader.load(efsm);
         generateX(automaton);
         generateGFuture(automaton);
         generateGPast(automaton);
     }
 
-	private static void generateX(Automaton automaton) {
+	private static void generateX(MealyAutomaton automaton) {
 		//final Set<String> allEvents = allEvents(automaton);
 		boolean[] possibleStates = new boolean[automaton.stateCount()];
 		possibleStates[automaton.startState().number()] = true;
@@ -44,7 +44,7 @@ public class SafetyLTLGeneratorMain extends MainBase {
 			final boolean[] newStates = new boolean[automaton.stateCount()];
 			for (int j = 0; j < possibleStates.length; j++) {
 				if (possibleStates[j]) {
-					for (Transition t : automaton.state(j).transitions()) {
+					for (MealyTransition t : automaton.state(j).transitions()) {
 						events.add(t.event());
 						newStates[t.dst().number()] = true;
 					}
@@ -69,24 +69,24 @@ public class SafetyLTLGeneratorMain extends MainBase {
 		return String.join(" || ", events.stream().map(e -> "wasEvent(ep." + e + ")").collect(Collectors.toList()));
 	}
 	
-	private static Set<String> allEvents(Automaton automaton) {
+	private static Set<String> allEvents(MealyAutomaton automaton) {
 		final Set<String> events = new TreeSet<>();
 		for (MealyNode node : automaton.states()) {
-			for (Transition t : node.transitions()) {
+			for (MealyTransition t : node.transitions()) {
 				events.add(t.event());
 			}
 		}
 		return events;
 	}
 	
-	private static void generateGFuture(Automaton automaton) {
+	private static void generateGFuture(MealyAutomaton automaton) {
 		//final Set<String> allEvents = allEvents(automaton);
 		for (String event : allEvents(automaton)) {
 			final Set<String> nextEvents = new TreeSet<>();
 			for (MealyNode node : automaton.states()) {
-				for (Transition t : node.transitions()) {
+				for (MealyTransition t : node.transitions()) {
 					if (t.event().equals(event)) {
-						for (Transition nextT : t.dst().transitions()) {
+						for (MealyTransition nextT : t.dst().transitions()) {
 							nextEvents.add(nextT.event());
 						}
 					}
@@ -98,15 +98,15 @@ public class SafetyLTLGeneratorMain extends MainBase {
 		}
 	}
 	
-	private static void generateGPast(Automaton automaton) {
+	private static void generateGPast(MealyAutomaton automaton) {
 		//final Set<String> allEvents = allEvents(automaton);
 		for (String event : allEvents(automaton)) {
 			final Set<String> prevEvents = new TreeSet<>();
 			for (MealyNode node : automaton.states()) {
-				for (Transition t : node.transitions()) {
+				for (MealyTransition t : node.transitions()) {
 					if (t.event().equals(event)) {
 						for (MealyNode prevNode : automaton.states()) {
-							for (Transition prevT : prevNode.transitions()) {
+							for (MealyTransition prevT : prevNode.transitions()) {
 								if (prevT.dst() == node) {
 									prevEvents.add(prevT.event());
 								}

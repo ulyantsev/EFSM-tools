@@ -9,9 +9,9 @@ import java.util.regex.Pattern;
 
 import bool.MyBooleanExpression;
 import scenario.StringActions;
-import structures.Automaton;
-import structures.MealyNode;
-import structures.Transition;
+import structures.mealy.MealyAutomaton;
+import structures.mealy.MealyNode;
+import structures.mealy.MealyTransition;
 
 public class AutomatonGVLoader {
     private static String readFileAsString(String filePath) throws IOException {
@@ -22,7 +22,7 @@ public class AutomatonGVLoader {
         return new String(buffer);
     }
     
-    public static Automaton load(String fp) throws IOException, ParseException {
+    public static MealyAutomaton load(String fp) throws IOException, ParseException {
         String expr = "(\\d+) ?-> ?(\\d+) ?\\[label ?= ?\" ?(\\w+) ?\\[(.+)\\] \\((.*)\\) ?\"\\];";
         Pattern strPattern = Pattern.compile(expr);
         
@@ -51,10 +51,10 @@ public class AutomatonGVLoader {
             actionsList.add(actions);
         }
         
-        Automaton res = new Automaton(maxNum + 1);
+        MealyAutomaton res = new MealyAutomaton(maxNum + 1);
         for (int i = 0; i < srcList.size(); i++) {
             MealyNode src = res.state(srcList.get(i)), dst = res.state(dstList.get(i));
-            Transition transition = new Transition(src, dst, eventsList.get(i), guardConditionsList.get(i),
+            MealyTransition transition = new MealyTransition(src, dst, eventsList.get(i), guardConditionsList.get(i),
                     actionsList.get(i));
             res.addTransition(src, transition);
         }

@@ -14,8 +14,8 @@ import java.util.List;
 import java.util.logging.Logger;
 
 import scenario.StringActions;
-import structures.Automaton;
-import structures.Transition;
+import structures.mealy.MealyAutomaton;
+import structures.mealy.MealyTransition;
 import verification.ltl.LtlParser;
 import verification.verifier.Counterexample;
 import verification.verifier.Verifier;
@@ -29,12 +29,12 @@ public class VerifierTest {
 		int size = 2;
 		final List<String> events = Arrays.asList("A", "B", "C");
 		final List<String> actions = Arrays.asList("z");
-		Automaton a = new Automaton(size);
-		a.addTransition(a.state(0), new Transition(a.state(0), a.state(1), "A",
+		MealyAutomaton a = new MealyAutomaton(size);
+		a.addTransition(a.state(0), new MealyTransition(a.state(0), a.state(1), "A",
                 MyBooleanExpression.getTautology(), new StringActions("z")));
-		a.addTransition(a.state(1), new Transition(a.state(1), a.state(0), "B",
+		a.addTransition(a.state(1), new MealyTransition(a.state(1), a.state(0), "B",
                 MyBooleanExpression.getTautology(), new StringActions("z")));
-		a.addTransition(a.state(1), new Transition(a.state(1), a.state(1), "C",
+		a.addTransition(a.state(1), new MealyTransition(a.state(1), a.state(1), "C",
                 MyBooleanExpression.getTautology(), new StringActions("")));
 		System.out.println(a);
 		String filename = "tmp.ltl";
@@ -59,7 +59,7 @@ public class VerifierTest {
 	
 	public static void test2() throws IOException, ParseException {
 		final Logger logger = Logger.getLogger("Logger");
-		final Automaton a = AutomatonGVLoader.load("evaluation/jhotdraw.gv");
+		final MealyAutomaton a = AutomatonGVLoader.load("evaluation/jhotdraw.gv");
 		final String filename = "tmp.ltl";
 		final List<String> formulae = Arrays.asList(
 				"G(!(wasEvent(ep.setpos)) || X((wasEvent(ep.edit)) || (wasEvent(ep.setdim))))",
@@ -100,7 +100,7 @@ public class VerifierTest {
 		for (int states = 3; states <= 10; states++) {
 			for (String completeness : Arrays.asList("incomplete", "complete")) {
 				for (int i = 0; i < 50; i++) {
-					final Automaton a = AutomatonGVLoader.load("evaluation/testing/" + completeness
+					final MealyAutomaton a = AutomatonGVLoader.load("evaluation/testing/" + completeness
                             + "/fsm-" + states + "-" + i + ".dot");
 					//System.out.println(a);
 					System.out.println(completeness + " " + states + " " + i);
@@ -126,7 +126,7 @@ public class VerifierTest {
 		int states = 3;
 		final String completeness = "incomplete";
 		int i = 10;
-		final Automaton a = AutomatonGVLoader.load("evaluation/testing/"
+		final MealyAutomaton a = AutomatonGVLoader.load("evaluation/testing/"
                 + completeness + "/fsm-" + states + "-" + i + ".dot");
 		System.out.println(a);
 		boolean verdict = false;

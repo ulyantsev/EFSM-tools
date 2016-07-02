@@ -10,17 +10,17 @@ import java.util.List;
 import org.apache.commons.lang3.tuple.Pair;
 
 import scenario.StringActions;
-import structures.Automaton;
-import structures.MealyNode;
-import structures.Transition;
+import structures.mealy.MealyAutomaton;
+import structures.mealy.MealyNode;
+import structures.mealy.MealyTransition;
 import verification.verifier.Verifier;
-import algorithms.exception.AutomatonFoundException;
-import algorithms.exception.TimeLimitExceededException;
+import exception.AutomatonFoundException;
+import exception.TimeLimitExceededException;
 import bool.MyBooleanExpression;
 
 public class AutomatonCompleter {
 	private final Verifier verifier;
-	private final Automaton automaton;
+	private final MealyAutomaton automaton;
 	private final int colorSize;
 	private final List<String> events;
 	private final List<StringActions> preparedActions;
@@ -35,8 +35,8 @@ public class AutomatonCompleter {
 	/*
 	 * The automaton should be verified!
 	 */
-	public AutomatonCompleter(Verifier verifier, Automaton automaton, List<String> events,
-			List<String> actions, long finishTime, CompletenessType type) {
+	public AutomatonCompleter(Verifier verifier, MealyAutomaton automaton, List<String> events,
+                              List<String> actions, long finishTime, CompletenessType type) {
 		this.verifier = verifier;
 		this.automaton = automaton;
 		colorSize = automaton.stateCount();
@@ -124,7 +124,7 @@ public class AutomatonCompleter {
 		
 		for (StringActions actions : preparedActions) {
 			for (int dst = 0; dst < colorSize; dst++) {
-				Transition autoT = new Transition(stateFrom,
+				MealyTransition autoT = new MealyTransition(stateFrom,
 						automaton.state(dst), e, MyBooleanExpression.getTautology(), actions);
 				automaton.addTransition(stateFrom, autoT);
 				ensureCompleteness(missingTransitions);

@@ -18,13 +18,13 @@ import org.kohsuke.args4j.spi.BooleanOptionHandler;
 
 import sat_solving.SatSolver;
 import scenario.StringScenario;
-import structures.Automaton;
-import structures.NegativeScenarioTree;
-import structures.MealyNode;
-import structures.ScenarioTree;
+import structures.mealy.MealyAutomaton;
+import structures.mealy.NegativeScenarioTree;
+import structures.mealy.MealyNode;
+import structures.mealy.ScenarioTree;
 import verification.ltl.LtlParser;
 import verification.verifier.Verifier;
-import algorithms.automaton_builders.FastAutomatonBuilder;
+import automaton_builders.FastAutomatonBuilder;
 
 public class FastAutomatonBuilderMain extends MainBase {
 	@Argument(usage = "paths to files with scenarios", metaVar = "files", required = true)
@@ -141,7 +141,7 @@ public class FastAutomatonBuilderMain extends MainBase {
 
             final Verifier verifier = new Verifier(logger(), strFormulae, events, actions);
             final long finishTime = System.currentTimeMillis() + timeout * 1000;
-            final Optional<Automaton> resultAutomaton = FastAutomatonBuilder.build(logger(),
+            final Optional<MealyAutomaton> resultAutomaton = FastAutomatonBuilder.build(logger(),
                     tree, negativeForest, size, strFormulae,
                     events, actions, verifier, finishTime, complete, bfsConstraints,
                     globalTree, solver);

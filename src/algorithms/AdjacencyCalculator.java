@@ -5,9 +5,9 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
-import structures.MealyNode;
-import structures.ScenarioTree;
-import structures.Transition;
+import structures.mealy.MealyNode;
+import structures.mealy.ScenarioTree;
+import structures.mealy.MealyTransition;
 
 public class AdjacencyCalculator {
     public static Map<MealyNode, Set<MealyNode>> getAdjacent(ScenarioTree tree) {
@@ -24,12 +24,12 @@ public class AdjacencyCalculator {
                 return;
             }
 
-            for (Transition t1 : node.transitions()) {
+            for (MealyTransition t1 : node.transitions()) {
                 // calculating for children
                 calcNode(tree, t1.dst(), ans);
                 for (MealyNode other : tree.nodes()) {
                     if (other != node) {
-                        for (Transition t2 : other.transitions()) {
+                        for (MealyTransition t2 : other.transitions()) {
                             if (t1.event().equals(t2.event())) {
                                 if (t1.expr() == t2.expr()) {
                                     if (!t1.actions().equals(t2.actions())

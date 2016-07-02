@@ -8,9 +8,9 @@ import java.util.Random;
 
 import bool.MyBooleanExpression;
 import scenario.StringActions;
-import structures.Automaton;
-import structures.MealyNode;
-import structures.Transition;
+import structures.mealy.MealyAutomaton;
+import structures.mealy.MealyNode;
+import structures.mealy.MealyTransition;
 
 /**
  * Generating a variable-complete automaton
@@ -19,8 +19,8 @@ import structures.Transition;
  * 
  */
 public class AutomatonGenerator {
-	public static Automaton generate(int statesCount, int eventsCount, int actionsCount, int minActions,
-			int maxActions, int varsCount, double transitionsPersent, Random random) {
+	public static MealyAutomaton generate(int statesCount, int eventsCount, int actionsCount, int minActions,
+                                          int maxActions, int varsCount, double transitionsPersent, Random random) {
 
 		assert 0 < eventsCount && eventsCount <= 26;
 		List<String> events = new ArrayList<>();
@@ -41,8 +41,8 @@ public class AutomatonGenerator {
 		return generate(statesCount, events, actions, minActions, maxActions, vars, transitionsPersent, random);
 	}
 
-	public static Automaton generate(int statesCount, List<String> events, List<String> actions, int minActions,
-			int maxActions, List<String> vars, double transitionsPersent, Random random) {
+	public static MealyAutomaton generate(int statesCount, List<String> events, List<String> actions, int minActions,
+                                          int maxActions, List<String> vars, double transitionsPersent, Random random) {
 
 		assert 0.1 <= transitionsPersent && transitionsPersent <= 1;
 
@@ -57,7 +57,7 @@ public class AutomatonGenerator {
 		String[][][] expressions = getExpressions(statesCount, eventsCount, vars, cnt, random);
 		String[][][] act = getActions(statesCount, eventsCount, minActions, maxActions, actions, cnt, random);
 		
-		Automaton ans = new Automaton(statesCount);
+		MealyAutomaton ans = new MealyAutomaton(statesCount);
 		for (int stateNum = 0; stateNum < statesCount; stateNum++) {
 			for (int eventNum = 0; eventNum < eventsCount; eventNum++) {
 
@@ -73,7 +73,7 @@ public class AutomatonGenerator {
 					}
 					StringActions a = new StringActions(act[stateNum][eventNum][i]);
 					
-					Transition t = new Transition(srcNode, dstNode, event, expr, a);
+					MealyTransition t = new MealyTransition(srcNode, dstNode, event, expr, a);
 					ans.addTransition(srcNode, t);
 				}
 			}

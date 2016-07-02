@@ -1,0 +1,51 @@
+package structures.moore;
+
+/**
+ * (c) Igor Buzhinsky
+ */
+
+import scenario.StringActions;
+import scenario.StringScenario;
+
+public class PositivePlantScenarioForest extends PlantScenarioForest {
+	@Override
+	public void addScenario(StringScenario scenario) {
+    	checkScenario(scenario);
+    	final StringActions firstActions = scenario.getActions(0);
+    	MooreNode node = new MooreNode(nodes.size(), firstActions);
+    	roots.add(node);
+    	nodes.add(node);
+        for (int i = 1; i < scenario.size(); i++) {
+        	node = addTransition(node, scenario.getEvents(i).get(0), scenario.getActions(i));
+        }
+    }
+
+	@Override
+    protected MooreNode addTransition(MooreNode src, String event, StringActions actions) {
+    	final MooreNode dst = new MooreNode(nodes.size(), actions);
+		nodes.add(dst);
+        src.addTransition(event, dst);
+        return dst;
+    }
+
+	@Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder();
+        sb.append("# generated file; view: dot -Tpng <filename> > filename.png\n");
+        sb.append("digraph ScenarioForest {\n    node [shape = circle];\n");
+
+        for (MooreNode node : nodes) {
+    		sb.append("    " + node.number() + " [label = \"" + node + "\"];\n");
+    	}
+    	
+        for (MooreNode node : nodes) {
+            for (MooreTransition t : node.transitions()) {
+                sb.append("    " + t.src().number() + " -> " + t.dst().number()
+                		+ " [label = \"" + t.event() + "\"];\n");
+            }
+        }
+
+        sb.append("}\n");
+        return sb.toString();
+    }
+}

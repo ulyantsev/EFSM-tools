@@ -13,8 +13,8 @@ import meta.MainBase;
 import org.kohsuke.args4j.Option;
 import org.kohsuke.args4j.spi.BooleanOptionHandler;
 
-import structures.Automaton;
-import structures.plant.NondetMooreAutomaton;
+import structures.mealy.MealyAutomaton;
+import structures.moore.NondetMooreAutomaton;
 import verification.ltl.LtlParser;
 import verification.verifier.Counterexample;
 import verification.verifier.Verifier;
@@ -74,7 +74,7 @@ public class VerifierMain extends MainBase {
 			counterexamples = verifier.verifyNondetMoore(a);
 		} else {
             try {
-                final Automaton a = AutomatonGVLoader.load(automatonPath);
+                final MealyAutomaton a = AutomatonGVLoader.load(automatonPath);
                 counterexamples = verifier.verifyWithCounterexamplesWithNoDeadEndRemoval(a);
             } catch (ParseException e) {
                 System.err.println("Can't read EFSM from file " + automatonPath);
