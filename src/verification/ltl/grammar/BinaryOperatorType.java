@@ -36,7 +36,7 @@ public enum BinaryOperatorType implements IOperatorType {
     	return name;
     }
     
-    private BinaryOperatorType(String name) {
+    BinaryOperatorType(String name) {
         this.name = name;
     }
 

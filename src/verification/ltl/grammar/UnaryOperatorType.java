@@ -37,7 +37,7 @@ public enum UnaryOperatorType implements IOperatorType {
     	return name;
     }
     
-    private UnaryOperatorType(String name) {
+    UnaryOperatorType(String name) {
         this.name = name;
     }
 

@@ -28,57 +28,6 @@ public class LtlUtils {
         return new UnaryOperator(UnaryOperatorType.NEG, root);
     }
 
-    public LtlNode toNnf(LtlNode root) {
-        return toNnfNormalized(normalize(root));
-    }
-
-    protected LtlNode toNnfNormalized(LtlNode root) {
-        if (root instanceof UnaryOperator) {
-            UnaryOperator op = (UnaryOperator) root;
-            if (UnaryOperatorType.NEG == op.getType()) {
-                if (op.getOperand() instanceof Predicate) {
-                    return op;
-                }
-                return toNnfNormalized(op.getOperand().accept(visitor, null));
-            } else {
-                op.setOperand(toNnfNormalized(op.getOperand()));
-                return op;
-            }
-        } else if (root instanceof BinaryOperator) {
-            BinaryOperator op = (BinaryOperator) root;
-            op.setLeftOperand(toNnfNormalized(op.getLeftOperand()));
-            op.setRightOperand(toNnfNormalized(op.getRightOperand()));
-            return op;
-        }
-        return root;
-    }
-
-    public LtlNode normalize(LtlNode root) {
-        if (root instanceof UnaryOperator) {
-            UnaryOperator op = (UnaryOperator) root;
-            switch (op.getType()) {
-                case FUTURE:
-                    BinaryOperator untilOp = new BinaryOperator(BinaryOperatorType.UNTIL);
-                    untilOp.setLeftOperand(BooleanNode.TRUE);
-                    untilOp.setRightOperand(normalize(op.getOperand()));
-                    return untilOp;
-                case GLOBAL:
-                    BinaryOperator releaseOp = new BinaryOperator(BinaryOperatorType.RELEASE);
-                    releaseOp.setLeftOperand(BooleanNode.FALSE);
-                    releaseOp.setRightOperand(normalize(op.getOperand()));
-                    return releaseOp;
-                default:
-                    op.setOperand(normalize(op.getOperand()));
-                    break;
-            }
-        } else if (root instanceof BinaryOperator) {
-            BinaryOperator op = (BinaryOperator) root;
-            op.setLeftOperand(normalize(op.getLeftOperand()));
-            op.setRightOperand(normalize(op.getRightOperand()));
-        }
-        return root;
-    }
-
     private class NegationVisitor implements INodeVisitor<LtlNode, Void> {
         public LtlNode visitPredicate(Predicate p, Void aVoid) {
             throw new AssertionError();

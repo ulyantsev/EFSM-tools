@@ -49,9 +49,7 @@ public class Predicate extends LtlNode implements IExpression<Boolean> {
     public Boolean getValue() {
         try {
             return (Boolean) method.invoke(target, arg);
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
-        } catch (InvocationTargetException e) {
+        } catch (IllegalAccessException | InvocationTargetException e) {
             throw new RuntimeException(e);
         }
     }

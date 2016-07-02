@@ -44,7 +44,8 @@ public class StringScenario {
 	/*
 	 * varNumber = -1 for no variable removal
 	 */
-    public static List<StringScenario> loadScenarios(String filepath, int varNumber) throws ParseException, FileNotFoundException {
+    public static List<StringScenario> loadScenarios(String filepath, int varNumber)
+            throws ParseException, FileNotFoundException {
         List<StringScenario> ans = new ArrayList<>();
         
         try (Scanner in = new Scanner(new File(filepath))) {

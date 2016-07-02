@@ -111,6 +111,7 @@ public class Automaton {
         return missed;        
     }
 
+    @Override
     public String toString() {
     	StringBuilder sb = new StringBuilder();
     	sb.append("# generated file, don't try to modify\n"

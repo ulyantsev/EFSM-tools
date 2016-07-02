@@ -12,8 +12,4 @@ public class UnexpectedParameterException extends RuntimeException {
     public UnexpectedParameterException(Class<?> aClass) {
 	    super("Unexpected class: " + aClass.getName());
     }
-
-    public UnexpectedParameterException(Class<?> aClass, String parameter) {
-	    super("Unknown parameter \"" + parameter + "\" for class " + aClass.getName());
-    }
 }

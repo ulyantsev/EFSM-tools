@@ -9,7 +9,7 @@ import structures.Transition;
 
 public class DimacsCnfBuilder {
     public static String getCnf(ScenarioTree tree, int k) {
-        Map<String, Integer> vars = new HashMap<String, Integer>();
+        Map<String, Integer> vars = new HashMap<>();
         for (Node node : tree.nodes()) {
             for (int color = 0; color < k; color++) {
                 vars.put("x_" + node.number() + "_" + color, vars.size() + 1);
@@ -30,7 +30,7 @@ public class DimacsCnfBuilder {
             }
         }
         
-        List<String> clauses = new ArrayList<String>();
+        List<String> clauses = new ArrayList<>();
         String initClause = vars.get("x_0_0") + "";
         clauses.add(initClause);
         
@@ -65,7 +65,7 @@ public class DimacsCnfBuilder {
             }
         }
         
-        Set<String> was = new HashSet<String>();
+        Set<String> was = new HashSet<>();
         for (Node node : tree.nodes()) {
             for (Transition t : node.transitions()) {
                 String key = t.event() + "_" + t.expr();
@@ -90,7 +90,8 @@ public class DimacsCnfBuilder {
                     for (int childColor = 0; childColor < k; childColor++) {
                         int nodeVar = vars.get("x_" + node.number() + "_" + nodeColor);
                         int childVar = vars.get("x_" + t.dst().number() + "_" + childColor);
-                        int relationVar = vars.get("y_" + t.event() + "_" + t.expr() + "_" + nodeColor + "_" + childColor);
+                        int relationVar = vars.get("y_" + t.event() + "_" + t.expr()
+                                + "_" + nodeColor + "_" + childColor);
                         
                         clauses.add(relationVar + " " + -nodeVar + " " + -childVar);
                         clauses.add(-relationVar + " " + -nodeVar + " " + childVar);
@@ -262,5 +263,4 @@ public class DimacsCnfBuilder {
         
         return sb.toString();
     }
-    
 }

@@ -4,20 +4,7 @@ import scenario.StringActions;
 import bool.MyBooleanExpression;
 
 public class Transition {
-	public static boolean isCompatibile(Transition first, Transition second) {
-		if (first.event().equals(second.event())) {
-			if (first.expr() == second.expr()) {
-				if (!first.actions().equals(second.actions())) {
-					return false;
-				}
-			} else if (first.expr().hasSolutionWith(second.expr())) {
-				return false;
-			}
-		}
-		return true;
-	}
-
-	private final String event;
+    private final String event;
 	private final MyBooleanExpression expr;
 	private final StringActions actions;
 	private final Node src;
@@ -56,4 +43,17 @@ public class Transition {
 		return src.number() + " -> " + dst.number()
 				+ "  " + event + " [" + expr.toString() + "] " + actions.toString();
 	}
+
+    /*public static boolean isCompatibile(Transition first, Transition second) {
+		if (first.event().equals(second.event())) {
+			if (first.expr() == second.expr()) {
+				if (!first.actions().equals(second.actions())) {
+					return false;
+				}
+			} else if (first.expr().hasSolutionWith(second.expr())) {
+				return false;
+			}
+		}
+		return true;
+	}*/
 }

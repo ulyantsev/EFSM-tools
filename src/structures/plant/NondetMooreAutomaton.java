@@ -162,7 +162,8 @@ public class NondetMooreAutomaton {
         final Map<String, String> actionDescriptions = conf.isPresent()
                 ? conf.get().extendedActionDescriptions() : new HashMap<>();
 
-    	final String initNodes = String.join(", ", initialStates().stream().map(s -> "init" + s).collect(Collectors.toList()));
+    	final String initNodes = String.join(", ",
+                initialStates().stream().map(s -> "init" + s).collect(Collectors.toList()));
     	
 		sb.append("    " + initNodes + " [shape=point, width=0.01, height=0.01, label=\"\", color=white];\n");
 		sb.append("    node [shape=circle];\n");
@@ -479,7 +480,6 @@ public class NondetMooreAutomaton {
 
         return copy;
     }
-
 
     public void removeDeadlocks() {
     	Map<MooreNode, Set<MooreTransition>> reversedTransitions = null;
