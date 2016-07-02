@@ -30,11 +30,11 @@ public class AutomatonGVLoader {
         Matcher matcher = strPattern.matcher(target);
         
         int maxNum = 0;
-        List<Integer> srcList = new ArrayList<Integer>();
-        List<Integer> dstList = new ArrayList<Integer>();
-        List<String> eventsList = new ArrayList<String>();
-        List<MyBooleanExpression> guardConditionsList = new ArrayList<MyBooleanExpression>();
-        List<StringActions> actionsList= new ArrayList<StringActions>();
+        List<Integer> srcList = new ArrayList<>();
+        List<Integer> dstList = new ArrayList<>();
+        List<String> eventsList = new ArrayList<>();
+        List<MyBooleanExpression> guardConditionsList = new ArrayList<>();
+        List<StringActions> actionsList= new ArrayList<>();
         
         while (matcher.find()) {
             int srcNum = Integer.parseInt(matcher.group(1));
@@ -54,7 +54,8 @@ public class AutomatonGVLoader {
         Automaton res = new Automaton(maxNum + 1);
         for (int i = 0; i < srcList.size(); i++) {
             Node src = res.state(srcList.get(i)), dst = res.state(dstList.get(i));
-            Transition transition = new Transition(src, dst, eventsList.get(i), guardConditionsList.get(i), actionsList.get(i));
+            Transition transition = new Transition(src, dst, eventsList.get(i), guardConditionsList.get(i),
+                    actionsList.get(i));
             res.addTransition(src, transition);
         }
         

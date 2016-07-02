@@ -42,8 +42,8 @@ public abstract class ScenarioAndLtlAutomatonBuilder {
 	 */
 	public static Pair<Automaton, List<BooleanVariable>> constructAutomatonFromAssignment(Logger logger, List<Assignment> ass,
 			ScenarioTree tree, int colorSize, boolean complete, CompletenessType completenessType) {
-		List<BooleanVariable> filteredYVars = new ArrayList<>();
-		int[] nodeColors = new int[tree.nodeCount()];
+		final List<BooleanVariable> filteredYVars = new ArrayList<>();
+		final int[] nodeColors = new int[tree.nodeCount()];
 		
 		ass.stream()
 				.filter(a -> a.value && a.var.name.startsWith("x_"))
@@ -71,7 +71,7 @@ public abstract class ScenarioAndLtlAutomatonBuilder {
 		if (complete) {
 			// add other transitions
 			for (Assignment a : ass.stream()
-					.filter(a -> a.value && a.var.name.startsWith("y_"))
+					.filter(aa -> aa.value && aa.var.name.startsWith("y_"))
 					.collect(Collectors.toList())) {
 				String[] tokens = a.var.name.split("_");
 				assert tokens.length == 4;

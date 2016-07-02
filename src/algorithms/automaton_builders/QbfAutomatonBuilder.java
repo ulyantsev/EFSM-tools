@@ -36,7 +36,7 @@ public class QbfAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 	private static final int MAX_FORMULA_SIZE = 1000 * 1000 * 1000;
 	
 	public static Set<String> getForbiddenYs(Logger logger, int states, int events) throws FileNotFoundException {
-		Set<String> ys = new TreeSet<>();
+		final Set<String> ys = new TreeSet<>();
 		try (Scanner sc = new Scanner(new File(PRECOMPUTED_DIR_NAME + "/" + states + "_" + events))) {
 			while (sc.hasNext()) {
 				ys.add(sc.next());

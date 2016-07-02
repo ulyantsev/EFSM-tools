@@ -13,7 +13,7 @@ public class NondetMooreVerifierPair {
 	private final Verifier ordinaryVerifier;
 	private final Verifier globalVerifier;
 	
-	public NondetMooreVerifierPair(Logger logger, List<String> strFormulae, List<String> events, List<String> actions, int varNumber) {
+	public NondetMooreVerifierPair(Logger logger, List<String> strFormulae, List<String> events, List<String> actions) {
 		final List<String> ordinaryLTL = new ArrayList<>();
 		final List<String> globalLTL = new ArrayList<>();
 		for (String formula : strFormulae) {
@@ -25,8 +25,8 @@ public class NondetMooreVerifierPair {
 				ordinaryLTL.add(formula);
 			}
 		}
-		ordinaryVerifier = new Verifier(logger, ordinaryLTL, events, actions, varNumber, false);
-		globalVerifier = new Verifier(logger, globalLTL, events, actions, varNumber, true);
+		ordinaryVerifier = new Verifier(logger, ordinaryLTL, events, actions, false);
+		globalVerifier = new Verifier(logger, globalLTL, events, actions, true);
 	}
 	
 	public Pair<List<Counterexample>, List<Counterexample>> verifyNondetMoore(NondetMooreAutomaton automaton) {

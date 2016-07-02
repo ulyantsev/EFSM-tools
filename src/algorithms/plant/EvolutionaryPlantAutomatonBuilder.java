@@ -14,7 +14,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.tuple.Pair;
@@ -24,7 +23,6 @@ import structures.plant.MooreNode;
 import structures.plant.MooreTransition;
 import structures.plant.NondetMooreAutomaton;
 import structures.plant.PositivePlantScenarioForest;
-import verification.ltl.grammar.LtlNode;
 import verification.verifier.Counterexample;
 import verification.verifier.Verifier;
 import algorithms.automaton_builders.ScenarioAndLtlAutomatonBuilder;
@@ -93,9 +91,8 @@ public class EvolutionaryPlantAutomatonBuilder extends ScenarioAndLtlAutomatonBu
 		System.out.println(">>> Finished evolution");
 	}
 	
-	public static Optional<NondetMooreAutomaton> build(Logger logger, PositivePlantScenarioForest positiveForest,
-			String ltlFilePath, List<LtlNode> formulae, List<String> events,
-			List<String> actions, Verifier verifier, long finishTime) throws IOException {
+	public static Optional<NondetMooreAutomaton> build(PositivePlantScenarioForest positiveForest, List<String> events,
+                                                       Verifier verifier) throws IOException {
 		
 		final Map<StringActions, Set<MooreNode>> map = new LinkedHashMap<>();
 		final Map<MooreNode, Integer> nodeToState = new HashMap<>();

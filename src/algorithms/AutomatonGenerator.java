@@ -23,17 +23,17 @@ public class AutomatonGenerator {
 			int maxActions, int varsCount, double transitionsPersent, Random random) {
 
 		assert 0 < eventsCount && eventsCount <= 26;
-		List<String> events = new ArrayList<String>();
+		List<String> events = new ArrayList<>();
 		for (int i = 0; i < eventsCount; i++) {
 			events.add("" + (char)('A' + i));
 		}
 
-		List<String> actions = new ArrayList<String>();
+		List<String> actions = new ArrayList<>();
 		for (int i = 0; i < actionsCount; i++) {
 			actions.add("z" + i);
 		}
 
-		List<String> vars = new ArrayList<String>();
+		List<String> vars = new ArrayList<>();
 		for (int i = 0; i < varsCount; i++) {
 			vars.add("x" + i);
 		}
@@ -168,8 +168,8 @@ public class AutomatonGenerator {
 		return ans;
 	}
 
-	private static List<String> choise(List<String> c, int k, Random random) {
-		List<String> ans = new ArrayList<String>();
+	private static List<String> choice(List<String> c, int k, Random random) {
+		List<String> ans = new ArrayList<>();
 
 		boolean[] was = new boolean[c.size()];
 		for (int i = 0; i < k; i++) {
@@ -203,7 +203,7 @@ public class AutomatonGenerator {
 					continue;
 				}
 
-				List<String> curVars = choise(vars, cnt[stateNum][eventNum], random);
+				List<String> curVars = choice(vars, cnt[stateNum][eventNum], random);
 
 				for (int mask = 0; mask < size; mask++) {
 					String s = "";

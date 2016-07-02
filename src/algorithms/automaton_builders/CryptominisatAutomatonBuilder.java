@@ -31,25 +31,25 @@ public class CryptominisatAutomatonBuilder {
 		}
 
 		File tmpFile = new File("tmp.cnf");
-		PrintWriter tmpPW = new PrintWriter(tmpFile);
-		tmpPW.print(cnf);
-		tmpPW.close();
+        try (PrintWriter tmpPW = new PrintWriter(tmpFile)) {
+            tmpPW.print(cnf);
+        }
 
 		Process p = Runtime.getRuntime().exec("cryptominisat --threads=4 tmp.cnf");
 		// Process p = Runtime.getRuntime().exec("cryptominisat tmp.cnf");
 
 		String ansLine = null;
-		BufferedReader input = new BufferedReader(new InputStreamReader(p.getInputStream()));
-		String line;
-		while ((line = input.readLine()) != null) {
-			if (solverPrintWriter != null) {
-				solverPrintWriter.println(line);
-			}
-			if (line.charAt(0) == 'v') {
-				ansLine = line;
-			}
-		}
-		input.close();
+		try (BufferedReader input = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
+            String line;
+            while ((line = input.readLine()) != null) {
+                if (solverPrintWriter != null) {
+                    solverPrintWriter.println(line);
+                }
+                if (line.charAt(0) == 'v') {
+                    ansLine = line;
+                }
+            }
+        }
 		tmpFile.delete();
 
 		if (ansLine != null) {

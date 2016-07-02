@@ -25,9 +25,7 @@ import structures.plant.MooreNode;
 import structures.plant.NegativePlantScenarioForest;
 import structures.plant.NondetMooreAutomaton;
 import structures.plant.PositivePlantScenarioForest;
-import verification.ltl.LtlParseException;
 import verification.ltl.LtlParser;
-import verification.ltl.grammar.LtlNode;
 import verification.verifier.Counterexample;
 import verification.verifier.NondetMooreVerifierPair;
 import verification.verifier.Verifier;
@@ -138,16 +136,7 @@ public class PlantBuilderMain extends MainBase {
         final List<String> eventnames = eventNames(eventNames, eventNumber);
         final List<String> events = events(eventnames, eventNumber, varNumber);
         final List<String> actions = actions(actionNames, actionNumber);
-
         final List<String> strFormulae = LtlParser.load(ltlFilePath, varNumber, eventnames);
-        List<LtlNode> formulae;
-        try {
-            formulae = LtlParser.parse(strFormulae);
-        } catch (LtlParseException e) {
-            logger().warning("Can't get LTL formula from " + treeFilePath);
-            throw new RuntimeException(e);
-        }
-
         logger().info("LTL formula from " + ltlFilePath);
 
         final List<StringScenario> negativeScenarios = new ArrayList<>();
@@ -158,9 +147,8 @@ public class PlantBuilderMain extends MainBase {
         }
 
         logger().info("Initializing the verifier...");
-
         final NondetMooreVerifierPair verifier = new NondetMooreVerifierPair(logger(), strFormulae,
-                events, actions, varNumber);
+                events, actions);
         final long finishTime = System.currentTimeMillis() + timeout * 1000;
 
         logger().info("Started building automaton.");
@@ -168,7 +156,7 @@ public class PlantBuilderMain extends MainBase {
         resultAutomaton = fast
                 ? RapidPlantAutomatonBuilder.build(positiveForest, events)
                 : PlantAutomatonBuilder.build(logger(), positiveForest, negativeForest, size,
-                actionspecFilePath, formulae, events, actions, verifier, finishTime);
+                actionspecFilePath, events, actions, verifier, finishTime);
 
         if (!resultAutomaton.isPresent()) {
             logger().info("Automaton with " + size + " states NOT FOUND!");
@@ -210,7 +198,7 @@ public class PlantBuilderMain extends MainBase {
                         new ArrayList<>(), Optional.empty()), nusmvFilePath);
             }
 
-            final Verifier usualVerifier = new Verifier(logger(), strFormulae, events, actions, varNumber);
+            final Verifier usualVerifier = new Verifier(logger(), strFormulae, events, actions);
             final List<Counterexample> counterexamples =
                     usualVerifier.verifyNondetMoore(resultAutomaton.get());
             if (counterexamples.stream().allMatch(Counterexample::isEmpty)) {

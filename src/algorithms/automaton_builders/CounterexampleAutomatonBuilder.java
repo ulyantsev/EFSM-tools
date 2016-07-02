@@ -66,8 +66,8 @@ public class CounterexampleAutomatonBuilder extends ScenarioAndLtlAutomatonBuild
 		}
 	}
 	
-	protected static void addProhibited(Logger logger, List<Assignment> list,
-			List<BooleanFormula> prohibited) {
+	protected static void addProhibited(List<Assignment> list,
+                                        List<BooleanFormula> prohibited) {
 		final FormulaList options = new FormulaList(BinaryOperations.OR);
 		for (Assignment ass : list) {
 			if (ass.var.name.startsWith("y_") && ass.value || ass.var.name.startsWith("z_")) {
@@ -78,13 +78,14 @@ public class CounterexampleAutomatonBuilder extends ScenarioAndLtlAutomatonBuild
 	}
 		
 	public static Optional<Automaton> build(Logger logger, ScenarioTree tree, int size, String solverParams,
-			List<LtlNode> formulae, List<String> events, List<String> actions,
-			SatSolver satSolver, Verifier verifier, long finishTime, CompletenessType completenessType,
-			NegativeScenarioTree negativeTree, boolean useCompletenessHeuristics) throws IOException {
+                                            List<String> events, List<String> actions,
+                                            SatSolver satSolver, Verifier verifier, long finishTime,
+                                            CompletenessType completenessType, NegativeScenarioTree negativeTree,
+                                            boolean useCompletionHeuristics) throws IOException {
 		deleteTrash();
 		
 		final List<BooleanFormula> prohibited = new ArrayList<>();
-		final CompletenessType effectiveCompletenessType = useCompletenessHeuristics
+		final CompletenessType effectiveCompletenessType = useCompletionHeuristics
 				? CompletenessType.NO_DEAD_ENDS : completenessType;
 		
 		ExpandableStringFormula expandableFormula = null;
@@ -134,7 +135,7 @@ public class CounterexampleAutomatonBuilder extends ScenarioAndLtlAutomatonBuild
 				final List<Counterexample> counterexamples = verifier.verifyWithCounterexamples(automaton.get());
 				final boolean verified = counterexamples.stream().allMatch(Counterexample::isEmpty);
 				if (verified) {
-					if (completenessType == CompletenessType.NORMAL && useCompletenessHeuristics) {
+					if (completenessType == CompletenessType.NORMAL && useCompletionHeuristics) {
 						logger.info("STARTING HEURISTIC COMPLETION");
 						try {
 							new AutomatonCompleter(verifier, automaton.get(), events, actions,
@@ -145,13 +146,13 @@ public class CounterexampleAutomatonBuilder extends ScenarioAndLtlAutomatonBuild
 							logger.info("TOTAL TIME LIMIT EXCEEDED, ANSWER IS UNKNOWN");
 							return reportResult(logger, iteration, Optional.empty());
 						}
-						addProhibited(logger, list, prohibited);
+						addProhibited(list, prohibited);
 						logger.info("ADDED PROHIBITED FSM");
 					} else {
 						return reportResult(logger, iteration, automaton);
 					}
 				} else {
-					final Set<String> unique = new HashSet<String>();
+					final Set<String> unique = new HashSet<>();
 					for (Counterexample counterexample : counterexamples) {
 						if (!counterexample.isEmpty()) {
 							if (!unique.contains(counterexample.toString())) {

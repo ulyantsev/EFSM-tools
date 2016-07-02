@@ -63,7 +63,7 @@ public class VerifierMain extends MainBase {
         final List<String> actions = actions(actionNames, actionNumber);
 		
 		final Verifier verifier = new Verifier(logger(), LtlParser.load(ltlFilePath, varNumber, events),
-				events, actions, varNumber);
+				events, actions);
 		final List<Counterexample> counterexamples;
 		if (plantModel) {
 			final NondetMooreAutomaton a = NondetMooreAutomaton.readGV(automatonPath);

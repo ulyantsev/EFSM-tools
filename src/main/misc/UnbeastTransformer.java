@@ -69,7 +69,7 @@ public class UnbeastTransformer {
 		final SimpleFormatter formatter = new SimpleFormatter();
 		fh.setFormatter(formatter);
 		
-		final Verifier v = new Verifier(logger, formulae, p.events, p.actions, 0);
+		final Verifier v = new Verifier(logger, formulae, p.events, p.actions);
 		final List<String> specification = new ArrayList<>();
 		specification.addAll(Generator.ltlSpecification(nodes, p.incomplete));
 		specification.addAll(Generator.scenarioSpecification(scenarios, p.actions, p.incomplete));

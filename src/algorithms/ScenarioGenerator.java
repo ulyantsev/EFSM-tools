@@ -117,7 +117,8 @@ public class ScenarioGenerator {
         
     }
 
-    static private String generateScenario(Automaton automaton, int length, List<Collection<Transition>> visitedTransitions, Random random) {
+    static private String generateScenario(Automaton automaton, int length,
+                                           List<Collection<Transition>> visitedTransitions, Random random) {
         String events = "", actions = "";
 
         Node curNode = automaton.startState();

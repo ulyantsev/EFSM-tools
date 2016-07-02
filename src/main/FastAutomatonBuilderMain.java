@@ -21,9 +21,7 @@ import structures.Automaton;
 import structures.NegativeScenarioTree;
 import structures.Node;
 import structures.ScenarioTree;
-import verification.ltl.LtlParseException;
 import verification.ltl.LtlParser;
-import verification.ltl.grammar.LtlNode;
 import verification.verifier.Verifier;
 import algorithms.automaton_builders.FastAutomatonBuilder;
 
@@ -111,7 +109,6 @@ public class FastAutomatonBuilderMain extends MainBase {
 
         try {
             final List<String> strFormulae = LtlParser.load(ltlFilePath, varNumber, eventnames);
-            final List<LtlNode> formulae = LtlParser.parse(strFormulae);
             logger().info("LTL formula from " + ltlFilePath);
 
             final List<StringScenario> scenarios = new ArrayList<>();
@@ -128,10 +125,10 @@ public class FastAutomatonBuilderMain extends MainBase {
 
             logger().info("Start building automaton");
 
-            final Verifier verifier = new Verifier(logger(), strFormulae, events, actions, varNumber);
+            final Verifier verifier = new Verifier(logger(), strFormulae, events, actions);
             final long finishTime = System.currentTimeMillis() + timeout * 1000;
             final Optional<Automaton> resultAutomaton = FastAutomatonBuilder.build(logger(),
-                    tree, negativeForest, size, resultFilePath, strFormulae, formulae,
+                    tree, negativeForest, size, strFormulae,
                     events, actions, verifier, finishTime, complete, bfsConstraints,
                     globalTree);
 
@@ -184,7 +181,7 @@ public class FastAutomatonBuilderMain extends MainBase {
                     logger().severe("INCOMPLETE");
                 }
             }
-        } catch (ParseException | LtlParseException e) {
+        } catch (ParseException e) {
             logger().warning("Can't get LTL formula from " + treeFilePath);
             throw new RuntimeException(e);
         }

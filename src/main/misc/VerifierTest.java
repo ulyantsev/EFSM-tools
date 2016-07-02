@@ -51,7 +51,7 @@ public class VerifierTest {
 				pw.println(ltl);
 			}
 			Verifier v = new Verifier(logger, LtlParser.load(filename, varNumber, events),
-					events, actions, varNumber);
+					events, actions);
 			System.out.println(v.verifyWithCounterexamples(a));
 			new File(filename).delete();
 		}
@@ -84,13 +84,13 @@ public class VerifierTest {
 			}
 
 			Verifier v = new Verifier(logger, LtlParser.load(filename, 0, events),
-					events, Arrays.asList(), 0);
+					events, Arrays.asList());
 			System.out.println(v.verifyWithCounterexamples(a));
 			new File(filename).delete();
 		}
 		
 		Verifier v = new Verifier(logger,  LtlParser.load("evaluation/walkinshaw/jhotdraw.ltl", 0, events),
-				events, Arrays.asList(), 0);
+				events, Arrays.asList());
 		System.out.println(v.verify(a));
 		new File(filename).delete();
 	}
@@ -107,7 +107,7 @@ public class VerifierTest {
 					final List<String> events = Arrays.asList("A", "B", "C", "D");
 					final Verifier v = new Verifier(logger, LtlParser.load("evaluation/testing/" + completeness
 							+ "/fsm-" + states + "-" + i + "-true.ltl", 0, events),
-						events, Arrays.asList("z0", "z1", "z2", "z3"), 0);
+						events, Arrays.asList("z0", "z1", "z2", "z3"));
 					List<Counterexample> result = v.verifyWithCounterexamples(a);
 					boolean boolResult = result.stream().allMatch(Counterexample::isEmpty);
 					if (!boolResult) {
@@ -134,7 +134,7 @@ public class VerifierTest {
 		final List<String> events = Arrays.asList("A", "B", "C", "D");
 		final Verifier v = new Verifier(logger, LtlParser.load("evaluation/testing/" + completeness + "/fsm-"
 				+ states + "-" + i + "-" + verdict + ".ltl", 0, events),
-				events, Arrays.asList("z0", "z1", "z2", "z3"), 0);
+				events, Arrays.asList("z0", "z1", "z2", "z3"));
 		final List<Counterexample> result = v.verifyWithCounterexamples(a);
 		System.out.println(result);
 		boolean boolResult = result.stream().allMatch(Counterexample::isEmpty);

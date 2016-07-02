@@ -24,8 +24,8 @@ public class Verifier {
 	private final Set<String> allActions;
 	private final VerifierFactory verifier;
 	
-	public Verifier(Logger logger, List<String> ltlFormulae, List<String> events, List<String> actions, int varNumber) {
-		this(logger, ltlFormulae, events, actions, varNumber, false);
+	public Verifier(Logger logger, List<String> ltlFormulae, List<String> events, List<String> actions) {
+		this(logger, ltlFormulae, events, actions, false);
 	}
 	
 	public static final String G_REGEX = "^ *G *\\(.*$";
@@ -52,7 +52,8 @@ public class Verifier {
 		this.verifier = verifier;
 	}
 		
-	public Verifier(Logger logger, List<String> ltlFormulae, List<String> events, List<String> actions, int varNumber, boolean verifyFromAllStates) {
+	public Verifier(Logger logger, List<String> ltlFormulae, List<String> events, List<String> actions,
+                    boolean verifyFromAllStates) {
 		this.ltlFormulae = ltlFormulae;
 		logger.info(ltlFormulae.toString());
 

@@ -198,7 +198,7 @@ public class QbfBuilderMain extends MainBase {
 			logger().info("Start building automaton");
 			
 			Optional<Automaton> resultAutomaton = null;
-			final Verifier verifier = new Verifier(logger(), strFormulae, events, actions, varNumber);
+			final Verifier verifier = new Verifier(logger(), strFormulae, events, actions);
 			final long finishTime = startTime() + timeout * 1000;
 			switch (ss) {
 			case QSAT: case EXP_SAT:
@@ -208,7 +208,7 @@ public class QbfBuilderMain extends MainBase {
 				break;
 			case COUNTEREXAMPLE:
 				resultAutomaton = CounterexampleAutomatonBuilder.build(logger(), tree, size, solverParams,
-						formulae, events, actions, satsolver, verifier, finishTime,
+                        events, actions, satsolver, verifier, finishTime,
 						completenesstype, negativeTree, !noCompletenessHeuristics);
 				break;
 			case STATE_MERGING:

@@ -33,7 +33,6 @@ import structures.plant.MooreTransition;
 import structures.plant.NegativePlantScenarioForest;
 import structures.plant.NondetMooreAutomaton;
 import structures.plant.PositivePlantScenarioForest;
-import verification.ltl.grammar.LtlNode;
 import verification.verifier.Counterexample;
 import verification.verifier.NondetMooreVerifierPair;
 import verification.verifier.SimpleVerifier;
@@ -42,13 +41,16 @@ import bnf_formulae.BooleanVariable;
 import bool.MyBooleanExpression;
 
 public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
-	protected static Optional<NondetMooreAutomaton> reportResult(Logger logger, int iterations, Optional<NondetMooreAutomaton> a) {
+	protected static Optional<NondetMooreAutomaton> reportResult(Logger logger, int iterations,
+                                                                 Optional<NondetMooreAutomaton> a) {
 		logger.info("ITERATIONS: " + (iterations + 1));
 		return a;
 	}
 		
-	private static NondetMooreAutomaton constructAutomatonFromAssignment(Logger logger, List<Assignment> ass,
-			PositivePlantScenarioForest forest, int colorSize, List<String> actionList, List<String> eventList) {
+	private static NondetMooreAutomaton constructAutomatonFromAssignment(List<Assignment> ass,
+                                                                         PositivePlantScenarioForest forest,
+                                                                         int colorSize, List<String> actionList,
+                                                                         List<String> eventList) {
 		final List<Boolean> isStart = Arrays.asList(ArrayUtils.toObject(new boolean[colorSize]));
 		final List<List<String>> actions = new ArrayList<>();
 		for (int i = 0; i < isStart.size(); i++) {
@@ -164,9 +166,10 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 	}
 
 	public static Optional<NondetMooreAutomaton> build(Logger logger, PositivePlantScenarioForest positiveForest,
-			NegativePlantScenarioForest negativeForest, int size,
-			String actionspecFilePath, List<LtlNode> formulae,
-			List<String> events, List<String> actions, NondetMooreVerifierPair verifier, long finishTime) throws IOException {
+                                                       NegativePlantScenarioForest negativeForest, int size,
+                                                       String actionspecFilePath, List<String> events,
+                                                       List<String> actions, NondetMooreVerifierPair verifier,
+                                                       long finishTime) throws IOException {
 		deleteTrash();
 		SimpleVerifier.setLoopWeight(size);
 		
@@ -195,7 +198,7 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 				return reportResult(logger, iteration, Optional.empty());
 			}
 
-			final NondetMooreAutomaton automaton = constructAutomatonFromAssignment(logger, ass.list(),
+			final NondetMooreAutomaton automaton = constructAutomatonFromAssignment(ass.list(),
 					positiveForest, size, actions, events);
 
 			// verify
@@ -241,18 +244,18 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 				}
 				if (normalMinIndex == -1 && globalMinIndex != -1) {
 					// add global CE
-					addCounterexample(logger, size, globalCEs.get(globalMinIndex), globalNegativeForest);
+					addCounterexample(logger, globalCEs.get(globalMinIndex), globalNegativeForest);
 				} else if (normalMinIndex != -1 && globalMinIndex == -1) {
 					// add normal CE
-					addCounterexample(logger, size, normalCEs.get(normalMinIndex), negativeForest);
+					addCounterexample(logger, normalCEs.get(normalMinIndex), negativeForest);
 				} else {
 					final int normalLength = normalCEs.get(normalMinIndex).events().size();
 					final int globalLength = globalCEs.get(globalMinIndex).events().size();
 					// always add global
-					addCounterexample(logger, size, globalCEs.get(globalMinIndex), globalNegativeForest);
+					addCounterexample(logger, globalCEs.get(globalMinIndex), globalNegativeForest);
 					// add normal if it is not longer
 					if (normalLength <= globalLength) {
-						addCounterexample(logger, size, normalCEs.get(normalMinIndex), negativeForest);
+						addCounterexample(logger, normalCEs.get(normalMinIndex), negativeForest);
 					}
 				}
 			}
@@ -276,8 +279,8 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 		return new Counterexample(events, actions, 0);
 	}
 	
-	protected static void addCounterexample(Logger logger, int size,
-			Counterexample counterexample, NegativePlantScenarioForest negativeForest) {
+	protected static void addCounterexample(Logger logger, Counterexample counterexample,
+                                            NegativePlantScenarioForest negativeForest) {
 		final List<MyBooleanExpression> expr = new ArrayList<>();
 		for (int i = 0; i < counterexample.events().size(); i++) {
 			expr.add(MyBooleanExpression.getTautology());

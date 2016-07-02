@@ -30,7 +30,6 @@ import structures.NegativeScenarioTree;
 import structures.Node;
 import structures.ScenarioTree;
 import structures.Transition;
-import verification.ltl.grammar.LtlNode;
 import verification.verifier.Counterexample;
 import verification.verifier.Verifier;
 import algorithms.AutomatonCompleter.CompletenessType;
@@ -199,7 +198,7 @@ public class FastAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 				: ("(" + String.join(")&(", additionalFormulae) + ")");
 	}
 	
-	private static boolean containsTrue(boolean[] array){
+	private static boolean containsTrue(boolean[] array) {
 	    for (boolean val : array) {
 	        if (val) {
 	            return true;
@@ -209,19 +208,18 @@ public class FastAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 	}
 	
 	public static Optional<Automaton> build(Logger logger, ScenarioTree positiveTree,
-			NegativeScenarioTree negativeTree, int size, String resultFilePath,
-			List<String> strFormulae, List<LtlNode> formulae, List<String> events,
-			List<String> actions, Verifier verifier, long finishTime,
-			boolean complete, boolean bfsConstraints, boolean useGlobalTree) throws IOException {
+                                            NegativeScenarioTree negativeTree, int size,
+                                            List<String> strFormulae, List<String> events,
+                                            List<String> actions, Verifier verifier, long finishTime,
+                                            boolean complete, boolean bfsConstraints, boolean useGlobalTree)
+            throws IOException {
 		deleteTrash();
 		
 		final boolean[] ltlIsG = new boolean[strFormulae.size()];
 		for (int i = 0; i < strFormulae.size(); i++) {
 			ltlIsG[i] = strFormulae.get(i).matches(Verifier.G_REGEX);
 		}
-		if (!containsTrue(ltlIsG)) {
-			useGlobalTree = false;
-		}
+        useGlobalTree &= containsTrue(ltlIsG);
 		final Verifier globalVerifier = useGlobalTree
 				? verifier.globalVerifier() : null;
 		final NegativeScenarioTree globalTree = new NegativeScenarioTree();
@@ -277,12 +275,12 @@ public class FastAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 						normalCEs.add(normalCE);
 					}
 				}
-				normalCEs.stream().forEach(ce -> addCounterexample(logger, size, ce, negativeTree));
-				globalCEs.stream().forEach(ce -> addCounterexample(logger, size, ce, globalTree));
+				normalCEs.stream().forEach(ce -> addCounterexample(logger, ce, negativeTree));
+				globalCEs.stream().forEach(ce -> addCounterexample(logger, ce, globalTree));
 			} else {
 				counterexamples.stream()
 						.filter(ce -> !ce.isEmpty()).distinct()
-						.forEach(ce -> addCounterexample(logger, size, ce, negativeTree));
+						.forEach(ce -> addCounterexample(logger, ce, negativeTree));
 			}
 		}
 		incr.halt();
@@ -290,8 +288,8 @@ public class FastAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 		return Optional.empty();
 	}
 
-	protected static void addCounterexample(Logger logger, int size,
-			Counterexample counterexample, NegativeScenarioTree negativeForest) {
+	protected static void addCounterexample(Logger logger, Counterexample counterexample,
+                                            NegativeScenarioTree negativeForest) {
 		final List<MyBooleanExpression> expr = new ArrayList<>();
 		for (int i = 0; i < counterexample.events().size(); i++) {
 			expr.add(MyBooleanExpression.getTautology());

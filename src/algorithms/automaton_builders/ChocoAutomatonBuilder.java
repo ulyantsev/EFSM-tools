@@ -30,39 +30,27 @@ public class ChocoAutomatonBuilder {
         return build(tree, size, isComplete, false, null);
     }
 
-    public static Automaton build(ScenarioTree tree, int size, boolean isComplete, boolean isWeakCompleteness) {
-        return build(tree, size, isComplete, isWeakCompleteness, null);
+    public static Automaton build(ScenarioTree tree, int size, boolean isComplete, boolean isWeakComplete) {
+        return build(tree, size, isComplete, isWeakComplete, null);
     }
 
-    public static Automaton build(ScenarioTree tree,
-                                  int size,
-                                  boolean isComplete,
-                                  boolean isWeakCompleteness,
+    public static Automaton build(ScenarioTree tree, int size, boolean isComplete, boolean isWeakComplete,
                                   PrintWriter modelPrintWriter) {
         IntegerVariable[] nodesColorsVars = Choco.makeIntVarArray("Color", tree.nodeCount(), 0, size - 1);
-        CPModel model = buildModel(tree, size, isComplete, isWeakCompleteness, nodesColorsVars, modelPrintWriter);
-
+        CPModel model = buildModel(tree, size, isComplete, isWeakComplete, nodesColorsVars, modelPrintWriter);
         return buildAutomatonFromModel(size, tree, nodesColorsVars, model);
     }
 
-    public static List<Automaton> buildAll(ScenarioTree tree,
-                                           int size,
-                                           boolean isComplete,
-                                           boolean isWeakCompleteness,
+    public static List<Automaton> buildAll(ScenarioTree tree, int size, boolean isComplete, boolean isWeakComplete,
                                            PrintWriter modelPrintWriter) {
         IntegerVariable[] nodesColorsVars = Choco.makeIntVarArray("Color", tree.nodeCount(), 0, size - 1);
-        CPModel model = buildModel(tree, size, isComplete, isWeakCompleteness, nodesColorsVars, modelPrintWriter);
-
+        CPModel model = buildModel(tree, size, isComplete, isWeakComplete, nodesColorsVars, modelPrintWriter);
         return buildAllAutomatonsFromModel(size, tree, nodesColorsVars, model);
     }
 
 
-    private static CPModel buildModel(ScenarioTree tree,
-                                      int size,
-                                      boolean isComplete,
-                                      boolean isWeakCompleteness,
-                                      IntegerVariable[] nodesColorsVars,
-                                      PrintWriter modelPrintWriter) {
+    private static CPModel buildModel(ScenarioTree tree, int size, boolean isComplete, boolean isWeakCompleteness,
+                                      IntegerVariable[] nodesColorsVars, PrintWriter modelPrintWriter) {
         CPModel model = new CPModel();
 
         Constraint rootColorConstraint = Choco.eq(nodesColorsVars[0], 0);
@@ -84,20 +72,17 @@ public class ChocoAutomatonBuilder {
         return model;
     }
 
-    private static Constraint[] getCompleteConstraints(CPModel model,
-                                                       int size,
-                                                       ScenarioTree tree,
-                                                       IntegerVariable[] nodesColorsVars,
-                                                       boolean isWeakCompleteness) {
+    private static Constraint[] getCompleteConstraints(CPModel model, int size, ScenarioTree tree,
+                                                       IntegerVariable[] nodesColorsVars, boolean isWeakCompleteness) {
 
-        Map<String, Map<String, List<Node>>> eventExprToNodes = new TreeMap<String, Map<String, List<Node>>>();
+        Map<String, Map<String, List<Node>>> eventExprToNodes = new TreeMap<>();
 
         Map<String, List<MyBooleanExpression>> pairs = tree.pairsEventExpression();
         for (String event : pairs.keySet()) {
-            Map<String, List<Node>> exprMap = new TreeMap<String, List<Node>>();
+            Map<String, List<Node>> exprMap = new TreeMap<>();
             eventExprToNodes.put(event, exprMap);
             for (MyBooleanExpression expr : pairs.get(event)) {
-                exprMap.put(expr.toString(), new ArrayList<Node>());
+                exprMap.put(expr.toString(), new ArrayList<>());
             }
         }
 
@@ -116,16 +101,16 @@ public class ChocoAutomatonBuilder {
 
         int varsCount = tree.variableCount();
 
-        Map<String, Integer> exprSetsCount = new TreeMap<String, Integer>();
+        Map<String, Integer> exprSetsCount = new TreeMap<>();
         for (MyBooleanExpression expr : tree.expressions()) {
             int cnt = expr.getSatisfiabilitySetsCount() * (1 << (varsCount - expr.getVariablesCount()));
             exprSetsCount.put(expr.toString(), cnt);
             //System.out.println(expr.toString() + " " + cnt);
         }
 
-        Map<String, Map<String, IntegerVariable[]>> used = new TreeMap<String, Map<String, IntegerVariable[]>>();
+        Map<String, Map<String, IntegerVariable[]>> used = new TreeMap<>();
         for (String event : pairs.keySet()) {
-            Map<String, IntegerVariable[]> map = new TreeMap<String, IntegerVariable[]>();
+            Map<String, IntegerVariable[]> map = new TreeMap<>();
             for (MyBooleanExpression expr : pairs.get(event)) {
                 String arrayName = "used_" + event + "_" + expr.toString();
                 IntegerVariable[] vars = Choco.makeBooleanVarArray(arrayName, size);//, Options.V_NO_DECISION); // ???
@@ -135,14 +120,14 @@ public class ChocoAutomatonBuilder {
             used.put(event, map);
         }
 
-        ArrayList<Constraint> ans = new ArrayList<Constraint>();
+        ArrayList<Constraint> ans = new ArrayList<>();
 
         for (String event : pairs.keySet()) {
             for (MyBooleanExpression expr : pairs.get(event)) {
                 List<Node> nodes = eventExprToNodes.get(event).get(expr.toString());
                 IntegerVariable[] vars = used.get(event).get(expr.toString());
                 for (int color = 0; color < size; color++) {
-                    List<Constraint> orClauses = new ArrayList<Constraint>();
+                    List<Constraint> orClauses = new ArrayList<>();
                     for (Node node : nodes) {
                         Constraint clause = Choco.eq(nodesColorsVars[node.number()], color);
                         orClauses.add(clause);
@@ -159,7 +144,7 @@ public class ChocoAutomatonBuilder {
         int totalSetsCount = 1 << varsCount;
         for (String event : pairs.keySet()) {
             for (int color = 0; color < size; color++) {
-                List<IntegerVariable> vars = new ArrayList<IntegerVariable>();
+                List<IntegerVariable> vars = new ArrayList<>();
                 int[] countsArray = new int[pairs.get(event).size()];
                 int[] onesArray = new int[pairs.get(event).size()];
                 int i = 0;
@@ -202,7 +187,7 @@ public class ChocoAutomatonBuilder {
     }
 
     private static Constraint[] getAdjacentConstraints(ScenarioTree tree, IntegerVariable[] nodesColorsVars) {
-        ArrayList<Constraint> ans = new ArrayList<Constraint>();
+        ArrayList<Constraint> ans = new ArrayList<>();
         Map<Node, Set<Node>> adjacent = AdjacencyCalculator.getAdjacent(tree);
 
         for (Node node : tree.nodes()) {
@@ -218,12 +203,11 @@ public class ChocoAutomatonBuilder {
         return ans.toArray(new Constraint[ans.size()]);
     }
 
-    private static Constraint[] getTransitionsConstraints(int size,
-                                                          ScenarioTree tree,
+    private static Constraint[] getTransitionsConstraints(int size, ScenarioTree tree,
                                                           IntegerVariable[] nodesColorsVars) {
-        List<Constraint> ans = new ArrayList<Constraint>();
+        List<Constraint> ans = new ArrayList<>();
 
-        Map<String, IntegerVariable[]> transitionsVars = new HashMap<String, IntegerVariable[]>();
+        Map<String, IntegerVariable[]> transitionsVars = new HashMap<>();
         for (Node node : tree.nodes()) {
             for (Transition t : node.transitions()) {
                 String key = t.event() + "[" + t.expr().toString() + "]";
@@ -245,12 +229,11 @@ public class ChocoAutomatonBuilder {
         return ans.toArray(new Constraint[ans.size()]);
     }
 
-    private static Constraint[] getBFSSymmetryBreakingConstraints(int size,
-                                                                  ScenarioTree tree,
+    private static Constraint[] getBFSSymmetryBreakingConstraints(int size, ScenarioTree tree,
                                                                   Map<String, IntegerVariable[]> transitionsVars) {
-        List<Constraint> ans = new ArrayList<Constraint>();
+        List<Constraint> ans = new ArrayList<>();
 
-        List<String> eventExprOrder = new ArrayList<String>();
+        List<String> eventExprOrder = new ArrayList<>();
         for (Node node : tree.nodes()) {
             for (Transition t : node.transitions()) {
                 String eventExpr = t.event() + "[" + t.expr().toString() + "]";
@@ -318,7 +301,6 @@ public class ChocoAutomatonBuilder {
         // e_a_b => [m_a_b = ee <=> y_a_ee = b /\ ~(y_a_{ee-1} = b) /\ ... /\ ~(y_a_{ee0} = b)]
 
 /*
-
 
         for (int nodeColor = 0; nodeColor < k; nodeColor++) {
             for (int childColor = nodeColor + 1; childColor < k; childColor++) {
@@ -396,10 +378,8 @@ public class ChocoAutomatonBuilder {
         return ans.toArray(new Constraint[ans.size()]);
     }
 
-    private static List<Automaton> buildAllAutomatonsFromModel(int size,
-                                                               ScenarioTree tree,
-                                                               IntegerVariable[] nodesColorsVars,
-                                                               CPModel model) {
+    private static List<Automaton> buildAllAutomatonsFromModel(int size, ScenarioTree tree,
+                                                               IntegerVariable[] nodesColorsVars, CPModel model) {
         CPSolver solver = new CPSolver();
         solver.read(model);
         solver.setTimeLimit(300000);
@@ -414,7 +394,7 @@ public class ChocoAutomatonBuilder {
             solver.solve();
         }
 
-        List<Automaton> ans = new ArrayList<Automaton>();
+        List<Automaton> ans = new ArrayList<>();
         if (!solver.existsSolution()) {
             return ans;
         }
@@ -437,9 +417,7 @@ public class ChocoAutomatonBuilder {
         return ans;
     }
 
-    private static Automaton buildAutomatonFromModel(int size,
-                                                     ScenarioTree tree,
-                                                     IntegerVariable[] nodesColorsVars,
+    private static Automaton buildAutomatonFromModel(int size, ScenarioTree tree, IntegerVariable[] nodesColorsVars,
                                                      CPModel model) {
         CPSolver solver = new CPSolver();
         solver.read(model);
@@ -457,7 +435,6 @@ public class ChocoAutomatonBuilder {
 //                  new IncreasingDomain()));
             solver.solve();
         }
-
 
         Automaton ans = null;
         if (solver.existsSolution()) {

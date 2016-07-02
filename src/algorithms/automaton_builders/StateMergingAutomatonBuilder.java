@@ -21,7 +21,7 @@ import verification.verifier.Verifier;
 
 public class StateMergingAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 	private static APTA getAPTA(List<List<String>> possc, Set<List<String>> negsc) {
-		APTA a = new APTA();
+		final APTA a = new APTA();
 		for (List<String> sc : possc) {
 			a.addScenario(sc, true);
 		}
@@ -32,8 +32,8 @@ public class StateMergingAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder
 		return a;
 	}
 	
-	public static Optional<Automaton> build(Logger logger, Verifier verifier,
-			List<String> scenarioFilePaths, String negscFilePath) throws FileNotFoundException, ParseException {		
+	public static Optional<Automaton> build(Logger logger, Verifier verifier, List<String> scenarioFilePaths,
+                                            String negscFilePath) throws FileNotFoundException, ParseException {
 		final List<List<String>> possc = new ArrayList<>();
 		for (String filePath : scenarioFilePaths) {
 			for (StringScenario sc : StringScenario.loadScenarios(filePath, 0)) {
