@@ -27,6 +27,7 @@ import java.util.logging.Logger;
 
 import sat_solving.Assignment;
 import sat_solving.SatSolver;
+import sat_solving.SolverResult;
 
 public abstract class BooleanFormula {
 	public static Optional<Assignment> fromDimacsToken(String token, DimacsConversionInfo dimacs) {
@@ -55,6 +56,13 @@ public abstract class BooleanFormula {
 			this.time = time;
 			this.info = info;
 		}
+
+        public SolverResult toSolverResult(int secondsLeft) {
+            return list.isEmpty()
+                    ? new SolverResult(time >= secondsLeft * 1000
+                    ? SolverResult.SolverResults.UNKNOWN : SolverResult.SolverResults.UNSAT)
+                    : new SolverResult(list);
+        }
 	}
 	
 	private static String fixedSizedDimacsHeader(int varNum, int clauseNum) {
@@ -158,44 +166,40 @@ public abstract class BooleanFormula {
 	private static int SOLVER_SEED = 0;
 	
 	public static SolveAsSatResult solveDimacs(Logger logger, int timeoutSeconds, SatSolver solver,
-			String solverParams, DimacsConversionInfo info) throws IOException {
+			DimacsConversionInfo info) throws IOException {
 		long time = System.currentTimeMillis();
 		final Map<String, Assignment> list = new LinkedHashMap<>();
-		if (solver == SatSolver.LINGELING) {
-			solverParams += " --seed=" + SOLVER_SEED;
-			timeoutSeconds = Math.max(1, timeoutSeconds);
+		String solverParams = "";
+        if (solver == SatSolver.LINGELING) {
+			solverParams = " --seed=" + SOLVER_SEED;
 		} else if (solver == SatSolver.CRYPTOMINISAT) {
-			solverParams += " --random=" + SOLVER_SEED;
-			timeoutSeconds = Math.max(2, timeoutSeconds); // cryptominisat does not accept time=1
+			solverParams = " --random=" + SOLVER_SEED;
 		}
-		SOLVER_SEED++;
-		final String solverStr = solver.command + timeoutSeconds + " " + solverParams
-				+ " " + DIMACS_FILENAME;
+        timeoutSeconds = Math.max(1, timeoutSeconds);
+        SOLVER_SEED++;
+		final String solverStr = solver.command + timeoutSeconds + " " + solverParams + " " + DIMACS_FILENAME;
 		logger.info(solverStr);
 		final Process p = Runtime.getRuntime().exec(solverStr);
-		
+
 		try (BufferedReader input = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
 			input.lines().filter(s -> s.startsWith("v")).forEach(certificateLine ->
 				Arrays.stream(certificateLine.split(" ")).skip(1).forEach(token ->
-					fromDimacsToken(token, info).ifPresent(ass -> {
-						assert !list.containsKey(ass.var.name);
-						list.put(ass.var.name, ass);
-					})
+					fromDimacsToken(token, info).ifPresent(ass -> list.put(ass.var.name, ass))
 				)
 			);
 		}
-		
+
 		time = System.currentTimeMillis() - time;
 		return new SolveAsSatResult(new ArrayList<>(list.values()), time, info);
 	}
 	
-	public static SolveAsSatResult solveAsSat(String formula, Logger logger, String solverParams,
+	public static SolveAsSatResult solveAsSat(String formula, Logger logger,
 			int timeoutSeconds, SatSolver solver) throws IOException {
 		logger.info("Final SAT formula length: " + formula.length());
 		final DimacsConversionInfo info = BooleanFormula.toDimacs(formula, logger, DIMACS_FILENAME);
 		info.close();
 		logger.info("CREATED DIMACS FILE");
-		return solveDimacs(logger, timeoutSeconds, solver, solverParams, info);
+		return solveDimacs(logger, timeoutSeconds, solver, info);
 	}
 	
 	public static DimacsConversionInfo actionSpecToDimacs(Logger logger, String dimacsFilename,
@@ -206,28 +210,31 @@ public abstract class BooleanFormula {
 				: actionSpec;
 		return toDimacs(limbooleString, logger, dimacsFilename);
 	}
-	
-	public static void appendConstraints(List<int[]> cnfConstraints, DimacsConversionInfo info, DataOutputStream constraintWriter) throws IOException {
+
+    public static void transformConstraints(List<int[]> cnfConstraints, DimacsConversionInfo info) {
+        for (int i = 0; i < cnfConstraints.size(); i++) {
+            final int[] terms = cnfConstraints.get(i);
+            for (int j = 0; j < terms.length; j++) {
+                final int term = terms[j];
+                final int var = Math.abs(term);
+
+                Integer transformedNum = info.limbooleNumberToDimacs.get(var);
+                if (transformedNum == null) {
+                    info.varNumber++;
+                    info.limbooleNumberToDimacs.put(var, info.varNumber);
+                    info.dimacsNumberToLimboole.put(info.varNumber, var);
+                    transformedNum = info.varNumber;
+                }
+                terms[j] = (term < 0 ? -1 : 1) * transformedNum;
+            }
+        }
+    }
+
+	public static void appendConstraints(List<int[]> cnfConstraints, DimacsConversionInfo info,
+                                         DataOutputStream constraintWriter) throws IOException {
 		final int initialVarNumber = info.varNumber;
-		
-		for (int i = 0; i < cnfConstraints.size(); i++) {
-			final int[] terms = cnfConstraints.get(i);
-			for (int j = 0; j < terms.length; j++) {
-				final int term = terms[j];
-				final int var = Math.abs(term);
-				
-				Integer transformedNum = info.limbooleNumberToDimacs.get(var);
-				if (transformedNum == null) {
-					info.varNumber++;
-					info.limbooleNumberToDimacs.put(var, info.varNumber);
-					info.dimacsNumberToLimboole.put(info.varNumber, var);
-					transformedNum = info.varNumber;
-				}
-				terms[j] = (term < 0 ? -1 : 1) * transformedNum;
-			}
-		}
-		
-		int newVars = info.varNumber - initialVarNumber;
+		transformConstraints(cnfConstraints, info);
+		final int newVars = info.varNumber - initialVarNumber;
 		if (newVars > 0) {
 			constraintWriter.writeInt(1);
 			constraintWriter.writeInt(newVars);
@@ -236,10 +243,8 @@ public abstract class BooleanFormula {
 			constraintWriter.writeInt(0);
 			for (int i : constraint) {
 				constraintWriter.writeInt(i);
-				//System.out.print(i + " ");
 			}
 			constraintWriter.writeInt(0);
-			//System.out.print("0\n");
 		}
 	}
 	
@@ -301,7 +306,8 @@ public abstract class BooleanFormula {
 	
 	public abstract String toLimbooleString();
 	
-	public static DimacsConversionInfo toDimacs(String limbooleFormula, Logger logger, String dimacsFilename) throws IOException {
+	public static DimacsConversionInfo toDimacs(String limbooleFormula, Logger logger, String dimacsFilename)
+            throws IOException {
 		final String beforeLimbooleFilename = "_tmp.limboole";
 		final String afterLimbooleFilename = "_tmp.after.limboole.dimacs";
 		
@@ -351,7 +357,6 @@ public abstract class BooleanFormula {
 		return BinaryOperation.equivalent(this, other);
 	}
 	
-	//public abstract BooleanFormula substitute(BooleanVariable v, BooleanFormula replacement);
 	public abstract BooleanFormula multipleSubstitute(Map<BooleanVariable, BooleanFormula> replacement);
 	
 	/*
@@ -359,9 +364,9 @@ public abstract class BooleanFormula {
 	 */
 	public abstract BooleanFormula simplify();
 	
-	public static BooleanFormula fromBoolean(boolean value) {
+	/*public static BooleanFormula fromBoolean(boolean value) {
 		return value ? TrueFormula.INSTANCE : FalseFormula.INSTANCE;
-	}
+	}*/
 
 	@Override
 	public boolean equals(Object other) {

@@ -213,9 +213,7 @@ public class TraceTranslator {
 
 		// parameter limits
 		System.out.println("Found parameter boundaries:");
-		final Function<Parameter, String> describe = p -> {
-			return p.traceName() + " in " + p.limits() + " - " + p;
-		};
+		final Function<Parameter, String> describe = p -> p.traceName() + " in " + p.limits() + " - " + p;
 		for (Parameter p : conf.outputParameters) {
 			System.out.println(" output " + describe.apply(p));
 		}

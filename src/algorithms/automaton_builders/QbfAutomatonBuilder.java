@@ -47,7 +47,7 @@ public class QbfAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 	}
 	
 	public static Optional<Automaton> build(Logger logger, ScenarioTree tree,
-			List<LtlNode> formulae, int size, QbfSolver qbfSolver, String solverParams,
+			List<LtlNode> formulae, int size, QbfSolver qbfSolver,
 			boolean useSat, List<String> events, List<String> actions,
 			SatSolver satSolver, Verifier verifier, long finishTime,
 			CompletenessType completenessType) throws IOException {
@@ -74,7 +74,7 @@ public class QbfAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 					return Optional.empty();
 				}
 				SolveAsSatResult solution = BooleanFormula.solveAsSat(formula,
-						logger, solverParams, timeLeft, satSolver);
+						logger, timeLeft, satSolver);
 				List<Assignment> list = solution.list();
 				long time = solution.time;
 				if (list.isEmpty()) {
@@ -103,7 +103,7 @@ public class QbfAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 				QuantifiedBooleanFormula qbf = new QbfFormulaBuilder(logger, tree,
 						formulae, size, k, completenessType, events, actions).getFormula(false);
 				final int timeLeft = (int) (finishTime - System.currentTimeMillis()) / 1000 + 1;
-				SolverResult ass = qbf.solve(logger, qbfSolver, solverParams, timeLeft);
+				SolverResult ass = qbf.solve(logger, qbfSolver, timeLeft);
 				logger.info(ass.toString().split("\n")[0]);
 
 				if (ass.type() == SolverResults.SAT) {

@@ -69,6 +69,4 @@ public class Counterexample {
 			return false;
 		return true;
 	}
-	
-	
 }

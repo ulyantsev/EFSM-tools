@@ -16,6 +16,7 @@ import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.Option;
 import org.kohsuke.args4j.spi.BooleanOptionHandler;
 
+import sat_solving.SatSolver;
 import scenario.StringScenario;
 import structures.Automaton;
 import structures.NegativeScenarioTree;
@@ -94,6 +95,11 @@ public class FastAutomatonBuilderMain extends MainBase {
 			usage = "use a special negative tree to handle finite counterexamples produced from G(...) formulae")
 	private boolean globalTree;
 
+    @Option(name = "--solver",
+            usage = "SAT solver: INCREMENTAL_CRYPTOMINISAT (default), LINGELING, CRYPTOMINISAT",
+            metaVar = "<solver>")
+    private String strSolver = SatSolver.INCREMENTAL_CRYPTOMINISAT.name();
+
 	public static void main(String[] args) {
         new FastAutomatonBuilderMain().run(args, Author.IB, "FSM builder from scenarios and LTL formulae");
 	}
@@ -106,6 +112,14 @@ public class FastAutomatonBuilderMain extends MainBase {
         final List<String> eventnames = eventNames(eventNames, eventNumber);
         final List<String> events = events(eventnames, eventNumber, varNumber);
         final List<String> actions = actions(actionNames, actionNumber);
+
+        SatSolver solver;
+        try {
+            solver = SatSolver.valueOf(strSolver);
+        } catch (IllegalArgumentException e) {
+            logger().warning(strSolver + " is not a valid SAT solver.");
+            return;
+        }
 
         try {
             final List<String> strFormulae = LtlParser.load(ltlFilePath, varNumber, eventnames);
@@ -130,7 +144,7 @@ public class FastAutomatonBuilderMain extends MainBase {
             final Optional<Automaton> resultAutomaton = FastAutomatonBuilder.build(logger(),
                     tree, negativeForest, size, strFormulae,
                     events, actions, verifier, finishTime, complete, bfsConstraints,
-                    globalTree);
+                    globalTree, solver);
 
             if (!resultAutomaton.isPresent()) {
                 logger().info("Automaton with " + size + " states NOT FOUND!");

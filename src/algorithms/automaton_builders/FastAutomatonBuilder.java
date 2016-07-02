@@ -19,9 +19,7 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.tuple.Pair;
 
-import sat_solving.Assignment;
-import sat_solving.IncrementalInterface;
-import sat_solving.SolverResult;
+import sat_solving.*;
 import sat_solving.SolverResult.SolverResults;
 import scenario.StringActions;
 import scenario.StringScenario;
@@ -211,7 +209,8 @@ public class FastAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
                                             NegativeScenarioTree negativeTree, int size,
                                             List<String> strFormulae, List<String> events,
                                             List<String> actions, Verifier verifier, long finishTime,
-                                            boolean complete, boolean bfsConstraints, boolean useGlobalTree)
+                                            boolean complete, boolean bfsConstraints, boolean useGlobalTree,
+                                            SatSolver solver)
             throws IOException {
 		deleteTrash();
 		
@@ -224,7 +223,7 @@ public class FastAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 				? verifier.globalVerifier() : null;
 		final NegativeScenarioTree globalTree = new NegativeScenarioTree();
 		
-		IncrementalInterface incr = null;
+		SolverInterface inf = null;
 		
 		for (int iteration = 0; System.currentTimeMillis() < finishTime; iteration++) {
 			final FastAutomatonFormulaBuilder builder = new FastAutomatonFormulaBuilder(size, positiveTree,
@@ -234,11 +233,11 @@ public class FastAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 			if (iteration == 0) {
 				final List<int[]> constraints = builder.positiveConstraints();
 				final String transSpec = transitionSpecification(strFormulae, size, events, actions);
-				incr = new IncrementalInterface(constraints, transSpec, logger);
+				inf = solver.createInterface(constraints, transSpec, logger);
 			}
 			
 			// SAT-solve
-			final SolverResult ass = incr.solve(builder.negativeConstraints(), secondsLeft);
+			final SolverResult ass = inf.solve(builder.negativeConstraints(), secondsLeft);
 			logger.info(ass.type().toString());
 			if (ass.type() != SolverResults.SAT) {
 				return reportResult(logger, iteration, Optional.empty());
@@ -254,7 +253,7 @@ public class FastAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 					verifier.verifyWithCounterexamplesWithNoDeadEndRemoval(automaton);
 			
 			if (counterexamples.stream().allMatch(Counterexample::isEmpty)) {
-				incr.halt();
+				inf.halt();
 				return reportResult(logger, iteration, Optional.of(automaton));
 			} else if (useGlobalTree) {
 				final List<Counterexample> globalCounterexamples =
@@ -283,7 +282,7 @@ public class FastAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 						.forEach(ce -> addCounterexample(logger, ce, negativeTree));
 			}
 		}
-		incr.halt();
+		inf.halt();
 		logger.info("TOTAL TIME LIMIT EXCEEDED, ANSWER IS UNKNOWN");
 		return Optional.empty();
 	}

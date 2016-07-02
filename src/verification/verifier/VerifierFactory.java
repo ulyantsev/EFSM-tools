@@ -49,11 +49,7 @@ public class VerifierFactory {
     public VerifierFactory(boolean verifyFromAllStates) {
     	this.verifyFromAllStates = verifyFromAllStates;
     }
-    
-    public List<LtlNode> preparedLtlNodes() {
-    	return Collections.unmodifiableList(preparedLtlNodes);
-    }
-    
+
 	public void prepareFormulas(List<String> formulas) throws LtlParseException {
     	 final JLtl2baTranslator translator = new JLtl2baTranslator();
 

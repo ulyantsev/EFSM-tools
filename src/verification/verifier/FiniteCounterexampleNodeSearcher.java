@@ -27,7 +27,7 @@ public class FiniteCounterexampleNodeSearcher {
     	
     	final Set<BuchiNode> result = new HashSet<>(a.nodes());
     	for (BuchiNode node : a.nodes()) {
-    		final Set<BuchiNode> reachabilitySet = reachibilitySet(node);
+    		final Set<BuchiNode> reachabilitySet = reachabilitySet(node);
     		for (BuchiNode loopStart : reachabilitySet) {
     			if (nodesWithRejectingLoops.contains(loopStart)) {
     				result.remove(node);
@@ -39,7 +39,7 @@ public class FiniteCounterexampleNodeSearcher {
     	return result;
     }
     
-    private static Set<BuchiNode> reachibilitySet(BuchiNode node) {
+    private static Set<BuchiNode> reachabilitySet(BuchiNode node) {
     	final Set<BuchiNode> visited = new HashSet<>();
     	visited.add(node);
     	final Deque<BuchiNode> queue = new ArrayDeque<>();

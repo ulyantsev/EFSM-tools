@@ -19,19 +19,23 @@ import bnf_formulae.BooleanFormula;
 import bnf_formulae.BooleanFormula.DimacsConversionInfo;
 import bnf_formulae.BooleanVariable;
 
-public class IncrementalInterface {
+public class IncrementalInterface implements SolverInterface {
 	private final DimacsConversionInfo info;
-	private final Process solver;
+	private final Process solverProcess;
 	private final DataOutputStream writer;
 	private final DataInputStream reader;
 	
-	public IncrementalInterface(List<int[]> positiveConstraints, String actionspec, Logger logger) throws IOException {	
-		info = BooleanFormula.actionSpecToDimacs(logger, BooleanFormula.DIMACS_FILENAME, actionspec);
+	public IncrementalInterface(List<int[]> positiveConstraints, String actionspec, Logger logger, SatSolver solver)
+            throws IOException {
+		if (!solver.isIncremental) {
+            throw new AssertionError("An incremental solver was expected!");
+        }
+        info = BooleanFormula.actionSpecToDimacs(logger, BooleanFormula.DIMACS_FILENAME, actionspec);
 		info.close();
 
-		solver = Runtime.getRuntime().exec("incremental-cryptominisat-binary " + info.varNumber());
-		writer = new DataOutputStream(new BufferedOutputStream(solver.getOutputStream()));
-		reader = new DataInputStream(solver.getInputStream());
+        solverProcess = Runtime.getRuntime().exec(solver.command + info.varNumber());
+		writer = new DataOutputStream(new BufferedOutputStream(solverProcess.getOutputStream()));
+		reader = new DataInputStream(solverProcess.getInputStream());
 		
 		try (BufferedReader input = new BufferedReader(new FileReader(BooleanFormula.DIMACS_FILENAME))) {
 			input.readLine();
@@ -47,14 +51,16 @@ public class IncrementalInterface {
 		
 		BooleanFormula.appendConstraints(positiveConstraints, info, writer);
 	}
-	
+
+    @Override
 	public void halt() throws IOException {
 		writer.writeInt(3);
 		writer.flush();
 		writer.close();
 		reader.close();
 	}
-	
+
+    @Override
 	public SolverResult solve(List<int[]> newConstraints, int timeLeftForSolver) throws IOException {
 		BooleanFormula.appendConstraints(newConstraints, info, writer);
 		writer.writeInt(2); // solve

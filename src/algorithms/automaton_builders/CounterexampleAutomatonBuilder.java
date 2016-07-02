@@ -77,7 +77,7 @@ public class CounterexampleAutomatonBuilder extends ScenarioAndLtlAutomatonBuild
 		prohibited.add(options.assemble());
 	}
 		
-	public static Optional<Automaton> build(Logger logger, ScenarioTree tree, int size, String solverParams,
+	public static Optional<Automaton> build(Logger logger, ScenarioTree tree, int size,
                                             List<String> events, List<String> actions,
                                             SatSolver satSolver, Verifier verifier, long finishTime,
                                             CompletenessType completenessType, NegativeScenarioTree negativeTree,
@@ -102,7 +102,7 @@ public class CounterexampleAutomatonBuilder extends ScenarioAndLtlAutomatonBuild
 				negationConstraints.stream().forEach(negationList::add);
 				final String formula = basicFormula.and(negationList.assemble())
 						.simplify().toLimbooleString();
-				expandableFormula = new ExpandableStringFormula(formula, logger, satSolver, solverParams);
+				expandableFormula = new ExpandableStringFormula(formula, logger, satSolver);
 			} else {
 				negationConstraints.addAll(builder.getNegationConstraints());
 				final Set<BooleanFormula> diffConstraints = new LinkedHashSet<>(negationConstraints);
@@ -118,12 +118,7 @@ public class CounterexampleAutomatonBuilder extends ScenarioAndLtlAutomatonBuild
 			// SAT-solve
 			final int secondsLeft = timeLeftForSolver(finishTime);
 			final SolveAsSatResult solution = expandableFormula.solve(secondsLeft);
-			final List<Assignment> list = solution.list();
-			final long time = solution.time;
-			
-			final SolverResult ass = list.isEmpty()
-				? new SolverResult(time >= secondsLeft * 1000 ? SolverResults.UNKNOWN : SolverResults.UNSAT)
-				: new SolverResult(list);
+			final SolverResult ass = solution.toSolverResult(secondsLeft);
 			logger.info(ass.type().toString());
 
 			final Optional<Automaton> automaton = ass.type() == SolverResults.SAT
@@ -146,7 +141,7 @@ public class CounterexampleAutomatonBuilder extends ScenarioAndLtlAutomatonBuild
 							logger.info("TOTAL TIME LIMIT EXCEEDED, ANSWER IS UNKNOWN");
 							return reportResult(logger, iteration, Optional.empty());
 						}
-						addProhibited(list, prohibited);
+						addProhibited(solution.list(), prohibited);
 						logger.info("ADDED PROHIBITED FSM");
 					} else {
 						return reportResult(logger, iteration, automaton);

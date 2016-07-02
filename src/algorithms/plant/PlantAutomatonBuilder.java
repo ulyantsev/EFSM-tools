@@ -22,9 +22,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
-import sat_solving.Assignment;
-import sat_solving.IncrementalInterface;
-import sat_solving.SolverResult;
+import sat_solving.*;
 import sat_solving.SolverResult.SolverResults;
 import scenario.StringActions;
 import scenario.StringScenario;
@@ -169,13 +167,13 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
                                                        NegativePlantScenarioForest negativeForest, int size,
                                                        String actionspecFilePath, List<String> events,
                                                        List<String> actions, NondetMooreVerifierPair verifier,
-                                                       long finishTime) throws IOException {
+                                                       long finishTime, SatSolver solver) throws IOException {
 		deleteTrash();
 		SimpleVerifier.setLoopWeight(size);
 		
 		final NegativePlantScenarioForest globalNegativeForest = new NegativePlantScenarioForest();
 		
-		IncrementalInterface incr = null;
+		SolverInterface inf = null;
 		
 		for (int iteration = 0; System.currentTimeMillis() < finishTime; iteration++) {
 			final PlantFormulaBuilder builder = new PlantFormulaBuilder(size, positiveForest,
@@ -188,11 +186,11 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 				final List<int[]> positiveConstraints = builder.positiveConstraints();
 				logger.info("Generated initial constraints.");
 				final String actionSpec = actionSpecification(actionspecFilePath, size, actions);
-				incr = new IncrementalInterface(positiveConstraints, actionSpec, logger);
+				inf = solver.createInterface(positiveConstraints, actionSpec, logger);
 			}
 			
 			// SAT-solve
-			final SolverResult ass = incr.solve(builder.negativeConstraints(), secondsLeft);
+			final SolverResult ass = inf.solve(builder.negativeConstraints(), secondsLeft);
 			logger.info(ass.type().toString());
 			if (ass.type() != SolverResults.SAT) {
 				return reportResult(logger, iteration, Optional.empty());
@@ -210,7 +208,7 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 			final List<Counterexample> mixedCE = new ArrayList<>(counterexamples.getLeft());
 			mixedCE.addAll(counterexamples.getRight());
 			if (mixedCE.stream().allMatch(Counterexample::isEmpty)) {
-				incr.halt();
+				inf.halt();
 				return reportResult(logger, iteration, Optional.of(automaton));
 			} else {
 				// find minimum CEs of both types
@@ -260,7 +258,7 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 				}
 			}
 		}
-		incr.halt();
+		inf.halt();
 		logger.info("TOTAL TIME LIMIT EXCEEDED, ANSWER IS UNKNOWN");
 		return Optional.empty();
 	}
@@ -285,9 +283,8 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 		for (int i = 0; i < counterexample.events().size(); i++) {
 			expr.add(MyBooleanExpression.getTautology());
 		}
-		final List<StringActions> actions = counterexample.actions().stream().map(
-				action -> new StringActions(String.join(",", action))
-		).collect(Collectors.toList());
+		final List<StringActions> actions = counterexample.actions().stream()
+                .map(action -> new StringActions(String.join(",", action))).collect(Collectors.toList());
 		negativeForest.addScenario(new StringScenario(true, counterexample.events(), expr, actions));
 		logger.info("ADDING COUNTEREXAMPLE: " + counterexample);
 	}

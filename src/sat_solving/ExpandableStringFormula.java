@@ -15,20 +15,17 @@ import bnf_formulae.BooleanFormula.SolveAsSatResult;
 public class ExpandableStringFormula {
 	private final String initialFormula;
 	private final Logger logger;
-	private final SatSolver satSolver;
-	private final String solverParams;
+	private final SatSolver solver;
 	private DimacsConversionInfo info;
 	
 	public DimacsConversionInfo info() {
 		return info;
 	}
 	
-	public ExpandableStringFormula(String initialFormula, Logger logger, SatSolver satSolver,
-			String solverParams) {
+	public ExpandableStringFormula(String initialFormula, Logger logger, SatSolver solver) {
 		this.initialFormula = initialFormula;
 		this.logger = logger;
-		this.satSolver = satSolver;
-		this.solverParams = solverParams;
+		this.solver = solver;
 	}
 	
 	/*
@@ -44,11 +41,10 @@ public class ExpandableStringFormula {
 	public SolveAsSatResult solve(int timeLeftForSolver) throws IOException {
 		if (info == null) {
 			final SolveAsSatResult solution = BooleanFormula.solveAsSat(initialFormula,
-					logger, solverParams, timeLeftForSolver, satSolver);
+					logger, timeLeftForSolver, solver);
 			info = solution.info;
 			return solution;
 		}
-		return BooleanFormula.solveDimacs(logger, timeLeftForSolver, satSolver,
-				solverParams, info);
+		return BooleanFormula.solveDimacs(logger, timeLeftForSolver, solver, info);
 	}
 }

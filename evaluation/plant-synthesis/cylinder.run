@@ -1,1 +1,0 @@
-plant-synthesis/cylinder.sc --actionNames home,end --actionNumber 2 --eventNames extend,retract,wait --eventNumber 3 --ltl plant-synthesis/cylinder.ltl --size 3 --varNumber 0 --tree tree.gv

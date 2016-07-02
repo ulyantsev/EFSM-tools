@@ -39,7 +39,7 @@ int main(int argc, const char* argv[]) {
         std::cout << " * Solve:         2 <time limit in seconds>" << std::endl;
         std::cout << " * Terminate:     3" << std::endl;
         std::cout << "As well as output: " << std::endl;
-        std::cout << " * SAT:     0 <assignemnt terminated by 0>" << std::endl;
+        std::cout << " * SAT:     0 <assignment terminated by 0>" << std::endl;
         std::cout << " * UNSAT:   1" << std::endl;
         std::cout << " * UNKNOWN: 2" << std::endl;
         return 1;

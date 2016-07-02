@@ -33,9 +33,9 @@ public class QuantifiedBooleanFormula {
 	private final BooleanFormula formulaExist; // the part which does not use forall-variables
 	private final BooleanFormula formulaTheRest;
 
-	public BooleanFormula existentialPart() {
+	/*public BooleanFormula existentialPart() {
 		return formulaExist;
-	}
+	}*/
 	
 	private BooleanFormula formula() {
 		return formulaExist.and(formulaTheRest);
@@ -108,12 +108,12 @@ public class QuantifiedBooleanFormula {
 	private static final String QDIMACS_FILENAME = "_tmp.qdimacs";
 	
 	private SolverResult depqbfSolve(Logger logger, int timeoutSeconds,
-			QdimacsConversionInfo qdimacs, String params) throws IOException {
+			QdimacsConversionInfo qdimacs) throws IOException {
 		long time = System.currentTimeMillis();
-		List<Assignment> list = new ArrayList<>();
-		String depqbfStr = "depqbf --max-secs=" + timeoutSeconds + " --qdo " + QDIMACS_FILENAME + " " + params;
+		final List<Assignment> list = new ArrayList<>();
+		final String depqbfStr = "depqbf --max-secs=" + timeoutSeconds + " --qdo " + QDIMACS_FILENAME;
 		logger.info(depqbfStr);
-		Process depqbf = Runtime.getRuntime().exec(depqbfStr);
+		final Process depqbf = Runtime.getRuntime().exec(depqbfStr);
 		try (BufferedReader input = new BufferedReader(new InputStreamReader(depqbf.getInputStream()))) {
 			input.lines().filter(s -> s.startsWith("V")).forEach(line -> {
 				String[] tokens = line.split(" ");
@@ -134,13 +134,14 @@ public class QuantifiedBooleanFormula {
 	}
 	
 	public boolean assignmentIsOk(List<Assignment> assignments) {
-		final Set<String> properVars = existVars.stream().map(v -> v.name).collect(Collectors.toCollection(TreeSet::new));
-		final Set<String> actualVars = assignments.stream().map(a -> a.var.name).collect(Collectors.toCollection(TreeSet::new));
+		final Set<String> properVars = existVars.stream().map(v -> v.name)
+                .collect(Collectors.toCollection(TreeSet::new));
+		final Set<String> actualVars = assignments.stream().map(a -> a.var.name)
+                .collect(Collectors.toCollection(TreeSet::new));
 		return properVars.equals(actualVars);
 	}
 
-	public SolverResult solve(Logger logger, QbfSolver solver, String solverParams,
-			int timeoutSeconds) throws IOException {
+	public SolverResult solve(Logger logger, QbfSolver solver, int timeoutSeconds) throws IOException {
 		final QdimacsConversionInfo qdimacs = toQdimacs(logger);
 		logger.info("DIMACS CNF: " + qdimacs.info.title());
 		
@@ -153,7 +154,7 @@ public class QuantifiedBooleanFormula {
 		
 		switch (solver) {
 		case DEPQBF:
-			return depqbfSolve(logger, timeoutSeconds, qdimacs, solverParams);
+			return depqbfSolve(logger, timeoutSeconds, qdimacs);
 		default:
 			throw new AssertionError();
 		}
@@ -163,9 +164,9 @@ public class QuantifiedBooleanFormula {
 	 * Produce an equivalent Boolean formula as a Limboole string.
 	 * The size of the formula is exponential of forallVars.size().
 	 */
-	public String flatten(int statesNum, int k, Logger logger,
-			List<String> events, List<String> actions,
-			Set<String> forbiddenYs, long finishTime, int sizeLimit, boolean withExistPart) throws FormulaSizeException, TimeLimitExceededException {
+	public String flatten(int statesNum, int k, Logger logger, List<String> events, List<String> actions,
+			Set<String> forbiddenYs, long finishTime, int sizeLimit, boolean withExistPart)
+            throws FormulaSizeException, TimeLimitExceededException {
 		final FormulaBuffer buffer = new FormulaBuffer(finishTime, sizeLimit);
 		logger.info("Number of 'forall' variables: " + forallVars.size());
 		long time = System.currentTimeMillis();
@@ -186,8 +187,9 @@ public class QuantifiedBooleanFormula {
 	 * Equivalent to constraints sigma_0_0 = 0 and A_1 and A_2 and B.
 	 */
 	private void findAllAssignmentsSigmaEps(List<String> events, int statesNum, List<String> actions,
-			int k, int j, BooleanFormula formulaToAppend, FormulaBuffer buffer,
-			int lastStateIndex, int lastPairIndex, Map<String, Integer> yAssignment, Set<String> forbiddenYs) throws FormulaSizeException, TimeLimitExceededException {
+			int k, int j, BooleanFormula formulaToAppend, FormulaBuffer buffer, int lastStateIndex,
+            int lastPairIndex, Map<String, Integer> yAssignment, Set<String> forbiddenYs)
+            throws FormulaSizeException, TimeLimitExceededException {
 		formulaToAppend = formulaToAppend.simplify();
 		if (j == k + 1) {
 			assert formulaToAppend != FalseFormula.INSTANCE; // in this case the formula is obviously unsatisfiable

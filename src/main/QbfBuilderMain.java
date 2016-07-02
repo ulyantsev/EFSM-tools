@@ -103,10 +103,6 @@ public class QbfBuilderMain extends MainBase {
 			metaVar = "<satSolver>")
 	private String satSolver = SatSolver.LINGELING.name();
 	
-	@Option(name = "--solverParams", aliases = { "-sp" },
-            usage = "additional solver parameters", metaVar = "<solverParams>")
-	private String solverParams = "";
-	
 	@Option(name = "--timeout", aliases = { "-to" },
             usage = "solver timeout (sec)", metaVar = "<timeout>")
 	private int timeout = 60 * 60 * 24;
@@ -203,11 +199,11 @@ public class QbfBuilderMain extends MainBase {
 			switch (ss) {
 			case QSAT: case EXP_SAT:
 				resultAutomaton = QbfAutomatonBuilder.build(logger(), tree, formulae, size,
-						qbfsolver, solverParams, ss == SolvingStrategy.EXP_SAT,
+						qbfsolver, ss == SolvingStrategy.EXP_SAT,
 						events, actions, satsolver, verifier, finishTime, completenesstype);
 				break;
 			case COUNTEREXAMPLE:
-				resultAutomaton = CounterexampleAutomatonBuilder.build(logger(), tree, size, solverParams,
+				resultAutomaton = CounterexampleAutomatonBuilder.build(logger(), tree, size,
                         events, actions, satsolver, verifier, finishTime,
 						completenesstype, negativeTree, !noCompletenessHeuristics);
 				break;

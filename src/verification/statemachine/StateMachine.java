@@ -22,9 +22,9 @@ public class StateMachine {
         return initialState;
     }
 
-    public SimpleState getState(String stateName) {
+    /*public SimpleState getState(String stateName) {
         return states.get(stateName);
-    }
+    }*/
 
     public void addState(SimpleState s) {
         checkInitial(s);

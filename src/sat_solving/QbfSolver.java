@@ -9,7 +9,7 @@ public enum QbfSolver {
 	
 	public final String command;
 
-	private QbfSolver(String command) {
+	QbfSolver(String command) {
 		this.command = command;
 	}
 }

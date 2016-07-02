@@ -20,6 +20,7 @@ import org.kohsuke.args4j.spi.BooleanOptionHandler;
 
 import algorithms.plant.PlantAutomatonBuilder;
 import algorithms.plant.RapidPlantAutomatonBuilder;
+import sat_solving.SatSolver;
 import scenario.StringScenario;
 import structures.plant.MooreNode;
 import structures.plant.NegativePlantScenarioForest;
@@ -103,7 +104,12 @@ public class PlantBuilderMain extends MainBase {
     @Option(name = "--fast", handler = BooleanOptionHandler.class,
             usage = "use the fast but inprecise way of model generation: "
                     + "size, negative scenarios, LTL formulae and action specifications are ignored")
-    private boolean fast;
+    private boolean fast = false;
+
+    @Option(name = "--solver",
+            usage = "SAT solver: INCREMENTAL_CRYPTOMINISAT (default), LINGELING, CRYPTOMINISAT",
+            metaVar = "<solver>")
+    private String strSolver = SatSolver.INCREMENTAL_CRYPTOMINISAT.name();
 
     private Optional<NondetMooreAutomaton> resultAutomaton = null;
     private final Map<String, String> colorRuleMap = new LinkedHashMap<>();
@@ -123,6 +129,14 @@ public class PlantBuilderMain extends MainBase {
     @Override
     protected void launcher() throws IOException, ParseException {
         initializeLogger(logFilePath);
+
+        SatSolver solver;
+        try {
+            solver = SatSolver.valueOf(strSolver);
+        } catch (IllegalArgumentException e) {
+            logger().warning(strSolver + " is not a valid SAT solver.");
+            return;
+        }
 
         final PositivePlantScenarioForest positiveForest = new PositivePlantScenarioForest();
         final List<StringScenario> scenarios = new ArrayList<>();
@@ -156,7 +170,7 @@ public class PlantBuilderMain extends MainBase {
         resultAutomaton = fast
                 ? RapidPlantAutomatonBuilder.build(positiveForest, events)
                 : PlantAutomatonBuilder.build(logger(), positiveForest, negativeForest, size,
-                actionspecFilePath, events, actions, verifier, finishTime);
+                actionspecFilePath, events, actions, verifier, finishTime, solver);
 
         if (!resultAutomaton.isPresent()) {
             logger().info("Automaton with " + size + " states NOT FOUND!");
