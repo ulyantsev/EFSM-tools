@@ -24,12 +24,22 @@ public class PlantAutomatonGeneratorMain extends MainBase {
 	private int size;
 
 	@Option(name = "--eventNumber", aliases = { "-en" },
-            usage = "used events number", metaVar = "<num>", required = true)
+            usage = "number of events", metaVar = "<num>", required = true)
 	private int eventNumber;
 
+    @Option(name = "--eventNames",
+            usage = "optional comma-separated event names (default: A, B, C, ...)",
+            metaVar = "<names>")
+    private String eventNames;
+
 	@Option(name = "--actionNumber", aliases = { "-an" },
-            usage = "used actions number", metaVar = "<num>", required = true)
+            usage = "number of actions", metaVar = "<num>", required = true)
 	private int actionNumber;
+
+    @Option(name = "--actionNames",
+            usage = "optional comma-separated action names (default: z0, z1, z2, ...)",
+            metaVar = "<names>")
+    private String actionNames;
 
 	@Option(name = "--initialPercentage", aliases = { "-ip" },
             usage = "initial state percentage (even if set to 0, at least one state will always be initial",
@@ -69,14 +79,17 @@ public class PlantAutomatonGeneratorMain extends MainBase {
         initializeRandom(randseed);
         final List<Boolean> isStart = new ArrayList<>();
 		final List<StringActions> stringActions = new ArrayList<>();
-		for (int i = 0; i < size; i++) {
+        final List<String> eventnames = eventNames(eventNames, eventNumber);
+        final List<String> events = events(eventnames, eventNumber, 0);
+        final List<String> actions = actions(actionNames, actionNumber);
+        for (int i = 0; i < size; i++) {
 			isStart.add(random().nextDouble() < initialPercentage * 0.01);
 			final Set<String> thisActions = new LinkedHashSet<>();
 			final int actionNum = minActions + random().nextInt(maxActions - minActions + 1);
 			for (int j = 0; j < actionNum; j++) {
 				String a;
 				do {
-					a = "z" + random().nextInt(actionNumber);
+					a = actions.get(random().nextInt(actionNumber));
 				} while (thisActions.contains(a));
 				thisActions.add(a);
 			}
@@ -89,7 +102,7 @@ public class PlantAutomatonGeneratorMain extends MainBase {
 		final NondetMooreAutomaton automaton = new NondetMooreAutomaton(size, stringActions, isStart);
 		for (int i = 0; i < size; i++) {
 			for (int j = 0; j < eventNumber; j++) {
-				final String event = String.valueOf((char)('A' + j));
+				final String event = events.get(j);
 				final Set<Integer> present = new TreeSet<>();
 				final int transitions = minTrans + random().nextInt(maxTrans - minTrans + 1);
 				for (int k = 0; k < transitions; k++) {

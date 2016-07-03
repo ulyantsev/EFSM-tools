@@ -6,6 +6,7 @@ package main.plant;
 
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -53,20 +54,17 @@ public class PlantScenarioGeneratorMain extends MainBase {
 			final int startState = startStates.get(random().nextInt(startStates.size()));
 			final int length = minLength + random().nextInt(maxLength - minLength + 1);
 			final List<String> events = new ArrayList<>();
-			final List<MyBooleanExpression> expressions = new ArrayList<>();
-			final List<StringActions> actions = new ArrayList<>();
+			final List<MyBooleanExpression> expressions
+                    = Collections.nCopies(length + 1, MyBooleanExpression.getTautology());
+            final List<StringActions> actions = new ArrayList<>();
 			events.add("");
 			actions.add(automaton.state(startState).actions());
-			expressions.add(MyBooleanExpression.getTautology());
 			int curState = startState;
 			for (int j = 0; j < length; j++) {
-				final List<MooreTransition> transitions
-					= new ArrayList<>(automaton.state(curState).transitions());
-				final MooreTransition transition
-					= transitions.get(random().nextInt(transitions.size()));
+				final List<MooreTransition> transitions = new ArrayList<>(automaton.state(curState).transitions());
+				final MooreTransition transition = transitions.get(random().nextInt(transitions.size()));
 				events.add(transition.event());
 				actions.add(transition.dst().actions());
-				expressions.add(MyBooleanExpression.getTautology());
 				curState = transition.dst().number();
 			}
 			scenarios.add(new StringScenario(true, events, expressions, actions));

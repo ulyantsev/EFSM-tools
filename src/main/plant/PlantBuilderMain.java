@@ -40,30 +40,30 @@ public class PlantBuilderMain extends MainBase {
     private int size;
 
     @Option(name = "--eventNumber", aliases = {"-en"},
-            usage = "number of events", metaVar = "<eventNumber>", required = true)
+            usage = "number of events", metaVar = "<num>", required = true)
     private int eventNumber;
 
     @Option(name = "--eventNames", aliases = {"-enm"},
             usage = "optional comma-separated event names (default: A, B, C, ...)",
-            metaVar = "<eventNames>")
+            metaVar = "<names>")
     private String eventNames;
 
     @Option(name = "--actionNumber", aliases = {"-an"},
-            usage = "number of actions", metaVar = "<actionNumber>", required = true)
+            usage = "number of actions", metaVar = "<num>", required = true)
     private int actionNumber;
 
     @Option(name = "--actionNames", aliases = {"-anm"},
             usage = "optional comma-separated action names (default: z0, z1, z2, ...)",
-            metaVar = "<actionNames>")
+            metaVar = "<names>")
     private String actionNames;
 
     @Option(name = "--colorRules",
             usage = "comma-separated state coloring rules for GV output, each in the form action->color",
-            metaVar = "<colorRules>")
+            metaVar = "<rules>")
     private String colorRules;
 
     @Option(name = "--varNumber", aliases = {"-vn"},
-            usage = "number of variables (x0, x1, ...)", metaVar = "<varNumber>")
+            usage = "number of variables (x0, x1, ...)", metaVar = "<num>")
     private int varNumber = 0;
 
     @Option(name = "--log", aliases = {"-l"},
@@ -192,13 +192,13 @@ public class PlantBuilderMain extends MainBase {
                     + " states WAS FOUND!");
             logger().info("Automaton builder execution time: " + executionTime());
 
-            if (resultAutomaton.get().isCompliantWithScenarios(scenarios, true, true)) {
+            if (resultAutomaton.get().compliesWith(scenarios, true, true)) {
                 logger().info("COMPLIES WITH SCENARIOS");
             } else {
                 logger().severe("NOT COMPLIES WITH SCENARIOS");
             }
 
-            if (resultAutomaton.get().isCompliantWithScenarios(negativeScenarios, false, false)) {
+            if (resultAutomaton.get().compliesWith(negativeScenarios, false, false)) {
                 logger().info("COMPLIES WITH NEGATIVE SCENARIOS");
             } else {
                 logger().severe("NOT COMPLIES WITH NEGATIVE SCENARIOS");

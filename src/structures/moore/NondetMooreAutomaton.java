@@ -80,7 +80,8 @@ public class NondetMooreAutomaton {
                         continue;
                     }
 					transitionRelation.put(from, new ArrayList<>());
-					final List<String> theseActions = Arrays.asList(line.split("\"")[1].split("\\\\n")[1].trim().split(", "));
+                    final String[] labels = line.split("\"")[1].split("\\\\n");
+					final List<String> theseActions = Arrays.asList(labels).subList(1, labels.length);
 					actionRelation.put(from, theseActions);
 					actions.addAll(theseActions);
 				}
@@ -239,17 +240,20 @@ public class NondetMooreAutomaton {
     			eventThresholds.stream().map(t -> "CONT_INPUT_" + t.getKey())
     			.collect(Collectors.toList()));
     	final StringBuilder sb = new StringBuilder();
-    	/*sb.append("MODULE main()\n");
-    	sb.append("VAR\n");
-    	sb.append("    plant: PLANT(" + inputLine + ");\n");
-		for (Pair<String, Parameter> entry : eventThresholds) {
-			final String paramName = entry.getLeft();
-			final Parameter param = entry.getRight();
-			sb.append("    CONT_INPUT_" + paramName + ": " + param.nusmvType()
-					+ ";\n");
+
+        if (false) {
+            sb.append("MODULE main()\n");
+            sb.append("VAR\n");
+            sb.append("    plant: PLANT(" + inputLine + ");\n");
+            for (Pair<String, Parameter> entry : eventThresholds) {
+                final String paramName = entry.getLeft();
+                final Parameter param = entry.getRight();
+                sb.append("    CONT_INPUT_" + paramName + ": " + param.nusmvType()
+                        + ";\n");
+            }
+            sb.append("\n");
 		}
-    	
-    	sb.append("\n");*/
+
     	sb.append("MODULE PLANT(" + inputLine + ")\n");
     	sb.append("VAR\n");
     	sb.append("    unsupported: boolean;\n");
@@ -367,8 +371,7 @@ public class NondetMooreAutomaton {
     	return sb.toString();
     }
     
-    public boolean isCompliantWithScenarios(List<StringScenario> scenarios, boolean positive,
-                                            boolean markUnsupportedTransitions) {
+    public boolean compliesWith(List<StringScenario> scenarios, boolean positive, boolean markUnsupportedTransitions) {
     	final Set<MooreTransition> supported = new HashSet<>();
 
         for (StringScenario sc : scenarios) {
@@ -480,54 +483,5 @@ public class NondetMooreAutomaton {
         }
 
         return copy;
-    }
-
-    public void removeDeadlocks() {
-    	Map<MooreNode, Set<MooreTransition>> reversedTransitions = null;
-    	final Set<MooreNode> allDeadlockStates = new HashSet<>();
-    	while (true) {
-	    	final Set<MooreNode> deadlockStates = new HashSet<>();
-	    	// initial deadlock states
-	    	for (MooreNode state : states) {
-	    		if (state.transitions().isEmpty()) {
-	    			deadlockStates.add(state);
-	    		}
-	    	}
-	    	if (!allDeadlockStates.addAll(deadlockStates)) {
-	    		return;
-	    	}
-	    	final Deque<MooreNode> unprocessedNodes = new ArrayDeque<>(deadlockStates);
-
-	    	if (reversedTransitions == null) {
-		    	reversedTransitions = new HashMap<>();
-		    	for (MooreNode state : states) {
-		    		reversedTransitions.put(state, new HashSet<>());
-		    	}
-		    	for (MooreNode state : states) {
-		    		for (MooreTransition t : state.transitions()) {
-		    			reversedTransitions.get(t.dst()).add(t);
-		    		}
-		    	}
-	    	}
-	    	while (!unprocessedNodes.isEmpty()) {
-	    		final MooreNode node = unprocessedNodes.pollFirst();
-	    		final List<MooreTransition> trans = new ArrayList<>(reversedTransitions.get(node));
-	    		for (MooreTransition t : trans) {
-	    			t.src().removeTransition(t);
-	    		}
-	    		for (MooreTransition t : trans) {
-	    			if (t.src().transitionsCount() == 0) {
-	    				deadlockStates.add(t.src());
-	    				if (!allDeadlockStates.add(t.src())) {
-	    					unprocessedNodes.add(t.src());
-	    				}
-	    			}
-	    		}
-	    	}
-	    	
-	    	for (MooreNode node : deadlockStates) {
-	    		isInitial.set(node.number(), false);
-	    	}
-    	}
     }
 }
