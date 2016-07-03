@@ -77,7 +77,7 @@ public class ScenarioTree {
     }
 
     public String[] events() {
-        Set<String> events = new HashSet<>();
+        final Set<String> events = new HashSet<>();
         for (MealyNode node : nodes) {
             for (MealyTransition transition : node.transitions()) {
                 events.add(transition.event());
@@ -87,7 +87,7 @@ public class ScenarioTree {
     }
     
     public List<String> actions() {
-        Set<String> actions = new TreeSet<>();
+        final Set<String> actions = new TreeSet<>();
         for (MealyNode node : nodes) {
             for (MealyTransition transition : node.transitions()) {
             	for (String action : transition.actions().getActions()) {
@@ -103,7 +103,7 @@ public class ScenarioTree {
     }
         
     public String[] variables() {
-        Set<String> variables = new HashSet<>();
+        final Set<String> variables = new HashSet<>();
         for (MealyNode node : nodes) {
             for (MealyTransition transition : node.transitions()) {
                 String[] transitionVars = transition.expr().getVariables();
@@ -118,7 +118,7 @@ public class ScenarioTree {
     }
     
     public Map<String, List<MyBooleanExpression>> pairsEventExpression() {
-        Map<String, List<MyBooleanExpression>> ans = new HashMap<>();
+        final Map<String, List<MyBooleanExpression>> ans = new HashMap<>();
         for (MealyNode node : nodes) {
             for (MealyTransition transition : node.transitions()) {
                 String event = transition.event();
@@ -139,8 +139,8 @@ public class ScenarioTree {
     }
     
     public Collection<MyBooleanExpression> expressions() {
-        List<MyBooleanExpression> ans = new ArrayList<>();
-        for (MealyNode node : this.nodes) {
+        final List<MyBooleanExpression> ans = new ArrayList<>();
+        for (MealyNode node : nodes) {
             for (MealyTransition t : node.transitions()) {
                 if (!ans.contains(t.expr())) {
                     ans.add(t.expr());

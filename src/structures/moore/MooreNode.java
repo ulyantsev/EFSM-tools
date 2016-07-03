@@ -33,8 +33,7 @@ public class MooreNode {
     }
     
     public void addTransition(String event, MooreNode dst) {
-        final MooreTransition transition = new MooreTransition(this, dst, event);
-        transitions.add(transition);
+        transitions.add(new MooreTransition(this, dst, event));
     }
     
     public void addTransition(MooreTransition transition) {
@@ -81,12 +80,8 @@ public class MooreNode {
     }
     
     public List<MooreNode> allDst(String event) {
-    	final List<MooreNode> ans = new ArrayList<>();
-    	for (MooreTransition t : transitions) {
-    		if (t.event().equals(event)) {
-    			ans.add(t.dst());
-    		}
-    	}
-    	return ans;
+    	return transitions.stream().filter(t -> t.event().equals(event))
+                .map(MooreTransition::dst)
+                .collect(Collectors.toList());
     }
 }

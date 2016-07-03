@@ -47,6 +47,17 @@ public abstract class PlantScenarioForest {
         return node;
     }
 
+    protected MooreNode properRoot(StringActions actions) {
+        MooreNode properRoot = null;
+        for (MooreNode root : roots) {
+            if (root.actions().equals(actions)) {
+                properRoot = root;
+                break;
+            }
+        }
+        return properRoot;
+    }
+
     protected void checkScenario(StringScenario scenario) {
     	for (int i = 0; i < scenario.size(); i++) {
         	if (scenario.getEvents(i).size() != 1) {

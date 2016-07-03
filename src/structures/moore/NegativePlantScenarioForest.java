@@ -39,14 +39,7 @@ public class NegativePlantScenarioForest extends PlantScenarioForest {
 	public void addScenario(StringScenario scenario) {
     	checkScenario(scenario);
     	final StringActions firstActions = scenario.getActions(0);
-    	
-    	MooreNode properRoot = null;
-    	for (MooreNode root : roots) {
-    		if (root.actions().equals(firstActions)) {
-    			properRoot = root;
-    			break;
-    		}
-    	}
+    	MooreNode properRoot = properRoot(firstActions);
     	if (properRoot == null) {
     		properRoot = new MooreNode(nodes.size(), firstActions);
     		nodes.add(properRoot);
