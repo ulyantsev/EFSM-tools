@@ -54,7 +54,7 @@ public class MooreNode {
         return Collections.unmodifiableList(transitions);
     }
     
-    public int transitionsCount() {
+    public int transitionCount() {
         return transitions.size();
     }
     

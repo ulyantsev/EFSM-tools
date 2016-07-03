@@ -146,10 +146,7 @@ public abstract class FastFormulaBuilder {
         for (int k = 0; k < colorSize; k++) {
             for (int i = k + 1; i < colorSize; i++) {
                 for (int j = i + 1; j < colorSize - 1; j++) {
-                    constraints.add(new int[] {
-                            -pVar(j, i).number,
-                            -pVar(j + 1, k).number
-                    });
+                    constraints.add(new int[] { -pVar(j, i).number, -pVar(j + 1, k).number });
                 }
             }
         }
@@ -158,16 +155,10 @@ public abstract class FastFormulaBuilder {
     protected void pDefinitions(List<int[]> constraints) {
         for (int i = 0; i < colorSize; i++) {
             for (int j = i + 1; j < colorSize; j++) {
-                constraints.add(new int[] {
-                        -pVar(j, i).number,
-                        tVar(i, j).number
-                });
+                constraints.add(new int[] { -pVar(j, i).number, tVar(i, j).number });
                 final int[] options = new int[i + 2];
                 for (int k = i - 1; k >= 0; k--) {
-                    constraints.add(new int[] {
-                            -pVar(j, i).number,
-                            -tVar(k, j).number
-                    });
+                    constraints.add(new int[] { -pVar(j, i).number, -tVar(k, j).number });
                     options[k] = tVar(k, j).number;
                 }
                 options[i] = -tVar(i, j).number;
@@ -182,10 +173,7 @@ public abstract class FastFormulaBuilder {
             for (int j = i + 1; j < colorSize; j++) {
                 final int[] options = new int[events.size() + 1];
                 for (int ei = 0; ei < events.size(); ei++) {
-                    constraints.add(new int[] {
-                            -yVar(i, j, ei).number,
-                            tVar(i, j).number
-                    });
+                    constraints.add(new int[] { -yVar(i, j, ei).number, tVar(i, j).number });
                     options[ei] = yVar(i, j, ei).number;
                 }
                 options[events.size()] = -tVar(i, j).number;
@@ -200,16 +188,10 @@ public abstract class FastFormulaBuilder {
             for (int i = 0; i < colorSize; i++) {
                 for (int j = i + 1; j < colorSize; j++) {
                     for (int ei1 = 0; ei1 < events.size(); ei1++) {
-                        constraints.add(new int[] {
-                                -mVar(ei1, i, j).number,
-                                yVar(i, j, ei1).number
-                        });
+                        constraints.add(new int[] { -mVar(ei1, i, j).number, yVar(i, j, ei1).number });
                         final int[] options = new int[ei1 + 2];
                         for (int ei2 = ei1 - 1; ei2 >= 0; ei2--) {
-                            constraints.add(new int[] {
-                                    -mVar(ei1, i, j).number,
-                                    -yVar(i, j, ei2).number
-                            });
+                            constraints.add(new int[] { -mVar(ei1, i, j).number, -yVar(i, j, ei2).number });
                             options[ei2] = yVar(i, j, ei2).number;
                         }
                         options[ei1] = -yVar(i, j, ei1).number;
@@ -224,10 +206,8 @@ public abstract class FastFormulaBuilder {
                     for (int k = 0; k < events.size(); k++) {
                         for (int n = k + 1; n < events.size(); n++) {
                             constraints.add(new int[] {
-                                    -pVar(j, i).number,
-                                    -pVar(j + 1, i).number,
-                                    -mVar(n, i, j).number,
-                                    -mVar(k, i, j + 1).number
+                                    -pVar(j, i).number, -pVar(j + 1, i).number,
+                                    -mVar(n, i, j).number, -mVar(k, i, j + 1).number
                             });
                         }
                     }
@@ -236,11 +216,7 @@ public abstract class FastFormulaBuilder {
         } else {
             for (int i = 0; i < colorSize; i++) {
                 for (int j = i + 1; j < colorSize - 1; j++) {
-                    constraints.add(new int[] {
-                            -pVar(j, i).number,
-                            -pVar(j + 1, i).number,
-                            yVar(i, j, 0).number
-                    });
+                    constraints.add(new int[] { -pVar(j, i).number, -pVar(j + 1, i).number, yVar(i, j, 0).number });
                 }
             }
         }

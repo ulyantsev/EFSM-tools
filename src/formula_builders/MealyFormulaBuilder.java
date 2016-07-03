@@ -121,10 +121,7 @@ public class MealyFormulaBuilder extends FastFormulaBuilder {
 			for (MealyNode other : adjacent.get(node)) {
 				if (other.number() < node.number()) {
 					for (int color = 0; color < colorSize; color++) {
-						constraints.add(new int[] {
-								-varNums[nodeNum][color],
-								-varNums[other.number()][color],
-						});
+						constraints.add(new int[] { -varNums[nodeNum][color], -varNums[other.number()][color] });
 					}
 				}
 			}
@@ -140,16 +137,8 @@ public class MealyFormulaBuilder extends FastFormulaBuilder {
 						final BooleanVariable childVar = xVar(t.dst().number(), childColor);
 						final BooleanVariable relationVar = yVar(nodeColor, childColor,
 								eventIndices.get(t.event()));
-						constraints.add(new int[] {
-								relationVar.number,
-								-nodeVar.number,
-								-childVar.number
-						});
-						constraints.add(new int[] {
-								-relationVar.number,
-								-nodeVar.number,
-								childVar.number
-						});
+						constraints.add(new int[] { relationVar.number, -nodeVar.number, -childVar.number });
+						constraints.add(new int[] { -relationVar.number, -nodeVar.number, childVar.number });
 					}
 				}
 			}
@@ -181,9 +170,7 @@ public class MealyFormulaBuilder extends FastFormulaBuilder {
 	private void negativeScenarioBasis(List<int[]> constraints) {
 		if (!negativeBasisAdded) {
 			for (int i = 0; i < colorSize; i++) {
-				constraints.add(new int[] {
-						(i == 0 ? 1 : -1) * xxVar(0, i, false).number
-				});
+				constraints.add(new int[] { (i == 0 ? 1 : -1) * xxVar(0, i, false).number });
 			}
 		}
 	}
@@ -191,9 +178,7 @@ public class MealyFormulaBuilder extends FastFormulaBuilder {
 	private void globalNegativeScenarioBasis(List<int[]> constraints) {
 		if (!negativeBasisAdded) {
 			for (int i = 0; i < colorSize; i++) {
-				constraints.add(new int[] {
-						xxVar(0, i, true).number
-				});
+				constraints.add(new int[] { xxVar(0, i, true).number });
 			}
 		}
 	}

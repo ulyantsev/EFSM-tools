@@ -150,14 +150,14 @@ public class PlantBuilderMain extends MainBase {
             return;
         }
 
-        final PositivePlantScenarioForest positiveForest = new PositivePlantScenarioForest();
+        final PositivePlantScenarioForest positiveForest = new PositivePlantScenarioForest(!deterministic);
         final List<StringScenario> scenarios = new ArrayList<>();
         for (String scenarioPath : arguments) {
             scenarios.addAll(loadScenarios(scenarioPath, varNumber));
             logger().info("Loaded scenarios from " + scenarioPath);
         }
         scenarios.forEach(positiveForest::addScenario);
-        logger().info("Scenario tree size: " + positiveForest.nodeCount());
+        logger().info("Scenario forest size: " + positiveForest.nodeCount());
         saveScenarioTree(positiveForest, treeFilePath);
         final List<String> eventnames = eventNames(eventNames, eventNumber);
         final List<String> events = events(eventnames, eventNumber, varNumber);
@@ -188,17 +188,17 @@ public class PlantBuilderMain extends MainBase {
             logger().info("Automaton with " + size + " states NOT FOUND!");
             logger().info("Automaton builder execution time: " + executionTime());
         } else {
-            logger().info("Automaton with " + resultAutomaton.get().stateCount()
-                    + " states WAS FOUND!");
+            final NondetMooreAutomaton a = resultAutomaton.get();
+            logger().info("Automaton with " + a.stateCount() + " states WAS FOUND!");
             logger().info("Automaton builder execution time: " + executionTime());
 
-            if (resultAutomaton.get().compliesWith(scenarios, true, true)) {
+            if (a.compliesWith(scenarios, true, true)) {
                 logger().info("COMPLIES WITH SCENARIOS");
             } else {
                 logger().severe("NOT COMPLIES WITH SCENARIOS");
             }
 
-            if (resultAutomaton.get().compliesWith(negativeScenarios, false, false)) {
+            if (a.compliesWith(negativeScenarios, false, false)) {
                 logger().info("COMPLIES WITH NEGATIVE SCENARIOS");
             } else {
                 logger().severe("NOT COMPLIES WITH NEGATIVE SCENARIOS");
@@ -217,16 +217,15 @@ public class PlantBuilderMain extends MainBase {
                 }
             }
 
-            saveToFile(resultAutomaton.get().toString(colorRuleMap, Optional.empty()), resultFilePath);
+            saveToFile(a.toString(colorRuleMap, Optional.empty()), resultFilePath);
 
             if (nusmvFilePath != null) {
-                saveToFile(resultAutomaton.get().toNuSMVString(events, actions,
+                saveToFile(a.toNuSMVString(events, actions,
                         new ArrayList<>(), Optional.empty()), nusmvFilePath);
             }
 
             final Verifier usualVerifier = new Verifier(logger(), strFormulae, events, actions);
-            final List<Counterexample> counterexamples =
-                    usualVerifier.verifyNondetMoore(resultAutomaton.get());
+            final List<Counterexample> counterexamples = usualVerifier.verifyNondetMoore(a);
             if (counterexamples.stream().allMatch(Counterexample::isEmpty)) {
                 logger().info("VERIFIED");
             } else {
@@ -236,20 +235,35 @@ public class PlantBuilderMain extends MainBase {
             // completeness check
             boolean complete = true;
             if (!incomplete) {
-                for (MooreNode s : resultAutomaton.get().states()) {
+                for (MooreNode s : a.states()) {
                     for (String event : events) {
                         complete &= s.transitions().stream().anyMatch(t -> t.event().endsWith(event));
                     }
                 }
             } else {
-                for (MooreNode s : resultAutomaton.get().states()) {
-                    complete &= s.transitions().size() != 0;
+                for (MooreNode s : a.states()) {
+                    complete &= s.transitionCount() != 0;
                 }
             }
             if (complete) {
                 logger().info("COMPLETE");
             } else {
                 logger().severe("INCOMPLETE");
+            }
+
+            // determinism check
+            if (deterministic) {
+                boolean checked = true;
+                for (MooreNode s : a.states()) {
+                    for (String event : events) {
+                        checked &= s.allDst(event).size() <= 1;
+                    }
+                }
+                if (checked) {
+                    logger().info("DETERMINISTIC");
+                } else {
+                    logger().severe("NONDETERMINISTIC");
+                }
             }
         }
     }

@@ -34,14 +34,19 @@ public abstract class PlantScenarioForest {
      * varNumber = -1 for no variable removal
      */
     public void load(String filepath, int varNumber) throws FileNotFoundException, ParseException {
-        for (StringScenario scenario : StringScenario.loadScenarios(filepath, varNumber)) {
-        	addScenario(scenario);
-        }
+        StringScenario.loadScenarios(filepath, varNumber).forEach(this::addScenario);
     }
     
-    protected abstract void addScenario(StringScenario scenarion);
+    protected abstract void addScenario(StringScenario scenario);
     protected abstract MooreNode addTransition(MooreNode src, String event, StringActions actions);
-    
+
+    protected MooreNode addScenarioFrom(MooreNode node, StringScenario scenario) {
+        for (int i = 1; i < scenario.size(); i++) {
+            node = addTransition(node, scenario.getEvents(i).get(0), scenario.getActions(i));
+        }
+        return node;
+    }
+
     protected void checkScenario(StringScenario scenario) {
     	for (int i = 0; i < scenario.size(); i++) {
         	if (scenario.getEvents(i).size() != 1) {
@@ -52,5 +57,26 @@ public abstract class PlantScenarioForest {
     	if (!scenario.getEvents(0).get(0).isEmpty()) {
     		throw new RuntimeException("The first event must be dummy (i.e. empty string)!");
     	}
+    }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder();
+        sb.append("# generated file; view: dot -Tpng <filename> > filename.png\n");
+        sb.append("digraph ScenarioForest {\n    node [shape = circle];\n");
+
+        for (MooreNode node : nodes) {
+            sb.append("    " + node.number() + " [label = \"" + node + "\"];\n");
+        }
+
+        for (MooreNode node : nodes) {
+            for (MooreTransition t : node.transitions()) {
+                sb.append("    " + t.src().number() + " -> " + t.dst().number()
+                        + " [label = \"" + t.event() + "\"];\n");
+            }
+        }
+
+        sb.append("}\n");
+        return sb.toString();
     }
 }

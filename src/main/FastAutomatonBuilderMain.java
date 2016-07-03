@@ -150,24 +150,25 @@ public class FastAutomatonBuilderMain extends MainBase {
                 logger().info("Automaton with " + size + " states NOT FOUND!");
                 logger().info("Automaton builder execution time: " + executionTime());
             } else {
+                final MealyAutomaton a = resultAutomaton.get();
                 logger().info("Automaton with " + size + " states WAS FOUND!");
                 logger().info("Automaton builder execution time: " + executionTime());
 
-                if (scenarios.stream().allMatch(sc -> resultAutomaton.get().compliesWith(sc))) {
+                if (scenarios.stream().allMatch(sc -> a.compliesWith(sc))) {
                     logger().info("COMPLIES WITH SCENARIOS");
                 } else {
                     logger().severe("NOT COMPLIES WITH SCENARIOS");
                 }
 
-                if (negativeScenarios.stream().allMatch(sc -> !resultAutomaton.get().compliesWith(sc))) {
+                if (negativeScenarios.stream().allMatch(sc -> !a.compliesWith(sc))) {
                     logger().info("COMPLIES WITH NEGATIVE SCENARIOS");
                 } else {
                     logger().severe("NOT COMPLIES WITH NEGATIVE SCENARIOS");
                 }
 
-                saveToFile(resultAutomaton.get(), resultFilePath);
+                saveToFile(a, resultFilePath);
 
-                boolean verified = verifier.verify(resultAutomaton.get());
+                boolean verified = verifier.verify(a);
                 if (verified) {
                     logger().info("VERIFIED");
                 } else {
@@ -177,11 +178,11 @@ public class FastAutomatonBuilderMain extends MainBase {
                 // completeness check
                 boolean isComplete = true;
                 if (complete) {
-                    for (MealyNode s : resultAutomaton.get().states()) {
+                    for (MealyNode s : a.states()) {
                         isComplete &= s.transitionCount() == events.size();
                     }
                 } else {
-                    for (MealyNode s : resultAutomaton.get().states()) {
+                    for (MealyNode s : a.states()) {
                         isComplete &= s.transitionCount() != 0;
                     }
                 }

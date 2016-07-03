@@ -117,17 +117,9 @@ public class PlantFormulaBuilder extends FastFormulaBuilder {
 					for (int childColor = 0; childColor < colorSize; childColor++) {
 						final BooleanVariable childVar = xVar(t.dst().number(), childColor);
 						final BooleanVariable relationVar = yVar(nodeColor, childColor, t.event());
-						constraints.add(new int[] {
-								relationVar.number,
-								-nodeVar.number,
-								-childVar.number
-						});
+						constraints.add(new int[] { relationVar.number, -nodeVar.number, -childVar.number });
                         if (deterministic) {
-                            constraints.add(new int[] {
-                                    -relationVar.number,
-                                    -nodeVar.number,
-                                    childVar.number
-                            });
+                            constraints.add(new int[] { -relationVar.number, -nodeVar.number, childVar.number });
                         }
 					}
 				}
@@ -143,8 +135,7 @@ public class PlantFormulaBuilder extends FastFormulaBuilder {
 					final String action = actions.get(ai);
 					constraints.add(new int[] {
 							-xVar(node.number(), nodeColor).number,
-							(actionSequence.contains(action) ? 1 : -1)
-								* zVar(nodeColor, ai).number
+							(actionSequence.contains(action) ? 1 : -1) * zVar(nodeColor, ai).number
 					});
 				}
 			}
@@ -179,9 +170,7 @@ public class PlantFormulaBuilder extends FastFormulaBuilder {
 			}
 			// the global negative root is colored in all colors
 			for (int nodeColor = 0; nodeColor < colorSize; nodeColor++) {
-				constraints.add(new int[] {
-						xxVar(root.number(), nodeColor, true).number
-				});
+				constraints.add(new int[] { xxVar(root.number(), nodeColor, true).number });
 			}
 		}
 	}

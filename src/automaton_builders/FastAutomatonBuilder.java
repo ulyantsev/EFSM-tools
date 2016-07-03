@@ -119,11 +119,11 @@ public class FastAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 					}
 				} else {
 					// check
-					MealyTransition t = state.transition(event, MyBooleanExpression.getTautology());
+					final MealyTransition t = state.transition(event, MyBooleanExpression.getTautology());
 					if (t.dst() != ans.state(to)) {
 						logger.severe("INVALID TRANSITION DESTINATION " + a.var);
 					}
-					List<String> actualActions = new ArrayList<>(new TreeSet<>(
+					final List<String> actualActions = new ArrayList<>(new TreeSet<>(
 							Arrays.asList(t.actions().getActions())));
 					if (!actualActions.equals(properUniqueActions)) {
 						logger.severe("ACTIONS DO NOT MATCH");
@@ -289,13 +289,10 @@ public class FastAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 
 	protected static void addCounterexample(Logger logger, Counterexample counterexample,
                                             NegativeScenarioTree negativeForest) {
-		final List<MyBooleanExpression> expr = new ArrayList<>();
-		for (int i = 0; i < counterexample.events().size(); i++) {
-			expr.add(MyBooleanExpression.getTautology());
-		}
-		final List<StringActions> actions = counterexample.actions().stream().map(
-				action -> new StringActions(String.join(",", action))
-		).collect(Collectors.toList());
+        final List<MyBooleanExpression> expr =
+                Collections.nCopies(counterexample.events().size(), MyBooleanExpression.getTautology());
+		final List<StringActions> actions = counterexample.actions().stream()
+                .map(action -> new StringActions(String.join(",", action))).collect(Collectors.toList());
 		try {
 			negativeForest.addScenario(new StringScenario(true,
 					counterexample.events(), expr, actions), counterexample.loopLength);

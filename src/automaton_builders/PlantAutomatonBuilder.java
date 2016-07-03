@@ -7,15 +7,7 @@ package automaton_builders;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Scanner;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -46,73 +38,64 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 	}
 		
 	private static NondetMooreAutomaton constructAutomatonFromAssignment(List<Assignment> ass,
-                                                                         PositivePlantScenarioForest forest,
-                                                                         int colorSize, List<String> actionList,
-                                                                         List<String> eventList) {
+            PositivePlantScenarioForest forest, int colorSize, List<String> actionList, List<String> eventList) {
 		final List<Boolean> isStart = Arrays.asList(ArrayUtils.toObject(new boolean[colorSize]));
 		final List<List<String>> actions = new ArrayList<>();
-		for (int i = 0; i < isStart.size(); i++) {
+		for (int i = 0; i < colorSize; i++) {
 			actions.add(new ArrayList<>());
 		}
 		
 		final Map<Integer, Integer> coloring = new HashMap<>();
-		for (Assignment a : ass) {
-			if (a.value) {
-				final String tokens[] = a.var.name.split("_");
-				if (tokens[0].equals("x")) {
-					for (MooreNode root : forest.roots()) {
-						if (tokens[1].equals(root.number() + "")) {
-							final int state = Integer.parseInt(tokens[2]);
-							isStart.set(state, true);
-						}
-					}
-					final int node = Integer.parseInt(tokens[1]);
-					final int color = Integer.parseInt(tokens[2]);
-					coloring.put(node, color);
-				} else if (tokens[0].equals("z")) {
-					final int state = Integer.parseInt(tokens[1]);
-					final String action = actionList.get(Integer.parseInt(tokens[2]));
-					actions.get(state).add(action);
-				}
-			}
-		}
+        ass.stream().filter(a -> a.value).forEach(a -> {
+            final String tokens[] = a.var.name.split("_");
+            if (tokens[0].equals("x")) {
+                for (MooreNode root : forest.roots()) {
+                    if (tokens[1].equals(String.valueOf(root.number()))) {
+                        final int state = Integer.parseInt(tokens[2]);
+                        isStart.set(state, true);
+                    }
+                }
+                final int node = Integer.parseInt(tokens[1]);
+                final int color = Integer.parseInt(tokens[2]);
+                coloring.put(node, color);
+            } else if (tokens[0].equals("z")) {
+                final int state = Integer.parseInt(tokens[1]);
+                final String action = actionList.get(Integer.parseInt(tokens[2]));
+                actions.get(state).add(action);
+            }
+        });
 		
 		final NondetMooreAutomaton automaton = new NondetMooreAutomaton(colorSize,
 				actions.stream().map(l -> new StringActions(String.join(",", l)))
 				.collect(Collectors.toList()), isStart);
-		
-		for (Assignment a : ass) {
-			if (a.value) {
-				final String tokens[] = a.var.name.split("_");
-				if (tokens[0].equals("y")) {
-					final int from = Integer.parseInt(tokens[1]);
-					final int to = Integer.parseInt(tokens[2]);
-					final String event = eventList.get(Integer.parseInt(tokens[3]));
-					automaton.state(from).addTransition(event, automaton.state(to));
-				}
-			}
-		}
-		
-		// remove unused transitions unless this does not violate completeness
+
+        ass.stream().filter(a -> a.value).forEach(a -> {
+            final String tokens[] = a.var.name.split("_");
+            if (tokens[0].equals("y")) {
+                final int from = Integer.parseInt(tokens[1]);
+                final int to = Integer.parseInt(tokens[2]);
+                final String event = eventList.get(Integer.parseInt(tokens[3]));
+                automaton.state(from).addTransition(event, automaton.state(to));
+            }
+        });
+
+        // identify used transitions
 		final Set<MooreTransition> usedTransitions = new HashSet<>();
 		for (MooreNode node : forest.nodes()) {
 			final int source = coloring.get(node.number());
-			final int transitionNumber = node.transitions().size();
-			if (transitionNumber == 0) {
-				continue;
-			} else if (transitionNumber > 1) {
-				throw new AssertionError();
-			}
-			final MooreTransition scTransition = node.transitions().iterator().next();
-			final String event = scTransition.event();
-			final int dest = coloring.get(scTransition.dst().number());
-			for (MooreTransition t : automaton.state(source).transitions()) {
-				if (t.event().equals(event) && t.dst().number() == dest) {
-					usedTransitions.add(t);
-				}
-			}
+            for (MooreTransition scTransition : node.transitions()) {
+                final String event = scTransition.event();
+                final int dest = coloring.get(scTransition.dst().number());
+                for (MooreTransition t : automaton.state(source).transitions()) {
+                    if (t.event().equals(event) && t.dst().number() == dest) {
+                        usedTransitions.add(t);
+                    }
+                }
+            }
 		}
-		for (int i = 0; i < colorSize; i++) {
+
+        // remove unused transitions unless it violates completeness
+        for (int i = 0; i < colorSize; i++) {
 			final List<MooreTransition> copy = new ArrayList<>(automaton.state(i).transitions());
 			for (MooreTransition tCopy : copy) {
 				if (!usedTransitions.contains(tCopy)) {
@@ -280,10 +263,8 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 	
 	protected static void addCounterexample(Logger logger, Counterexample counterexample,
                                             NegativePlantScenarioForest negativeForest) {
-		final List<MyBooleanExpression> expr = new ArrayList<>();
-		for (int i = 0; i < counterexample.events().size(); i++) {
-			expr.add(MyBooleanExpression.getTautology());
-		}
+		final List<MyBooleanExpression> expr =
+                Collections.nCopies(counterexample.events().size(), MyBooleanExpression.getTautology());
 		final List<StringActions> actions = counterexample.actions().stream()
                 .map(action -> new StringActions(String.join(",", action))).collect(Collectors.toList());
 		negativeForest.addScenario(new StringScenario(true, counterexample.events(), expr, actions));
