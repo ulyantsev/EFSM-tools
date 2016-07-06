@@ -4,22 +4,13 @@ package main.plant;
  * (c) Igor Buzhinsky
  */
 
-import java.io.IOException;
-import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
+import automaton_builders.PlantAutomatonBuilder;
+import automaton_builders.RapidPlantAutomatonBuilder;
 import meta.Author;
 import meta.MainBase;
 import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.Option;
 import org.kohsuke.args4j.spi.BooleanOptionHandler;
-
-import automaton_builders.PlantAutomatonBuilder;
-import automaton_builders.RapidPlantAutomatonBuilder;
 import sat_solving.SatSolver;
 import scenario.StringScenario;
 import structures.moore.MooreNode;
@@ -30,6 +21,10 @@ import verification.ltl.LtlParser;
 import verification.verifier.Counterexample;
 import verification.verifier.NondetMooreVerifierPair;
 import verification.verifier.Verifier;
+
+import java.io.IOException;
+import java.text.ParseException;
+import java.util.*;
 
 public class PlantBuilderMain extends MainBase {
     @Argument(usage = "paths to files with scenarios", metaVar = "files", required = true)
@@ -95,7 +90,7 @@ public class PlantBuilderMain extends MainBase {
 
     @Option(name = "--timeout", aliases = {"-to"},
             usage = "solver timeout (sec)", metaVar = "<timeout>")
-    private int timeout = 60 * 60 * 24;
+    private int timeout = 10_000_000;
 
     @Option(name = "--nusmv",
             usage = "file for NuSMV output (optional)", metaVar = "<file>")
@@ -175,7 +170,7 @@ public class PlantBuilderMain extends MainBase {
         logger().info("Initializing the verifier...");
         final NondetMooreVerifierPair verifier = new NondetMooreVerifierPair(logger(), strFormulae,
                 events, actions);
-        final long finishTime = System.currentTimeMillis() + timeout * 1000;
+        final long finishTime = System.currentTimeMillis() + (long) timeout * 1000;
 
         logger().info("Started building automaton.");
 

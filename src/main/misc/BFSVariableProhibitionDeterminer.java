@@ -121,7 +121,7 @@ public class BFSVariableProhibitionDeterminer {
 			if (v.name.startsWith("y")) {
 				constraints.add(v);
 				List<Assignment> list = BooleanFormula.solveAsSat(constraints.assemble().toLimbooleString(),
-						logger, "", 100000, SatSolver.CRYPTOMINISAT).list();
+						logger, 100000, SatSolver.CRYPTOMINISAT).list();
 				results.put(v.name, !list.isEmpty());
 				constraints.removeLast();
 			}

@@ -81,7 +81,7 @@ public class FastAutomatonBuilderMain extends MainBase {
 	
 	@Option(name = "--timeout", aliases = { "-to" },
             usage = "solver timeout (sec)", metaVar = "<timeout>")
-	private int timeout = 60 * 60 * 24;
+	private int timeout = 10_000_000;
 
 	@Option(name = "--complete", aliases = { "-cm" }, handler = BooleanOptionHandler.class,
             usage = "completeness")
@@ -140,7 +140,7 @@ public class FastAutomatonBuilderMain extends MainBase {
             logger().info("Start building automaton");
 
             final Verifier verifier = new Verifier(logger(), strFormulae, events, actions);
-            final long finishTime = System.currentTimeMillis() + timeout * 1000;
+            final long finishTime = System.currentTimeMillis() + (long) timeout * 1000;
             final Optional<MealyAutomaton> resultAutomaton = FastAutomatonBuilder.build(logger(),
                     tree, negativeForest, size, strFormulae,
                     events, actions, verifier, finishTime, complete, bfsConstraints,

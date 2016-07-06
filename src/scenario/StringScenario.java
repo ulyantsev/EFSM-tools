@@ -1,18 +1,14 @@
 package scenario;
 
+import bool.MyBooleanExpression;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-
-import bool.MyBooleanExpression;
 
 public class StringScenario {
 	private static String removeVariables(String input, int varNumber) throws ParseException {
@@ -23,15 +19,12 @@ public class StringScenario {
 		while (m.find()) {
 			final String event = m.group(1);
 			sb.append(input.substring(lastPos, m.start()));
-			final List<String> expansion = new ArrayList<>();
 			final MyBooleanExpression expr = MyBooleanExpression.get(m.group(3));
-			final List<String> varAssignments = expr.getSatVarCombinations(varNumber);
-			for (String varAssignment : varAssignments) {
-				expansion.add(event + varAssignment);
-			}
+            final List<String> expansion = expr.getSatVarCombinations(varNumber).stream()
+                    .map(varAssignment -> event + varAssignment)
+                    .collect(Collectors.toList());
 			lastPos = m.end();
-			String strToAppend = String.join("|", expansion) + "[1]";
-			sb.append(strToAppend);
+			sb.append(String.join("|", expansion) + "[1]");
 		}
 		sb.append(input.substring(lastPos, input.length()));
 		return sb.toString();

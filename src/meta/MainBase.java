@@ -113,7 +113,7 @@ public abstract class MainBase {
     protected List<StringScenario> loadScenarios(String filename, int varNumber)
             throws FileNotFoundException, ParseException {
         try {
-            return StringScenario.loadScenarios(filename);
+            return StringScenario.loadScenarios(filename, varNumber);
         } catch (FileNotFoundException e) {
             System.err.println("Can't open file " + filename);
             throw e;

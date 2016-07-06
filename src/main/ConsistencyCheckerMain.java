@@ -1,14 +1,14 @@
 package main;
 
-import java.io.IOException;
-import java.text.ParseException;
-import java.util.List;
-
 import meta.Author;
 import meta.MainBase;
 import org.kohsuke.args4j.Argument;
 import scenario.StringScenario;
 import structures.mealy.MealyAutomaton;
+
+import java.io.IOException;
+import java.text.ParseException;
+import java.util.List;
 
 public class ConsistencyCheckerMain extends MainBase {
     @Argument(usage = "path to EFSM in Graphviz format", metaVar = "<efsm.gv>", required = true, index = 0)
@@ -18,7 +18,7 @@ public class ConsistencyCheckerMain extends MainBase {
     private String sc;
 
     public static void main(String[] args) {
-        new ConsistencyCheckerMain().run(args, Author.VU, "Tool for checking EFSM and scenarios set consistency");
+        new ConsistencyCheckerMain().run(args, Author.VU, "Tool for checking EFSM compliance with a scenario set");
     }
 
     @Override

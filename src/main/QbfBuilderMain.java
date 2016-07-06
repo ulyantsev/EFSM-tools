@@ -105,7 +105,7 @@ public class QbfBuilderMain extends MainBase {
 	
 	@Option(name = "--timeout", aliases = { "-to" },
             usage = "solver timeout (sec)", metaVar = "<timeout>")
-	private int timeout = 60 * 60 * 24;
+	private int timeout = 10_000_000;
 	
 	@Option(name = "--strategy", aliases = { "-str" },
             usage = "solving mode: QSAT, EXP_SAT, BACKTRACKING, COUNTEREXAMPLE (default), STATE_MERGING",
@@ -195,7 +195,7 @@ public class QbfBuilderMain extends MainBase {
 			
 			Optional<MealyAutomaton> resultAutomaton = null;
 			final Verifier verifier = new Verifier(logger(), strFormulae, events, actions);
-			final long finishTime = startTime() + timeout * 1000;
+			final long finishTime = startTime() + (long) timeout * 1000;
 			switch (ss) {
 			case QSAT: case EXP_SAT:
 				resultAutomaton = QbfAutomatonBuilder.build(logger(), tree, formulae, size,

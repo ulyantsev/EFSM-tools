@@ -16,9 +16,11 @@ EFSM-tools is developed in Computer Technologies Laboratory, ITMO University. Yo
 ## Prerequisites
 
 The toolset is based on Java, so you must have JRE 1.8 (or greater) to run it. You may wish to rebuild the toolset, for which you need JDK 1.8 (or greater) and [ant](https://ant.apache.org/).
-The tool is intended to work on Linux and Windows. The most recent features are not tested on Windows, though. Running some examples requires bash. Important scripts are planned to be rewritten in a platform-independent way later.
+The tool is intended to work on Linux and Windows. The most recent features are not tested on Windows, though. Running some examples may require bash.
 
 EFSM-tools works with [cryptominisat](http://www.msoos.org/cryptominisat4/) and [lingeling](http://fmv.jku.at/lingeling/) SAT solvers, [Choco](http://choco-solver.org/) constraint (CSP) solver and [DepQBF](https://github.com/lonsing/depqbf) QSAT (QBF) solver. Choco is included into the toolset as a library. As for the rest, they must be installed separately. Make them available in command line as "cryptominisat4", "lingeling" and "depqbf".
+
+Some of the tools which work with solvers require [limboole](http://fmv.jku.at/limboole/). Make it available in command line as "limboole".
 
 Different features of the toolset require different solvers, so probably there is no need to install all of them. More information is provided in other sections.
 
@@ -61,7 +63,7 @@ The desired method can be selected using the "--strategy" command line option. F
 
 Here are scripts to run several examples from the paper mentioned above:
 
-> cd evaluation
+> cd examples
 
 > ln -s ../c-lib .
 
@@ -71,13 +73,11 @@ Here are scripts to run several examples from the paper mentioned above:
 
 > ./cash-dispenser.sh # ATM
 
-> ./walkinshaw-run-jar-editor.sh # Text editor
+> ./editor.sh # Text editor
 
-> ./walkinshaw-run-jar-jhotdraw.sh # JHotDraw
+> ./jhotdraw.sh # JHotDraw
 
-> ./walkinshaw-run-jar-cvs.sh # CVS client
-
-Example data is available in [evaluation/walkinshaw](/evaluation/walkinshaw/) and [evaluation/case-instances](/evaluation/case-instances/).
+> ./cvs.sh # CVS client
 
 ## Mealy machine synthesis from traces and LTL properties based on incremental SAT solvers
 
@@ -87,7 +87,7 @@ This is an enhanced version of the so-called "iterative" method described here: 
 
 Here are scripts to run several examples from the paper mentioned above:
 
-> cd evaluation
+> cd examples
 
 > ln -s ../c-lib .
 
@@ -97,13 +97,11 @@ Here are scripts to run several examples from the paper mentioned above:
 
 > ./cash-dispenser-fast.sh # ATM
 
-> ./walkinshaw-run-jar-editor-fast.sh # Text editor
+> ./editor-fast.sh # Text editor
 
-> ./walkinshaw-run-jar-jhotdraw-fast.sh # JHotDraw
+> ./jhotdraw-fast.sh # JHotDraw
 
-> ./walkinshaw-run-jar-cvs-fast.sh # CVS client
-
-Example data is available in [evaluation/walkinshaw](/evaluation/walkinshaw/) and [evaluation/case-instances](/evaluation/case-instances/).
+> ./cvs-fast.sh # CVS client
 
 ## Plant model synthesis from traces and LTL properties
 

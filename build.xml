@@ -60,26 +60,18 @@
     <property name="apros.builder.main" value="main/plant/AprosBuilderMain"/>
     <property name="apros.builder.jar" value="apros-builder.jar"/>
 
-    <property name="debug" value="false"/>
+    <property name="moore.scenario.compliance.checker.main" value="main/plant/MooreScenarioComplianceCheckerMain"/>
+    <property name="moore.scenario.compliance.checker.jar" value="moore-scenario-compliance-checker.jar"/>
+
+    <property name="debug" value="true"/>
     
     <target name="all" 
-            depends="consistency-jar, 
-                     isomorphism-jar, 
-                     completeness-jar,
-                     builder-jar, 
-                     sat-builder-jar, 
-                     automaton-generator-jar, 
-                     scenarios-generator-jar,
-                     minizinc-generator-jar,
-                     qbf-automaton-generator-jar,
-                     plant-automaton-generator-jar,
-                     safety-ltl-generator-jar,
-                     max-clique-finder-jar,
-                     plant-generator-jar,
-                     verifier-jar,
-                     plant-scenario-generator-jar,
-                     fast-automaton-generator-jar,
-                     apros-builder-jar">
+            depends="consistency-jar, isomorphism-jar, completeness-jar, builder-jar, sat-builder-jar, 
+                     automaton-generator-jar, scenarios-generator-jar, minizinc-generator-jar,
+                     qbf-automaton-generator-jar, plant-automaton-generator-jar,
+                     safety-ltl-generator-jar, max-clique-finder-jar, plant-generator-jar,
+                     verifier-jar, plant-scenario-generator-jar, fast-automaton-generator-jar,
+                     apros-builder-jar, moore-scenario-compliance-checker-jar">
     </target>
 
     <target name="minizinc-generator-jar">
@@ -427,4 +419,24 @@
         <delete dir="${bin.dir}"/>
     </target>
     
+    <target name="moore-scenario-compliance-checker-jar">
+        <mkdir dir="${bin.dir}"/>
+        <javac srcdir="${src.dir}"
+               destdir="${bin.dir}"
+               classpath="${args4j.path}:${commons.lang3.path}:${javassist.path}"
+               includeantruntime="false"
+               debug="${debug}">
+            <include name="${moore.scenario.compliance.checker.main}.java"/>
+        </javac>
+        <jar destfile="${jars.dir}/${moore.scenario.compliance.checker.jar}"
+             basedir="${bin.dir}">
+            <manifest>
+                <attribute name="Main-Class" value="${moore.scenario.compliance.checker.main}"/>
+            </manifest>
+            <zipfileset src="${args4j.path}" excludes="META-INF/*.SF"/>
+            <zipfileset src="${commons.lang3.path}" excludes="META-INF/*.SF"/>
+            <zipfileset src="${javassist.path}" excludes="meta-inf/*.sf"/>
+        </jar>
+        <delete dir="${bin.dir}"/>
+    </target>
 </project>

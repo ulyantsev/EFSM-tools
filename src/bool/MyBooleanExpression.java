@@ -87,14 +87,14 @@ public class MyBooleanExpression {
     	if (varIndices.isEmpty()) {
     		return Collections.singletonList(varAssignment);
     	}
-    	int index = varIndices.iterator().next();
+        final int index = varIndices.iterator().next();
     	varIndices.remove(index);
-    	List<Map<String, Boolean>> prevAns = extendForVars(varAssignment, varIndices);
+    	final List<Map<String, Boolean>> prevAns = extendForVars(varAssignment, varIndices);
     	varIndices.add(index);
-    	List<Map<String, Boolean>> ans = new ArrayList<>();
+        final List<Map<String, Boolean>> ans = new ArrayList<>();
     	for (Map<String, Boolean> m : prevAns) {
-    		Map<String, Boolean> m0 = new HashMap<>(m);
-    		Map<String, Boolean> m1 = new HashMap<>(m);
+            final Map<String, Boolean> m0 = new HashMap<>(m);
+            final Map<String, Boolean> m1 = new HashMap<>(m);
     		m0.put(String.valueOf((char) ('a' + index)), false);
     		m1.put(String.valueOf((char) ('a' + index)), true);
     		ans.add(m0);
@@ -104,7 +104,7 @@ public class MyBooleanExpression {
     }
     
     private List<Map<String, Boolean>> extendForAllVars(Map<String, Boolean> varAssignment, int varNum) {
-    	Set<Integer> remainingNumbers = new TreeSet<>();
+    	final Set<Integer> remainingNumbers = new TreeSet<>();
     	for (int i = 0; i < varNum; i++) {
     		if (!varAssignment.containsKey(String.valueOf((char) ('a' + i)))) {
     			remainingNumbers.add(i);
@@ -114,12 +114,12 @@ public class MyBooleanExpression {
     }
     
     public List<String> getSatVarCombinations(int varNum) {
-    	List<String> combinations = new ArrayList<>();
+    	final List<String> combinations = new ArrayList<>();
     	for (Map.Entry<Map<String, Boolean>, Boolean> entry : truthTable.entrySet()) {
     		if (entry.getValue()) {
-    			List<Map<String, Boolean>> varAssignments = extendForAllVars(entry.getKey(), varNum);
+    			final List<Map<String, Boolean>> varAssignments = extendForAllVars(entry.getKey(), varNum);
     			for (Map<String, Boolean> varAssignment : varAssignments) {
-	    			char[] assignment = new char[varNum];
+	    			final char[] assignment = new char[varNum];
 	        		for (int i = 0; i < varNum; i++) {
 	        			assignment[i] = varAssignment.get(String.valueOf((char) ('a' + i))) ? '1' : '0';
 	        		}
