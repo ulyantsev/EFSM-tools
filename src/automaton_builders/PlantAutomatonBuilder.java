@@ -4,31 +4,29 @@ package automaton_builders;
  * (c) Igor Buzhinsky
  */
 
+import bnf_formulae.BooleanVariable;
+import bool.MyBooleanExpression;
+import formula_builders.PlantFormulaBuilder;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.tuple.Pair;
+import sat_solving.Assignment;
+import sat_solving.SatSolver;
+import sat_solving.SolverInterface;
+import sat_solving.SolverResult;
+import sat_solving.SolverResult.SolverResults;
+import scenario.StringActions;
+import scenario.StringScenario;
+import structures.moore.*;
+import verification.verifier.Counterexample;
+import verification.verifier.NondetMooreVerifierPair;
+import verification.verifier.SimpleVerifier;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
-
-import formula_builders.PlantFormulaBuilder;
-import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.tuple.Pair;
-
-import sat_solving.*;
-import sat_solving.SolverResult.SolverResults;
-import scenario.StringActions;
-import scenario.StringScenario;
-import structures.moore.MooreNode;
-import structures.moore.MooreTransition;
-import structures.moore.NegativePlantScenarioForest;
-import structures.moore.NondetMooreAutomaton;
-import structures.moore.PositivePlantScenarioForest;
-import verification.verifier.Counterexample;
-import verification.verifier.NondetMooreVerifierPair;
-import verification.verifier.SimpleVerifier;
-import bnf_formulae.BooleanVariable;
-import bool.MyBooleanExpression;
 
 public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 	protected static Optional<NondetMooreAutomaton> reportResult(Logger logger, int iterations,
@@ -38,7 +36,8 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 	}
 		
 	private static NondetMooreAutomaton constructAutomatonFromAssignment(List<Assignment> ass,
-            PositivePlantScenarioForest forest, int colorSize, List<String> actionList, List<String> eventList) {
+            PositivePlantScenarioForest forest, int colorSize, List<String> actionList, List<String> eventList,
+            boolean complete) {
 		final List<Boolean> isStart = Arrays.asList(ArrayUtils.toObject(new boolean[colorSize]));
 		final List<List<String>> actions = new ArrayList<>();
 		for (int i = 0; i < colorSize; i++) {
@@ -94,16 +93,23 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
             }
 		}
 
-        // remove unused transitions unless it violates completeness
+        // remove unused transitions unless it violates completeness / absence of deadlocks
         for (int i = 0; i < colorSize; i++) {
-			final List<MooreTransition> copy = new ArrayList<>(automaton.state(i).transitions());
+            final MooreNode state = automaton.state(i);
+			final List<MooreTransition> copy = new ArrayList<>(state.transitions());
 			for (MooreTransition tCopy : copy) {
 				if (!usedTransitions.contains(tCopy)) {
-					automaton.state(i).removeTransition(tCopy);
-					if (!automaton.state(i).hasTransition(tCopy.event())) {
-						// return the transition
-						automaton.addTransition(automaton.state(i), tCopy);
-					}
+                    if (complete) {
+                        state.removeTransition(tCopy);
+                        if (!state.hasTransition(tCopy.event())) {
+                            // return the transition
+                            automaton.addTransition(state, tCopy);
+                        }
+                    } else {
+                        if (state.transitionCount() > 0) {
+                            state.removeTransition(tCopy);
+                        }
+                    }
 				}
 			}
 		}
@@ -141,9 +147,7 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 				}
 			}
 		}
-		return additionalFormulae.isEmpty()
-				? null
-				: ("(" + String.join(")&(", additionalFormulae) + ")");
+		return additionalFormulae.isEmpty() ? null : ("(" + String.join(")&(", additionalFormulae) + ")");
 	}
 
 	public static Optional<NondetMooreAutomaton> build(Logger logger, PositivePlantScenarioForest positiveForest,
@@ -181,7 +185,7 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 			}
 
 			final NondetMooreAutomaton automaton = constructAutomatonFromAssignment(ass.list(),
-					positiveForest, size, actions, events);
+					positiveForest, size, actions, events, complete);
 
 			// verify
 			final Pair<List<Counterexample>, List<Counterexample>> counterexamples =

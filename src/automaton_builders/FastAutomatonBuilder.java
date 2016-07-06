@@ -4,38 +4,29 @@ package automaton_builders;
  * (c) Igor Buzhinsky
  */
 
-import java.io.IOException;
-import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.TreeSet;
-import java.util.logging.Logger;
-import java.util.stream.Collectors;
-
-import org.apache.commons.lang3.tuple.Pair;
-
-import sat_solving.*;
-import sat_solving.SolverResult.SolverResults;
-import scenario.StringActions;
-import scenario.StringScenario;
-import structures.mealy.MealyAutomaton;
-import structures.mealy.NegativeScenarioTree;
-import structures.mealy.MealyNode;
-import structures.mealy.ScenarioTree;
-import structures.mealy.MealyTransition;
-import verification.verifier.Counterexample;
-import verification.verifier.Verifier;
 import algorithms.AutomatonCompleter.CompletenessType;
-import formula_builders.MealyFormulaBuilder;
 import bnf_formulae.BinaryOperations;
 import bnf_formulae.BooleanVariable;
 import bnf_formulae.FormulaList;
 import bool.MyBooleanExpression;
+import formula_builders.MealyFormulaBuilder;
+import org.apache.commons.lang3.tuple.Pair;
+import sat_solving.Assignment;
+import sat_solving.SatSolver;
+import sat_solving.SolverInterface;
+import sat_solving.SolverResult;
+import sat_solving.SolverResult.SolverResults;
+import scenario.StringActions;
+import scenario.StringScenario;
+import structures.mealy.*;
+import verification.verifier.Counterexample;
+import verification.verifier.Verifier;
+
+import java.io.IOException;
+import java.text.ParseException;
+import java.util.*;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 public class FastAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 	/*
@@ -91,7 +82,7 @@ public class FastAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 				}
 				
 				// include transitions not from scenarios
-				List<String> properUniqueActions = new ArrayList<>();
+				final List<String> properUniqueActions = new ArrayList<>();
 				for (Assignment az : ass) {
 					if (az.value && az.var.name.startsWith("z_" + from + "_")
 							&& az.var.name.endsWith("_" + eventIndex)) {
@@ -115,7 +106,6 @@ public class FastAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 						state.addTransition(event, MyBooleanExpression.getTautology(),
 							new StringActions(String.join(",",
 							properUniqueActions)), ans.state(to));
-						//logger.info("ADDING TRANSITION NOT FROM SCENARIOS " + a.var + " " + properUniqueActions);
 					}
 				} else {
 					// check
