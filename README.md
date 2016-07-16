@@ -1,3 +1,5 @@
+Warning: this branch is no longer updated. You may wish to check the master or devel branches instead.
+
 ## Introduction
 
 EFSM-tools is a toolset for finite-state machine (FSM) synthesis. Is is mostly based on satisfiability solvers, and uses *traces* (aka IO-traces, *scenarios*) and LTL formulae as input. EFSM means "extended finite-state machine", an FSM with variables. However, within this toolset variables are Boolean and are often treated analogously to input events. The variant of the FSM synthesis problem being solved is *exact*: an FSM is generated with the given number of states, or its non-existence is reported.
