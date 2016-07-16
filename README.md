@@ -46,9 +46,41 @@ To run incremental-cryptominisat-binary, you at least need to have cryptominisat
 
 If for some reason you are unable to use the incremental version of cryptominisat, the usual versions of cryptominisat and lingeling can be used instead (some jar tools have command line options to set the used solver).
 
+## Input data format for traces
+
+Behavior traces, or scenarios, are represented as text files. Each scenario is a pair of two consecutive lines: the first line represents inputs and the second one represents outputs. Trace elements are separated with semicolons. Trace files may have empty lines, which are ignored.
+
+Inputs have the formal *event[&lt;Boolean formula over input variables&gt;]*. The boolean formula can be just "1" if there are no input variables. Nontrivial Boolean formulae can use Boolean operators "&" (and), "|" (or), "~" (not). Here are some examples of input declarations:
+
+* A[1]
+* e1[x0 & ~x1]
+
+While each input is a combination of an event and, optionally, of variable values, each output is a combination of comma-separated actions, for example:
+
+* z0, z1, z4
+* close, logout
+
+To see complete examples of trace files, you may examine the files [examples/elevator.sc](/examples/elevator.sc) and [examples/clock.sc](/examples/clock.sc).
+
+More notes:
+
+* For Mealy machine synthesis, the order of actions is important (i.e. outputs are compared as action strings), while for Moore machines it is not (i.e. outputs are compared as action sets).
+* For Moore machine synthesis, the first input is always dummy (represented by the empty string). Thus, each input line starts with a semicolon.
+
+## Input data format for LTL properties
+
+LTL properties, or LTL formulae, are represented as text files. Each line represents a single LTL formula. Formulae may use temporal operators X (next), F (future), G (globally), U (until), R (release), Boolean operators "&&" (and), "||" (or), "!" (not), and atomic propositions *event(&lt;event name&gt;)*, *action(&lt;action name&gt;)*, *variable(&lt;variable name&gt;)*.
+
+To see complete examples of LTL property files, you may examine the files [examples/elevator.ltl](/examples/elevator.ltl) and [examples/clock.ltl](/examples/clock.ltl).
+
+More notes:
+
+* Empty lines are not permitted.
+* There is a deprecated format which requires to write atomic propositions as *wasAction(co.&lt;action name&gt;)* and *wasEvent(ep.&lt;event name&gt;)*. Avoid this format.
+
 ## Mealy machine synthesis from traces and LTL properties based on SAT and QSAT solvers
 
-This tool is described here: [http://arxiv.org/abs/1601.06945](http://arxiv.org/abs/1601.06945). It supports four methods of FSM systethis based on:
+This tool is described here: [http://arxiv.org/abs/1601.06945](http://arxiv.org/abs/1601.06945). It supports four methods of FSM synthesis based on:
 
 * iterative running of a SAT solver (also check the next section for a faster implementation of this method!)
 * running a QSAT (QBF) solver (this method is quite slow)
@@ -167,4 +199,3 @@ Auxiliary tools (for experiments, etc.):
 Regarding research collaboration, email Vladimir Ulyantsev (ulyantsev@rain.ifmo.ru) and Igor Buzhinsky (igor_buzhinsky@corp.ifmo.ru).
 
 Regarding issues with the tool, bugs, etc., email Igor Buzhinsky.
-
