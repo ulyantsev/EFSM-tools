@@ -1,4 +1,12 @@
 package main;
+import automaton_builders.CryptominisatAutomatonBuilder;
+import meta.Author;
+import meta.MainBase;
+import org.kohsuke.args4j.Argument;
+import org.kohsuke.args4j.Option;
+import structures.mealy.MealyAutomaton;
+import structures.mealy.ScenarioTree;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -6,16 +14,6 @@ import java.io.PrintWriter;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
-
-import meta.Author;
-import meta.MainBase;
-import org.kohsuke.args4j.Option;
-import org.kohsuke.args4j.Argument;
-import org.kohsuke.args4j.spi.BooleanOptionHandler;
-
-import automaton_builders.CryptominisatAutomatonBuilder;
-import structures.mealy.MealyAutomaton;
-import structures.mealy.ScenarioTree;
 
 public class SatBuilderMain extends MainBase {
 	@Argument(usage = "paths to files with scenarios", metaVar = "files", required = true)
@@ -41,10 +39,6 @@ public class SatBuilderMain extends MainBase {
             usage = "write SAT model to this file", metaVar = "<file>")
 	private String modelFilePath;
 
-	@Option(name = "--complete", aliases = { "-c" }, handler = BooleanOptionHandler.class,
-            usage = "TODO: is automaton will be complete")
-	private boolean isComplete;
-
     public static void main(String[] args) {
         new SatBuilderMain().run(args, Author.VU,
                 "Extended finite state machine CryptoMiniSat based identification tool");
@@ -53,7 +47,7 @@ public class SatBuilderMain extends MainBase {
     @Override
 	protected void launcher() throws IOException, ParseException {
 		try {
-			Runtime.getRuntime().exec("cryptominisat");
+			Runtime.getRuntime().exec("cryptominisat4");
 		} catch (Exception e) {
 			System.err.println("ERROR: Problems with CryptoMiniSat execution");
 			e.printStackTrace();

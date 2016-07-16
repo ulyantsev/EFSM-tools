@@ -37,7 +37,7 @@ public class FastAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 			Logger logger, List<Assignment> ass, ScenarioTree tree, int colorSize,
 			boolean complete, CompletenessType completenessType,
 			List<String> actionList, List<String> eventList) {
-		List<BooleanVariable> filteredYVars = new ArrayList<>();
+		final List<BooleanVariable> filteredYVars = new ArrayList<>();
 		final int[] nodeColors = new int[tree.nodeCount()];
 		
 		ass.stream()

@@ -1,16 +1,15 @@
 package automaton_builders;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-
 import formula_builders.DimacsCnfBuilder;
 import structures.mealy.MealyAutomaton;
 import structures.mealy.MealyNode;
-import structures.mealy.ScenarioTree;
 import structures.mealy.MealyTransition;
+import structures.mealy.ScenarioTree;
+
+import java.io.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class CryptominisatAutomatonBuilder {
 	public static MealyAutomaton build(ScenarioTree tree, int k) throws IOException {
@@ -24,21 +23,21 @@ public class CryptominisatAutomatonBuilder {
 	public static MealyAutomaton build(ScenarioTree tree, int k, PrintWriter cnfPrintWriter, PrintWriter solverPrintWriter)
 			throws IOException {
 
-		String cnf = DimacsCnfBuilder.getCnf(tree, k);
+		final String cnf = DimacsCnfBuilder.getCnf(tree, k);
 		if (cnfPrintWriter != null) {
 			cnfPrintWriter.println(cnf);
 			cnfPrintWriter.flush();
 		}
 
-		File tmpFile = new File("tmp.cnf");
+		final File tmpFile = new File("tmp.cnf");
         try (PrintWriter tmpPW = new PrintWriter(tmpFile)) {
             tmpPW.print(cnf);
         }
 
-		Process p = Runtime.getRuntime().exec("cryptominisat --threads=4 tmp.cnf");
+		final Process p = Runtime.getRuntime().exec("cryptominisat4 --threads=4 tmp.cnf");
 		// Process p = Runtime.getRuntime().exec("cryptominisat tmp.cnf");
 
-		String ansLine = null;
+		final List<String> ansLines = new ArrayList<>();
 		try (BufferedReader input = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
             String line;
             while ((line = input.readLine()) != null) {
@@ -46,30 +45,29 @@ public class CryptominisatAutomatonBuilder {
                     solverPrintWriter.println(line);
                 }
                 if (line.charAt(0) == 'v') {
-                    ansLine = line;
+                    ansLines.add(line);
                 }
             }
         }
 		tmpFile.delete();
 
-		if (ansLine != null) {
-			int[] nodesColors = new int[tree.nodeCount()];
-			String[] sp = ansLine.split(" ");
-			for (int nodeNum = 0; nodeNum < tree.nodeCount(); nodeNum++) {
-				for (int color = 0; color < k; color++) {
-					if (sp[1 + nodeNum * k + color].charAt(0) != '-') {
-						nodesColors[nodeNum] = color;
-					}
-				}
-			}
+		if (!ansLines.isEmpty()) {
+            final int[] nodeColors = new int[tree.nodeCount()];
+            ansLines.forEach(l -> Arrays.stream(l.split(" "))
+                    .skip(1)
+                    .filter(v -> !v.startsWith("-"))
+                    .mapToInt(v -> Integer.parseInt(v) - 1)
+                    .filter(v -> v != -1 && v < nodeColors.length * k)
+                    .forEach(v -> nodeColors[v / k] = v % k)
+            );
 
-			MealyAutomaton ans = new MealyAutomaton(k);
+			final MealyAutomaton ans = new MealyAutomaton(k);
 			for (int i = 0; i < tree.nodeCount(); i++) {
-				int color = nodesColors[i];
-				MealyNode state = ans.state(color);
+                final int color = nodeColors[i];
+				final MealyNode state = ans.state(color);
 				for (MealyTransition t : tree.nodes().get(i).transitions()) {
 					if (!state.hasTransition(t.event(), t.expr())) {
-						int childColor = nodesColors[t.dst().number()];
+						int childColor = nodeColors[t.dst().number()];
 						state.addTransition(t.event(), t.expr(), t.actions(), ans.state(childColor));
 					}
 				}

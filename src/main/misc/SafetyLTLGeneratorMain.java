@@ -4,13 +4,6 @@ package main.misc;
  * (c) Igor Buzhinsky
  */
 
-import java.io.IOException;
-import java.text.ParseException;
-import java.util.Collection;
-import java.util.Set;
-import java.util.TreeSet;
-import java.util.stream.Collectors;
-
 import algorithms.AutomatonGVLoader;
 import meta.Author;
 import meta.MainBase;
@@ -18,6 +11,13 @@ import org.kohsuke.args4j.Argument;
 import structures.mealy.MealyAutomaton;
 import structures.mealy.MealyNode;
 import structures.mealy.MealyTransition;
+
+import java.io.IOException;
+import java.text.ParseException;
+import java.util.Collection;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 public class SafetyLTLGeneratorMain extends MainBase {
     @Argument(usage = "path to EFSM in Graphviz format", metaVar = "<efsm.gv>", required = true)
@@ -59,14 +59,14 @@ public class SafetyLTLGeneratorMain extends MainBase {
             for (int j = 0; j < i; j++) {
                 sb.append(")");
             }
-            System.out.println(sb.toString());
+            System.out.println(sb);
 			//}
 			possibleStates = newStates;
 		}
 	}
 	
 	private static String joinEvents(Collection<String> events) {
-		return String.join(" || ", events.stream().map(e -> "wasEvent(ep." + e + ")").collect(Collectors.toList()));
+		return String.join(" || ", events.stream().map(e -> "event(" + e + ")").collect(Collectors.toList()));
 	}
 	
 	private static Set<String> allEvents(MealyAutomaton automaton) {
@@ -93,7 +93,7 @@ public class SafetyLTLGeneratorMain extends MainBase {
 				}
 			}
 			//if (!nextEvents.equals(allEvents)) {
-            System.out.println("G(!(wasEvent(ep." + event + ")) || X(" + joinEvents(nextEvents) + "))");
+            System.out.println("G(!(event(" + event + ")) || X(" + joinEvents(nextEvents) + "))");
 			//}
 		}
 	}
@@ -116,7 +116,7 @@ public class SafetyLTLGeneratorMain extends MainBase {
 				}
 			}
 			//if (!prevEvents.equals(allEvents)) {
-            System.out.println("G(!(X(wasEvent(ep." + event + "))) || " + joinEvents(prevEvents) + ")");
+            System.out.println("G(!(X(event(" + event + "))) || " + joinEvents(prevEvents) + ")");
 			//}
 		}
 	}

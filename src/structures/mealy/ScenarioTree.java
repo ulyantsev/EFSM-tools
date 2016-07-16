@@ -1,12 +1,13 @@
 package structures.mealy;
 
-import java.io.*;
-import java.text.ParseException;
-import java.util.*;
-
 import bool.MyBooleanExpression;
 import scenario.StringActions;
 import scenario.StringScenario;
+
+import java.io.FileNotFoundException;
+import java.text.ParseException;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class ScenarioTree {
     private final MealyNode root;
@@ -48,11 +49,13 @@ public class ScenarioTree {
      */
     private void addTransitions(MealyNode src, List<String> events, MyBooleanExpression expr,
                                 StringActions actions) throws ParseException {
-    	assert !events.isEmpty();
+    	if (events.isEmpty()) {
+            throw new AssertionError();
+        }
     	MealyNode dst = null;
     	for (String e : events) {
 	        if (src.hasTransition(e, expr)) {
-	            MealyTransition t = src.transition(e, expr);
+	            final MealyTransition t = src.transition(e, expr);
 	            if (!t.actions().equals(actions)) {
 	                throw new ParseException("bad transition add in node "
 	                		+ src.number() + ": " + t.actions()
@@ -79,9 +82,7 @@ public class ScenarioTree {
     public String[] events() {
         final Set<String> events = new HashSet<>();
         for (MealyNode node : nodes) {
-            for (MealyTransition transition : node.transitions()) {
-                events.add(transition.event());
-            }
+            events.addAll(node.transitions().stream().map(MealyTransition::event).collect(Collectors.toList()));
         }
         return events.toArray(new String[events.size()]);
     }
@@ -97,17 +98,12 @@ public class ScenarioTree {
         }
         return new ArrayList<>(actions);
     }
-    
-    public int eventCount() {
-        return events().length;
-    }
-        
+
     public String[] variables() {
         final Set<String> variables = new HashSet<>();
         for (MealyNode node : nodes) {
             for (MealyTransition transition : node.transitions()) {
-                String[] transitionVars = transition.expr().getVariables();
-                variables.addAll(Arrays.asList(transitionVars));
+                variables.addAll(Arrays.asList(transition.expr().getVariables()));
             }
         }
         return variables.toArray(new String[variables.size()]);
@@ -121,16 +117,14 @@ public class ScenarioTree {
         final Map<String, List<MyBooleanExpression>> ans = new HashMap<>();
         for (MealyNode node : nodes) {
             for (MealyTransition transition : node.transitions()) {
-                String event = transition.event();
-                MyBooleanExpression expr = transition.expr();
+                final String event = transition.event();
+                final MyBooleanExpression expr = transition.expr();
                 if (ans.containsKey(event)) {
                     if (!ans.get(event).contains(expr)) {
                         ans.get(event).add(expr);
                     }
                 } else {
-                    ArrayList<MyBooleanExpression> exprList = new ArrayList<>();
-                    exprList.add(expr);
-                    ans.put(event, exprList);
+                    ans.put(event, new ArrayList<>(Collections.singletonList(expr)));
                 }
             }
         }
@@ -151,7 +145,7 @@ public class ScenarioTree {
     }
 
     public String toString() {
-        StringBuilder sb = new StringBuilder();
+        final StringBuilder sb = new StringBuilder();
         sb.append("# generated file, don't try to modify\n");
         sb.append("# command: dot -Tpng <filename> > tree.png\n");
         sb.append("digraph ScenariosTree {\n    node [shape = circle];\n");

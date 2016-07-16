@@ -1,15 +1,15 @@
 package formula_builders;
 
-import java.util.*;
-
 import algorithms.AdjacencyCalculator;
 import structures.mealy.MealyNode;
-import structures.mealy.ScenarioTree;
 import structures.mealy.MealyTransition;
+import structures.mealy.ScenarioTree;
+
+import java.util.*;
 
 public class DimacsCnfBuilder {
     public static String getCnf(ScenarioTree tree, int k) {
-        Map<String, Integer> vars = new HashMap<>();
+        final Map<String, Integer> vars = new HashMap<>();
         for (MealyNode node : tree.nodes()) {
             for (int color = 0; color < k; color++) {
                 vars.put("x_" + node.number() + "_" + color, vars.size() + 1);
@@ -30,8 +30,8 @@ public class DimacsCnfBuilder {
             }
         }
         
-        List<String> clauses = new ArrayList<>();
-        String initClause = vars.get("x_0_0") + "";
+        final List<String> clauses = new ArrayList<>();
+        final String initClause = vars.get("x_0_0") + "";
         clauses.add(initClause);
         
         for (MealyNode node : tree.nodes()) {
@@ -45,27 +45,27 @@ public class DimacsCnfBuilder {
         for (MealyNode node : tree.nodes()) {
             for (int c1 = 0; c1 < k; c1++) {
                 for (int c2 = 0; c2 < c1; c2++) {
-                    int v1 = vars.get("x_" + node.number() + "_" + c1);
-                    int v2 = vars.get("x_" + node.number() + "_" + c2);
+                    final int v1 = vars.get("x_" + node.number() + "_" + c1);
+                    final int v2 = vars.get("x_" + node.number() + "_" + c2);
                     clauses.add(-v1 + " " + -v2);
                 }
             }
         }
-        
-        Map<MealyNode, Set<MealyNode>> adjacent = AdjacencyCalculator.getAdjacent(tree);
+
+        final Map<MealyNode, Set<MealyNode>> adjacent = AdjacencyCalculator.getAdjacent(tree);
         for (MealyNode node : tree.nodes()) {
             for (MealyNode other : adjacent.get(node)) {
                 if (other.number() < node.number()) {
                     for (int color = 0; color < k; color++) {
-                        int v1 = vars.get("x_" + node.number() + "_" + color);
-                        int v2 = vars.get("x_" + other.number() + "_" + color);
+                        final int v1 = vars.get("x_" + node.number() + "_" + color);
+                        final int v2 = vars.get("x_" + other.number() + "_" + color);
                         clauses.add("-" + v1 + " -" + v2);                      
                     }
                 }
             }
         }
-        
-        Set<String> was = new HashSet<>();
+
+        final Set<String> was = new HashSet<>();
         for (MealyNode node : tree.nodes()) {
             for (MealyTransition t : node.transitions()) {
                 String key = t.event() + "_" + t.expr();
@@ -74,8 +74,8 @@ public class DimacsCnfBuilder {
                     for (int parentColor = 0; parentColor < k; parentColor++) {
                         for (int c1 = 0; c1 < k; c1++) {
                             for (int c2 = 0; c2 < c1; c2++) {
-                                int v1 = vars.get("y_" + key + "_" + parentColor + "_" + c1);
-                                int v2 = vars.get("y_" + key + "_" + parentColor + "_" + c2);
+                                final int v1 = vars.get("y_" + key + "_" + parentColor + "_" + c1);
+                                final int v2 = vars.get("y_" + key + "_" + parentColor + "_" + c2);
                                 clauses.add(-v1 + " " + -v2);
                             }
                         }
@@ -88,9 +88,9 @@ public class DimacsCnfBuilder {
             for (MealyTransition t : node.transitions()) {
                 for (int nodeColor = 0; nodeColor < k; nodeColor++) {
                     for (int childColor = 0; childColor < k; childColor++) {
-                        int nodeVar = vars.get("x_" + node.number() + "_" + nodeColor);
-                        int childVar = vars.get("x_" + t.dst().number() + "_" + childColor);
-                        int relationVar = vars.get("y_" + t.event() + "_" + t.expr()
+                        final int nodeVar = vars.get("x_" + node.number() + "_" + nodeColor);
+                        final int childVar = vars.get("x_" + t.dst().number() + "_" + childColor);
+                        final int relationVar = vars.get("y_" + t.event() + "_" + t.expr()
                                 + "_" + nodeColor + "_" + childColor);
                         
                         clauses.add(relationVar + " " + -nodeVar + " " + -childVar);
@@ -122,7 +122,7 @@ public class DimacsCnfBuilder {
             // e_a_b <=> y_a_b_ee1 \/ ... \/ y_a_b_ee2
             for (int nodeColor = 0; nodeColor < k; nodeColor++) {
                 for (int childColor = nodeColor + 1; childColor < k; childColor++) {
-                    int edgeVar = vars.get("e_" + nodeColor + "_" + childColor);
+                    final int edgeVar = vars.get("e_" + nodeColor + "_" + childColor);
                     String edgeThenRelation = -edgeVar + " ";
                     for (String eventExpr : eventExprOrder) {
                         int relationVar = vars.get("y_" + eventExpr + "_" + nodeColor + "_" + childColor);
@@ -182,8 +182,8 @@ public class DimacsCnfBuilder {
                     int edgeVar = vars.get("e_" + nodeColor + "_" + childColor);
 
                     for (String eventExpr : eventExprOrder) {
-                        int minTransition = vars.get("m_" + eventExpr + "_" + nodeColor + "_" + childColor);
-                        int relationVar = vars.get("y_" + eventExpr + "_" + nodeColor + "_" + childColor);
+                        final int minTransition = vars.get("m_" + eventExpr + "_" + nodeColor + "_" + childColor);
+                        final int relationVar = vars.get("y_" + eventExpr + "_" + nodeColor + "_" + childColor);
 
                         clauses.add(-minTransition + " " + edgeVar);
                         clauses.add(-minTransition + " " + relationVar);
@@ -193,7 +193,8 @@ public class DimacsCnfBuilder {
                             if (otherEventExpr == eventExpr) {
                                 break;
                             }
-                            int otherRelationVar = vars.get("y_" + otherEventExpr + "_" + nodeColor + "_" + childColor);
+                            final int otherRelationVar = vars.get("y_" + otherEventExpr + "_" + nodeColor
+                                    + "_" + childColor);
                             clauses.add(-minTransition + " " + -otherRelationVar);
 
                             transitionThenMin += otherRelationVar + " ";
@@ -215,8 +216,9 @@ public class DimacsCnfBuilder {
                             if (otherEventExpr == eventExpr) {
                                 break;
                             }
-                            int minTransition = vars.get("m_" + eventExpr + "_" + nodeColor + "_" + childColor);
-                            int otherMin = vars.get("m_" + otherEventExpr + "_" + nodeColor + "_" + (childColor + 1));
+                            final int minTransition = vars.get("m_" + eventExpr + "_" + nodeColor + "_" + childColor);
+                            final int otherMin = vars.get("m_" + otherEventExpr + "_" + nodeColor
+                                    + "_" + (childColor + 1));
 
                             clauses.add(-parentVar + " " + -nextParentVar + " " + -minTransition + " " + -otherMin);
                         }
@@ -241,8 +243,8 @@ public class DimacsCnfBuilder {
             for (int nodeColor = 1; nodeColor < k - 1; nodeColor++) {
                 for (int parentColor = 0; parentColor < nodeColor; parentColor++) {
                     for (int nextParent = 0; nextParent < parentColor; nextParent++) {
-                        int parentVar = vars.get("p_" + nodeColor + "_" + parentColor);
-                        int nextParentVar = vars.get("p_" + (nodeColor + 1) + "_" + nextParent);
+                        final int parentVar = vars.get("p_" + nodeColor + "_" + parentColor);
+                        final int nextParentVar = vars.get("p_" + (nodeColor + 1) + "_" + nextParent);
 
                         clauses.add(-parentVar + " " + -nextParentVar);
                     }
@@ -251,7 +253,7 @@ public class DimacsCnfBuilder {
         
         }
 
-        StringBuilder sb = new StringBuilder();
+        final StringBuilder sb = new StringBuilder();
 
         String header = "c CNF for scenarios tree with " + tree.nodeCount() + " nodes, colored in " + k + " colors\n";
         header += "p cnf " + vars.size() + " " + clauses.size() + "\n";

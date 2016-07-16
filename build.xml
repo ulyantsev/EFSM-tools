@@ -63,7 +63,7 @@
     <property name="moore.scenario.compliance.checker.main" value="main/plant/MooreScenarioComplianceCheckerMain"/>
     <property name="moore.scenario.compliance.checker.jar" value="moore-scenario-compliance-checker.jar"/>
 
-    <property name="debug" value="true"/>
+    <property name="debug" value="false"/>
     
     <target name="all" 
             depends="consistency-jar, isomorphism-jar, completeness-jar, builder-jar, sat-builder-jar, 

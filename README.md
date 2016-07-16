@@ -183,7 +183,7 @@ FSM identification using the Choco CSP solver:
 
 > java -jar jars/builder.jar
 
-FSM identification using the cryptominisat SAT solver (note that it must be available under the name "cryptominisat", not "cryptominisat4"):
+FSM identification using the cryptominisat SAT solver (must be available under the name "cryptominisat4"):
 
 > java -jar jars/sat-builder.jar
 
