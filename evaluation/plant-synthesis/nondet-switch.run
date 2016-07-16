@@ -1,1 +1,0 @@
-plant-synthesis/nondet-switch.sc --actionNames bottom,middle,top --actionNumber 3 --eventNames up,down,observe --eventNumber 3 --ltl plant-synthesis/nondet-switch.ltl --size 3 --varNumber 0 --tree tree.gv

@@ -1,1 +1,0 @@
-plant-synthesis/interesting.sc --actionNames Z --actionNumber 1 --eventNumber 2 --ltl plant-synthesis/interesting.ltl --size 4 --varNumber 0 --tree tree.gv
