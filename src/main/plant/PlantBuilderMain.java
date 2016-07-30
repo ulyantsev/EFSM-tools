@@ -248,13 +248,7 @@ public class PlantBuilderMain extends MainBase {
 
             // determinism check
             if (deterministic) {
-                boolean checked = true;
-                for (MooreNode s : a.states()) {
-                    for (String event : events) {
-                        checked &= s.allDst(event).size() <= 1;
-                    }
-                }
-                if (checked) {
+                if (a.isDeterministic()) {
                     logger().info("DETERMINISTIC");
                 } else {
                     logger().severe("NONDETERMINISTIC");

@@ -1,19 +1,18 @@
 package structures.moore;
 
+import apros.Configuration;
+import apros.Parameter;
+import apros.TraceModelGenerator;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.tuple.Pair;
+import scenario.StringActions;
+import scenario.StringScenario;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-
-import apros.Configuration;
-import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.tuple.Pair;
-
-import apros.Parameter;
-import apros.TraceModelGenerator;
-import scenario.StringActions;
-import scenario.StringScenario;
 
 public class NondetMooreAutomaton {
     private final List<Boolean> isInitial = new ArrayList<>();
@@ -415,6 +414,123 @@ public class NondetMooreAutomaton {
         }
 
     	return true;
+    }
+
+    public boolean isDeterministic() {
+        if (initialStates().size() > 1) {
+            return false;
+        }
+        final Set<String> allEvents = new TreeSet<>();
+        states.forEach(s -> s.transitions().stream().map(MooreTransition::event).forEach(allEvents::add));
+        for (MooreNode s : states) {
+            for (String event : allEvents) {
+                if (s.allDst(event).size() > 1) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    /*
+     * Requires determinism.
+     */
+    public double strongCompliance(StringScenario scenario) {
+        MooreNode node = states.get(initialStates().get(0));
+        for (int pos = 0; pos < scenario.size(); pos++) {
+            final StringActions actions = scenario.getActions(pos);
+            if (pos == 0) {
+                if (!node.actions().setEquals(actions)) {
+                    return 0;
+                }
+            } else {
+                final String e = scenario.getEvents(pos).get(0);
+                boolean ok = false;
+                for (MooreTransition t : node.transitions()) {
+                    if (t.event().equals(e) && t.dst().actions().setEquals(actions)) {
+                        node = t.dst();
+                        ok = true;
+                        break;
+                    }
+                }
+                if (!ok) {
+                    return 0;
+                }
+            }
+        }
+        return 1;
+    }
+
+    /*
+     * Requires determinism.
+     */
+    public double mediumCompliance(StringScenario scenario) {
+        MooreNode node = states.get(initialStates().get(0));
+        for (int pos = 0; pos < scenario.size(); pos++) {
+            final StringActions actions = scenario.getActions(pos);
+            if (pos == 0) {
+                if (!node.actions().setEquals(actions)) {
+                    return 0;
+                }
+            } else {
+                final String e = scenario.getEvents(pos).get(0);
+                boolean ok = false;
+                for (MooreTransition t : node.transitions()) {
+                    if (t.event().equals(e) && t.dst().actions().setEquals(actions)) {
+                        node = t.dst();
+                        ok = true;
+                        break;
+                    }
+                }
+                if (!ok) {
+                    return (double) pos / scenario.size();
+                }
+            }
+        }
+        return 1;
+    }
+
+    /*
+     * Requires determinism.
+     */
+    public double weakCompliance(StringScenario scenario) {
+        MooreNode node = states.get(initialStates().get(0));
+        int matched = 0;
+        for (int pos = 0; pos < scenario.size(); pos++) {
+            final StringActions actions = scenario.getActions(pos);
+            if (pos > 0) {
+                final String e = scenario.getEvents(pos).get(0);
+                for (MooreTransition t : node.transitions()) {
+                    if (t.event().equals(e)) {
+                        node = t.dst();
+                        break;
+                    }
+                }
+            }
+            matched += node.actions().setEquals(actions) ? 1 : 0;
+        }
+        return (double) matched / scenario.size();
+    }
+
+    public double strongCompliance(List<StringScenario> scenarios) {
+        if (!isDeterministic()) {
+            throw new RuntimeException("The automaton must be deterministic.");
+        }
+        return scenarios.stream().mapToDouble(s -> strongCompliance(s)).average().getAsDouble();
+    }
+
+    public double mediumCompliance(List<StringScenario> scenarios) {
+        if (!isDeterministic()) {
+            throw new RuntimeException("The automaton must be deterministic.");
+        }
+        return scenarios.stream().mapToDouble(s -> mediumCompliance(s)).average().getAsDouble();
+    }
+
+    public double weakCompliance(List<StringScenario> scenarios) {
+        if (!isDeterministic()) {
+            throw new RuntimeException("The automaton must be deterministic.");
+        }
+        return scenarios.stream().mapToDouble(s -> weakCompliance(s)).average().getAsDouble();
     }
     
     public NondetMooreAutomaton copy() {

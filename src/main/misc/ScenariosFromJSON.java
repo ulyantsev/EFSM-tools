@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 public class ScenariosFromJSON {
     public static void main(String[] args) throws IOException {
         final String prefix = "evaluation/moore-json/";
-        for (String suffix : Arrays.asList("cs", "train", "test")) {
+        for (String suffix : Arrays.asList("train", "test")) {
             final String dir = prefix + suffix + "/";
             for (String filename : new File(dir).list()) {
                 if (!filename.endsWith(".json")) {

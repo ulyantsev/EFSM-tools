@@ -25,11 +25,11 @@ public class BooleanVariable extends BooleanFormula implements Comparable<Boolea
 	private static int counter = 1;
 	private static final List<BooleanVariable> ALL_VARS = new ArrayList<>();
 	private static final Map<String, BooleanVariable> VARS_BY_NAME = new HashMap<>();
-	
+
 	public static List<BooleanVariable> allVars() {
 		return Collections.unmodifiableList(ALL_VARS);
 	}
-	
+
 	private static String createName(String prefix, Object... indices) {
 		assert indices.length == 0 || !prefix.contains("_");
 		return indices.length == 0
@@ -48,7 +48,7 @@ public class BooleanVariable extends BooleanFormula implements Comparable<Boolea
 	public static int variableCount() {
 		return counter;
 	}
-	
+
 	public static BooleanVariable getVarByNumber(int num) {
 		return ALL_VARS.get(num - 1);
 	}

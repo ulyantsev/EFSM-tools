@@ -13,7 +13,6 @@ import structures.moore.NondetMooreAutomaton;
 
 import java.io.IOException;
 import java.text.ParseException;
-import java.util.Collections;
 import java.util.List;
 
 public class MooreScenarioComplianceCheckerMain extends MainBase {
@@ -27,6 +26,12 @@ public class MooreScenarioComplianceCheckerMain extends MainBase {
             usage = "number of variables (x0, x1, ...)", metaVar = "<num>")
     private int varNumber = 0;
 
+    @Option(name = "--measure",
+            usage = "how compliance with one scenario is measured: STRONG (yes or no, default), "
+                    + "MEDIUM (length of the matching prefix / total length), "
+                    + "WEAK (number of matched output symbols / total length)", metaVar = "<file>")
+    private String measure = "STRONG";
+
     public static void main(String[] args) {
         new MooreScenarioComplianceCheckerMain().run(args, Author.IB,
                 "Tool for checking Moore machine compliance with a scenario set");
@@ -36,14 +41,25 @@ public class MooreScenarioComplianceCheckerMain extends MainBase {
     protected void launcher() throws IOException, ParseException {
         final NondetMooreAutomaton automaton = NondetMooreAutomaton.readGV(automatonFilepath);
         final List<StringScenario> scenarios = loadScenarios(sc, varNumber);
-        int ok = 0;
-        for (int i = 0; i < scenarios.size(); i++) {
-            final StringScenario sc = scenarios.get(i);
-            final boolean result = automaton.compliesWith(Collections.singletonList(sc), true, false);
-            //System.out.println(i + ": " + (result ? "COMPLIES" : "NOT COMPLIES"));
-            ok += result ? 1 : 0;
+        final double result;
+        switch (measure) {
+        case "STRONG":
+            result = automaton.strongCompliance(scenarios);
+            System.out.println("COMPLIES WITH " + Math.round(result * scenarios.size())
+                    + " / " + scenarios.size());
+            System.out.println("COMPLIANCE PERCENTAGE: " + (float) result * 100 + "%");
+            break;
+        case "MEDIUM":
+            result = automaton.mediumCompliance(scenarios);
+            System.out.println("MEDIUM COMPLIANCE: " + (float) result * 100 + "%");
+            break;
+        case "WEAK":
+            result = automaton.weakCompliance(scenarios);
+            System.out.println("WEAK COMPLIANCE: " + (float) result * 100 + "%");
+            break;
+        default:
+            System.err.println("Unknown compliance measure!");
         }
-        System.out.println("COMPLIES WITH " + ok + " / " + scenarios.size());
-        System.out.println("COMPLIANCE PERCENTAGE: " + (float) ok / scenarios.size() * 100 + "%");
+
     }
 }
