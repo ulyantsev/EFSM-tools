@@ -57,9 +57,9 @@ public class ScenarioTree {
 	        if (src.hasTransition(e, expr)) {
 	            final MealyTransition t = src.transition(e, expr);
 	            if (!t.actions().equals(actions)) {
-	                throw new ParseException("bad transition add in node "
-	                		+ src.number() + ": " + t.actions()
-	                        + " != " + actions, 0);
+	                throw new ParseException("Transition clash for event " + e + " in node "
+	                		+ src.number() + ": " + t.actions() + " != " + actions
+                            + ". This may be caused by inconsistent scenarios.", 0);
 	            }
 	        } else {
 	        	if (dst == null) {
@@ -144,6 +144,7 @@ public class ScenarioTree {
         return ans;
     }
 
+    @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();
         sb.append("# generated file, don't try to modify\n");
