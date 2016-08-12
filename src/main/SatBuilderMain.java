@@ -55,7 +55,7 @@ public class SatBuilderMain extends MainBase {
 		}
 
 		initializeLogger(logFilePath);
-        final ScenarioTree tree = loadScenarioTree(arguments, -1);
+        final ScenarioTree tree = loadScenarioTree(arguments, false);
         saveScenarioTree(tree, treeFilePath);
 
 		PrintWriter modelPrintWriter = null;

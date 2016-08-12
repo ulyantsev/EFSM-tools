@@ -1,14 +1,14 @@
 package structures.moore;
 
+import scenario.StringActions;
+import scenario.StringScenario;
+
 import java.io.FileNotFoundException;
 import java.text.ParseException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
-
-import scenario.StringActions;
-import scenario.StringScenario;
 
 public abstract class PlantScenarioForest {
 	protected final Set<MooreNode> roots = new LinkedHashSet<>();
@@ -29,12 +29,9 @@ public abstract class PlantScenarioForest {
     public int nodeCount() {
         return nodes.size();
     }
-    
-    /*
-     * varNumber = -1 for no variable removal
-     */
-    public void load(String filepath, int varNumber) throws FileNotFoundException, ParseException {
-        StringScenario.loadScenarios(filepath, varNumber).forEach(this::addScenario);
+
+    public void load(String filepath, boolean removeVars) throws FileNotFoundException, ParseException {
+        StringScenario.loadScenarios(filepath, removeVars).forEach(this::addScenario);
     }
     
     protected abstract void addScenario(StringScenario scenario);

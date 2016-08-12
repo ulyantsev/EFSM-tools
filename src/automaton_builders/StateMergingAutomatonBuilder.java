@@ -4,20 +4,16 @@ package automaton_builders;
  * (c) Igor Buzhinsky
  */
 
-import java.io.FileNotFoundException;
-import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.logging.Logger;
-
 import scenario.StringScenario;
 import structures.mealy.APTA;
 import structures.mealy.MealyAutomaton;
 import verification.verifier.Counterexample;
 import verification.verifier.Verifier;
+
+import java.io.FileNotFoundException;
+import java.text.ParseException;
+import java.util.*;
+import java.util.logging.Logger;
 
 public class StateMergingAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 	private static APTA getAPTA(List<List<String>> possc, Set<List<String>> negsc) {
@@ -36,7 +32,7 @@ public class StateMergingAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder
                                                  String negscFilePath) throws FileNotFoundException, ParseException {
 		final List<List<String>> possc = new ArrayList<>();
 		for (String filePath : scenarioFilePaths) {
-			for (StringScenario sc : StringScenario.loadScenarios(filePath, 0)) {
+			for (StringScenario sc : StringScenario.loadScenarios(filePath, false)) {
 				List<String> l = new ArrayList<>();
 				for (int i = 0; i < sc.size(); i++) {
 					l.add(sc.getEvents(i).get(0));
@@ -47,7 +43,7 @@ public class StateMergingAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder
 		
 		final Set<List<String>> negsc = new LinkedHashSet<>();
 		if (negscFilePath != null) {
-			for (StringScenario sc : StringScenario.loadScenarios(negscFilePath, 0)) {
+			for (StringScenario sc : StringScenario.loadScenarios(negscFilePath, false)) {
 				List<String> l = new ArrayList<>();
 				for (int i = 0; i < sc.size(); i++) {
 					l.add(sc.getEvents(i).get(0));

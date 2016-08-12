@@ -1,4 +1,13 @@
 package main;
+import automaton_builders.ChocoAutomatonBuilder;
+import meta.Author;
+import meta.MainBase;
+import org.kohsuke.args4j.Argument;
+import org.kohsuke.args4j.Option;
+import org.kohsuke.args4j.spi.BooleanOptionHandler;
+import structures.mealy.MealyAutomaton;
+import structures.mealy.ScenarioTree;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -6,16 +15,6 @@ import java.io.PrintWriter;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
-
-import meta.Author;
-import meta.MainBase;
-import org.kohsuke.args4j.Option;
-import org.kohsuke.args4j.Argument;
-import org.kohsuke.args4j.spi.BooleanOptionHandler;
-
-import automaton_builders.ChocoAutomatonBuilder;
-import structures.mealy.MealyAutomaton;
-import structures.mealy.ScenarioTree;
 
 public class Main extends MainBase {
     @Argument(usage = "paths to files with scenarios", metaVar = "files", required = true)
@@ -65,7 +64,7 @@ public class Main extends MainBase {
         }
 
         initializeLogger(logFilePath);
-        final ScenarioTree tree = loadScenarioTree(arguments, -1);
+        final ScenarioTree tree = loadScenarioTree(arguments, false);
         saveScenarioTree(tree, treeFilePath);
 
         PrintWriter modelPrintWriter = null;

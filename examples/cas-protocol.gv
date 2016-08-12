@@ -1,0 +1,14 @@
+digraph Automaton {
+    node [shape = circle];
+    0 [style = "bold"];
+    0 -> 1 [label = "IncomingCall [1] () "];
+    1 -> 2 [label = "AnsweringCall [1] () "];
+    1 -> 3 [label = "RejectingCall [1] () "];
+    1 -> 4 [label = "Disconnected [1] () "];
+    2 -> 4 [label = "Disconnected [1] () "];
+    2 -> 5 [label = "CallConnected [1] () "];
+    3 -> 4 [label = "Disconnected [1] () "];
+    4 -> 0 [label = "CallReleased [1] () "];
+    5 -> 0 [label = "CallReleased [1] () "];
+    5 -> 4 [label = "Disconnected [1] () "];
+}

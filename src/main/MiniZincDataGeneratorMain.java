@@ -41,7 +41,7 @@ public class MiniZincDataGeneratorMain extends MainBase {
     @Override
     protected void launcher() throws IOException, ParseException {
         initializeLogger(logFilePath);
-        final ScenarioTree tree = loadScenarioTree(arguments, -1);
+        final ScenarioTree tree = loadScenarioTree(arguments, false);
         final Map<MealyNode, Set<MealyNode>> adjacent = AdjacencyCalculator.getAdjacent(tree);
         saveToFile(getDataString(tree, adjacent), resultFilePath);
     }

@@ -1,16 +1,7 @@
 package bool;
 
 import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.regex.Pattern;
 
 public class MyBooleanExpression {
@@ -28,56 +19,64 @@ public class MyBooleanExpression {
         if (expressions.containsKey(repr)) {
             return expressions.get(repr);
         }
-        MyBooleanExpression newExpr = new MyBooleanExpression(repr);
+        final MyBooleanExpression newExpr = new MyBooleanExpression(repr);
         for (MyBooleanExpression oldExpr : expressions.values()) {
             if (oldExpr.equals(newExpr)) {
                 expressions.put(repr, oldExpr);
                 return oldExpr;
             }
         }
-
         expressions.put(repr, newExpr);
         return newExpr;
     }
 
     private int satisfiabilitySetsCount;
+    private final String repr;
+    private final String[] variables;
+    private final Map<Map<String, Boolean>, Boolean> truthTable;
+    private static LinkedHashMap<String, Integer> varToNumber = new LinkedHashMap<>();
 
-    private String repr;
+    public static int varToNumber(String varName) {
+        Integer value = varToNumber.get(varName);
+        if (value == null) {
+            value = varToNumber.size();
+            varToNumber.put(varName, value);
+        }
 
-    private String[] variables;
+        if (varToNumber.size() >= 26) {
+            throw new RuntimeException("The number of variables should not exceed 25.");
+        }
 
-    private Map<Map<String, Boolean>, Boolean> truthTable;
+        return value;
+    }
+
+    public static void registerVariableNames(List<String> varNames) {
+        varNames.forEach(MyBooleanExpression::varToNumber);
+    }
 
     private MyBooleanExpression(String expression) throws ParseException {
-        expression = expression.replaceAll(" ", "").replaceAll("!", "~");
-        this.repr = expression;
-        Pattern pattern = Pattern.compile("[()~&|=>+]");
-        String[] vars = pattern.split(expression);
+        repr = expression.replaceAll(" ", "").replaceAll("!", "~");
+        final Pattern pattern = Pattern.compile("[()~&|=>+]");
+        final HashSet<String> varsSet = new LinkedHashSet<>(Arrays.asList(pattern.split(repr)));
+        varsSet.removeAll(Arrays.asList("", "1", "0"));
+        variables = varsSet.toArray(new String[varsSet.size()]);
 
-        HashSet<String> varsSet = new HashSet<>(Arrays.asList(vars));
-        varsSet.removeAll(Arrays.asList(new String[] { "", "1", "0" }));
-        this.variables = varsSet.toArray(new String[0]);
-
-        assert variables.length < 26;
-
-        String shortExpr = new String(expression);
-        for (int i = 0; i < variables.length; i++) {
-            shortExpr = shortExpr.replaceAll(variables[i], "___" + i);
+        String shortExpr = repr;
+        for (String var : variables) {
+            shortExpr = shortExpr.replaceAll(var, "___" + varToNumber(var));
         }
-        for (int i = 0; i < variables.length; i++) {
-            shortExpr = shortExpr.replaceAll("___" + i, "" + (char) ('a' + i));
+        for (int i = 0; i < varToNumber.size(); i++) {
+            shortExpr = shortExpr.replaceAll("___" + i, String.valueOf((char) ('a' + i)));
         }
-
-        //System.out.println(shortExpr);
         
-        BooleanExpression booleanExpression = new BooleanExpression(shortExpr);
-        Map<Map<String, Boolean>, Map<BooleanExpression, Boolean>> truthTable = new TruthTable(booleanExpression)
+        final BooleanExpression booleanExpression = new BooleanExpression(shortExpr);
+        final Map<Map<String, Boolean>, Map<BooleanExpression, Boolean>> truthTable = new TruthTable(booleanExpression)
                 .getResults();
         this.truthTable = new HashMap<>();
 
         for (Map<String, Boolean> map : truthTable.keySet()) {
-            Map<BooleanExpression, Boolean> booleanMap = truthTable.get(map);
-            boolean val = booleanMap.containsValue(true);
+            final Map<BooleanExpression, Boolean> booleanMap = truthTable.get(map);
+            final boolean val = booleanMap.containsValue(true);
             satisfiabilitySetsCount += val ? 1 : 0;
             this.truthTable.put(map, val);
         }
@@ -103,9 +102,9 @@ public class MyBooleanExpression {
     	return ans;
     }
     
-    private List<Map<String, Boolean>> extendForAllVars(Map<String, Boolean> varAssignment, int varNum) {
+    private List<Map<String, Boolean>> extendForAllVars(Map<String, Boolean> varAssignment) {
     	final Set<Integer> remainingNumbers = new TreeSet<>();
-    	for (int i = 0; i < varNum; i++) {
+    	for (int i = 0; i < varToNumber.size(); i++) {
     		if (!varAssignment.containsKey(String.valueOf((char) ('a' + i)))) {
     			remainingNumbers.add(i);
     		}
@@ -113,21 +112,23 @@ public class MyBooleanExpression {
     	return extendForVars(varAssignment, remainingNumbers);
     }
     
-    public List<String> getSatVarCombinations(int varNum) {
+    public List<String> getSatVarCombinations() {
     	final List<String> combinations = new ArrayList<>();
     	for (Map.Entry<Map<String, Boolean>, Boolean> entry : truthTable.entrySet()) {
-    		if (entry.getValue()) {
-    			final List<Map<String, Boolean>> varAssignments = extendForAllVars(entry.getKey(), varNum);
+            //System.out.println(entry);
+            if (entry.getValue()) {
+    			final List<Map<String, Boolean>> varAssignments = extendForAllVars(entry.getKey());
     			for (Map<String, Boolean> varAssignment : varAssignments) {
-	    			final char[] assignment = new char[varNum];
-	        		for (int i = 0; i < varNum; i++) {
+	    			final char[] assignment = new char[varToNumber.size()];
+	        		for (int i = 0; i < varToNumber.size(); i++) {
 	        			assignment[i] = varAssignment.get(String.valueOf((char) ('a' + i))) ? '1' : '0';
 	        		}
 	    			combinations.add(String.valueOf(assignment));
     			}
     		}
     	}
-    	return combinations;
+        //System.out.println(this + " " + combinations);
+        return combinations;
     }
     
     public String[] getVariables() {
@@ -142,34 +143,25 @@ public class MyBooleanExpression {
         return satisfiabilitySetsCount;
     }
 
-    public boolean hasSolution() {
+    private boolean hasSolution() {
         return truthTable.containsValue(true);
     }
 
-    public boolean isTautology() {
+    private boolean isTautology() {
         return !truthTable.containsValue(false);
     }
 
     public boolean equals(MyBooleanExpression other) {
-        if (other.repr.equals(this.repr)) {
+        if (other.repr.equals(repr)) {
             return true;
         }
 
         // possible to rewrite in a smarter way
-        MyBooleanExpression e = null;
         try {
-            e = new MyBooleanExpression("(" + this.repr + ")=(" + other.repr + ")");
-        } catch (ParseException ex) {
-            ex.printStackTrace();
-            System.exit(1);
+            return new MyBooleanExpression("(" + repr + ")=(" + other.repr + ")").isTautology();
+        } catch (ParseException e) {
+            throw new RuntimeException(e);
         }
-        /*
-        if (e.isTautology()) {
-            System.out.println(e + "    " + e.isTautology());
-            System.out.println(e.satisfiabilitySetsCount);
-        }
-        */
-        return e.isTautology();
     }
 
     private Map<MyBooleanExpression, Boolean> hasSolutionWithRes;
@@ -184,16 +176,13 @@ public class MyBooleanExpression {
         }
 
         // possible to rewrite in a smarter way
-        MyBooleanExpression e = null;
         try {
-            e = new MyBooleanExpression("(" + repr + ")&(" + other.repr + ")");
+            boolean res = new MyBooleanExpression("(" + repr + ")&(" + other.repr + ")").hasSolution();
+            hasSolutionWithRes.put(other, res);
+            return res;
         } catch (ParseException ex) {
-            ex.printStackTrace();
-            System.exit(1);
+            throw new RuntimeException(ex);
         }
-        boolean res = e.hasSolution();
-        hasSolutionWithRes.put(other, res);
-        return res;
     }
 
     @Override

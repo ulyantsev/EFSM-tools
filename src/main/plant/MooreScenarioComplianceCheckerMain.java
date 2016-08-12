@@ -40,7 +40,7 @@ public class MooreScenarioComplianceCheckerMain extends MainBase {
     @Override
     protected void launcher() throws IOException, ParseException {
         final NondetMooreAutomaton automaton = NondetMooreAutomaton.readGV(automatonFilepath);
-        final List<StringScenario> scenarios = loadScenarios(sc, varNumber);
+        final List<StringScenario> scenarios = loadScenarios(sc, true);
         final double result;
         switch (measure) {
         case "STRONG":

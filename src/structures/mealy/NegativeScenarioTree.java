@@ -4,16 +4,16 @@ package structures.mealy;
  * (c) Igor Buzhinsky
  */
 
+import bool.MyBooleanExpression;
+import scenario.StringActions;
+import scenario.StringScenario;
+
 import java.io.FileNotFoundException;
 import java.text.ParseException;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
-
-import scenario.StringActions;
-import scenario.StringScenario;
-import bool.MyBooleanExpression;
 
 public class NegativeScenarioTree {
     private final NegativeMealyNode root;
@@ -29,11 +29,8 @@ public class NegativeScenarioTree {
         return root;
     }
 
-    /*
-     * varNumber = -1 for no variable removal
-     */
-    public void load(String filepath, int varNumber) throws FileNotFoundException, ParseException {
-        for (StringScenario scenario : StringScenario.loadScenarios(filepath, varNumber)) {
+    public void load(String filepath, boolean removeVars) throws FileNotFoundException, ParseException {
+        for (StringScenario scenario : StringScenario.loadScenarios(filepath, removeVars)) {
             addScenario(scenario, 0);
         }
     }

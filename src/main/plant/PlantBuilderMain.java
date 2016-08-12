@@ -34,32 +34,36 @@ public class PlantBuilderMain extends MainBase {
             usage = "automaton size", metaVar = "<size>", required = true)
     private int size;
 
-    @Option(name = "--eventNumber", aliases = {"-en"},
-            usage = "number of events", metaVar = "<num>", required = true)
-    private int eventNumber;
+    @Option(name = "--eventNumber", aliases = { "-en" },
+            usage = "number of events (default 1)", metaVar = "<eventNumber>")
+    private int eventNumber = 1;
 
-    @Option(name = "--eventNames", aliases = {"-enm"},
+    @Option(name = "--eventNames", aliases = { "-enm" },
             usage = "optional comma-separated event names (default: A, B, C, ...)",
-            metaVar = "<names>")
+            metaVar = "<eventNames>")
     private String eventNames;
 
-    @Option(name = "--actionNumber", aliases = {"-an"},
-            usage = "number of actions", metaVar = "<num>", required = true)
-    private int actionNumber;
+    @Option(name = "--actionNumber", aliases = { "-an" },
+            usage = "number of actions (default 0)", metaVar = "<actionNumber>")
+    private int actionNumber = 0;
 
-    @Option(name = "--actionNames", aliases = {"-anm"},
+    @Option(name = "--actionNames", aliases = { "-anm" },
             usage = "optional comma-separated action names (default: z0, z1, z2, ...)",
-            metaVar = "<names>")
+            metaVar = "<actionNames>")
     private String actionNames;
+
+    @Option(name = "--varNumber", aliases = { "-vn" },
+            usage = "number of variables (default 0)", metaVar = "<varNumber>")
+    private int varNumber = 0;
+
+    @Option(name = "--varNames", aliases = { "-vnm" },
+            usage = "optional comma-separated variable names (default: x0, x1, ...)", metaVar = "<varNames>")
+    private String varNames;
 
     @Option(name = "--colorRules",
             usage = "comma-separated state coloring rules for GV output, each in the form action->color",
             metaVar = "<rules>")
     private String colorRules;
-
-    @Option(name = "--varNumber", aliases = {"-vn"},
-            usage = "number of variables (x0, x1, ...)", metaVar = "<num>")
-    private int varNumber = 0;
 
     @Option(name = "--log", aliases = {"-l"},
             usage = "write log to this file", metaVar = "<file>")
@@ -136,6 +140,10 @@ public class PlantBuilderMain extends MainBase {
     @Override
     protected void launcher() throws IOException, ParseException {
         initializeLogger(logFilePath);
+        eventNumber = eventNames == null ? eventNumber : eventNames.split(",").length;
+        actionNumber = actionNames == null ? actionNumber : actionNames.split(",").length;
+        varNumber = varNames == null ? varNumber : varNames.split(",").length;
+        registerVariableNames(varNames, varNumber);
 
         SatSolver solver;
         try {
@@ -148,7 +156,7 @@ public class PlantBuilderMain extends MainBase {
         final PositivePlantScenarioForest positiveForest = new PositivePlantScenarioForest(!deterministic);
         final List<StringScenario> scenarios = new ArrayList<>();
         for (String scenarioPath : arguments) {
-            scenarios.addAll(loadScenarios(scenarioPath, varNumber));
+            scenarios.addAll(loadScenarios(scenarioPath, true));
             logger().info("Loaded scenarios from " + scenarioPath);
         }
         scenarios.forEach(positiveForest::addScenario);
@@ -163,8 +171,8 @@ public class PlantBuilderMain extends MainBase {
         final List<StringScenario> negativeScenarios = new ArrayList<>();
         final NegativePlantScenarioForest negativeForest = new NegativePlantScenarioForest();
         if (negscFilePath != null) {
-            negativeScenarios.addAll(StringScenario.loadScenarios(negscFilePath, varNumber));
-            negativeForest.load(negscFilePath, varNumber);
+            negativeScenarios.addAll(StringScenario.loadScenarios(negscFilePath, true));
+            negativeForest.load(negscFilePath, true);
         }
 
         logger().info("Initializing the verifier...");

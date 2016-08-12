@@ -1,1 +1,1 @@
-java -jar ../../jars/plant-automaton-generator.jar cylinder.sc --actionNames home,end --actionNumber 2 --eventNames extend,retract,wait --eventNumber 3 --ltl cylinder.ltl --size 3 --varNumber 0 --tree tree.gv
+java -jar ../../jars/plant-automaton-generator.jar cylinder.sc --size 3 --actionNames home,end --eventNames extend,retract,wait --ltl cylinder.ltl --tree tree.gv

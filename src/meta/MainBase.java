@@ -1,6 +1,7 @@
 package meta;
 
 import algorithms.AutomatonGVLoader;
+import bool.MyBooleanExpression;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import scenario.StringScenario;
@@ -95,11 +96,11 @@ public abstract class MainBase {
         }
     }
 
-    protected ScenarioTree loadScenarioTree(List<String> filePaths, int varNumber) throws IOException, ParseException {
+    protected ScenarioTree loadScenarioTree(List<String> filePaths, boolean removeVars) throws IOException, ParseException {
         final ScenarioTree tree = new ScenarioTree();
         for (String filePath : filePaths) {
             try {
-                tree.load(filePath, varNumber);
+                tree.load(filePath, removeVars);
                 logger().info("Loaded scenarios from " + filePath);
                 logger().info("  Total scenarios tree size: " + tree.nodeCount());
             } catch (IOException | ParseException e) {
@@ -110,10 +111,10 @@ public abstract class MainBase {
         return tree;
     }
 
-    protected List<StringScenario> loadScenarios(String filename, int varNumber)
+    protected List<StringScenario> loadScenarios(String filename, boolean removeVars)
             throws FileNotFoundException, ParseException {
         try {
-            return StringScenario.loadScenarios(filename, varNumber);
+            return StringScenario.loadScenarios(filename, removeVars);
         } catch (FileNotFoundException e) {
             System.err.println("Can't open file " + filename);
             throw e;
@@ -164,10 +165,6 @@ public abstract class MainBase {
         final List<String> eventNames;
         if (names != null) {
             eventNames = Arrays.asList(names.split(","));
-            if (eventNames.size() != number) {
-                throw new RuntimeException(
-                        "The number of events in <eventNames> does not correspond to <eventNumber>!");
-            }
         } else {
             eventNames = new ArrayList<>();
             for (int i = 0; i < number; i++) {
@@ -175,6 +172,19 @@ public abstract class MainBase {
             }
         }
         return eventNames;
+    }
+
+    protected void registerVariableNames(String names, int number) {
+        final List<String> varNames;
+        if (names != null) {
+            varNames = Arrays.asList(names.split(","));
+        } else {
+            varNames = new ArrayList<>();
+            for (int i = 0; i < number; i++) {
+                varNames.add("x" + i);
+            }
+        }
+        MyBooleanExpression.registerVariableNames(varNames);
     }
 
     protected List<String> events(List<String> eventNames, int eventNumber, int varNumber) {
@@ -197,10 +207,6 @@ public abstract class MainBase {
         if (actionNames != null) {
             actions = actionNames.isEmpty() ? Collections.emptyList()
                     : Arrays.asList(actionNames.split(","));
-            if (actions.size() != actionNumber) {
-                throw new RuntimeException(
-                        "The number of actions in <actionNames> does not correspond to <actionNumber>!");
-            }
         } else {
             actions = new ArrayList<>();
             for (int i = 0; i < actionNumber; i++) {

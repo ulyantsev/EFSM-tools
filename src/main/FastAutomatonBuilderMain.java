@@ -4,27 +4,26 @@ package main;
  * (c) Igor Buzhinsky
  */
 
-import java.io.IOException;
-import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-
+import automaton_builders.FastAutomatonBuilder;
 import meta.Author;
 import meta.MainBase;
 import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.Option;
 import org.kohsuke.args4j.spi.BooleanOptionHandler;
-
 import sat_solving.SatSolver;
 import scenario.StringScenario;
 import structures.mealy.MealyAutomaton;
-import structures.mealy.NegativeScenarioTree;
 import structures.mealy.MealyNode;
+import structures.mealy.NegativeScenarioTree;
 import structures.mealy.ScenarioTree;
 import verification.ltl.LtlParser;
 import verification.verifier.Verifier;
-import automaton_builders.FastAutomatonBuilder;
+
+import java.io.IOException;
+import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 public class FastAutomatonBuilderMain extends MainBase {
 	@Argument(usage = "paths to files with scenarios", metaVar = "files", required = true)
@@ -35,8 +34,8 @@ public class FastAutomatonBuilderMain extends MainBase {
 	private int size;
 	
 	@Option(name = "--eventNumber", aliases = { "-en" },
-            usage = "number of events", metaVar = "<eventNumber>", required = true)
-	private int eventNumber;
+            usage = "number of events (default 1)", metaVar = "<eventNumber>")
+	private int eventNumber = 1;
 	
 	@Option(name = "--eventNames", aliases = { "-enm" },
             usage = "optional comma-separated event names (default: A, B, C, ...)",
@@ -44,8 +43,8 @@ public class FastAutomatonBuilderMain extends MainBase {
 	private String eventNames;
 	
 	@Option(name = "--actionNumber", aliases = { "-an" },
-            usage = "number of actions", metaVar = "<actionNumber>", required = true)
-	private int actionNumber;
+            usage = "number of actions (default 0)", metaVar = "<actionNumber>")
+	private int actionNumber = 0;
 	
 	@Option(name = "--actionNames", aliases = { "-anm" },
             usage = "optional comma-separated action names (default: z0, z1, z2, ...)",
@@ -53,9 +52,13 @@ public class FastAutomatonBuilderMain extends MainBase {
 	private String actionNames;
 	
 	@Option(name = "--varNumber", aliases = { "-vn" },
-            usage = "number of variables (x0, x1, ...)", metaVar = "<varNumber>")
+            usage = "number of variables (default 0)", metaVar = "<varNumber>")
 	private int varNumber = 0;
-	
+
+    @Option(name = "--varNames", aliases = { "-vnm" },
+            usage = "optional comma-separated variable names (default: x0, x1, ...)", metaVar = "<varNames>")
+    private String varNames;
+
 	@Option(name = "--log", aliases = { "-l" },
             usage = "write log to this file", metaVar = "<file>")
 	private String logFilePath;
@@ -107,7 +110,11 @@ public class FastAutomatonBuilderMain extends MainBase {
     @Override
     protected void launcher() throws IOException, ParseException {
         initializeLogger(logFilePath);
-        final ScenarioTree tree = loadScenarioTree(arguments, varNumber);
+        eventNumber = eventNames == null ? eventNumber : eventNames.split(",").length;
+        actionNumber = actionNames == null ? actionNumber : actionNames.split(",").length;
+        varNumber = varNames == null ? varNumber : varNames.split(",").length;
+        registerVariableNames(varNames, varNumber);
+        final ScenarioTree tree = loadScenarioTree(arguments, true);
         saveScenarioTree(tree, treeFilePath);
         final List<String> eventnames = eventNames(eventNames, eventNumber);
         final List<String> events = events(eventnames, eventNumber, varNumber);
@@ -127,14 +134,14 @@ public class FastAutomatonBuilderMain extends MainBase {
 
             final List<StringScenario> scenarios = new ArrayList<>();
             for (String scenarioPath : arguments) {
-                scenarios.addAll(StringScenario.loadScenarios(scenarioPath, varNumber));
+                scenarios.addAll(StringScenario.loadScenarios(scenarioPath, true));
             }
 
             final List<StringScenario> negativeScenarios = new ArrayList<>();
             final NegativeScenarioTree negativeForest = new NegativeScenarioTree();
             if (negscFilePath != null) {
-                negativeScenarios.addAll(StringScenario.loadScenarios(negscFilePath, varNumber));
-                negativeForest.load(negscFilePath, varNumber);
+                negativeScenarios.addAll(StringScenario.loadScenarios(negscFilePath, true));
+                negativeForest.load(negscFilePath, true);
             }
 
             logger().info("Start building automaton");

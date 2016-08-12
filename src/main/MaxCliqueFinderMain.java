@@ -4,19 +4,19 @@ package main;
  * (c) Igor Buzhinsky
  */
 
+import algorithms.AdjacencyCalculator;
+import meta.Author;
+import meta.MainBase;
+import org.kohsuke.args4j.Argument;
+import structures.mealy.MealyNode;
+import structures.mealy.ScenarioTree;
+
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import meta.Author;
-import meta.MainBase;
-import org.kohsuke.args4j.Argument;
-import structures.mealy.MealyNode;
-import structures.mealy.ScenarioTree;
-import algorithms.AdjacencyCalculator;
 
 public class MaxCliqueFinderMain extends MainBase {
     @Argument(usage = "scenario file path", metaVar = "<scenarios>", required = true, index = 0)
@@ -32,7 +32,7 @@ public class MaxCliqueFinderMain extends MainBase {
     @Override
     protected void launcher() throws IOException, ParseException {
         final ScenarioTree tree = new ScenarioTree();
-        tree.load(sc, varNumber);
+        tree.load(sc, true);
         final Map<MealyNode, Set<MealyNode>> adjacent = AdjacencyCalculator.getAdjacent(tree);
         final Set<MealyNode> clique = findClique(tree.root(), adjacent);
         checkClique(clique, adjacent);

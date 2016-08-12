@@ -24,14 +24,14 @@ public class ScenarioTree {
     }
 
     public void load(String filepath) throws FileNotFoundException, ParseException {
-    	load(filepath, -1);
+    	load(filepath, false);
     }
     
     /*
      * varNumber = -1 for no variable removal
      */
-    public void load(String filepath, int varNumber) throws FileNotFoundException, ParseException {
-        for (StringScenario scenario : StringScenario.loadScenarios(filepath, varNumber)) {
+    public void load(String filepath, boolean removeVars) throws FileNotFoundException, ParseException {
+        for (StringScenario scenario : StringScenario.loadScenarios(filepath, removeVars)) {
             addScenario(scenario);
         }
     }

@@ -4,41 +4,32 @@ package main;
  * (c) Igor Buzhinsky
  */
 
-import java.io.IOException;
-import java.text.ParseException;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Deque;
-import java.util.List;
-import java.util.Optional;
-import java.util.logging.Logger;
-import java.util.stream.Collectors;
-
-import meta.Author;
-import meta.MainBase;
-import org.kohsuke.args4j.Argument;
-import org.kohsuke.args4j.Option;
-import org.kohsuke.args4j.spi.BooleanOptionHandler;
-
-import sat_solving.QbfSolver;
-import sat_solving.SatSolver;
-import sat_solving.SolvingStrategy;
-import scenario.StringScenario;
-import structures.mealy.MealyAutomaton;
-import structures.mealy.NegativeScenarioTree;
-import structures.mealy.MealyNode;
-import structures.mealy.ScenarioTree;
-import structures.mealy.MealyTransition;
-import verification.ltl.LtlParseException;
-import verification.ltl.LtlParser;
-import verification.ltl.grammar.LtlNode;
-import verification.verifier.Verifier;
 import algorithms.AutomatonCompleter.CompletenessType;
 import automaton_builders.BacktrackingAutomatonBuilder;
 import automaton_builders.CounterexampleAutomatonBuilder;
 import automaton_builders.QbfAutomatonBuilder;
 import automaton_builders.StateMergingAutomatonBuilder;
 import bool.MyBooleanExpression;
+import meta.Author;
+import meta.MainBase;
+import org.kohsuke.args4j.Argument;
+import org.kohsuke.args4j.Option;
+import org.kohsuke.args4j.spi.BooleanOptionHandler;
+import sat_solving.QbfSolver;
+import sat_solving.SatSolver;
+import sat_solving.SolvingStrategy;
+import scenario.StringScenario;
+import structures.mealy.*;
+import verification.ltl.LtlParseException;
+import verification.ltl.LtlParser;
+import verification.ltl.grammar.LtlNode;
+import verification.verifier.Verifier;
+
+import java.io.IOException;
+import java.text.ParseException;
+import java.util.*;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 public class QbfBuilderMain extends MainBase {
 	@Argument(usage = "paths to files with scenarios", metaVar = "files", required = true)
@@ -47,28 +38,32 @@ public class QbfBuilderMain extends MainBase {
 	@Option(name = "--size", aliases = { "-s" },
             usage = "automaton size", metaVar = "<size>", required = true)
 	private int size;
-	
-	@Option(name = "--eventNumber", aliases = { "-en" },
-            usage = "number of events", metaVar = "<eventNumber>", required = true)
-	private int eventNumber;
-	
-	@Option(name = "--eventNames", aliases = { "-enm" },
+
+    @Option(name = "--eventNumber", aliases = { "-en" },
+            usage = "number of events (default 1)", metaVar = "<eventNumber>")
+    private int eventNumber = 1;
+
+    @Option(name = "--eventNames", aliases = { "-enm" },
             usage = "optional comma-separated event names (default: A, B, C, ...)",
-			metaVar = "<eventNames>")
-	private String eventNames;
-	
-	@Option(name = "--actionNumber", aliases = { "-an" },
-            usage = "number of actions", metaVar = "<actionNumber>", required = true)
-	private int actionNumber;
-	
-	@Option(name = "--actionNames", aliases = { "-anm" },
+            metaVar = "<eventNames>")
+    private String eventNames;
+
+    @Option(name = "--actionNumber", aliases = { "-an" },
+            usage = "number of actions (default 0)", metaVar = "<actionNumber>")
+    private int actionNumber = 0;
+
+    @Option(name = "--actionNames", aliases = { "-anm" },
             usage = "optional comma-separated action names (default: z0, z1, z2, ...)",
-			metaVar = "<actionNames>")
-	private String actionNames;
-	
-	@Option(name = "--varNumber", aliases = { "-vn" },
-            usage = "number of variables (x0, x1, ...)", metaVar = "<varNumber>")
-	private int varNumber = 0;
+            metaVar = "<actionNames>")
+    private String actionNames;
+
+    @Option(name = "--varNumber", aliases = { "-vn" },
+            usage = "number of variables (default 0)", metaVar = "<varNumber>")
+    private int varNumber = 0;
+
+    @Option(name = "--varNames", aliases = { "-vnm" },
+            usage = "optional comma-separated variable names (default: x0, x1, ...)", metaVar = "<varNames>")
+    private String varNames;
 	
 	@Option(name = "--log", aliases = { "-l" },
             usage = "write log to this file", metaVar = "<file>")
@@ -137,7 +132,12 @@ public class QbfBuilderMain extends MainBase {
     @Override
     protected void launcher() throws IOException, ParseException {
 		initializeLogger(logFilePath);
-        final ScenarioTree tree = loadScenarioTree(arguments, varNumber);
+        eventNumber = eventNames == null ? eventNumber : eventNames.split(",").length;
+        actionNumber = actionNames == null ? actionNumber : actionNames.split(",").length;
+        varNumber = varNames == null ? varNumber : varNames.split(",").length;
+        registerVariableNames(varNames, varNumber);
+
+        final ScenarioTree tree = loadScenarioTree(arguments, true);
         saveScenarioTree(tree, treeFilePath);
 		
 		SolvingStrategy ss;
@@ -183,12 +183,12 @@ public class QbfBuilderMain extends MainBase {
 			
 			final List<StringScenario> scenarios = new ArrayList<>();
 			for (String scenarioPath : arguments) {
-				scenarios.addAll(StringScenario.loadScenarios(scenarioPath, varNumber));
+				scenarios.addAll(StringScenario.loadScenarios(scenarioPath, true));
 			}
 			
 			final NegativeScenarioTree negativeTree = new NegativeScenarioTree();
 			if (negscFilePath != null) {
-				negativeTree.load(negscFilePath, varNumber);
+				negativeTree.load(negscFilePath, true);
 			}
 			
 			logger().info("Start building automaton");

@@ -1,0 +1,3 @@
+!event(POLL)
+G(!(event(OFFER) && X(event(OFFER) && X(event(OFFER) && X(event(OFFER))))))
+G(!(event(POLL) && X(event(POLL) && X(event(POLL) && X(event(POLL))))))

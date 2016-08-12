@@ -1,5 +1,5 @@
 One coin is required for a toffee, two coins are required for a chocolate.
-x0: one coin, !x0: two coins
+x1: one coin, !x1: two coins
 
 Taken from
 Taylor, R., Hall, M., Bogdanov, K., & Derrick, J. (2012, November). Using behaviour inference to optimise regression test sets. In IFIP International Conference on Testing Software and Systems (pp. 184-199). Springer Berlin Heidelberg.

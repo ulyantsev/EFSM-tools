@@ -1,0 +1,19 @@
+digraph Automaton {
+    node [shape = circle];
+    0 [style = "bold"];
+    0 -> 1 [label = "OFFER [1] (z1)"];
+    1 -> 0 [label = "POLL [x1 & !x2] ()"];
+    1 -> 2 [label = "OFFER [!x1 & !x2] (z6, z1)"];
+    1 -> 2 [label = "OFFER [!x1 & x2] (z2)"];
+    1 -> 4 [label = "OFFER [x1 & !x2] ()"];
+    2 -> 1 [label = "POLL [x1 & !x2] (z4)"];
+    2 -> 3 [label = "OFFER [!x2 & !x3 & !x4] (z7, z1)"];
+    2 -> 3 [label = "OFFER [!x1 & x2 & !x4] (z3)"];
+    2 -> 3 [label = "OFFER [!x1 & x2 & !x3 & x4] (z8, z2)"];
+    3 -> 2 [label = "POLL [x1 & !x2] (z5)"];
+    4 -> 1 [label = "POLL [x1 & !x2] ()"];
+    4 -> 5 [label = "OFFER [!x1 & x2] (z2)"];
+    4 -> 6 [label = "OFFER [!x2] (z2)"];
+    5 -> 2 [label = "POLL [x1 & !x2] ()"];
+    6 -> 4 [label = "POLL [x3 & !x4] ()"];
+}

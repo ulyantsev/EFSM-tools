@@ -4,6 +4,13 @@ package verification.ltl;
  * (c) Igor Buzhinsky
  */
 
+import bool.MyBooleanExpression;
+import ognl.Node;
+import ognl.Ognl;
+import ognl.OgnlException;
+import verification.ltl.grammar.LtlNode;
+import verification.ltl.grammar.PredicateFactory;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
@@ -12,12 +19,6 @@ import java.util.List;
 import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import ognl.Node;
-import ognl.Ognl;
-import ognl.OgnlException;
-import verification.ltl.grammar.LtlNode;
-import verification.ltl.grammar.PredicateFactory;
 
 public class LtlParser {
 	private static String simplify(String formula) {
@@ -62,7 +63,7 @@ public class LtlParser {
 		int lastPos = 0;
 		while (m.find()) {
 			final String varName = m.group(1);
-			final int varIndex = Integer.parseInt(varName.substring(1));
+			final int varIndex = MyBooleanExpression.varToNumber(varName);
 			sb.append(formula.substring(lastPos, m.start()));
 			final List<String> expansion = new ArrayList<>();
 			for (String event : events) {

@@ -24,7 +24,7 @@ public class ConsistencyCheckerMain extends MainBase {
     @Override
     protected void launcher() throws IOException, ParseException {
         final MealyAutomaton automaton = loadAutomaton(efsm);
-        final List<StringScenario> scenarios = loadScenarios(sc, -1);
+        final List<StringScenario> scenarios = loadScenarios(sc, false);
 
         int faultCount = 0;
         int actionsMistakes = 0;

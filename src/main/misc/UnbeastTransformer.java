@@ -4,24 +4,8 @@ package main.misc;
  * (c) Igor Buzhinsky
  */
 
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Deque;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Scanner;
-import java.util.Set;
-import java.util.TreeSet;
-import java.util.logging.FileHandler;
-import java.util.logging.Logger;
-import java.util.logging.SimpleFormatter;
-
+import bool.MyBooleanExpression;
+import choco.kernel.common.util.tools.ArrayUtils;
 import scenario.StringActions;
 import scenario.StringScenario;
 import structures.mealy.MealyAutomaton;
@@ -29,15 +13,17 @@ import structures.mealy.MealyNode;
 import structures.mealy.MealyTransition;
 import verification.ltl.LtlParseException;
 import verification.ltl.LtlParser;
-import verification.ltl.grammar.BinaryOperator;
-import verification.ltl.grammar.BooleanNode;
-import verification.ltl.grammar.INodeVisitor;
-import verification.ltl.grammar.LtlNode;
-import verification.ltl.grammar.Predicate;
-import verification.ltl.grammar.UnaryOperator;
+import verification.ltl.grammar.*;
 import verification.verifier.Verifier;
-import bool.MyBooleanExpression;
-import choco.kernel.common.util.tools.ArrayUtils;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.text.ParseException;
+import java.util.*;
+import java.util.logging.FileHandler;
+import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
 
 public class UnbeastTransformer {
 	public static void main(String[] args) throws IOException, ParseException, LtlParseException {
@@ -62,7 +48,7 @@ public class UnbeastTransformer {
 		
 		final List<String> formulae = LtlParser.load(p.ltlPath, 0, p.events);
 		final List<LtlNode> nodes = LtlParser.parse(formulae);
-		final List<StringScenario> scenarios = StringScenario.loadScenarios(p.scenarioPath, -1);
+		final List<StringScenario> scenarios = StringScenario.loadScenarios(p.scenarioPath, false);
 		final Logger logger = Logger.getLogger("Logger" + System.currentTimeMillis());
 		final FileHandler fh = new FileHandler(logPath, false);
 		logger.addHandler(fh);

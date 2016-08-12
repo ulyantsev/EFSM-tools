@@ -3,10 +3,10 @@ Based on PriorityQueue from Java class library: https://docs.oracle.com/javase/7
 OFFER: function offer(p)
 POLL: function poll(p)
 Assume that v1, v2, v3 are internal variables of the queue (not modeled here), then:
-x0: p = v1
-x1: p > v1
-x2: p = v2
-x3: p > v2
+x1: p = v1
+x2: p > v1
+x3: p = v2
+x4: p > v2
 z1: v1 := p
 z2: v2 := p
 z3: v3 := p
@@ -18,3 +18,4 @@ z8: v3 := v2
 
 A similar state machine was generated in
 Cassel, S., Howar, F., Jonsson, B., & Steffen, B. (2014, September). Learning extended finite state machines. In International Conference on Software Engineering and Formal Methods (pp. 250-264). Springer International Publishing.
+(see Appendix A)

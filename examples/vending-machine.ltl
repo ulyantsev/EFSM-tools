@@ -1,6 +1,6 @@
 event(START)
-G(!(event(COIN) && variable(x0) && action(OK) && X(event(COIN) && !variable(x0))) || X(action(NO)))
-G(!(event(COIN) && !variable(x0) && action(OK) && X(event(COIN))) || X(action(NO)))
+G(!(event(COIN) && variable(x1) && action(OK) && X(event(COIN) && !variable(x1))) || X(action(NO)))
+G(!(event(COIN) && !variable(x1) && action(OK) && X(event(COIN))) || X(action(NO)))
 G(!(action(CHOC) && X(action(CHOC))))
 G(!(action(TOFFEE) && X(action(CHOC))))
 G(!(action(TOFFEE) && X(action(TOFFEE)) && X(X(action(TOFFEE)))))

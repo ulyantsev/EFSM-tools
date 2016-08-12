@@ -11,7 +11,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class StringScenario {
-	private static String removeVariables(String input, int varNumber) throws ParseException {
+	private static String removeVariables(String input) throws ParseException {
 		final Pattern p = Pattern.compile("(\\w+)(\\s)*+\\[([^\\[\\]]+)\\]");
 		final StringBuilder sb = new StringBuilder();
 		final Matcher m = p.matcher(input);
@@ -20,24 +20,17 @@ public class StringScenario {
 			final String event = m.group(1);
 			sb.append(input.substring(lastPos, m.start()));
 			final MyBooleanExpression expr = MyBooleanExpression.get(m.group(3));
-            final List<String> expansion = expr.getSatVarCombinations(varNumber).stream()
+            final List<String> expansion = expr.getSatVarCombinations().stream()
                     .map(varAssignment -> event + varAssignment)
                     .collect(Collectors.toList());
-			lastPos = m.end();
+            lastPos = m.end();
 			sb.append(String.join("|", expansion) + "[1]");
 		}
 		sb.append(input.substring(lastPos, input.length()));
 		return sb.toString();
 	}
-	
-	public static List<StringScenario> loadScenarios(String filepath) throws ParseException, FileNotFoundException {
-		return loadScenarios(filepath, -1);
-	}
-	
-	/*
-	 * varNumber = -1 for no variable removal
-	 */
-    public static List<StringScenario> loadScenarios(String filepath, int varNumber)
+
+    public static List<StringScenario> loadScenarios(String filepath, boolean removeVars)
             throws ParseException, FileNotFoundException {
         List<StringScenario> ans = new ArrayList<>();
         
@@ -45,8 +38,8 @@ public class StringScenario {
 	        String inp = "";
 	        while (in.hasNextLine()) {
 	            String s = in.nextLine().trim();
-	            if (varNumber != -1) {
-	            	s = removeVariables(s, varNumber);
+	            if (removeVars) {
+	            	s = removeVariables(s);
 	            }
 	            if (inp.isEmpty() && s.isEmpty()) {
 	                continue;
@@ -70,9 +63,7 @@ public class StringScenario {
     private List<MyBooleanExpression> expressions = new ArrayList<>();
     private List<StringActions> actions = new ArrayList<>();
     
-    public StringScenario(boolean isPositive,
-                          List<String> events,
-                          List<MyBooleanExpression> expressions,
+    public StringScenario(boolean isPositive, List<String> events, List<MyBooleanExpression> expressions,
                           List<StringActions> actions) {
     	this.isPositive = isPositive;
     	
