@@ -44,6 +44,10 @@ public class AprosBuilderMain extends MainBase {
             metaVar = "<k>")
     private int traceIncludeEach = 1;
 
+    @Option(name = "--timeInterval", aliases = {}, usage = "minimum time interval between traces, added to dataset",
+            metaVar = "<double>")
+    private double timeInterval = 1.0;
+
     public static void main(String[] args) {
         new AprosBuilderMain().run(args, Author.IB, "Toolset for NuSMV model generation from Apros traces");
     }
@@ -52,7 +56,7 @@ public class AprosBuilderMain extends MainBase {
     protected void launcher() throws IOException {
         initializeLogger(logFilePath);
         if (Objects.equals(type, "prepare-dataset")) {
-            DatasetSerializer.run(traceLocation, traceFilenamePrefix, paramScaleFilename);
+            DatasetSerializer.run(traceLocation, traceFilenamePrefix, paramScaleFilename, timeInterval);
         } else {
             final Configuration conf = Configuration.load(confFilename);
             if (Objects.equals(type, "constraint-based")) {

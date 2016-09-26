@@ -78,7 +78,7 @@ public class Configuration {
                 if (line.isEmpty() || line.startsWith("#")) {
                     continue;
                 }
-                final String[] tokens = line.split(" ");
+                final String[] tokens = Utils.splitString(line);
                 final String operation = tokens[0];
                 if (operation.equals("color_rule")) {
                     colorRules.add(tokens);
