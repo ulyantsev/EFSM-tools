@@ -64,8 +64,8 @@ public class Dataset implements Serializable {
 				if (paramIndices.isEmpty()) {
 					// read param names
 					for (int i = 0; i < paramNum; i++) {
-						final String[] tokens = sc.nextLine().split(" ");
-						final String name = tokens[1] + "#" + tokens[2];
+						final String[] tokens = Utils.splitString(sc.nextLine());
+						final String name = String.join("#", tokens);
 						paramIndices.put(name, paramIndices.size());
 					}
 				} else {
@@ -77,9 +77,9 @@ public class Dataset implements Serializable {
 
 				while (sc.hasNextLine()) {
 					final String line = sc.nextLine();
-					final String[] tokens = line.split(" +");
+					final String[] tokens = Utils.splitString(line);
 
-					double curTimestamp = Double.parseDouble(tokens[1]);
+					double curTimestamp = Double.parseDouble(tokens[0]);
 					if (curTimestamp >= timestampToRecord) {
 						timestampToRecord += intervalSec;
 					} else {
@@ -88,7 +88,7 @@ public class Dataset implements Serializable {
 
 					final double[] valueLine = new double[paramNum];
 					for (int i = 0; i < paramNum; i++) {
-						valueLine[i] = Double.parseDouble(tokens[i + 2]);
+						valueLine[i] = Double.parseDouble(tokens[i + 1]);
 					}
 					valueLines.add(valueLine);
 				}
