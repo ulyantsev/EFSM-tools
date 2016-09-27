@@ -10,8 +10,8 @@ import java.io.ObjectOutputStream;
 
 public class DatasetSerializer {
 	public final static void run(String traceLocation, String traceFilenamePrefix,
-                                 String paramScaleFilename) throws IOException {
-        final Dataset ds = new Dataset(1.0,
+                                 String paramScaleFilename, double intervalSec) throws IOException {
+        final Dataset ds = new Dataset(intervalSec,
                 traceLocation, traceFilenamePrefix, TraceTranslator.paramScales(paramScaleFilename));
         final String outFilename = "dataset_" + traceFilenamePrefix + ".bin";
         try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(outFilename))) {

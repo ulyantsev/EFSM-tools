@@ -23,7 +23,7 @@ public class TraceTranslator {
                 if (line.isEmpty() || line.startsWith("#")) {
                     continue;
                 }
-                final String[] tokens = line.split(" ");
+                final String[] tokens = Utils.splitString(line);
                 final String aprosName = tokens[0];
                 final double scale = Double.parseDouble(tokens[1]);
                 paramScales.put(aprosName, scale);
