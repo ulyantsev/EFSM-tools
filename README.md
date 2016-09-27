@@ -1,3 +1,5 @@
+Warning: this is a development branch. Some features may not work properly.
+
 ## Introduction
 
 EFSM-tools is a toolset for finite-state machine (FSM) synthesis. Is is mostly based on satisfiability solvers, and uses *traces* (aka IO-traces, *scenarios*) and LTL formulae as input. EFSM means "extended finite-state machine", an FSM with variables. However, within this toolset variables are Boolean and are often treated analogously to input events. The variant of the FSM synthesis problem being solved is *exact*: an FSM is generated with the given number of states, or its non-existence is reported.
@@ -15,8 +17,7 @@ EFSM-tools is developed in Computer Technologies Laboratory, ITMO University. Yo
 
 ## Prerequisites
 
-The toolset is based on Java, so you must have JRE 1.8 (or greater) to run it. You may wish to rebuild the toolset, for which you need JDK 1.8 (or greater) and [ant](https://ant.apache.org/).
-The tool is intended to work on Linux and Windows. The most recent features are not tested on Windows, though. Running some examples may require bash.
+To build the toolset, you need JDK 1.8 (or greater) and [ant](https://ant.apache.org/). The tool is intended to work on Linux and Windows. The most recent features are not tested on Windows, though. Running some examples may require bash.
 
 EFSM-tools works with [cryptominisat](http://www.msoos.org/cryptominisat4/) and [lingeling](http://fmv.jku.at/lingeling/) SAT solvers, [Choco](http://choco-solver.org/) constraint (CSP) solver and [DepQBF](https://github.com/lonsing/depqbf) QSAT (QBF) solver. Choco is included into the toolset as a library. As for the rest, they must be installed separately. Make them available in command line as "cryptominisat4", "lingeling" and "depqbf".
 
@@ -28,11 +29,11 @@ To view generated FSMs, you need [Graphviz](http://www.graphviz.org/) (on Linux,
 
 ## Building and running
 
-The pre-build JAR executables are placed in the [jars](/jars/) directory. If you wish to rebuild the toolset yourself, move to the root of the project and run:
+To build the toolset, move to the root of the project and run:
 
 > ant
 
-Then you can try running JAR tools like this and see the summaries of their command line options:
+The JAR executables will be generated in the [jars](/jars/) directory. Then you can try running JAR tools like this and see the summaries of their command line options:
 
 > java -jar jars/<tool-name\>.jar
 
