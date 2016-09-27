@@ -44,7 +44,7 @@ public class AprosBuilderMain extends MainBase {
             metaVar = "<k>")
     private int traceIncludeEach = 1;
 
-    @Option(name = "--timeInterval", aliases = {}, usage = "minimum time interval between traces, added to dataset",
+    @Option(name = "--timeInterval", aliases = {}, usage = "minimum time interval between trace elements (default: 1)",
             metaVar = "<double>")
     private double timeInterval = 1.0;
 
