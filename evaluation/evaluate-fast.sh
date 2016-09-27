@@ -40,7 +40,7 @@ for ((size = $min_size; size <= $max_size; size++)); do
         for ((trysize = $minsize; trysize <= $size; trysize++)); do
             echo ">>> $instance_description: $trysize"
             rm -f $fsm
-            java -Xms2G -Xmx4G -jar ../jars/fast-automaton-generator.jar "$sc_name" \
+            java -Xmx4G -jar ../jars/fast-automaton-generator.jar "$sc_name" \
                 --ltl "$ltl_name" --size $trysize --eventNumber $events --actionNumber $actions \
                 --timeout $timeout --result "$fsm" $compcmd --bfsConstraints \
                 2>&1 | cat > $ev_name/$trysize.full.log

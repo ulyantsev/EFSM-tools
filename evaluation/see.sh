@@ -45,7 +45,7 @@ print_found_by_prefix() {
 
 for compdir in "complete" "incomplete"; do
     echo ">>> $compdir"
-    for prefix in FAST* EXP* QSAT* COUN* BACK*; do
+    for prefix in QSAT* FAST* EXP* COUN* BACK*; do
         echo_str=
         for ((s = 3; s <= 12; s++)); do
             ls "eval"/$compdir/$prefix-$s-*/"done" 1>/dev/null 2>/dev/null

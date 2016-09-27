@@ -224,8 +224,7 @@ public class NondetMooreAutomaton {
 		}
 	}
     
-    public String toNuSMVString(List<String> events, List<String> actions,
-                                List<List<Integer>> generatedStateSets,
+    public String toNuSMVString(List<String> events, List<String> actions, List<List<Integer>> generatedStateSets,
                                 Optional<Configuration> conf) {
     	final List<String> unmodifiedEvents = events;
     	events = events.stream().map(s -> "input_" + s).collect(Collectors.toList());

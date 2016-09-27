@@ -24,7 +24,7 @@ for l in 50 100 200; do
             ltl_name=$name/formulae
             echo ">>> s=$size num=$instance l=$l"
             rm -f "$fsm"
-            java -Xms2G -Xmx4G -jar ../jars/qbf-automaton-generator.jar "$sc_name" \
+            java -Xmx4G -jar ../jars/qbf-automaton-generator.jar "$sc_name" \
                 --ltl "$ltl_name" --size $size --eventNumber 2 --actionNumber 2 --varNumber 2 \
                 --timeout $timeout --result "$fsm" --strategy BACKTRACKING --completenessType NO_DEAD_ENDS \
                 2>&1 | grep "\\(INFO\\|WARNING\\|SEVERE\\|Exception\\|OutOfMemoryError|\\AssertionError\\)" > $ev_name.log && touch $ev_name.done
