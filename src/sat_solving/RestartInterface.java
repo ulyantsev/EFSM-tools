@@ -17,21 +17,21 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public class RestartInterface implements SolverInterface {
-	private final DimacsConversionInfo info;
+    private final DimacsConversionInfo info;
     private final Logger logger;
     private final SatSolver solver;
 
-	public RestartInterface(List<int[]> positiveConstraints, String actionspec, Logger logger, SatSolver solver)
+    public RestartInterface(List<int[]> positiveConstraints, String actionspec, Logger logger, SatSolver solver)
             throws IOException {
-		if (solver.isIncremental) {
+        if (solver.isIncremental) {
             throw new AssertionError("A non-incremental solver was expected!");
         }
         this.logger = logger;
         this.solver = solver;
         info = BooleanFormula.actionSpecToDimacs(logger, BooleanFormula.DIMACS_FILENAME, actionspec);
-		info.close();
+        info.close();
         appendConstraints(positiveConstraints);
-	}
+    }
 
     private void appendConstraints(List<int[]> constraints) throws IOException {
         BooleanFormula.transformConstraints(constraints, info);
@@ -42,12 +42,12 @@ public class RestartInterface implements SolverInterface {
     }
 
     @Override
-	public void halt() {
-	}
+    public void halt() {
+    }
 
     @Override
-	public SolverResult solve(List<int[]> newConstraints, int timeLeftForSolver) throws IOException {
+    public SolverResult solve(List<int[]> newConstraints, int timeLeftForSolver) throws IOException {
         appendConstraints(newConstraints);
         return BooleanFormula.solveDimacs(logger, timeLeftForSolver, solver, info).toSolverResult(timeLeftForSolver);
-	}
+    }
 }

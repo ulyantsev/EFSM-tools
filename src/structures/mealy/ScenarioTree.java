@@ -24,7 +24,7 @@ public class ScenarioTree {
     }
 
     public void load(String filepath) throws FileNotFoundException, ParseException {
-    	load(filepath, false);
+        load(filepath, false);
     }
     
     /*
@@ -49,26 +49,26 @@ public class ScenarioTree {
      */
     private void addTransitions(MealyNode src, List<String> events, MyBooleanExpression expr,
                                 StringActions actions) throws ParseException {
-    	if (events.isEmpty()) {
+        if (events.isEmpty()) {
             throw new AssertionError();
         }
-    	MealyNode dst = null;
-    	for (String e : events) {
-	        if (src.hasTransition(e, expr)) {
-	            final MealyTransition t = src.transition(e, expr);
-	            if (!t.actions().equals(actions)) {
-	                throw new ParseException("Transition clash for event " + e + " in node "
-	                		+ src.number() + ": " + t.actions() + " != " + actions
+        MealyNode dst = null;
+        for (String e : events) {
+            if (src.hasTransition(e, expr)) {
+                final MealyTransition t = src.transition(e, expr);
+                if (!t.actions().equals(actions)) {
+                    throw new ParseException("Transition clash for event " + e + " in node "
+                            + src.number() + ": " + t.actions() + " != " + actions
                             + ". This may be caused by inconsistent scenarios.", 0);
-	            }
-	        } else {
-	        	if (dst == null) {
-	        		dst = new MealyNode(nodes.size());
-	        		nodes.add(dst);
-	        	}
-	            src.addTransition(e, expr, actions, dst);
-	        }
-    	}
+                }
+            } else {
+                if (dst == null) {
+                    dst = new MealyNode(nodes.size());
+                    nodes.add(dst);
+                }
+                src.addTransition(e, expr, actions, dst);
+            }
+        }
     }
 
     public List<MealyNode> nodes() {
@@ -91,9 +91,9 @@ public class ScenarioTree {
         final Set<String> actions = new TreeSet<>();
         for (MealyNode node : nodes) {
             for (MealyTransition transition : node.transitions()) {
-            	for (String action : transition.actions().getActions()) {
-            		actions.add(action);
-            	}
+                for (String action : transition.actions().getActions()) {
+                    actions.add(action);
+                }
             }
         }
         return new ArrayList<>(actions);

@@ -29,7 +29,7 @@ public class MooreNode {
     }
     
     public boolean hasTransition(String event) {
-    	return transitions.stream().anyMatch(t -> t.event().equals(event));
+        return transitions.stream().anyMatch(t -> t.event().equals(event));
     }
     
     public void addTransition(String event, MooreNode dst) {
@@ -41,12 +41,12 @@ public class MooreNode {
     }
     
     public void removeTransition(MooreTransition transition) {
-    	for (int i = 0; i < transitions.size(); i++) {
-    		if (transitions.get(i) == transition) {
-    			transitions.remove(i);
-    			break;
-    		}
-    	}
+        for (int i = 0; i < transitions.size(); i++) {
+            if (transitions.get(i) == transition) {
+                transitions.remove(i);
+                break;
+            }
+        }
     }
     
     public Collection<MooreTransition> transitions() {
@@ -59,28 +59,28 @@ public class MooreNode {
     
     @Override
     public String toString() {
-    	return toString(Collections.emptyMap());
+        return toString(Collections.emptyMap());
     }
     
     public String toString(Map<String, String> actionDescriptions) {
-    	return String.valueOf(number + "\\n" + String.join("\\n",
-    			Arrays.stream(actions.getActions())
-    			.map(Object::toString)
-    			.map(s -> actionDescriptions.containsKey(s) ? actionDescriptions.get(s) : s)
-    			.collect(Collectors.toList())));
+        return String.valueOf(number + "\\n" + String.join("\\n",
+                Arrays.stream(actions.getActions())
+                .map(Object::toString)
+                .map(s -> actionDescriptions.containsKey(s) ? actionDescriptions.get(s) : s)
+                .collect(Collectors.toList())));
     }
     
     public MooreNode scenarioDst(String event, StringActions actions) {
-    	for (MooreTransition t : transitions) {
-    		if (t.event().equals(event) && t.dst().actions().equals(actions)) {
-    			return t.dst();
-    		}
-    	}
-    	return null;
+        for (MooreTransition t : transitions) {
+            if (t.event().equals(event) && t.dst().actions().equals(actions)) {
+                return t.dst();
+            }
+        }
+        return null;
     }
     
     public List<MooreNode> allDst(String event) {
-    	return transitions.stream().filter(t -> t.event().equals(event))
+        return transitions.stream().filter(t -> t.event().equals(event))
                 .map(MooreTransition::dst)
                 .collect(Collectors.toList());
     }

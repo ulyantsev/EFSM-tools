@@ -20,16 +20,16 @@ public class Predicate extends LtlNode implements IExpression<Boolean> {
      * For simplified usage.
      */
     public String arg() {
-    	return arg;
+        return arg;
     }
     
     public Predicate(Object target, Method m, String arg) {
         super(m.getName());
         
-    	if (arg.startsWith("ep.") || arg.startsWith("co.")) {
-    		arg = arg.substring(3);
-    	}
-    	
+        if (arg.startsWith("ep.") || arg.startsWith("co.")) {
+            arg = arg.substring(3);
+        }
+        
         if (!boolean.class.equals(m.getReturnType()) && !Boolean.class.equals(m.getReturnType())) {
             throw new IllegalArgumentException("Method should return boolean type");
         }

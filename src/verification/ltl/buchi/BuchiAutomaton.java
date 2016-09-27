@@ -49,11 +49,11 @@ public class BuchiAutomaton {
     @Override
     public String toString() {
         return "Initial state: " + startNode.getID() + "\n"
-        		+ String.join("", nodes.stream()
-        				.map(Object::toString).collect(Collectors.toList()))
-        		+ "Accepting states: ["
-        		+ String.join(", ", acceptSet.stream()
-        				.map(node -> String.valueOf(node.getID())).collect(Collectors.toList())
-        		+ "]\n");
+                + String.join("", nodes.stream()
+                        .map(Object::toString).collect(Collectors.toList()))
+                + "Accepting states: ["
+                + String.join(", ", acceptSet.stream()
+                        .map(node -> String.valueOf(node.getID())).collect(Collectors.toList())
+                + "]\n");
     }
 }

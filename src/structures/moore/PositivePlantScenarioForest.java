@@ -15,7 +15,7 @@ public class PositivePlantScenarioForest extends PlantScenarioForest {
     }
 
     @Override
-	public void addScenario(StringScenario scenario) {
+    public void addScenario(StringScenario scenario) {
         checkScenario(scenario);
         final StringActions firstActions = scenario.getActions(0);
         MooreNode properRoot = separatePaths ? null : properRoot(firstActions);
@@ -27,7 +27,7 @@ public class PositivePlantScenarioForest extends PlantScenarioForest {
         addScenarioFrom(properRoot, scenario);
     }
 
-	@Override
+    @Override
     protected MooreNode addTransition(MooreNode src, String event, StringActions actions) {
         MooreNode dst = separatePaths ? null : src.scenarioDst(event, actions);
         if (dst == null) {

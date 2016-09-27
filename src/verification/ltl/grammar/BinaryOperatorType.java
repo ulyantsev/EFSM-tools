@@ -33,7 +33,7 @@ public enum BinaryOperatorType implements IOperatorType {
 
     @Override
     public String toString() {
-    	return name;
+        return name;
     }
     
     BinaryOperatorType(String name) {

@@ -7,14 +7,14 @@ package exception;
 import structures.mealy.MealyAutomaton;
 
 public class AutomatonFoundException extends Exception {
-	public final MealyAutomaton automaton;
+    public final MealyAutomaton automaton;
 
-	public AutomatonFoundException(MealyAutomaton automaton) {
-		this.automaton = automaton;
-	}
-	
-	@Override
-	public Throwable fillInStackTrace() {
-		return this;
-	}
+    public AutomatonFoundException(MealyAutomaton automaton) {
+        this.automaton = automaton;
+    }
+    
+    @Override
+    public Throwable fillInStackTrace() {
+        return this;
+    }
 }

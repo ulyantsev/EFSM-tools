@@ -13,8 +13,8 @@ import verification.statemachine.StateTransition;
  * @author Kirill Egorov
  */
 public class PredicateFactory {
-	private SimpleState state;
-	private StateTransition transition;
+    private SimpleState state;
+    private StateTransition transition;
 
     /**
      * To check predicate in transition.getTarget() state.
@@ -31,7 +31,7 @@ public class PredicateFactory {
                 && transition.getTarget() == state && state.outgoingTransitions().size() > 1);
     }
     
-	@Predicate
+    @Predicate
     public Boolean event(String e) {
         return wasTransition() ? e.equals(transition.event) : null;
     }

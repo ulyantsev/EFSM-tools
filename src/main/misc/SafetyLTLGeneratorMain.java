@@ -23,9 +23,9 @@ public class SafetyLTLGeneratorMain extends MainBase {
     @Argument(usage = "path to EFSM in Graphviz format", metaVar = "<efsm.gv>", required = true)
     private String efsm;
 
-	public static void main(String[] args) {
+    public static void main(String[] args) {
         new SafetyLTLGeneratorMain().run(args, Author.IB, "Generator of safety LTL formulae for a given FSM");
-	}
+    }
 
     @Override
     protected void launcher() throws IOException, ParseException {
@@ -35,22 +35,22 @@ public class SafetyLTLGeneratorMain extends MainBase {
         generateGPast(automaton);
     }
 
-	private static void generateX(MealyAutomaton automaton) {
-		//final Set<String> allEvents = allEvents(automaton);
-		boolean[] possibleStates = new boolean[automaton.stateCount()];
-		possibleStates[automaton.startState().number()] = true;
-		for (int i = 0; i < automaton.stateCount(); i++) {
-			final Set<String> events = new TreeSet<>();
-			final boolean[] newStates = new boolean[automaton.stateCount()];
-			for (int j = 0; j < possibleStates.length; j++) {
-				if (possibleStates[j]) {
-					for (MealyTransition t : automaton.state(j).transitions()) {
-						events.add(t.event());
-						newStates[t.dst().number()] = true;
-					}
-				}
-			}
-			//if (!events.equals(allEvents)) {
+    private static void generateX(MealyAutomaton automaton) {
+        //final Set<String> allEvents = allEvents(automaton);
+        boolean[] possibleStates = new boolean[automaton.stateCount()];
+        possibleStates[automaton.startState().number()] = true;
+        for (int i = 0; i < automaton.stateCount(); i++) {
+            final Set<String> events = new TreeSet<>();
+            final boolean[] newStates = new boolean[automaton.stateCount()];
+            for (int j = 0; j < possibleStates.length; j++) {
+                if (possibleStates[j]) {
+                    for (MealyTransition t : automaton.state(j).transitions()) {
+                        events.add(t.event());
+                        newStates[t.dst().number()] = true;
+                    }
+                }
+            }
+            //if (!events.equals(allEvents)) {
             final StringBuilder sb = new StringBuilder();
             for (int j = 0; j < i; j++) {
                 sb.append("X(");
@@ -60,64 +60,64 @@ public class SafetyLTLGeneratorMain extends MainBase {
                 sb.append(")");
             }
             System.out.println(sb);
-			//}
-			possibleStates = newStates;
-		}
-	}
-	
-	private static String joinEvents(Collection<String> events) {
-		return String.join(" || ", events.stream().map(e -> "event(" + e + ")").collect(Collectors.toList()));
-	}
-	
-	private static Set<String> allEvents(MealyAutomaton automaton) {
-		final Set<String> events = new TreeSet<>();
-		for (MealyNode node : automaton.states()) {
-			for (MealyTransition t : node.transitions()) {
-				events.add(t.event());
-			}
-		}
-		return events;
-	}
-	
-	private static void generateGFuture(MealyAutomaton automaton) {
-		//final Set<String> allEvents = allEvents(automaton);
-		for (String event : allEvents(automaton)) {
-			final Set<String> nextEvents = new TreeSet<>();
-			for (MealyNode node : automaton.states()) {
-				for (MealyTransition t : node.transitions()) {
-					if (t.event().equals(event)) {
-						for (MealyTransition nextT : t.dst().transitions()) {
-							nextEvents.add(nextT.event());
-						}
-					}
-				}
-			}
-			//if (!nextEvents.equals(allEvents)) {
+            //}
+            possibleStates = newStates;
+        }
+    }
+    
+    private static String joinEvents(Collection<String> events) {
+        return String.join(" || ", events.stream().map(e -> "event(" + e + ")").collect(Collectors.toList()));
+    }
+    
+    private static Set<String> allEvents(MealyAutomaton automaton) {
+        final Set<String> events = new TreeSet<>();
+        for (MealyNode node : automaton.states()) {
+            for (MealyTransition t : node.transitions()) {
+                events.add(t.event());
+            }
+        }
+        return events;
+    }
+    
+    private static void generateGFuture(MealyAutomaton automaton) {
+        //final Set<String> allEvents = allEvents(automaton);
+        for (String event : allEvents(automaton)) {
+            final Set<String> nextEvents = new TreeSet<>();
+            for (MealyNode node : automaton.states()) {
+                for (MealyTransition t : node.transitions()) {
+                    if (t.event().equals(event)) {
+                        for (MealyTransition nextT : t.dst().transitions()) {
+                            nextEvents.add(nextT.event());
+                        }
+                    }
+                }
+            }
+            //if (!nextEvents.equals(allEvents)) {
             System.out.println("G(!(event(" + event + ")) || X(" + joinEvents(nextEvents) + "))");
-			//}
-		}
-	}
-	
-	private static void generateGPast(MealyAutomaton automaton) {
-		//final Set<String> allEvents = allEvents(automaton);
-		for (String event : allEvents(automaton)) {
-			final Set<String> prevEvents = new TreeSet<>();
-			for (MealyNode node : automaton.states()) {
-				for (MealyTransition t : node.transitions()) {
-					if (t.event().equals(event)) {
-						for (MealyNode prevNode : automaton.states()) {
-							for (MealyTransition prevT : prevNode.transitions()) {
-								if (prevT.dst() == node) {
-									prevEvents.add(prevT.event());
-								}
-							}
-						}
-					}
-				}
-			}
-			//if (!prevEvents.equals(allEvents)) {
+            //}
+        }
+    }
+    
+    private static void generateGPast(MealyAutomaton automaton) {
+        //final Set<String> allEvents = allEvents(automaton);
+        for (String event : allEvents(automaton)) {
+            final Set<String> prevEvents = new TreeSet<>();
+            for (MealyNode node : automaton.states()) {
+                for (MealyTransition t : node.transitions()) {
+                    if (t.event().equals(event)) {
+                        for (MealyNode prevNode : automaton.states()) {
+                            for (MealyTransition prevT : prevNode.transitions()) {
+                                if (prevT.dst() == node) {
+                                    prevEvents.add(prevT.event());
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            //if (!prevEvents.equals(allEvents)) {
             System.out.println("G(!(X(event(" + event + "))) || " + joinEvents(prevEvents) + ")");
-			//}
-		}
-	}
+            //}
+        }
+    }
 }

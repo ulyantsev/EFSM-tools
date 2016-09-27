@@ -37,11 +37,11 @@ public class IntersectionNode {
     }
 
     public IntersectionTransition next() {
-    	return iterator.hasNext() ? iterator.next() : null;
+        return iterator.hasNext() ? iterator.next() : null;
     }
 
     public void resetIterator() {
-    	iterator.reset();
+        iterator.reset();
     }
 
     @Override
@@ -53,7 +53,7 @@ public class IntersectionNode {
             return false;
         }
 
-		final IntersectionNode intersectionNode = (IntersectionNode) o;
+        final IntersectionNode intersectionNode = (IntersectionNode) o;
 
         return node.equals(intersectionNode.node) && state.equals(intersectionNode.state);
     }
@@ -102,7 +102,7 @@ public class IntersectionNode {
                 if (nodeIter.hasNext()) {
                     nextBuchiTransition = nodeIter.next();
                     if (nextBuchiTransition.getKey().getValue()) {
-						IntersectionNode node = automata.getNode(nextStateTransition.getTarget(),
+                        IntersectionNode node = automata.getNode(nextStateTransition.getTarget(),
                                 nextBuchiTransition.getValue());
                         next = new IntersectionTransition(nextStateTransition, node);
                         return true;
@@ -133,9 +133,9 @@ public class IntersectionNode {
             throw new UnsupportedOperationException();
         }
 
-		@Override
-		public void forEachRemaining(Consumer<? super IntersectionTransition> action) {
-			throw new UnsupportedOperationException();
-		}
+        @Override
+        public void forEachRemaining(Consumer<? super IntersectionTransition> action) {
+            throw new UnsupportedOperationException();
+        }
     }
 }

@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 
 public class DatasetSerializer {
-	public final static void run(String traceLocation, String traceFilenamePrefix,
+    public final static void run(String traceLocation, String traceFilenamePrefix,
                                  String paramScaleFilename, double intervalSec) throws IOException {
         final Dataset ds = new Dataset(intervalSec,
                 traceLocation, traceFilenamePrefix, TraceTranslator.paramScales(paramScaleFilename));
@@ -18,5 +18,5 @@ public class DatasetSerializer {
             out.writeObject(ds);
         }
         System.out.println("Done; dataset has been written to: " + outFilename);
-	}
+    }
 }

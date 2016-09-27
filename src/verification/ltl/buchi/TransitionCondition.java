@@ -24,11 +24,11 @@ public class TransitionCondition {
     }
     
     public Set<IExpression<Boolean>> expressions() {
-    	return Collections.unmodifiableSet(exprs);
+        return Collections.unmodifiableSet(exprs);
     }
     
     public Set<IExpression<Boolean>> negativeExpressions() {
-    	return Collections.unmodifiableSet(negExprs);
+        return Collections.unmodifiableSet(negExprs);
     }
 
     public TransitionCondition(Set<IExpression<Boolean>> exprs, Set<IExpression<Boolean>> negExprs) {

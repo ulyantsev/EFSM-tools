@@ -78,19 +78,19 @@ public class MealyAutomaton {
     public boolean compliesWith(StringScenario scenario) {
         MealyNode node = startState;
         for (int pos = 0; pos < scenario.size(); pos++) {
-        	List<MealyNode> newNodes = new ArrayList<>();
-        	// multi-edge support
-        	for (String e : scenario.getEvents(pos)) {
-	            MealyNode newNode = next(node, e, scenario.getExpr(pos), scenario.getActions(pos));
-	            if (newNode == null) {
-	                return false;
-	            }
-	            newNodes.add(newNode);
-        	}
-        	node = newNodes.get(0);
-        	if (new HashSet<>(newNodes).size() > 1) {
-        		return false;
-        	}
+            List<MealyNode> newNodes = new ArrayList<>();
+            // multi-edge support
+            for (String e : scenario.getEvents(pos)) {
+                MealyNode newNode = next(node, e, scenario.getExpr(pos), scenario.getActions(pos));
+                if (newNode == null) {
+                    return false;
+                }
+                newNodes.add(newNode);
+            }
+            node = newNodes.get(0);
+            if (new HashSet<>(newNodes).size() > 1) {
+                return false;
+            }
         }
         return true;
     }
@@ -113,18 +113,18 @@ public class MealyAutomaton {
 
     @Override
     public String toString() {
-    	StringBuilder sb = new StringBuilder();
-    	sb.append("# generated file, don't try to modify\n"
-        	+ "# command: dot -Tpng <filename> > tree.png\n"
-        	+ "digraph Automaton {\n"
-        	+ "    node [shape = circle];\n"
-        	+ "    0 [style = \"bold\"];\n");
+        StringBuilder sb = new StringBuilder();
+        sb.append("# generated file, don't try to modify\n"
+            + "# command: dot -Tpng <filename> > tree.png\n"
+            + "digraph Automaton {\n"
+            + "    node [shape = circle];\n"
+            + "    0 [style = \"bold\"];\n");
 
         for (MealyNode state : states) {
             for (MealyTransition t : state.transitions()) {
                 sb.append("    " + t.src().number() + " -> " + t.dst().number());
                 sb.append(" [label = \"" + t.event() + " [" + t.expr().toString()
-                	+ "] (" + t.actions().toString() + ") \"];\n");
+                    + "] (" + t.actions().toString() + ") \"];\n");
             }
         }
 

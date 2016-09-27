@@ -10,6 +10,6 @@ package verification.ltl.grammar.exception;
  */
 public class UnexpectedParameterException extends RuntimeException {
     public UnexpectedParameterException(Class<?> aClass) {
-	    super("Unexpected class: " + aClass.getName());
+        super("Unexpected class: " + aClass.getName());
     }
 }

@@ -26,86 +26,86 @@ import java.util.List;
 import java.util.Optional;
 
 public class FastAutomatonBuilderMain extends MainBase {
-	@Argument(usage = "paths to files with scenarios", metaVar = "files", required = true)
-	private List<String> arguments = new ArrayList<>();
+    @Argument(usage = "paths to files with scenarios", metaVar = "files", required = true)
+    private List<String> arguments = new ArrayList<>();
 
-	@Option(name = "--size", aliases = { "-s" },
+    @Option(name = "--size", aliases = { "-s" },
             usage = "automaton size", metaVar = "<size>", required = true)
-	private int size;
-	
-	@Option(name = "--eventNumber", aliases = { "-en" },
+    private int size;
+    
+    @Option(name = "--eventNumber", aliases = { "-en" },
             usage = "number of events (default 1)", metaVar = "<eventNumber>")
-	private int eventNumber = 1;
-	
-	@Option(name = "--eventNames", aliases = { "-enm" },
+    private int eventNumber = 1;
+    
+    @Option(name = "--eventNames", aliases = { "-enm" },
             usage = "optional comma-separated event names (default: A, B, C, ...)",
-			metaVar = "<eventNames>")
-	private String eventNames;
-	
-	@Option(name = "--actionNumber", aliases = { "-an" },
+            metaVar = "<eventNames>")
+    private String eventNames;
+    
+    @Option(name = "--actionNumber", aliases = { "-an" },
             usage = "number of actions (default 0)", metaVar = "<actionNumber>")
-	private int actionNumber = 0;
-	
-	@Option(name = "--actionNames", aliases = { "-anm" },
+    private int actionNumber = 0;
+    
+    @Option(name = "--actionNames", aliases = { "-anm" },
             usage = "optional comma-separated action names (default: z0, z1, z2, ...)",
-			metaVar = "<actionNames>")
-	private String actionNames;
-	
-	@Option(name = "--varNumber", aliases = { "-vn" },
+            metaVar = "<actionNames>")
+    private String actionNames;
+    
+    @Option(name = "--varNumber", aliases = { "-vn" },
             usage = "number of variables (default 0)", metaVar = "<varNumber>")
-	private int varNumber = 0;
+    private int varNumber = 0;
 
     @Option(name = "--varNames", aliases = { "-vnm" },
             usage = "optional comma-separated variable names (default: x0, x1, ...)", metaVar = "<varNames>")
     private String varNames;
 
-	@Option(name = "--log", aliases = { "-l" },
+    @Option(name = "--log", aliases = { "-l" },
             usage = "write log to this file", metaVar = "<file>")
-	private String logFilePath;
+    private String logFilePath;
 
-	@Option(name = "--result", aliases = { "-r" },
+    @Option(name = "--result", aliases = { "-r" },
             usage = "write the obtained automaton in the GV format to this file",
-			metaVar = "<file>")
-	private String resultFilePath = "automaton.gv";
+            metaVar = "<file>")
+    private String resultFilePath = "automaton.gv";
 
-	@Option(name = "--tree", aliases = { "-t" },
+    @Option(name = "--tree", aliases = { "-t" },
             usage = "write the obtained scenario tree in the GV format to this file",
-			metaVar = "<file>")
-	private String treeFilePath;
+            metaVar = "<file>")
+    private String treeFilePath;
 
-	@Option(name = "--ltl", aliases = { "-lt" },
+    @Option(name = "--ltl", aliases = { "-lt" },
             usage = "file with LTL properties", metaVar = "<file>")
-	private String ltlFilePath;
-	
-	@Option(name = "--negsc", aliases = { "-ns" },
+    private String ltlFilePath;
+    
+    @Option(name = "--negsc", aliases = { "-ns" },
             usage = "file with negative scenarios",
-			metaVar = "<file>")
-	private String negscFilePath;
-	
-	@Option(name = "--timeout", aliases = { "-to" },
+            metaVar = "<file>")
+    private String negscFilePath;
+    
+    @Option(name = "--timeout", aliases = { "-to" },
             usage = "solver timeout (sec)", metaVar = "<timeout>")
-	private int timeout = 10_000_000;
+    private int timeout = 10_000_000;
 
-	@Option(name = "--complete", aliases = { "-cm" }, handler = BooleanOptionHandler.class,
+    @Option(name = "--complete", aliases = { "-cm" }, handler = BooleanOptionHandler.class,
             usage = "completeness")
-	private boolean complete;
-	
-	@Option(name = "--bfsConstraints", aliases = { "-bc" }, handler = BooleanOptionHandler.class,
+    private boolean complete;
+    
+    @Option(name = "--bfsConstraints", aliases = { "-bc" }, handler = BooleanOptionHandler.class,
             usage = "BFS symmetry breaking")
-	private boolean bfsConstraints;
-	
-	@Option(name = "--globalTree", aliases = { "-gt" }, handler = BooleanOptionHandler.class,
-			usage = "use a special negative tree to handle finite counterexamples produced from G(...) formulae")
-	private boolean globalTree;
+    private boolean bfsConstraints;
+    
+    @Option(name = "--globalTree", aliases = { "-gt" }, handler = BooleanOptionHandler.class,
+            usage = "use a special negative tree to handle finite counterexamples produced from G(...) formulae")
+    private boolean globalTree;
 
     @Option(name = "--solver",
             usage = "SAT solver: INCREMENTAL_CRYPTOMINISAT (default), LINGELING, CRYPTOMINISAT",
             metaVar = "<solver>")
     private String strSolver = SatSolver.INCREMENTAL_CRYPTOMINISAT.name();
 
-	public static void main(String[] args) {
+    public static void main(String[] args) {
         new FastAutomatonBuilderMain().run(args, Author.IB, "FSM builder from scenarios and LTL formulae");
-	}
+    }
 
     @Override
     protected void launcher() throws IOException, ParseException {

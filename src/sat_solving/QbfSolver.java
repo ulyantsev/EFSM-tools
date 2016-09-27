@@ -5,11 +5,11 @@ package sat_solving;
  */
 
 public enum QbfSolver {
-	DEPQBF("depqbf");
-	
-	public final String command;
+    DEPQBF("depqbf");
+    
+    public final String command;
 
-	QbfSolver(String command) {
-		this.command = command;
-	}
+    QbfSolver(String command) {
+        this.command = command;
+    }
 }

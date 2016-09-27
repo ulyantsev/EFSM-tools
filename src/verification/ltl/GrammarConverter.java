@@ -52,8 +52,8 @@ public class GrammarConverter {
             throw new IllegalArgumentException("BuchiNode can't be null");
         }
         if (root instanceof ASTMethod) {
-        	final ASTMethod node = (ASTMethod) root;
-        	final String name = node.getMethodName();
+            final ASTMethod node = (ASTMethod) root;
+            final String name = node.getMethodName();
 
             //is unary operator?
             for (UnaryOperatorType type : UnaryOperatorType.values()) {

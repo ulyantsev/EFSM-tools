@@ -4,27 +4,23 @@ package apros;
  * (c) Igor Buzhinsky
  */
 
+import org.apache.commons.lang3.tuple.Pair;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
-
-import org.apache.commons.lang3.tuple.Pair;
+import java.util.*;
 
 public class TraceModelGenerator {
-	public static void run(Configuration conf, String datasetFilename) throws IOException {
-		final Dataset ds = Dataset.load(datasetFilename);
-		
-		final int maxLength = ds.values.stream().mapToInt(v -> v.size()).max().getAsInt();
-		final int minLength = ds.values.stream().mapToInt(v -> v.size()).min().getAsInt();
-		if (maxLength != minLength) {
-			throw new AssertionError("All traces are currently assumed to have equal lengths.");
-		}
+    public static void run(Configuration conf, String datasetFilename) throws IOException {
+        final Dataset ds = Dataset.load(datasetFilename);
+
+        final int maxLength = ds.values.stream().mapToInt(v -> v.size()).max().getAsInt();
+        final int minLength = ds.values.stream().mapToInt(v -> v.size()).min().getAsInt();
+        if (maxLength != minLength) {
+            throw new AssertionError("All traces are currently assumed to have equal lengths.");
+        }
 
         final String outFilename = "trace-model.smv";
         final String individualTraceDir = "individual-trace-models";
@@ -36,9 +32,9 @@ public class TraceModelGenerator {
                     individualTraceDir + "/trace-model-" + i + ".smv");
         }
 
-		System.out.println("Done; the model has been written to: " + outFilename);
+        System.out.println("Done; the model has been written to: " + outFilename);
         System.out.println("Individual trace models have been written to: " + individualTraceDir);
-	}
+    }
 
     private static void writeTraceModel(Configuration conf, Dataset ds, int maxLength, int indexFrom, int indexTo,
                                         String filename) throws FileNotFoundException {
@@ -100,42 +96,42 @@ public class TraceModelGenerator {
             pw.println(sb);
         }
     }
-	
-	public static List<Pair<Integer, Integer>> intervals(Collection<Integer> values) {
-		final List<Pair<Integer, Integer>> intervals = new ArrayList<>();
-		int min = -1;
-		int max = -1;
-		for (int value : values) {
-			if (min == -1) {
-				min = max = value;
-			} else if (value == max + 1) {
-				max = value;
-			} else if (value <= max) {
-				throw new AssertionError("Input set must contain increasing values.");
-			} else {
-				intervals.add(Pair.of(min, max));
-				min = max = value;
-			}
-		}
-		intervals.add(Pair.of(min, max));
-		return intervals;
-	}
-	
-	public static String expressWithIntervals(Collection<Integer> values) {
-		final List<Pair<Integer, Integer>> intervals = intervals(values);
-		final List<String> stringIntervals = new ArrayList<>();
-		final Set<Integer> separate = new TreeSet<>();
-		for (Pair<Integer, Integer> interval : intervals) {
-			if (interval.getLeft() + 1 >= interval.getRight()) {
-				separate.add(interval.getLeft());
-				separate.add(interval.getRight());
-			} else {
-				stringIntervals.add(interval.getLeft() + ".." + interval.getRight());
-			}
-		}
-		if (!separate.isEmpty()) {
-			stringIntervals.add(separate.toString().replace("[", "{").replace("]", "}"));
-		}
-		return String.join(" union ", stringIntervals);
-	}
+
+    public static List<Pair<Integer, Integer>> intervals(Collection<Integer> values) {
+        final List<Pair<Integer, Integer>> intervals = new ArrayList<>();
+        int min = -1;
+        int max = -1;
+        for (int value : values) {
+            if (min == -1) {
+                min = max = value;
+            } else if (value == max + 1) {
+                max = value;
+            } else if (value <= max) {
+                throw new AssertionError("Input set must contain increasing values.");
+            } else {
+                intervals.add(Pair.of(min, max));
+                min = max = value;
+            }
+        }
+        intervals.add(Pair.of(min, max));
+        return intervals;
+    }
+
+    public static String expressWithIntervals(Collection<Integer> values) {
+        final List<Pair<Integer, Integer>> intervals = intervals(values);
+        final List<String> stringIntervals = new ArrayList<>();
+        final Set<Integer> separate = new TreeSet<>();
+        for (Pair<Integer, Integer> interval : intervals) {
+            if (interval.getLeft() + 1 >= interval.getRight()) {
+                separate.add(interval.getLeft());
+                separate.add(interval.getRight());
+            } else {
+                stringIntervals.add(interval.getLeft() + ".." + interval.getRight());
+            }
+        }
+        if (!separate.isEmpty()) {
+            stringIntervals.add(separate.toString().replace("[", "{").replace("]", "}"));
+        }
+        return String.join(" union ", stringIntervals);
+    }
 }

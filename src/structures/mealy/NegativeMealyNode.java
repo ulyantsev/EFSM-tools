@@ -19,27 +19,27 @@ public class NegativeMealyNode extends MealyNode {
     private Set<NegativeMealyNode> loops = null;
     
     public NegativeMealyNode(int number) {
-    	super(number);
-    	transitionList = new ArrayList<>();
+        super(number);
+        transitionList = new ArrayList<>();
     }
     
     public void addLoop(NegativeMealyNode node) {
-    	if (loops == null) {
-    		loops = new LinkedHashSet<>();
-    	}
-    	loops.add(node);
+        if (loops == null) {
+            loops = new LinkedHashSet<>();
+        }
+        loops.add(node);
     }
     
     public boolean weakInvalid() {
-    	return !loops().isEmpty();
+        return !loops().isEmpty();
     }
     
     public boolean strongInvalid() {
-    	return loops().contains(this);
+        return loops().contains(this);
     }
     
     public Collection<NegativeMealyNode> loops() {
-    	return loops != null ? Collections.unmodifiableSet(loops) : Collections.emptySet();
+        return loops != null ? Collections.unmodifiableSet(loops) : Collections.emptySet();
     }
     
     @Override
@@ -49,7 +49,7 @@ public class NegativeMealyNode extends MealyNode {
     
     @Override
     public void addTransition(String event, MyBooleanExpression expr, StringActions actions, MealyNode dst) {
-    	throw new AssertionError();
+        throw new AssertionError();
     }
     
     public void addTransition(String event, MyBooleanExpression expr, StringActions actions, NegativeMealyNode dst) {
@@ -58,12 +58,12 @@ public class NegativeMealyNode extends MealyNode {
     
     @Override
     public void removeTransition(MealyTransition transition) {
-    	throw new AssertionError();
+        throw new AssertionError();
     }
     
     @Override
     public MealyTransition transition(String event, MyBooleanExpression expr) {
-    	throw new AssertionError();
+        throw new AssertionError();
     }
     
     @Override
@@ -73,16 +73,16 @@ public class NegativeMealyNode extends MealyNode {
     
     @Override
     public NegativeMealyNode dst(String event, MyBooleanExpression expr) {
-    	throw new AssertionError();
+        throw new AssertionError();
     }
     
     public NegativeMealyNode dst(String event, MyBooleanExpression expr, StringActions actions) {
-    	for (MealyTransition t : transitionList) {
-    		if (t.event().equals(event) && t.expr().equals(expr) && t.actions().equals(actions)) {
-    			return (NegativeMealyNode) t.dst();
-    		}
-    	}
-    	return null;
+        for (MealyTransition t : transitionList) {
+            if (t.event().equals(event) && t.expr().equals(expr) && t.actions().equals(actions)) {
+                return (NegativeMealyNode) t.dst();
+            }
+        }
+        return null;
     }
     
     @Override

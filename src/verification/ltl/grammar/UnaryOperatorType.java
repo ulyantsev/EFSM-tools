@@ -34,7 +34,7 @@ public enum UnaryOperatorType implements IOperatorType {
 
     @Override
     public String toString() {
-    	return name;
+        return name;
     }
     
     UnaryOperatorType(String name) {

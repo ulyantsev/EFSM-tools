@@ -10,6 +10,6 @@ package verification.ltl.grammar.exception;
  */
 public class UnexpectedMethodException extends RuntimeException {
     public UnexpectedMethodException(String message) {
-	    super(message);
+        super(message);
     }
 }

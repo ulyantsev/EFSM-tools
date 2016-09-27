@@ -10,6 +10,6 @@ package verification.ltl.grammar.exception;
  */
 public class NotPredicateException extends RuntimeException {
     public NotPredicateException(String message) {
-    	super(message);
+        super(message);
     }
 }

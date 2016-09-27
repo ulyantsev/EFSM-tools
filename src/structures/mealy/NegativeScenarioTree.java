@@ -36,23 +36,23 @@ public class NegativeScenarioTree {
     }
     
     public void addScenario(StringScenario scenario, int loopLength) throws ParseException {
-    	NegativeMealyNode loopNode = null;
-    	NegativeMealyNode node = root;
+        NegativeMealyNode loopNode = null;
+        NegativeMealyNode node = root;
         for (int i = 0; i < scenario.size(); i++) {
-        	if (i == scenario.size() - loopLength) {
-        		loopNode = node;
-        	}
+            if (i == scenario.size() - loopLength) {
+                loopNode = node;
+            }
             addTransitions(node, scenario.getEvents(i), scenario.getExpr(i), scenario.getActions(i));
             node = node.dst(scenario.getEvents(i).get(0), scenario.getExpr(i), scenario.getActions(i));
         }
         if (loopLength == 0) {
-        	loopNode = node;
+            loopNode = node;
         }
         if (loopNode == null) {
-        	throw new AssertionError("loopNode is null!");
+            throw new AssertionError("loopNode is null!");
         }
         if (node.loops().contains(loopNode)) {
-        	throw new AssertionError("Duplicate counterexample!");
+            throw new AssertionError("Duplicate counterexample!");
         }
         node.addLoop(loopNode);
     }
@@ -62,17 +62,17 @@ public class NegativeScenarioTree {
      */
     private void addTransitions(NegativeMealyNode src, List<String> events, MyBooleanExpression expr,
                                 StringActions actions) throws ParseException {
-    	assert !events.isEmpty();
-    	NegativeMealyNode dst = null;
-    	for (String e : events) {
-    		if (src.dst(e, expr, actions) == null) {
-    			if (dst == null) {
-            		dst = new NegativeMealyNode(nodes.size());
-            		nodes.add(dst);
-            	}
+        assert !events.isEmpty();
+        NegativeMealyNode dst = null;
+        for (String e : events) {
+            if (src.dst(e, expr, actions) == null) {
+                if (dst == null) {
+                    dst = new NegativeMealyNode(nodes.size());
+                    nodes.add(dst);
+                }
                 src.addTransition(e, expr, actions, dst);
-    		}
-    	}
+            }
+        }
     }
 
     public Collection<NegativeMealyNode> nodes() {
@@ -96,9 +96,9 @@ public class NegativeScenarioTree {
                         + t.actions().toString() + ") \"];\n");
             }
             if (node.weakInvalid()) {
-	            for (NegativeMealyNode loop : node.loops()) {
-	                sb.append("    " + node.number() + " -> " + loop.number() + ";\n");
-	            }
+                for (NegativeMealyNode loop : node.loops()) {
+                    sb.append("    " + node.number() + " -> " + loop.number() + ";\n");
+                }
             }
         }
 

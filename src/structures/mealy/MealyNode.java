@@ -21,7 +21,7 @@ public class MealyNode {
     }
     
     public void setNumber(int number) {
-    	this.number = number;
+        this.number = number;
     }
     
     public boolean hasTransition(String event, MyBooleanExpression expr) {
@@ -55,6 +55,6 @@ public class MealyNode {
     
     @Override
     public String toString() {
-    	return String.valueOf(number);
+        return String.valueOf(number);
     }
 }

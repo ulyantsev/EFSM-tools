@@ -50,6 +50,6 @@ public class UnaryOperator extends Operator<UnaryOperatorType> {
     
     @Override
     public String toString() {
-	    return getName() + "(" + operand + ")";
-	}
+        return getName() + "(" + operand + ")";
+    }
 }

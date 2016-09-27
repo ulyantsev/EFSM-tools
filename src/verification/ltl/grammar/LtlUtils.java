@@ -41,7 +41,7 @@ public class LtlUtils {
         }
 
         public LtlNode visitFuture(UnaryOperator op, Void aVoid) {
-        	throw new AssertionError();
+            throw new AssertionError();
         }
 
         public LtlNode visitNext(UnaryOperator op, Void aVoid) {
@@ -85,7 +85,7 @@ public class LtlUtils {
         }
 
         public LtlNode visitGlobal(UnaryOperator op, Void aVoid) {
-        	throw new AssertionError();
+            throw new AssertionError();
         }
 
         public LtlNode visitBoolean(BooleanNode b, Void aVoid) {

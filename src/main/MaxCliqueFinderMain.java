@@ -38,71 +38,71 @@ public class MaxCliqueFinderMain extends MainBase {
         checkClique(clique, adjacent);
         System.out.println("MAX-CLIQUE SIZE: " + clique.size());
         System.out.println("NODES: " + clique.stream().map(MealyNode::number).sorted().collect(Collectors.toList()));
-	}
-	
-	private static void checkClique(Set<MealyNode> clique, Map<MealyNode, Set<MealyNode>> adjacent) {
-		for (MealyNode u : clique) {
-			for (MealyNode v : clique) {
-				if (u != v) {
-					if (!adjacent.get(u).contains(v)) {
-						throw new AssertionError();
-					}
-				}
-			}
-		}
-	}
-	
-	private static Set<MealyNode> findClique(MealyNode root, Map<MealyNode, Set<MealyNode>> adjacent) {
-		int maxDegree = 0;
-		MealyNode maxV = null;
-		final Set<MealyNode> clique = new LinkedHashSet<>();
-		
-		for (Map.Entry<MealyNode, Set<MealyNode>> pair : adjacent.entrySet()) {
-			MealyNode candidate = pair.getKey();
-			int candidateDegree = pair.getValue().size();
-			if (candidateDegree > maxDegree) {
-				maxDegree = candidateDegree;
-				maxV = candidate;
-			}
-		}
-		
-		MealyNode last = maxV;
-		if (last != null) {
-			clique.add(last);
-			MealyNode anotherOne = neighborWithHighestDegree(clique, last, adjacent);
-			while (anotherOne != null) {
-				clique.add(anotherOne);
-				last = anotherOne;
-				anotherOne = neighborWithHighestDegree(clique, last, adjacent);
-			}
-		} else {
-			clique.add(root);
-		}
-		
-		return clique;
-	}
+    }
+    
+    private static void checkClique(Set<MealyNode> clique, Map<MealyNode, Set<MealyNode>> adjacent) {
+        for (MealyNode u : clique) {
+            for (MealyNode v : clique) {
+                if (u != v) {
+                    if (!adjacent.get(u).contains(v)) {
+                        throw new AssertionError();
+                    }
+                }
+            }
+        }
+    }
+    
+    private static Set<MealyNode> findClique(MealyNode root, Map<MealyNode, Set<MealyNode>> adjacent) {
+        int maxDegree = 0;
+        MealyNode maxV = null;
+        final Set<MealyNode> clique = new LinkedHashSet<>();
+        
+        for (Map.Entry<MealyNode, Set<MealyNode>> pair : adjacent.entrySet()) {
+            MealyNode candidate = pair.getKey();
+            int candidateDegree = pair.getValue().size();
+            if (candidateDegree > maxDegree) {
+                maxDegree = candidateDegree;
+                maxV = candidate;
+            }
+        }
+        
+        MealyNode last = maxV;
+        if (last != null) {
+            clique.add(last);
+            MealyNode anotherOne = neighborWithHighestDegree(clique, last, adjacent);
+            while (anotherOne != null) {
+                clique.add(anotherOne);
+                last = anotherOne;
+                anotherOne = neighborWithHighestDegree(clique, last, adjacent);
+            }
+        } else {
+            clique.add(root);
+        }
+        
+        return clique;
+    }
 
-	private static MealyNode neighborWithHighestDegree(Set<MealyNode> cur, MealyNode v, Map<MealyNode, Set<MealyNode>> adjacent) {
-		int maxDegree = 0;
-		MealyNode maxNeighbour = null;
-		for (MealyNode u : adjacent.get(v)) {
-			boolean uInClique = true;
-			for (MealyNode w : cur) {
-				if (w != v) {
-					if (!adjacent.get(w).contains(u)) {
-						uInClique = false;
-						break;
-					}
-				}
-			}
-			if (uInClique) {
-				int uDegree = adjacent.get(u).size();
-				if (uDegree > maxDegree) {
-					maxDegree = uDegree;
-					maxNeighbour = u;
-				}
-			}
-		}
-		return maxNeighbour;
-	}
+    private static MealyNode neighborWithHighestDegree(Set<MealyNode> cur, MealyNode v, Map<MealyNode, Set<MealyNode>> adjacent) {
+        int maxDegree = 0;
+        MealyNode maxNeighbour = null;
+        for (MealyNode u : adjacent.get(v)) {
+            boolean uInClique = true;
+            for (MealyNode w : cur) {
+                if (w != v) {
+                    if (!adjacent.get(w).contains(u)) {
+                        uInClique = false;
+                        break;
+                    }
+                }
+            }
+            if (uInClique) {
+                int uDegree = adjacent.get(u).size();
+                if (uDegree > maxDegree) {
+                    maxDegree = uDegree;
+                    maxNeighbour = u;
+                }
+            }
+        }
+        return maxNeighbour;
+    }
 }

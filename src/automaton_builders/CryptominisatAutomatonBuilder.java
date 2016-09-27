@@ -12,33 +12,33 @@ import java.util.Arrays;
 import java.util.List;
 
 public class CryptominisatAutomatonBuilder {
-	public static MealyAutomaton build(ScenarioTree tree, int k) throws IOException {
-		return build(tree, k, null);
-	}	
-	
-	public static MealyAutomaton build(ScenarioTree tree, int k, PrintWriter cnfPrintWriter) throws IOException {
-		return build(tree, k, cnfPrintWriter, null);
-	}
+    public static MealyAutomaton build(ScenarioTree tree, int k) throws IOException {
+        return build(tree, k, null);
+    }   
+    
+    public static MealyAutomaton build(ScenarioTree tree, int k, PrintWriter cnfPrintWriter) throws IOException {
+        return build(tree, k, cnfPrintWriter, null);
+    }
 
-	public static MealyAutomaton build(ScenarioTree tree, int k, PrintWriter cnfPrintWriter, PrintWriter solverPrintWriter)
-			throws IOException {
+    public static MealyAutomaton build(ScenarioTree tree, int k, PrintWriter cnfPrintWriter, PrintWriter solverPrintWriter)
+            throws IOException {
 
-		final String cnf = DimacsCnfBuilder.getCnf(tree, k);
-		if (cnfPrintWriter != null) {
-			cnfPrintWriter.println(cnf);
-			cnfPrintWriter.flush();
-		}
+        final String cnf = DimacsCnfBuilder.getCnf(tree, k);
+        if (cnfPrintWriter != null) {
+            cnfPrintWriter.println(cnf);
+            cnfPrintWriter.flush();
+        }
 
-		final File tmpFile = new File("tmp.cnf");
+        final File tmpFile = new File("tmp.cnf");
         try (PrintWriter tmpPW = new PrintWriter(tmpFile)) {
             tmpPW.print(cnf);
         }
 
-		final Process p = Runtime.getRuntime().exec("cryptominisat4 --threads=4 tmp.cnf");
-		// Process p = Runtime.getRuntime().exec("cryptominisat tmp.cnf");
+        final Process p = Runtime.getRuntime().exec("cryptominisat4 --threads=4 tmp.cnf");
+        // Process p = Runtime.getRuntime().exec("cryptominisat tmp.cnf");
 
-		final List<String> ansLines = new ArrayList<>();
-		try (BufferedReader input = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
+        final List<String> ansLines = new ArrayList<>();
+        try (BufferedReader input = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
             String line;
             while ((line = input.readLine()) != null) {
                 if (solverPrintWriter != null) {
@@ -49,9 +49,9 @@ public class CryptominisatAutomatonBuilder {
                 }
             }
         }
-		tmpFile.delete();
+        tmpFile.delete();
 
-		if (!ansLines.isEmpty()) {
+        if (!ansLines.isEmpty()) {
             final int[] nodeColors = new int[tree.nodeCount()];
             ansLines.forEach(l -> Arrays.stream(l.split(" "))
                     .skip(1)
@@ -61,20 +61,20 @@ public class CryptominisatAutomatonBuilder {
                     .forEach(v -> nodeColors[v / k] = v % k)
             );
 
-			final MealyAutomaton ans = new MealyAutomaton(k);
-			for (int i = 0; i < tree.nodeCount(); i++) {
+            final MealyAutomaton ans = new MealyAutomaton(k);
+            for (int i = 0; i < tree.nodeCount(); i++) {
                 final int color = nodeColors[i];
-				final MealyNode state = ans.state(color);
-				for (MealyTransition t : tree.nodes().get(i).transitions()) {
-					if (!state.hasTransition(t.event(), t.expr())) {
-						int childColor = nodeColors[t.dst().number()];
-						state.addTransition(t.event(), t.expr(), t.actions(), ans.state(childColor));
-					}
-				}
-			}
-			return ans;
-		}
+                final MealyNode state = ans.state(color);
+                for (MealyTransition t : tree.nodes().get(i).transitions()) {
+                    if (!state.hasTransition(t.event(), t.expr())) {
+                        int childColor = nodeColors[t.dst().number()];
+                        state.addTransition(t.event(), t.expr(), t.actions(), ans.state(childColor));
+                    }
+                }
+            }
+            return ans;
+        }
 
-		return null;
-	}
+        return null;
+    }
 }

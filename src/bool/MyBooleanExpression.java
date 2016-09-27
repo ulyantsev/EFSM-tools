@@ -8,11 +8,11 @@ public class MyBooleanExpression {
     private static Map<String, MyBooleanExpression> expressions = new TreeMap<>();
 
     public static MyBooleanExpression getTautology() {
-    	try {
-			return get("1");
-		} catch (ParseException e) {
-			throw new AssertionError(e);
-		}
+        try {
+            return get("1");
+        } catch (ParseException e) {
+            throw new AssertionError(e);
+        }
     }
     
     public static MyBooleanExpression get(String repr) throws ParseException {
@@ -83,50 +83,50 @@ public class MyBooleanExpression {
     }
 
     private List<Map<String, Boolean>> extendForVars(Map<String, Boolean> varAssignment, Set<Integer> varIndices) {
-    	if (varIndices.isEmpty()) {
-    		return Collections.singletonList(varAssignment);
-    	}
+        if (varIndices.isEmpty()) {
+            return Collections.singletonList(varAssignment);
+        }
         final int index = varIndices.iterator().next();
-    	varIndices.remove(index);
-    	final List<Map<String, Boolean>> prevAns = extendForVars(varAssignment, varIndices);
-    	varIndices.add(index);
+        varIndices.remove(index);
+        final List<Map<String, Boolean>> prevAns = extendForVars(varAssignment, varIndices);
+        varIndices.add(index);
         final List<Map<String, Boolean>> ans = new ArrayList<>();
-    	for (Map<String, Boolean> m : prevAns) {
+        for (Map<String, Boolean> m : prevAns) {
             final Map<String, Boolean> m0 = new HashMap<>(m);
             final Map<String, Boolean> m1 = new HashMap<>(m);
-    		m0.put(String.valueOf((char) ('a' + index)), false);
-    		m1.put(String.valueOf((char) ('a' + index)), true);
-    		ans.add(m0);
-    		ans.add(m1);
-    	}
-    	return ans;
+            m0.put(String.valueOf((char) ('a' + index)), false);
+            m1.put(String.valueOf((char) ('a' + index)), true);
+            ans.add(m0);
+            ans.add(m1);
+        }
+        return ans;
     }
     
     private List<Map<String, Boolean>> extendForAllVars(Map<String, Boolean> varAssignment) {
-    	final Set<Integer> remainingNumbers = new TreeSet<>();
-    	for (int i = 0; i < varToNumber.size(); i++) {
-    		if (!varAssignment.containsKey(String.valueOf((char) ('a' + i)))) {
-    			remainingNumbers.add(i);
-    		}
-    	}
-    	return extendForVars(varAssignment, remainingNumbers);
+        final Set<Integer> remainingNumbers = new TreeSet<>();
+        for (int i = 0; i < varToNumber.size(); i++) {
+            if (!varAssignment.containsKey(String.valueOf((char) ('a' + i)))) {
+                remainingNumbers.add(i);
+            }
+        }
+        return extendForVars(varAssignment, remainingNumbers);
     }
     
     public List<String> getSatVarCombinations() {
-    	final List<String> combinations = new ArrayList<>();
-    	for (Map.Entry<Map<String, Boolean>, Boolean> entry : truthTable.entrySet()) {
+        final List<String> combinations = new ArrayList<>();
+        for (Map.Entry<Map<String, Boolean>, Boolean> entry : truthTable.entrySet()) {
             //System.out.println(entry);
             if (entry.getValue()) {
-    			final List<Map<String, Boolean>> varAssignments = extendForAllVars(entry.getKey());
-    			for (Map<String, Boolean> varAssignment : varAssignments) {
-	    			final char[] assignment = new char[varToNumber.size()];
-	        		for (int i = 0; i < varToNumber.size(); i++) {
-	        			assignment[i] = varAssignment.get(String.valueOf((char) ('a' + i))) ? '1' : '0';
-	        		}
-	    			combinations.add(String.valueOf(assignment));
-    			}
-    		}
-    	}
+                final List<Map<String, Boolean>> varAssignments = extendForAllVars(entry.getKey());
+                for (Map<String, Boolean> varAssignment : varAssignments) {
+                    final char[] assignment = new char[varToNumber.size()];
+                    for (int i = 0; i < varToNumber.size(); i++) {
+                        assignment[i] = varAssignment.get(String.valueOf((char) ('a' + i))) ? '1' : '0';
+                    }
+                    combinations.add(String.valueOf(assignment));
+                }
+            }
+        }
         //System.out.println(this + " " + combinations);
         return combinations;
     }

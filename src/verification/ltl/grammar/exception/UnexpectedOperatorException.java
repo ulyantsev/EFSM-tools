@@ -10,6 +10,6 @@ package verification.ltl.grammar.exception;
  */
 public class UnexpectedOperatorException extends RuntimeException {
     public UnexpectedOperatorException(String message) {
-	    super(message);
+        super(message);
     }
 }

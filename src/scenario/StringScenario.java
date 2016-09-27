@@ -11,47 +11,47 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class StringScenario {
-	private static String removeVariables(String input) throws ParseException {
-		final Pattern p = Pattern.compile("(\\w+)(\\s)*+\\[([^\\[\\]]+)\\]");
-		final StringBuilder sb = new StringBuilder();
-		final Matcher m = p.matcher(input);
-		int lastPos = 0;
-		while (m.find()) {
-			final String event = m.group(1);
-			sb.append(input.substring(lastPos, m.start()));
-			final MyBooleanExpression expr = MyBooleanExpression.get(m.group(3));
+    private static String removeVariables(String input) throws ParseException {
+        final Pattern p = Pattern.compile("(\\w+)(\\s)*+\\[([^\\[\\]]+)\\]");
+        final StringBuilder sb = new StringBuilder();
+        final Matcher m = p.matcher(input);
+        int lastPos = 0;
+        while (m.find()) {
+            final String event = m.group(1);
+            sb.append(input.substring(lastPos, m.start()));
+            final MyBooleanExpression expr = MyBooleanExpression.get(m.group(3));
             final List<String> expansion = expr.getSatVarCombinations().stream()
                     .map(varAssignment -> event + varAssignment)
                     .collect(Collectors.toList());
             lastPos = m.end();
-			sb.append(String.join("|", expansion) + "[1]");
-		}
-		sb.append(input.substring(lastPos, input.length()));
-		return sb.toString();
-	}
+            sb.append(String.join("|", expansion) + "[1]");
+        }
+        sb.append(input.substring(lastPos, input.length()));
+        return sb.toString();
+    }
 
     public static List<StringScenario> loadScenarios(String filepath, boolean removeVars)
             throws ParseException, FileNotFoundException {
         List<StringScenario> ans = new ArrayList<>();
         
         try (Scanner in = new Scanner(new File(filepath))) {
-	        String inp = "";
-	        while (in.hasNextLine()) {
-	            String s = in.nextLine().trim();
-	            if (removeVars) {
-	            	s = removeVariables(s);
-	            }
-	            if (inp.isEmpty() && s.isEmpty()) {
-	                continue;
-	            }
-	
-	            if (inp.isEmpty()) {
-	                inp = s;
-	            } else {
-	                ans.add(new StringScenario(inp, s));
-	                inp = "";
-	            }
-	        }
+            String inp = "";
+            while (in.hasNextLine()) {
+                String s = in.nextLine().trim();
+                if (removeVars) {
+                    s = removeVariables(s);
+                }
+                if (inp.isEmpty() && s.isEmpty()) {
+                    continue;
+                }
+    
+                if (inp.isEmpty()) {
+                    inp = s;
+                } else {
+                    ans.add(new StringScenario(inp, s));
+                    inp = "";
+                }
+            }
         }
 
         return ans;
@@ -65,20 +65,20 @@ public class StringScenario {
     
     public StringScenario(boolean isPositive, List<String> events, List<MyBooleanExpression> expressions,
                           List<StringActions> actions) {
-    	this.isPositive = isPositive;
-    	
-    	if (events.size() != expressions.size() || events.size() != actions.size()) {
-    		throw new RuntimeException("Events, expressions, actions sizes mismatch: " + 
-    									events.size() + " " + expressions.size() + " " + actions.size());
-    	}
+        this.isPositive = isPositive;
+        
+        if (events.size() != expressions.size() || events.size() != actions.size()) {
+            throw new RuntimeException("Events, expressions, actions sizes mismatch: " + 
+                                        events.size() + " " + expressions.size() + " " + actions.size());
+        }
 
-    	this.events = events.stream().map(e -> Collections.singletonList(e)).collect(Collectors.toList());
-    	this.expressions = new ArrayList<>(expressions);
-    	this.actions = new ArrayList<>(actions);
+        this.events = events.stream().map(e -> Collections.singletonList(e)).collect(Collectors.toList());
+        this.expressions = new ArrayList<>(expressions);
+        this.actions = new ArrayList<>(actions);
     }
     
     private List<String> splitEvent(String event) {
-    	return Arrays.asList(event.split("\\|"));
+        return Arrays.asList(event.split("\\|"));
     }
     
     public StringScenario(String input, String output) throws ParseException {
@@ -131,7 +131,7 @@ public class StringScenario {
      * the correct way to display a normal event is without "[", "]".
      */
     private static String eventListToString(List<String> eventList) {
-    	return eventList.size() == 1 ? eventList.get(0) : eventList.toString();
+        return eventList.size() == 1 ? eventList.get(0) : eventList.toString();
     }
     
     public String toString() {
@@ -150,17 +150,17 @@ public class StringScenario {
     
     // TODO
     public String toJSON() {
-    	String ans =
-    		"{" + "'type': " + (isPositive ? "'positive'" : "'negative'") + ",\n" +
-    		" 'scenario': [";
-    	for (int pos = 0; pos < size(); pos++) {
-    		if (pos > 0) {
-    			ans += ",\n              ";
-    		}
-    		ans += "{'event': '" + events.get(pos) + "', 'guard': '" + expressions.get(pos) + "', 'actions': '" + actions.get(pos) + "'}";
-    	}
-    	ans += "             ]\n}\n";
-    	
-    	return ans;
+        String ans =
+            "{" + "'type': " + (isPositive ? "'positive'" : "'negative'") + ",\n" +
+            " 'scenario': [";
+        for (int pos = 0; pos < size(); pos++) {
+            if (pos > 0) {
+                ans += ",\n              ";
+            }
+            ans += "{'event': '" + events.get(pos) + "', 'guard': '" + expressions.get(pos) + "', 'actions': '" + actions.get(pos) + "'}";
+        }
+        ans += "             ]\n}\n";
+        
+        return ans;
     }
 }

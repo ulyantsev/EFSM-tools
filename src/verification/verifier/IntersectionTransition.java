@@ -44,7 +44,7 @@ public class IntersectionTransition {
     
     @Override
     public String toString() {
-    	return "[" + (transition == null ? "NULL" : transition.event
-    			+ "" + transition.getActions()) + "]";
+        return "[" + (transition == null ? "NULL" : transition.event
+                + "" + transition.getActions()) + "]";
     }
 }

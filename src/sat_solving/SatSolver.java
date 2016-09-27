@@ -9,17 +9,17 @@ import java.util.logging.Logger;
  */
 
 public enum SatSolver {
-	CRYPTOMINISAT(false, "cryptominisat4 --maxtime="),
+    CRYPTOMINISAT(false, "cryptominisat4 --maxtime="),
     LINGELING(false, "lingeling -t "),
     INCREMENTAL_CRYPTOMINISAT(true, "incremental-cryptominisat-binary ");
 
     public final boolean isIncremental;
-	public final String command;
+    public final String command;
 
-	SatSolver(boolean isIncremental, String command) {
+    SatSolver(boolean isIncremental, String command) {
         this.isIncremental = isIncremental;
         this.command = command;
-	}
+    }
 
     public SolverInterface createInterface(List<int[]> positiveConstraints, String actionspec, Logger logger)
             throws IOException {

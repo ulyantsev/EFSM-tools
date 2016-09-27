@@ -15,7 +15,7 @@ public class IsomorphismCheckerMain extends MainBase {
     @Argument(usage = "path to EFSM in Graphviz format", metaVar = "<second.gv>", required = true, index = 1)
     private String efsm2;
 
-	public static void main(String[] args) {
+    public static void main(String[] args) {
         new IsomorphismCheckerMain().run(args, Author.VU, "Tool for EFSM isomorphism checking");
     }
 

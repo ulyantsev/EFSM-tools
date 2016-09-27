@@ -11,8 +11,8 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 public abstract class PlantScenarioForest {
-	protected final Set<MooreNode> roots = new LinkedHashSet<>();
-	protected final Set<MooreNode> nodes = new LinkedHashSet<>();
+    protected final Set<MooreNode> roots = new LinkedHashSet<>();
+    protected final Set<MooreNode> nodes = new LinkedHashSet<>();
 
     public Collection<MooreNode> roots() {
         return Collections.unmodifiableSet(roots);
@@ -56,15 +56,15 @@ public abstract class PlantScenarioForest {
     }
 
     protected void checkScenario(StringScenario scenario) {
-    	for (int i = 0; i < scenario.size(); i++) {
-        	if (scenario.getEvents(i).size() != 1) {
-        		throw new RuntimeException("Multi-edges are not supported!");
-        	}
-    	}
-    	
-    	if (!scenario.getEvents(0).get(0).isEmpty()) {
-    		throw new RuntimeException("The first event must be dummy (i.e. empty string)!");
-    	}
+        for (int i = 0; i < scenario.size(); i++) {
+            if (scenario.getEvents(i).size() != 1) {
+                throw new RuntimeException("Multi-edges are not supported!");
+            }
+        }
+        
+        if (!scenario.getEvents(0).get(0).isEmpty()) {
+            throw new RuntimeException("The first event must be dummy (i.e. empty string)!");
+        }
     }
 
     @Override

@@ -3,7 +3,7 @@ package apros;
 import java.util.Arrays;
 
 class Utils {
-    static final String[] emptyStringArray = new String[0];
+    private static final String[] emptyStringArray = new String[0];
 
     static String[] splitString(String str) {
         if (str.trim().equals("")) {

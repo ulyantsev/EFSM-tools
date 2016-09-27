@@ -4,26 +4,26 @@ package apros;
  * (c) Igor Buzhinsky
  */
 
+import org.apache.commons.lang3.tuple.Pair;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.tuple.Pair;
-
 public class Configuration {
-	final double intervalSec;
-	final List<Parameter> outputParameters;
-	final List<Parameter> inputParameters;
-	final List<String> colorRules = new ArrayList<>();
+    final double intervalSec;
+    final List<Parameter> outputParameters;
+    final List<Parameter> inputParameters;
+    final List<String> colorRules = new ArrayList<>();
 
-	public List<String> actionDescriptions() {
-		final List<String> result = new ArrayList<>();
-		for (Parameter p : outputParameters) {
-			result.addAll(p.descriptions());
-		}
-		return result;
-	}
+    public List<String> actionDescriptions() {
+        final List<String> result = new ArrayList<>();
+        for (Parameter p : outputParameters) {
+            result.addAll(p.descriptions());
+        }
+        return result;
+    }
 
     public Map<String, String> extendedActionDescriptions() {
         final Map<String, String> descriptions = new LinkedHashMap<>();
@@ -34,14 +34,14 @@ public class Configuration {
         }
         return descriptions;
     }
-	
-	public List<String> actions() {
-		final List<String> result = new ArrayList<>();
-		for (Parameter p : outputParameters) {
-			result.addAll(p.traceNames());
-		}
-		return result;
-	}
+
+    public List<String> actions() {
+        final List<String> result = new ArrayList<>();
+        for (Parameter p : outputParameters) {
+            result.addAll(p.traceNames());
+        }
+        return result;
+    }
 
     public List<Pair<String, Parameter>> actionThresholds() {
         final List<Pair<String, Parameter>> actionThresholds = new ArrayList<>();
@@ -59,13 +59,13 @@ public class Configuration {
         return eventThresholds;
     }
 
-	public Configuration(double intervalSec,
-			List<Parameter> outputParameters,
-			List<Parameter> inputParameters) {
-		this.intervalSec = intervalSec;
-		this.outputParameters = outputParameters;
-		this.inputParameters = inputParameters;
-	}
+    public Configuration(double intervalSec,
+            List<Parameter> outputParameters,
+            List<Parameter> inputParameters) {
+        this.intervalSec = intervalSec;
+        this.outputParameters = outputParameters;
+        this.inputParameters = inputParameters;
+    }
 
     public static Configuration load(String filename) {
         final double intervalSec = 1.0;
@@ -118,17 +118,17 @@ public class Configuration {
         return c;
     }
 
-	public void addColorRule(String traceName, int index, String color) {
-		colorRules.add(traceName + index + "->" + color);
-	}
-	
-	@Override
-	public String toString() {
-		return "out:\n  " +  
-				String.join("\n  ", outputParameters.stream()
-						.map(p -> p.toString()).collect(Collectors.toList()))
-				+ "\nin:\n  " + 
-				String.join("\n  ", inputParameters.stream()
-					.map(p -> p.toString()).collect(Collectors.toList()));
-	}
+    public void addColorRule(String traceName, int index, String color) {
+        colorRules.add(traceName + index + "->" + color);
+    }
+
+    @Override
+    public String toString() {
+        return "out:\n  " +
+                String.join("\n  ", outputParameters.stream()
+                        .map(p -> p.toString()).collect(Collectors.toList()))
+                + "\nin:\n  " +
+                String.join("\n  ", inputParameters.stream()
+                    .map(p -> p.toString()).collect(Collectors.toList()));
+    }
 }
