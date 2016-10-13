@@ -33,7 +33,7 @@ public class UnbeastTransformer {
     private static void randomInstances() throws IOException, ParseException, LtlParseException {
         final List<String> events = Arrays.asList("A", "B", "C", "D");
         final List<String> actions = Arrays.asList("z0", "z1", "z2", "z3");
-        final String prefix = "qbf/testing/complete/fsm-3-";
+        final String prefix = "evaluation/testing/complete/fsm-3-";
         for (int i = 0; i < 50; i++) {
             final Problem p = new Problem(prefix + i + "-true.ltl",
                 prefix + i + ".sc", events, actions, false);
@@ -68,7 +68,7 @@ public class UnbeastTransformer {
         final long unbeastStartTime = System.currentTimeMillis();
         final Process unbeast = Runtime.getRuntime().exec(
                 new String[] { "./unbeast", "../../" + outputPath, "--runSimulator" },
-                new String[0], new File("./qbf/Unbeast-0.6b"));
+                new String[0], new File("./evaluation/Unbeast-0.6b"));
         try (
                 final Scanner inputScanner = new Scanner(unbeast.getInputStream());
                 final PrintWriter writer = new PrintWriter(unbeast.getOutputStream(), true);
@@ -413,18 +413,6 @@ public class UnbeastTransformer {
             }
         }
     }
-    
-    static final Problem pElevator = new Problem("qbf/Unbeast-0.6b/my/elevator.ltl",
-            "qbf/Unbeast-0.6b/my/elevator.sc",
-            Arrays.asList("e11", "e2", "e12", "e3", "e4"),
-            Arrays.asList("z1", "z2", "z3"),
-            true);
-    
-    static final Problem pSwitch = new Problem("qbf/Unbeast-0.6b/my/switch.ltl",
-            "qbf/Unbeast-0.6b/my/switch.sc",
-            Arrays.asList("turnon", "turnoff", "touch"),
-            Arrays.asList("on", "off"),
-            false);
     
     static class Game {
         private final Scanner input;
