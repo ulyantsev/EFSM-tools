@@ -50,19 +50,8 @@ public class TraceTranslator {
         }
     }
 
-    public static List<String> generateScenarios(Configuration conf, Dataset ds, Set<List<String>> allActionCombinations,
-            String gvOutput, String smvOutput, boolean addActionDescriptions, boolean satBased,
-            boolean allEventCombinations, int traceIncludeEach)
-            throws FileNotFoundException {
-        // traces
-        final Set<String> allEvents = new TreeSet<>();
-        if (allEventCombinations) {
-            // complete event set
-            final char[] arr = new char[conf.inputParameters.size() + 1];
-            arr[0] = 'A';
-            allEventCombinations(arr, 1, allEvents, conf.inputParameters);
-        }
-
+    private static void printOutputTraces(Configuration conf, String directory, Set<String> allEvents,
+                Set<List<String>> allActionCombinations, Dataset ds, boolean satBased, int traceIncludeEach) throws FileNotFoundException {
         // coverage
         final Set<Pair<String, Integer>> inputCovered = new HashSet<>();
         final Set<Pair<String, Integer>> outputCovered = new HashSet<>();
@@ -82,7 +71,7 @@ public class TraceTranslator {
         }
 
         int addedTraces = 0;
-        try (PrintWriter pw = new PrintWriter(new File(OUTPUT_TRACE_FILENAME))) {
+        try (PrintWriter pw = new PrintWriter(new File(Utils.combinePaths(directory, OUTPUT_TRACE_FILENAME)))) {
             for (int i = 0; i < ds.values.size(); i++) {
                 final List<double[]> trace = ds.values.get(i);
                 final List<String> events = new ArrayList<>();
@@ -92,14 +81,14 @@ public class TraceTranslator {
                     final double[] snapshot = trace.get(j);
                     final StringBuilder event = new StringBuilder("A");
                     final List<String> thisActions = new ArrayList<>();
-
+                    
                     for (Parameter p : conf.inputParameters) {
                         final double value = ds.get(snapshot, p);
                         final int index = p.traceNameIndex(value);
                         inputCovered.add(Pair.of(p.aprosName(), index));
                         event.append(index);
                     }
-
+                    
                     for (Parameter p : conf.outputParameters) {
                         final double value = ds.get(snapshot, p);
                         final int index = p.traceNameIndex(value);
@@ -135,24 +124,45 @@ public class TraceTranslator {
                 }
             }
         }
-
         System.out.println("Traces: " + addedTraces);
+        System.out.println(String.format("Input coverage: %.2f%%",
+                100.0 * inputCovered.size() / totalInputValues));
+        System.out.println(String.format("Output coverage: %.2f%%",
+                100.0 * outputCovered.size() / totalOutputValues));
 
         if (satBased) {
-            // actionspec
-            try (PrintWriter pw = new PrintWriter(new File(
-                    OUTPUT_ACTIONSPEC_FILENAME))) {
-                for (Parameter p : conf.outputParameters) {
-                    p.actionspec().forEach(pw::println);
-                }
-            }
-
             // smoothness temporal properties
-            try (PrintWriter pw = new PrintWriter(new File(OUTPUT_LTL_FILENAME))) {
+            try (PrintWriter pw = new PrintWriter(new File(Utils.combinePaths(directory, OUTPUT_LTL_FILENAME)))) {
                 for (Parameter p : conf.outputParameters) {
                     final int smoothnessLevel = smoothnessLevels.get(p);
                     System.out.println("smoothness(" + p.traceName() + ") = " + smoothnessLevel);
                     p.smoothnessTemporalProperties(smoothnessLevel).forEach(pw::println);
+                }
+            }
+        }
+    }
+
+    public static List<String> generateScenarios(Configuration conf, String directory, Dataset ds, Set<List<String>> allActionCombinations,
+            String gvOutput, String smvOutput, boolean addActionDescriptions, boolean satBased,
+            boolean allEventCombinations, int traceIncludeEach)
+            throws FileNotFoundException {
+        // traces
+        final Set<String> allEvents = new TreeSet<>();
+        if (allEventCombinations) {
+            // complete event set
+            final char[] arr = new char[conf.inputParameters.size() + 1];
+            arr[0] = 'A';
+            allEventCombinations(arr, 1, allEvents, conf.inputParameters);
+        }
+        
+
+        printOutputTraces(conf, directory, allEvents, allActionCombinations, ds, satBased, traceIncludeEach);
+
+        if (satBased) {
+            // actionspec
+            try (PrintWriter pw = new PrintWriter(new File(Utils.combinePaths(directory, OUTPUT_ACTIONSPEC_FILENAME)))) {
+                for (Parameter p : conf.outputParameters) {
+                    p.actionspec().forEach(pw::println);
                 }
             }
         }
@@ -166,9 +176,9 @@ public class TraceTranslator {
         final String nl = " \\\n";
 
         System.out.println("Run:");
-
+        
         final List<String> builderArgs = new ArrayList<>();
-        builderArgs.add(OUTPUT_TRACE_FILENAME);
+        builderArgs.add(Utils.combinePaths(directory, OUTPUT_TRACE_FILENAME));
         builderArgs.add("--actionNames");
         builderArgs.add(String.join(",", allActions));
         if (addActionDescriptions) {
@@ -185,13 +195,13 @@ public class TraceTranslator {
         builderArgs.add(String.valueOf(allEvents.size()));
         if (satBased) {
             builderArgs.add("--ltl");
-            builderArgs.add(OUTPUT_LTL_FILENAME);
+            builderArgs.add(Utils.combinePaths(directory, OUTPUT_LTL_FILENAME));
         } else {
             builderArgs.add("--fast");
             System.out.println("# LTL disabled");
         }
         builderArgs.add("--actionspec");
-        builderArgs.add(OUTPUT_ACTIONSPEC_FILENAME);
+        builderArgs.add(Utils.combinePaths(directory, OUTPUT_ACTIONSPEC_FILENAME));
         builderArgs.add("--size");
         builderArgs.add(String.valueOf(recommendedSize));
         builderArgs.add("--varNumber");
@@ -220,11 +230,6 @@ public class TraceTranslator {
         for (Parameter p : conf.inputParameters) {
             System.out.println(" input " + describe.apply(p));
         }
-
-        System.out.println(String.format("Input coverage: %.2f%%",
-                100.0 * inputCovered.size() / totalInputValues));
-        System.out.println(String.format("Output coverage: %.2f%%",
-                100.0 * outputCovered.size() / totalOutputValues));
 
         return builderArgs;
     }

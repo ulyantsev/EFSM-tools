@@ -13,8 +13,8 @@ import java.io.PrintWriter;
 import java.util.*;
 
 public class TraceModelGenerator {
-    public static void run(Configuration conf, String datasetFilename) throws IOException {
-        final Dataset ds = Dataset.load(datasetFilename);
+    public static void run(Configuration conf, String directory, String datasetFilename) throws IOException {
+        final Dataset ds = Dataset.load(Utils.combinePaths(directory, datasetFilename));
 
         final int maxLength = ds.values.stream().mapToInt(v -> v.size()).max().getAsInt();
         final int minLength = ds.values.stream().mapToInt(v -> v.size()).min().getAsInt();
@@ -22,8 +22,8 @@ public class TraceModelGenerator {
             throw new AssertionError("All traces are currently assumed to have equal lengths.");
         }
 
-        final String outFilename = "trace-model.smv";
-        final String individualTraceDir = "individual-trace-models";
+        final String outFilename = Utils.combinePaths(directory, "trace-model.smv");
+        final String individualTraceDir = Utils.combinePaths(directory, "individual-trace-models");
         new File(individualTraceDir).mkdir();
 
         writeTraceModel(conf, ds, maxLength, 0, ds.values.size(), outFilename);
@@ -92,9 +92,7 @@ public class TraceModelGenerator {
 
         sb.append(ConstraintExtractor.plantConversions(conf));
 
-        try (PrintWriter pw = new PrintWriter(filename)) {
-            pw.println(sb);
-        }
+        Utils.writeToFile(filename, sb.toString());
     }
 
     public static List<Pair<Integer, Integer>> intervals(Collection<Integer> values) {

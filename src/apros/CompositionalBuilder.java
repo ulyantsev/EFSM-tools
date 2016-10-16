@@ -142,7 +142,7 @@ public class CompositionalBuilder {
         c2.outputParameters.forEach(process);
         match.badActionPrefixes.forEach(traceNameToParam::remove);
         final List<Parameter> outputs = new ArrayList<>(traceNameToParam.values());
-
+        
         // inputs
         final List<Parameter> inputs = new ArrayList<>();
         for (int i = 0; i < c1.inputParameters.size(); i++) {
@@ -155,7 +155,7 @@ public class CompositionalBuilder {
                 inputs.add(c2.inputParameters.get(i));
             }
         }
-
+        
         return new Configuration(c1.intervalSec, outputs, inputs);
     }
 
@@ -177,7 +177,7 @@ public class CompositionalBuilder {
     private static NondetMooreAutomaton compose(NondetMooreAutomaton a1, NondetMooreAutomaton a2,
             Match match, Set<List<String>> allActionCombinationsSorted) throws FileNotFoundException {
         final List<MooreNode> compositeStates = new ArrayList<>();
-
+        
         final Deque<Pair<StatePair, MooreNode>> q = new ArrayDeque<>();
         final Map<Set<String>, MooreNode> allEnqueuedOutputCombinations = new HashMap<>();
         for (int initial1 : a1.initialStates()) {
@@ -194,7 +194,7 @@ public class CompositionalBuilder {
             }
         }
         final int initialStateNum = q.size();
-
+        
         final List<String> allEventsList = new ArrayList<>();
         final StatePair firstPair = q.getFirst().getLeft();
         for (MooreTransition t1 : firstPair.first.transitions()) {
@@ -202,12 +202,12 @@ public class CompositionalBuilder {
                 allEventsList.add(joinEvents(t1.event(), t2.event(), match));
             }
         }
-
+        
         while (!q.isEmpty()) {
             final Pair<StatePair, MooreNode> retrieved = q.removeLast();
             final StatePair pair = retrieved.getLeft();
             final MooreNode src = retrieved.getRight();
-
+            
             final Set<String> allEvents = new TreeSet<>(allEventsList);
             final Map<String, StatePair> potentialTransitions = new TreeMap<>();
 
@@ -220,45 +220,45 @@ public class CompositionalBuilder {
                     compositeStates.add(dst);
                     allEnqueuedOutputCombinations.put(actionSet, dst);
                 }
-
+                
                 if (!src.allDst(event).contains(dst)) {
                     src.addTransition(event.toString(), dst);
                 }
             };
-
+            
             for (MooreTransition t1 : pair.first.transitions()) {
                 final String e1 = t1.event();
-
+                
                 l: for (MooreTransition t2 : pair.second.transitions()) {
                     final String e2 = t2.event();
 
                     // **** The event must be consistent with the NEXT state
                     // **** If it is required to be consistent with the FIRST state,
                     // **** then there are some semantic problems
-
+                    
                     // internal connection consistency
                     final String event = joinEvents(e1, e2, match);
                     final StatePair p = new StatePair(t1.dst(), t2.dst());
-
+                    
                     if (!isConsistentWithInputs(t2.dst(), e1, match, false)) {
                         continue;
                     }
                     if (!isConsistentWithInputs(t1.dst(), e2, match, true)) {
                         continue;
                     }
-
+                    
                     for (Pair<Integer, Integer> ip : match.inputPairs) {
                         if (e1.charAt(ip.getLeft() + 1) != e2.charAt(ip.getRight() + 1)) {
                             continue l;
                         }
                     }
-
+                    
                     if (!p.isConsistent(match)) {
                         continue;
                     }
 
                     potentialTransitions.put(event, p);
-
+                    
                     if (p.isPresentInTraces(allActionCombinationsSorted)) {
                         add.accept(p, event);
                         allEvents.remove(event);
@@ -292,7 +292,7 @@ public class CompositionalBuilder {
          *           Q <- q
          * remove internal connections (duplicate inputs and outputs)
          */
-
+        
         final List<Boolean> isInitial = new ArrayList<>();
         isInitial.addAll(Collections.nCopies(initialStateNum, true));
         isInitial.addAll(Collections.nCopies(compositeStates.size() - initialStateNum, false));
@@ -339,7 +339,7 @@ public class CompositionalBuilder {
                     }
                 }
             }
-
+            
             for (Parameter p : c1.outputParameters) {
                 for (int j = 0; j < c2.inputParameters.size(); j++) {
                     final Parameter q = c2.inputParameters.get(j);
@@ -348,7 +348,7 @@ public class CompositionalBuilder {
                     }
                 }
             }
-
+            
             for (int i = 0; i < c1.inputParameters.size(); i++) {
                 final Parameter p = c1.inputParameters.get(i);
                 for (Parameter q : c2.outputParameters) {
@@ -357,7 +357,7 @@ public class CompositionalBuilder {
                     }
                 }
             }
-
+            
             // internal connections
             for (Pair<Integer, Parameter> iop : inputOutputPairs) {
                 badFirstIndices.add(iop.getLeft());
@@ -370,7 +370,7 @@ public class CompositionalBuilder {
             for (Pair<Parameter, Integer> oip : outputInputPairs) {
                 badSecondIndices.add(oip.getRight());
             }
-
+            
             for (Pair<Parameter, Integer> p : outputInputPairs) {
                 badActionPrefixes.add(p.getLeft().traceName());
             }
@@ -380,7 +380,7 @@ public class CompositionalBuilder {
         }
     }
 
-    public static void run(List<Configuration> confs, String datasetFilename, boolean satBased,
+    public static void run(List<Configuration> confs, String directory, String datasetFilename, boolean satBased,
                            int traceIncludeEach) throws IOException {
         // 1. Unification of all configuration pairs:
         System.out.println("*** UNIFICATION");
@@ -393,11 +393,11 @@ public class CompositionalBuilder {
             System.err.println("Incompatible intervals, stopping.");
             return;
         }
-
+        
         // 2. Load the dataset
         System.out.println("*** LOADING THE DATASET");
-        final Dataset ds = Dataset.load(datasetFilename);
-
+        final Dataset ds = Dataset.load(Utils.combinePaths(directory, datasetFilename));
+        
         // 3. Build all the basic plants
         final List<NondetMooreAutomaton> automata = new ArrayList<>();
         for (int i = 0; i < confs.size(); i++) {
@@ -407,8 +407,8 @@ public class CompositionalBuilder {
             System.out.println();
             final String namePrefix = "automaton" + i + ".";
 
-            final List<String> params = TraceTranslator.generateScenarios(conf,
-                    ds, new HashSet<>(), namePrefix + "gv", namePrefix + "smv",
+            final List<String> params = TraceTranslator.generateScenarios(conf, directory, ds, new HashSet<>(),
+                    Utils.combinePaths(directory, namePrefix + "gv"), Utils.combinePaths(directory, namePrefix + "smv"),
                     false, satBased, ALL_EVENT_COMBINATIONS, traceIncludeEach);
             System.out.println();
             final PlantBuilderMain builder = new PlantBuilderMain();
@@ -419,11 +419,11 @@ public class CompositionalBuilder {
                 return;
             }
             final NondetMooreAutomaton a = builder.resultAutomaton().get();
-            dumpAutomaton(a, conf, namePrefix, builder.colorRuleMap());
+            dumpAutomaton(a, conf, directory, namePrefix, builder.colorRuleMap());
             automata.add(a);
             System.out.println();
         }
-
+        
         // 4. Iteratively compose automata
         Configuration lastConf = confs.get(0);
         NondetMooreAutomaton lastAuto = automata.get(0);
@@ -433,11 +433,11 @@ public class CompositionalBuilder {
             final Configuration conf2 = confs.get(i);
             final Match match = new Match(conf1, conf2);
             final String namePrefix = "automaton_comp" + i + ".";
-
+            
             // Obtain the set of all possible composite actions
             final Set<List<String>> allActionCombinations = new HashSet<>();
             TraceTranslator.generateScenarios(outputConfigurationComposition(conf1, conf2),
-                    ds, allActionCombinations, "", "", false, satBased,
+                    directory, ds, allActionCombinations, "", "", false, satBased,
                     ALL_EVENT_COMBINATIONS, traceIncludeEach);
             final Set<List<String>> allActionCombinationsSorted = new HashSet<>();
             for (List<String> actionCombination : allActionCombinations) {
@@ -452,8 +452,8 @@ public class CompositionalBuilder {
             lastAuto = compose(lastAuto, automata.get(i), match,
                     allActionCombinationsSorted);
             lastConf = composeConfigurations(conf1, conf2, match);
-
-            dumpAutomaton(lastAuto, lastConf, namePrefix, Collections.emptyMap());
+            
+            dumpAutomaton(lastAuto, lastConf, directory, namePrefix, Collections.emptyMap());
             System.out.println(lastConf);
             System.out.println();
         }
@@ -469,7 +469,7 @@ public class CompositionalBuilder {
     }
 
     private static void dumpAutomaton(NondetMooreAutomaton a, Configuration conf,
-            String namePrefix, Map<String, String> colorRules) throws FileNotFoundException {
+            String directory, String namePrefix, Map<String, String> colorRules) throws FileNotFoundException {
         NondetMooreAutomaton effectiveA = a;
         if (PROXIMITY_COMPLETION) {
             effectiveA = proximityBasedCompletion(effectiveA, conf);
@@ -484,18 +484,15 @@ public class CompositionalBuilder {
         System.out.printf("Fraction of unsupported transitions in the automaton: %.2f\n",
                 effectiveA.unsupportedTransitionFraction());
 
-        try (PrintWriter pw = new PrintWriter(namePrefix + "gv")) {
-            pw.println(effectiveA.toString(colorRules, Optional.of(conf)));
-        }
+        Utils.writeToFile(Utils.combinePaths(directory, namePrefix + "gv"),
+                          effectiveA.toString(colorRules, Optional.of(conf)));
 
         // reduced GV file with transitions merged for different inputs
-        try (PrintWriter pw = new PrintWriter(namePrefix + "reduced." + "gv")) {
-            pw.println(effectiveA.simplify().toString(colorRules, Optional.of(conf)));
-        }
-
-        try (PrintWriter pw = new PrintWriter(namePrefix + "smv")) {
-            pw.println(effectiveA.toNuSMVString(eventsFromAutomaton(a),
-                    conf.actions(), new ArrayList<>(), Optional.of(conf)));
-        }
+        Utils.writeToFile(Utils.combinePaths(directory, namePrefix + "reduced." + "gv"),
+                          effectiveA.simplify().toString(colorRules, Optional.of(conf)));
+        
+        Utils.writeToFile(Utils.combinePaths(directory, namePrefix + "smv"),
+                          effectiveA.toNuSMVString(eventsFromAutomaton(a),
+                              conf.actions(), new ArrayList<>(), Optional.of(conf)));
     }
 }

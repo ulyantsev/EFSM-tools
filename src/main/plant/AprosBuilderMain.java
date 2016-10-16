@@ -48,6 +48,10 @@ public class AprosBuilderMain extends MainBase {
             metaVar = "<double>")
     private double timeInterval = 1.0;
 
+    @Option(name = "--dir", aliases = {}, usage = "directory where all work files are stored (config file included)",
+            metaVar = "<path>")
+    private String directory = "";
+
     public static void main(String[] args) {
         new AprosBuilderMain().run(args, Author.IB, "Toolset for NuSMV model generation from Apros traces");
     }
@@ -56,17 +60,17 @@ public class AprosBuilderMain extends MainBase {
     protected void launcher() throws IOException {
         initializeLogger(logFilePath);
         if (Objects.equals(type, "prepare-dataset")) {
-            DatasetSerializer.run(traceLocation, traceFilenamePrefix, paramScaleFilename, timeInterval);
+            DatasetSerializer.run(directory, traceLocation, traceFilenamePrefix, paramScaleFilename, timeInterval);
         } else {
-            final Configuration conf = Configuration.load(confFilename);
+            final Configuration conf = Configuration.load(Utils.combinePaths(directory, confFilename));
             if (Objects.equals(type, "constraint-based")) {
-                ConstraintExtractor.run(conf, datasetFilename);
+                ConstraintExtractor.run(conf, directory, datasetFilename);
             } else if (Objects.equals(type, "explicit-state")) {
-                CompositionalBuilder.run(Arrays.asList(conf), datasetFilename, false, traceIncludeEach);
+                CompositionalBuilder.run(Arrays.asList(conf), directory, datasetFilename, false, traceIncludeEach);
             } else if (Objects.equals(type, "sat-based")) {
-                CompositionalBuilder.run(Arrays.asList(conf), datasetFilename, true, traceIncludeEach);
+                CompositionalBuilder.run(Arrays.asList(conf), directory, datasetFilename, true, traceIncludeEach);
             } else if (Objects.equals(type, "traces")) {
-                TraceModelGenerator.run(conf, datasetFilename);
+                TraceModelGenerator.run(conf, directory, datasetFilename);
             } else {
                 System.err.println("Invalid request type!");
                 return;
