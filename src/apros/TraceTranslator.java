@@ -195,13 +195,13 @@ public class TraceTranslator {
         builderArgs.add(String.valueOf(allEvents.size()));
         if (satBased) {
             builderArgs.add("--ltl");
-            builderArgs.add(OUTPUT_LTL_FILENAME);
+            builderArgs.add(Utils.combinePaths(directory, OUTPUT_LTL_FILENAME));
         } else {
             builderArgs.add("--fast");
             System.out.println("# LTL disabled");
         }
         builderArgs.add("--actionspec");
-        builderArgs.add(OUTPUT_ACTIONSPEC_FILENAME);
+        builderArgs.add(Utils.combinePaths(directory, OUTPUT_ACTIONSPEC_FILENAME));
         builderArgs.add("--size");
         builderArgs.add(String.valueOf(recommendedSize));
         builderArgs.add("--varNumber");

@@ -14,7 +14,7 @@ import java.util.*;
 
 public class TraceModelGenerator {
     public static void run(Configuration conf, String directory, String datasetFilename) throws IOException {
-        final Dataset ds = Dataset.load(datasetFilename);
+        final Dataset ds = Dataset.load(Utils.combinePaths(directory, datasetFilename));
 
         final int maxLength = ds.values.stream().mapToInt(v -> v.size()).max().getAsInt();
         final int minLength = ds.values.stream().mapToInt(v -> v.size()).min().getAsInt();

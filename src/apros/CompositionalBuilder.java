@@ -405,10 +405,10 @@ public class CompositionalBuilder {
             final Configuration conf = confs.get(i);
             System.out.println(conf);
             System.out.println();
-            final String namePrefix = Utils.combinePaths(directory, "automaton" + i + ".");
-            
-            final List<String> params = TraceTranslator.generateScenarios(conf,
-                    directory, ds, new HashSet<>(), namePrefix + "gv", namePrefix + "smv",
+            final String namePrefix = "automaton" + i + ".";
+
+            final List<String> params = TraceTranslator.generateScenarios(conf, directory, ds, new HashSet<>(),
+                    Utils.combinePaths(directory, namePrefix + "gv"), Utils.combinePaths(directory, namePrefix + "smv"),
                     false, satBased, ALL_EVENT_COMBINATIONS, traceIncludeEach);
             System.out.println();
             final PlantBuilderMain builder = new PlantBuilderMain();
