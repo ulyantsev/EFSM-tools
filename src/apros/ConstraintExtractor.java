@@ -61,109 +61,30 @@ public class ConstraintExtractor {
                 + (next ? ")" : "") + " in " + range;
     }
 
-    public static void run(Configuration conf, String datasetFilename) throws IOException {
-        final Dataset ds = Dataset.load(datasetFilename);
-        final StringBuilder sb = new StringBuilder();
-        sb.append(plantCaption(conf));
-        sb.append("    loop_executed: boolean;\n");
-        final List<String> initConstraints = new ArrayList<>();
-        final List<String> transConstraints = new ArrayList<>();
-
-        // 1. overall 1-dimensional constraints
-        if (OVERALL_1D) {
-            for (Parameter p : conf.outputParameters) {
-                final Set<Integer> indices = new TreeSet<>();
-                for (List<double[]> trace : ds.values) {
-                    for (double[] snapshot : trace) {
-                        final int index = p.traceNameIndex(ds.get(snapshot, p));
-                        indices.add(index);
-                    }
-                }
-                initConstraints.add(interval(indices, p, false));
-                transConstraints.add(interval(indices, p, true));
-            }
-        }
-        // 2. overall 2-dimensional constraints
-        if (OVERALL_2D) {
-            for (int i = 0; i < conf.outputParameters.size(); i++) {
-                final Parameter pi = conf.outputParameters.get(i);
-                for (int j = 0; j < i; j++) {
-                    final Parameter pj = conf.outputParameters.get(j);
-                    final Map<Integer, Set<Integer>> indexPairs = new TreeMap<>();
-                    for (List<double[]> trace : ds.values) {
-                        for (double[] snapshot : trace) {
-                            final int index1 = pi.traceNameIndex(ds.get(snapshot, pi));
-                            final int index2 = pj.traceNameIndex(ds.get(snapshot, pj));
-                            Set<Integer> secondIndices = indexPairs.get(index1);
-                            if (secondIndices == null) {
-                                secondIndices = new TreeSet<>();
-                                indexPairs.put(index1, secondIndices);
-                            }
-                            secondIndices.add(index2);
-                        }
-                    }
-                    for (List<String> list : Arrays.asList(initConstraints, transConstraints)) {
-                        final Function<Parameter, String> varName = p -> {
-                            String res = "output_" + p.traceName();
-                            if (list == transConstraints) {
-                                res = "next(" + res + ")";
-                            }
-                            return res;
-                        };
-
-                        final List<String> optionList = new ArrayList<>();
-                        for (Map.Entry<Integer, Set<Integer>> implication : indexPairs.entrySet()) {
-                            final int index1 = implication.getKey();
-                            optionList.add(varName.apply(pi) + " = " + index1 + " & "
-                                    + interval(implication.getValue(), pj, false));
-                        }
-
-                        list.add(String.join(" | ", optionList));
-                    }
+    private static void add1DConstraints (Configuration conf, List<String> initConstraints, List<String> transConstraints, Dataset ds) {
+        for (Parameter p : conf.outputParameters) {
+            final Set<Integer> indices = new TreeSet<>();
+            for (List<double[]> trace : ds.values) {
+                for (double[] snapshot : trace) {
+                    final int index = p.traceNameIndex(ds.get(snapshot, p));
+                    indices.add(index);
                 }
             }
+            initConstraints.add(interval(indices, p, false));
+            transConstraints.add(interval(indices, p, true));
         }
+    }
 
-        // 2. 2-dimensional constraints "input -> possible next state"
-        // if the input is unknown, then no constraint
-
-        // FIXME do something with potential deadlocks, when unknown
-        // input combinations require non-intersecting actions
-        if (INPUT_STATE) {
-            for (Parameter pi : conf.inputParameters) {
-                for (Parameter po : conf.outputParameters) {
-                    final Map<Integer, Set<Integer>> indexPairs = new TreeMap<>();
-                    for (int index1 = 0; index1 < pi.valueCount(); index1++) {
-                        indexPairs.put(index1, new TreeSet<>());
-                    }
-                    for (List<double[]> trace : ds.values) {
-                        for (int i = 0; i < trace.size() - 1; i++) {
-                            final int index1 = pi.traceNameIndex(ds.get(trace.get(i), pi));
-                            final int index2 = po.traceNameIndex(ds.get(trace.get(i + 1), po));
-                            indexPairs.get(index1).add(index2);
-                        }
-                    }
-                    final List<String> optionList = new ArrayList<>();
-                    for (int index1 = 0; index1 < pi.valueCount(); index1++) {
-                        optionList.add("CONT_INPUT_" + pi.traceName()
-                            + " in " + pi.nusmvInterval(index1)
-                            + (indexPairs.get(index1).isEmpty() ? ""
-                                : (" & " + interval(indexPairs.get(index1), po, true))));
-                    }
-
-                    transConstraints.add(String.join(" | ", optionList));
-                }
-            }
-        }
-
-        // 2. 2-dimensional constraints "current state -> next state"
-        if (CURRENT_NEXT) {
-            for (Parameter p : conf.outputParameters) {
+    private static void add2DConstraints (Configuration conf, List<String> initConstraints, List<String> transConstraints, Dataset ds) {
+        for (int i = 0; i < conf.outputParameters.size(); i++) {
+            final Parameter pi = conf.outputParameters.get(i);
+            for (int j = 0; j < i; j++) {
+                final Parameter pj = conf.outputParameters.get(j);
                 final Map<Integer, Set<Integer>> indexPairs = new TreeMap<>();
                 for (List<double[]> trace : ds.values) {
-                    for (int i = 0; i < trace.size() - 1; i++) {
-                        final int index1 = p.traceNameIndex(ds.get(trace.get(i), p));
-                        final int index2 = p.traceNameIndex(ds.get(trace.get(i + 1), p));
+                    for (double[] snapshot : trace) {
+                        final int index1 = pi.traceNameIndex(ds.get(snapshot, pi));
+                        final int index2 = pj.traceNameIndex(ds.get(snapshot, pj));
                         Set<Integer> secondIndices = indexPairs.get(index1);
                         if (secondIndices == null) {
                             secondIndices = new TreeSet<>();
@@ -172,45 +93,149 @@ public class ConstraintExtractor {
                         secondIndices.add(index2);
                     }
                 }
-                final List<String> optionList = new ArrayList<>();
-                for (Map.Entry<Integer, Set<Integer>> implication : indexPairs.entrySet()) {
-                    final int index1 = implication.getKey();
-                    optionList.add("output_" + p.traceName()
-                        + " = " + index1
-                        + (" & " + interval(indexPairs.get(index1), p, true)));
+                for (List<String> list : Arrays.asList(initConstraints, transConstraints)) {
+                    final Function<Parameter, String> varName = p -> {
+                        String res = "output_" + p.traceName();
+                        if (list == transConstraints) {
+                            res = "next(" + res + ")";
+                        }
+                        return res;
+                    };
+                    
+                    final List<String> optionList = new ArrayList<>();
+                    for (Map.Entry<Integer, Set<Integer>> implication : indexPairs.entrySet()) {
+                        final int index1 = implication.getKey();
+                        optionList.add(varName.apply(pi) + " = " + index1 + " & "
+                                + interval(implication.getValue(), pj, false));
+                    }
+
+                    list.add(String.join(" | ", optionList));
                 }
+            }
+        }
+    }
+
+    private static void addInputStateConstraints (Configuration conf, List<String> initConstraints, List<String> transConstraints, Dataset ds) {
+        for (Parameter pi : conf.inputParameters) {
+            for (Parameter po : conf.outputParameters) {
+                final Map<Integer, Set<Integer>> indexPairs = new TreeMap<>();
+                for (int index1 = 0; index1 < pi.valueCount(); index1++) {
+                    indexPairs.put(index1, new TreeSet<>());
+                }
+                for (List<double[]> trace : ds.values) {
+                    for (int i = 0; i < trace.size() - 1; i++) {
+                        final int index1 = pi.traceNameIndex(ds.get(trace.get(i), pi));
+                        final int index2 = po.traceNameIndex(ds.get(trace.get(i + 1), po));
+                        indexPairs.get(index1).add(index2);
+                    }
+                }
+                final List<String> optionList = new ArrayList<>();
+                for (int index1 = 0; index1 < pi.valueCount(); index1++) {
+                    optionList.add("CONT_INPUT_" + pi.traceName()
+                        + " in " + pi.nusmvInterval(index1)
+                        + (indexPairs.get(index1).isEmpty() ? ""
+                            : (" & " + interval(indexPairs.get(index1), po, true))));
+                }
+
                 transConstraints.add(String.join(" | ", optionList));
             }
         }
+    }
 
+    private static void addCurrentNextConstraints (Configuration conf, List<String> initConstraints, List<String> transConstraints, Dataset ds) {
+        for (Parameter p : conf.outputParameters) {
+            final Map<Integer, Set<Integer>> indexPairs = new TreeMap<>();
+            for (List<double[]> trace : ds.values) {
+                for (int i = 0; i < trace.size() - 1; i++) {
+                    final int index1 = p.traceNameIndex(ds.get(trace.get(i), p));
+                    final int index2 = p.traceNameIndex(ds.get(trace.get(i + 1), p));
+                    Set<Integer> secondIndices = indexPairs.get(index1);
+                    if (secondIndices == null) {
+                        secondIndices = new TreeSet<>();
+                        indexPairs.put(index1, secondIndices);
+                    }
+                    secondIndices.add(index2);
+                }
+            }
+            final List<String> optionList = new ArrayList<>();
+            for (Map.Entry<Integer, Set<Integer>> implication : indexPairs.entrySet()) {
+                final int index1 = implication.getKey();
+                optionList.add("output_" + p.traceName()
+                    + " = " + index1
+                    + (" & " + interval(indexPairs.get(index1), p, true)));
+            }
+            transConstraints.add(String.join(" | ", optionList));
+        }
+    }
+
+    private static void printRes (Configuration conf, List<String> initConstraints, List<String> transConstraints, String outFilename) throws IOException {
+        final StringBuilder sb = new StringBuilder();
+        sb.append(plantCaption(conf));
+        sb.append("    loop_executed: boolean;\n");
         sb.append("INIT\n");
-        final int num = initConstraints.size() + transConstraints.size();
+
+        final int constraintsCount = initConstraints.size() + transConstraints.size();
         if (initConstraints.isEmpty()) {
             initConstraints.add("TRUE");
         }
-        sb.append("    (" + String.join(")\n  & (", initConstraints) + ")\n");
+        sb.append("    ("
+                    +     String.join(")\n  & (", initConstraints)
+                    + ")\n");
         sb.append("TRANS\n");
         if (transConstraints.isEmpty()) {
             transConstraints.add("TRUE");
         }
-        sb.append("    (" + String.join(")\n  & (", transConstraints) + ")\n");
+        sb.append("    ("
+                    +    String.join(")\n  & (", transConstraints)
+                    + ")\n");
+
+        List<String> outParameters = 
+            conf.outputParameters.stream()
+            .map(p -> "output_" + p.traceName() + " = next(output_" + p.traceName() + ")")
+            .collect(Collectors.toList());
 
         sb.append("ASSIGN\n");
         sb.append("    init(loop_executed) := FALSE;\n");
-        sb.append("    next(loop_executed) := " + String.join(" & ",
-                conf.outputParameters.stream()
-                .map(p -> "output_" + p.traceName() + " = next(output_" + p.traceName() + ")")
-                .collect(Collectors.toList())) + ";\n");
+        sb.append("    next(loop_executed) := " + String.join(" & ", outParameters) + ";\n");
+
         sb.append("DEFINE\n");
         sb.append("    unsupported := FALSE;\n");
         sb.append(plantConversions(conf));
 
-        final String outFilename = "plant-constraints.smv";
-        try (PrintWriter pw = new PrintWriter(new File(outFilename))) {
-            pw.println(sb);
-        }
+        Utils.writeToFile(outFilename, sb.toString());
 
         System.out.println("Done; model has been written to: " + outFilename);
-        System.out.println("Constraints generated: " + num);
+        System.out.println("Constraints generated: " + constraintsCount);
+    }
+
+    public static void run(Configuration conf, String directory, String datasetFilename) throws IOException {
+        final Dataset ds = Dataset.load(Utils.combinePaths(directory, datasetFilename));
+        final List<String> initConstraints = new ArrayList<>();
+        final List<String> transConstraints = new ArrayList<>();
+
+        // 1. overall 1-dimensional constraints
+        if (OVERALL_1D) {
+            add1DConstraints(conf, initConstraints, transConstraints, ds);
+        }
+        // 2. overall 2-dimensional constraints
+        if (OVERALL_2D) {
+            add2DConstraints(conf, initConstraints, transConstraints, ds);
+        }
+
+        // 2. 2-dimensional constraints "input -> possible next state"
+        // if the input is unknown, then no constraint
+        
+        // FIXME do something with potential deadlocks, when unknown
+        // input combinations require non-intersecting actions
+        if (INPUT_STATE) {
+            addInputStateConstraints(conf, initConstraints, transConstraints, ds);
+        }
+        
+        // 2. 2-dimensional constraints "current state -> next state"
+        if (CURRENT_NEXT) {
+            addCurrentNextConstraints(conf, initConstraints, transConstraints, ds);
+        }
+        
+        printRes(conf, initConstraints, transConstraints, Utils.combinePaths(directory, "plant-constraints.smv"));
     }
 }

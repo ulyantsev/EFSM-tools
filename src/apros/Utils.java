@@ -1,11 +1,13 @@
 package apros;
 
 import java.util.Arrays;
+import java.nio.file.Paths;
+import java.io.*;
 
-class Utils {
+public class Utils {
     private static final String[] emptyStringArray = new String[0];
 
-    static String[] splitString(String str) {
+    public static String[] splitString(String str) {
         if (str.trim().equals("")) {
             return emptyStringArray;
         }
@@ -14,5 +16,15 @@ class Utils {
         int len = temp.length;
         int end = temp[len - 1].equals("") ? len - 1 : len;
         return Arrays.copyOfRange(temp, start, end);
+    }
+
+    public static String combinePaths(String... paths) {
+        return Paths.get("", paths).toString();
+    }
+
+    public static void writeToFile(String path, String text) throws FileNotFoundException {
+        try (PrintWriter pw = new PrintWriter(path)) {
+            pw.print(text);
+        }
     }
 }
