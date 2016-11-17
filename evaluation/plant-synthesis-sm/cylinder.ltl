@@ -1,0 +1,4 @@
+G(!(action(home) && action(end)))
+G(!(action(home) && X(event(wait))) || X(action(home)))
+G(!(action(end) && X(event(wait))) || X(action(end)))
+G(!(!(action(home)) && !(action(end)) && X(event(wait))) || X(!(action(home)) && !(action(end))))

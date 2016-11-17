@@ -4,22 +4,13 @@ package structures.mealy;
  * (c) Igor Buzhinsky
  */
 
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Deque;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-
-import org.apache.commons.lang3.tuple.Pair;
-
-import scenario.StringActions;
 import bool.MyBooleanExpression;
+import org.apache.commons.lang3.tuple.Pair;
+import scenario.StringActions;
+import structures.moore.MooreNode;
+import structures.moore.NondetMooreAutomaton;
+
+import java.util.*;
 
 public class APTA {
     private final Map<Integer, Map<String, Integer>> nodes = new LinkedHashMap<>();
@@ -349,6 +340,49 @@ public class APTA {
         }
         
         return auto;
+    }
+
+    /*
+     * For state merging based nondeterministic automaton synthesis.
+     */
+    public NondetMooreAutomaton toNondetMooreAutomaton(List<String> actions) {
+        final MealyAutomaton mealy = toAutomaton();
+        final List<MooreNode> mooreStates = new ArrayList<>();
+        final List<Boolean> mooreIsInitial = new ArrayList<>();
+        int num = 0;
+        final Map<MealyTransition, Integer> transToNum = new HashMap<>();
+        // states
+        for (MealyNode node : mealy.states()) {
+            for (MealyTransition t : node.transitions()) {
+                final String label = t.event();
+                final String event = label.substring(0, label.length() - actions.size());
+                final String action = label.substring(label.length() - actions.size(), label.length());
+                final List<String> separatedActions = new ArrayList<>();
+                for (int i = 0; i < actions.size(); i++) {
+                    if (action.charAt(i) == '1') {
+                        separatedActions.add(actions.get(i));
+                    }
+                }
+                final StringActions stringActions = new StringActions(String.join(",", separatedActions));
+                final MooreNode mooreNode = new MooreNode(num, stringActions);
+                mooreStates.add(mooreNode);
+                mooreIsInitial.add(event.isEmpty());
+                transToNum.put(t, num);
+                num++;
+            }
+        }
+        // transitions
+        for (MealyNode node : mealy.states()) {
+            for (MealyTransition t1 : node.transitions()) {
+                for (MealyTransition t2 : t1.dst().transitions()) {
+                    final String label = t2.event();
+                    final String event = label.substring(0, label.length() - actions.size());
+                    mooreStates.get(transToNum.get(t1)).addTransition(event,
+                            mooreStates.get(transToNum.get(t2)));
+                }
+            }
+        }
+        return new NondetMooreAutomaton(mooreStates, mooreIsInitial);
     }
     
     // additionally makes parent(b) point to r

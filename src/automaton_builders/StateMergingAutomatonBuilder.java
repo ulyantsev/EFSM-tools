@@ -16,7 +16,7 @@ import java.util.*;
 import java.util.logging.Logger;
 
 public class StateMergingAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
-    private static APTA getAPTA(List<List<String>> possc, Set<List<String>> negsc) {
+    public static APTA getAPTA(List<List<String>> possc, Set<List<String>> negsc) {
         final APTA a = new APTA();
         for (List<String> sc : possc) {
             a.addScenario(sc, true);

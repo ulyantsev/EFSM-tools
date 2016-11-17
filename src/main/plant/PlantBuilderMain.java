@@ -6,6 +6,7 @@ package main.plant;
 
 import automaton_builders.PlantAutomatonBuilder;
 import automaton_builders.RapidPlantAutomatonBuilder;
+import automaton_builders.StateMergingNondetAutomatonBuilder;
 import meta.Author;
 import meta.MainBase;
 import org.kohsuke.args4j.Argument;
@@ -122,6 +123,10 @@ public class PlantBuilderMain extends MainBase {
             usage = "disable completeness")
     private boolean incomplete;
 
+    @Option(name = "--sm", handler = BooleanOptionHandler.class,
+            usage = "use state merging instead of satisfiability")
+    private boolean stateMerging;
+
     private Optional<NondetMooreAutomaton> resultAutomaton = null;
     private final Map<String, String> colorRuleMap = new LinkedHashMap<>();
 
@@ -176,14 +181,16 @@ public class PlantBuilderMain extends MainBase {
         }
 
         logger().info("Initializing the verifier...");
+
         final NondetMooreVerifierPair verifier = new NondetMooreVerifierPair(logger(), strFormulae,
                 events, actions);
         final long finishTime = System.currentTimeMillis() + (long) timeout * 1000;
 
         logger().info("Started building automaton.");
 
-        resultAutomaton = fast
-                ? RapidPlantAutomatonBuilder.build(positiveForest, events)
+        resultAutomaton = stateMerging
+                ? StateMergingNondetAutomatonBuilder.build(logger(), events, actions, arguments, strFormulae)
+                : fast ? RapidPlantAutomatonBuilder.build(positiveForest, events)
                 : PlantAutomatonBuilder.build(logger(), positiveForest, negativeForest, size, actionspecFilePath,
                 events, actions, verifier, finishTime, solver, deterministic, bfsConstraints, !incomplete);
 
