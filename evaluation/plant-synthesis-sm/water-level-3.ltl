@@ -1,5 +1,3 @@
-G(!(G(event(open  ))) || F(G(action(abovehh))))
-G(!(G(event(closed))) || F(G(action(belowll))))
 action(abovesp) || action(belowsp)
 G(!(action(abovehh) && X(event(closed))) || X(action(abovehh) || action(aboveh )))
 G(!(action(aboveh ) && X(event(closed))) || X(action(aboveh ) || action(aboveth)))

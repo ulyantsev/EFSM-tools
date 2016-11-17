@@ -1,0 +1,41 @@
+package apros;
+
+import java.util.Arrays;
+import java.nio.file.Paths;
+import java.io.*;
+
+<<<<<<< HEAD
+class Utils {
+    private static final String[] emptyStringArray = new String[0];
+
+    static String[] splitString(String str) {
+        if (str.trim().equals("")) {
+=======
+public class Utils {
+    private static final String[] emptyStringArray = new String[0];
+
+    public static String[] splitString(String str) {
+        if (str.trim() == "") {
+>>>>>>> 7bb4c2b3b3e37db43638e0985f47b4586e88685e
+            return emptyStringArray;
+        }
+        String[] temp = str.split(" +");
+        int start = temp[0].equals("") ? 1 : 0;
+        int len = temp.length;
+        int end = temp[len - 1].equals("") ? len - 1 : len;
+        return Arrays.copyOfRange(temp, start, end);
+    }
+<<<<<<< HEAD
+=======
+
+    public static String combinePaths(String... paths) {
+        return Paths.get("", paths).toString();
+    }
+
+    public static void writeToFile(String path, String text) throws FileNotFoundException {
+        try (PrintWriter pw = new PrintWriter(path)) {
+            pw.print(text);
+        }
+    }
+>>>>>>> 7bb4c2b3b3e37db43638e0985f47b4586e88685e
+}

@@ -94,7 +94,7 @@ public class StateMergingNondetAutomatonBuilder extends ScenarioAndLtlAutomatonB
 
     public static Optional<NondetMooreAutomaton> build2(Logger logger, Verifier verifier, List<List<String>> possc,
                                                   List<String> actions) throws FileNotFoundException, ParseException {
-        final Set<List<String>> negsc = new LinkedHashSet<>();
+        final List<List<String>> negsc = new ArrayList<>();
         APTA a = StateMergingAutomatonBuilder.getAPTA(possc, negsc);
 
         int iterations = 1;
@@ -105,14 +105,15 @@ public class StateMergingNondetAutomatonBuilder extends ScenarioAndLtlAutomatonB
                 final APTA newA = merge.get();
 
                 final NondetMooreAutomaton moore = newA.toNondetMooreAutomaton(actions);
-                final List<Counterexample> counterexamples
-                    = verifier.verifyNondetMoore(moore);
-                if (!counterexamples.stream().allMatch(Counterexample::isEmpty)) {
+                final List<Counterexample> counterexamples = verifier.verifyNondetMoore(moore).stream()
+                        .filter(ce -> !ce.isEmpty())
+                        .distinct()
+                        .collect(Collectors.toList());
+
+                if (!counterexamples.isEmpty()) {
+                    System.out.println();
                     int added = 0;
                     for (Counterexample ce : counterexamples) {
-                        if (ce.isEmpty()) {
-                            continue;
-                        }
                         if (ce.loopLength > 0) {
                             throw new RuntimeException("Looping counterexample!");
                         }
@@ -131,6 +132,7 @@ public class StateMergingNondetAutomatonBuilder extends ScenarioAndLtlAutomatonB
                     iterations++;
                 } else {
                     a = newA;
+                    System.out.print(".");
                 }
             } else {
                 break;
