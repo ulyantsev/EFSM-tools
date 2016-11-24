@@ -57,12 +57,12 @@ public class StateMergingAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder
         int iterations = 1;
         while (true) {
             a.updateColors();
-            final Optional<APTA> merge = a.bestMerge();
-            if (merge.isPresent()) {
-                final APTA newA = merge.get();
+            final boolean succ = a.bestMerge();
+            if (succ) {
                 final List<Counterexample> counterexamples
-                    = verifier.verifyWithCounterexamplesWithNoDeadEndRemoval(newA.toAutomaton());
+                    = verifier.verifyWithCounterexamplesWithNoDeadEndRemoval(a.toAutomaton());
                 if (!counterexamples.stream().allMatch(Counterexample::isEmpty)) {
+                    System.out.println();
                     int added = 0;
                     for (Counterexample ce : counterexamples) {
                         if (ce.isEmpty()) {
@@ -79,7 +79,7 @@ public class StateMergingAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder
                     a = getAPTA(possc, negsc);
                     iterations++;
                 } else {
-                    a = newA;
+                    System.out.print(".");
                 }
             } else {
                 break;

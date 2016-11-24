@@ -13,11 +13,110 @@ import structures.moore.NondetMooreAutomaton;
 import java.util.*;
 
 public class APTA {
-    private final Map<Integer, Map<String, Integer>> nodes = new LinkedHashMap<>();
+    private final Map<Integer, Map<String, Integer>> edges = new LinkedHashMap<>();
+    private final Map<Integer, Map<String, Integer>> revEdges = new LinkedHashMap<>();
     private final Map<Integer, NodeType> nodeTypes = new LinkedHashMap<>();
     private final Map<Integer, NodeColor> nodeColors = new LinkedHashMap<>();
-    private final Map<Pair<Integer, Integer>, Pair<APTA, Integer>> cachedMerges = new HashMap<>();
-    
+    private final List<Operation> operations = new ArrayList<>();
+
+    private void revert() {
+        for (int i = operations.size() - 1; i >= 0; i--) {
+            operations.get(i).revert();
+        }
+        operations.clear();
+    }
+
+    private void apply(List<Operation> op) {
+        op.forEach(Operation::apply);
+    }
+
+    private interface Operation {
+        void apply();
+        void revert();
+    }
+
+    private class NodeTypesPut implements Operation {
+        final int index;
+        final NodeType type;
+        final NodeType prevType;
+
+        public NodeTypesPut(int index, NodeType type) {
+            this.index = index;
+            this.type = type;
+            prevType = nodeTypes.get(index);
+            apply();
+        }
+
+        @Override
+        public void apply() {
+            nodeTypes.put(index, type);
+        }
+
+        @Override
+        public void revert() {
+            if (prevType == null) {
+                nodeTypes.remove(index);
+            } else {
+                nodeTypes.put(index, prevType);
+            }
+        }
+
+        @Override
+        public String toString() {
+            return "NodeTypesPut{" + "index=" + index + ", type=" + type + ", prevType=" + prevType + '}';
+        }
+    }
+
+    private class NodePut implements Operation {
+        final int from;
+        final String event;
+        final int to;
+        final boolean present;
+        final Integer prevNode;
+        final boolean presentRev;
+        final Integer prevRevNode;
+
+        public NodePut(int from, String event, int to) {
+            this.from = from;
+            this.event = event;
+            this.to = to;
+
+            present = edges.get(from).containsKey(event);
+            prevNode = edges.get(from).get(event);
+
+            presentRev = revEdges.get(to).containsKey(event);
+            prevRevNode = revEdges.get(to).get(event);
+
+            apply();
+        }
+
+        @Override
+        public void apply() {
+            edges.get(from).put(event, to);
+            revEdges.get(to).put(event, from);
+        }
+
+        @Override
+        public void revert() {
+            if (!present) {
+                edges.get(from).remove(event);
+            } else {
+                edges.get(from).put(event, prevNode);
+            }
+            if (!presentRev) {
+                revEdges.get(to).remove(event);
+            } else {
+                revEdges.get(to).put(event, prevRevNode);
+            }
+        }
+
+        @Override
+        public String toString() {
+            return "NodePut{" + "from=" + from + ", event='" + event + '\'' + ", to=" + to +
+                    ", prevNode=" + prevNode + '}';
+        }
+    }
+
     private enum NodeType {
         POSITIVE("solid"), NEGATIVE("dashed"), UNKNOWN("dotted");
 
@@ -50,18 +149,19 @@ public class APTA {
     
     public void resetColors() {
         // the root is RED, its children are BLUE, other nodes are WHITE
-        for (int node : nodes.keySet()) {
+        for (int node : edges.keySet()) {
             nodeColors.put(node, NodeColor.WHITE);
         }
         nodeColors.put(0, NodeColor.RED);
-        for (Map.Entry<String, Integer> edges : nodes.get(0).entrySet()) {
+        for (Map.Entry<String, Integer> edges : this.edges.get(0).entrySet()) {
             int dst = edges.getValue();
             nodeColors.put(dst, NodeColor.BLUE);
         }
     }
 
     public APTA() {
-        nodes.put(0, new LinkedHashMap<>());
+        edges.put(0, new TreeMap<>());
+        revEdges.put(0, new TreeMap<>());
         nodeTypes.put(0, NodeType.POSITIVE);
     }
     
@@ -72,11 +172,7 @@ public class APTA {
         while (!queue.isEmpty()) {
             int node = queue.removeFirst();
             visited.add(node);
-            for (Integer child : nodes.get(node).values()) {
-                if (!visited.contains(child)) {
-                    queue.addLast(child);
-                }
-            }
+            edges.get(node).values().stream().filter(child -> !visited.contains(child)).forEach(queue::addLast);
         }
         return visited;
     }
@@ -91,49 +187,37 @@ public class APTA {
                 return false;
             }
             visited.add(node);
-            for (Integer child : nodes.get(node).values()) {
-                if (!visited.contains(child)) {
-                    queue.addLast(child);
-                }
-            }
+            edges.get(node).values().stream().filter(child -> !visited.contains(child)).forEach(queue::addLast);
         }
         return true;
     }
-    
-    private Pair<APTA, Integer> aptaAndScore(int r, int b) {
-        final Pair<APTA, Integer> cached = cachedMerges.get(Pair.of(r, b));
-        if (cached != null) {
-            return cached;
-        }
-        final APTA copy = copy(r, b);
-        final int score = copy.merge(r, b, 0);
-        cachedMerges.put(Pair.of(r, b), Pair.of(copy, score));
-        return Pair.of(copy, score);
+
+    private int aptaScore(int r, int b) {
+        redirect(r, b);
+        final int score = merge(r, b, 0);
+        revert();
+        return score;
+    }
+
+    private Pair<List<Operation>, Integer> aptaAndScore(int r, int b) {
+        redirect(r, b);
+        final int score = merge(r, b, 0);
+        final List<Operation> opCopy = operations.isEmpty() ? null : new ArrayList<>(operations);
+        revert();
+        return Pair.of(opCopy, score);
     }
     
     public void updateColors() {
         final Set<Integer> bfsNodes = bfs();
-        
-        final Map<Integer, Set<Integer>> backEdges = new LinkedHashMap<>();
-        for (int node : nodes.keySet()) {
-            backEdges.put(node, new HashSet<>());
-        }
-        for (Map.Entry<Integer, Map<String, Integer>> node : nodes.entrySet()) {
-            final int src = node.getKey();
-            for (Map.Entry<String, Integer> t : node.getValue().entrySet()) {
-                final int dst = t.getValue();
-                backEdges.get(dst).add(src);
-            }
-        }
-        
+
         while (true) {
             boolean recoloredBlueRed = false;
             l1: for (int b : bfsNodes) {
                 if (nodeColors.get(b) == NodeColor.BLUE) {
                     for (int r : nodeColors.keySet()) {
                         if (nodeColors.get(r) == NodeColor.RED) {
-                            final Pair<APTA, Integer> pair = aptaAndScore(r, b);
-                            final int score = pair.getRight();
+                            final int score = aptaScore(r, b);
+
                             if (score != Integer.MIN_VALUE) {
                                 // there exists a red node such that the blue node
                                 // can be merged with it
@@ -149,8 +233,7 @@ public class APTA {
         
             final Set<Integer> isolated = new HashSet<>();
             for (int w : bfsNodes) {
-                if (nodeColors.get(w) == NodeColor.BLUE
-                        || nodeColors.get(w) == NodeColor.WHITE && isolated(w)) {
+                if (nodeColors.get(w) == NodeColor.BLUE || nodeColors.get(w) == NodeColor.WHITE && isolated(w)) {
                     isolated.add(w);
                 }
             }
@@ -158,7 +241,7 @@ public class APTA {
             boolean recoloredWriteBlue = false;
             l2: for (int w : isolated) {
                 if (nodeColors.get(w) == NodeColor.WHITE) {
-                    for (int parent : backEdges.get(w)) {
+                    for (int parent : revEdges.get(w).values()) {
                         if (isolated.contains(parent)) {
                             continue l2;
                         }
@@ -177,42 +260,40 @@ public class APTA {
         }
     }
     
-    public Optional<APTA> bestMerge() {
+    public boolean bestMerge() {
         int bestScore = Integer.MIN_VALUE;
-        APTA bestMerge = null;
+        List<Operation> bestMerge = null;
         
         for (int r : nodeColors.keySet()) {
             if (nodeColors.get(r) == NodeColor.RED) {
                 for (int b : nodeColors.keySet()) {
                     if (nodeColors.get(b) == NodeColor.BLUE) {
-                        final Pair<APTA, Integer> pair = aptaAndScore(r, b);
+                        final Pair<List<Operation>, Integer> pair = aptaAndScore(r, b);
                         final int score = pair.getRight();
                         if (score > bestScore) {
-                            final APTA copy = pair.getLeft();
                             bestScore = score;
-                            bestMerge = copy;
+                            bestMerge = pair.getLeft();
                         }
                     }
                 }
             }
         }
         if (bestMerge != null) {
-            bestMerge.removeUnreachableNodes();
+            apply(bestMerge);
+            removeUnreachableNodes();
+            return true;
         }
-        cachedMerges.clear();
-        return Optional.ofNullable(bestMerge);
+        return false;
     }
     
     private void removeUnreachableNodes() {
-        final Set<Integer> nodesToRemove = new HashSet<>(nodes.keySet());
+        final Set<Integer> nodesToRemove = new HashSet<>(edges.keySet());
         nodesToRemove.removeAll(bfs());
-        for (int n : nodesToRemove) {
-            removeNode(n);
-        }
+        nodesToRemove.forEach(this::removeNode);
     }
     
     private void removeNode(int node) {
-        nodes.remove(node);
+        edges.remove(node);
         nodeColors.remove(node);
         nodeTypes.remove(node);
     }
@@ -229,21 +310,21 @@ public class APTA {
                     return Integer.MIN_VALUE;
                 }
             } else {
-                nodeTypes.put(r, bLabel);
+                operations.add(new NodeTypesPut(r, bLabel));
             }
         }
         
-        for (Map.Entry<String, Integer> blueEdge : nodes.get(b).entrySet()) {
+        for (Map.Entry<String, Integer> blueEdge : edges.get(b).entrySet()) {
             final int blueChild = blueEdge.getValue();
             final String event = blueEdge.getKey();
-            final Integer redChild = nodes.get(r).get(event);
+            final Integer redChild = edges.get(r).get(event);
             if (redChild != null) {
                 score = merge(redChild, blueChild, score);
                 if (score == Integer.MIN_VALUE) {
                     return score;
                 }
             } else {
-                nodes.get(r).put(event, blueChild);
+                operations.add(new NodePut(r, event, blueChild));
             }
         }
         
@@ -266,17 +347,18 @@ public class APTA {
     }
 
     private int addTransition(int src, String event) {
-        Integer dst = nodes.get(src).get(event);
+        Integer dst = edges.get(src).get(event);
         if (dst == null) {
-            dst = nodes.size();
-            nodes.put(dst, new LinkedHashMap<>());
-            nodes.get(src).put(event, dst);
+            dst = edges.size();
+            edges.put(dst, new TreeMap<>());
+            revEdges.put(dst, new TreeMap<>());
+            new NodePut(src, event, dst);
         }
         return dst;
     }
 
     private APTA removeNegativeNodes() {
-        final APTA a = copy(0, 0);
+        final APTA a = copy();
         final List<Integer> negative = new ArrayList<>();
         for (Map.Entry<Integer, NodeType> entry : nodeTypes.entrySet()) {
             if (entry.getValue() == NodeType.NEGATIVE) {
@@ -285,13 +367,9 @@ public class APTA {
         }
         for (int node : negative) {
             a.removeNode(node);
-            for (Map<String, Integer> transitionMap : a.nodes.values()) {
+            for (Map<String, Integer> transitionMap : a.edges.values()) {
                 final List<String> events = new ArrayList<>(transitionMap.keySet());
-                for (String event : events) {
-                    if (transitionMap.get(event) == node) {
-                        transitionMap.remove(event);
-                    }
-                }
+                events.stream().filter(event -> transitionMap.get(event) == node).forEach(transitionMap::remove);
             }
         }
         a.removeUnreachableNodes();
@@ -300,18 +378,18 @@ public class APTA {
     
     private APTA removeNodeNumGaps() {
         final APTA a = new APTA();
-        final int size = nodes.keySet().stream().mapToInt(x -> x).max().getAsInt() + 1;
+        final int size = edges.keySet().stream().mapToInt(x -> x).max().getAsInt() + 1;
         final int[] mapping = new int[size];
         
         int j = 0;
-        for (int node : nodes.keySet()) {
+        for (int node : edges.keySet()) {
             mapping[node] = j;
-            a.nodes.put(j, new LinkedHashMap<>());
+            a.edges.put(j, new TreeMap<>());
             j++;
         }
-        for (Map.Entry<Integer, Map<String, Integer>> node : nodes.entrySet()) {
+        for (Map.Entry<Integer, Map<String, Integer>> node : edges.entrySet()) {
             for (Map.Entry<String, Integer> t : node.getValue().entrySet()) {
-                a.nodes.get(mapping[node.getKey()]).put(t.getKey(), mapping[t.getValue()]);
+                a.edges.get(mapping[node.getKey()]).put(t.getKey(), mapping[t.getValue()]);
             }
         }
         
@@ -327,8 +405,8 @@ public class APTA {
     
     public MealyAutomaton toAutomaton() {
         final APTA a = removeNegativeNodes().removeNodeNumGaps();
-        final MealyAutomaton auto = new MealyAutomaton(a.nodes.size());
-        for (Map.Entry<Integer, Map<String, Integer>> node : a.nodes.entrySet()) {
+        final MealyAutomaton auto = new MealyAutomaton(a.edges.size());
+        for (Map.Entry<Integer, Map<String, Integer>> node : a.edges.entrySet()) {
             final int src = node.getKey();
             for (Map.Entry<String, Integer> t : node.getValue().entrySet()) {
                 final int dst = t.getValue();
@@ -386,31 +464,36 @@ public class APTA {
     }
     
     // additionally makes parent(b) point to r
-    private APTA copy(int r, int b) {
+    private APTA copy() {
         final APTA a = new APTA();
-        for (Map.Entry<Integer, Map<String, Integer>> node : nodes.entrySet()) {
-            final int state = node.getKey();
-            a.nodes.put(state, new LinkedHashMap<>());
-            for (Map.Entry<String, Integer> t : node.getValue().entrySet()) {
-                int dst = t.getValue();
-                a.nodes.get(state).put(t.getKey(), dst == b ? r : dst);
-            }
+        for (Map.Entry<Integer, Map<String, Integer>> node : edges.entrySet()) {
+            a.edges.put(node.getKey(), new TreeMap<>(node.getValue()));
+        }
+        for (Map.Entry<Integer, Map<String, Integer>> node : revEdges.entrySet()) {
+            a.revEdges.put(node.getKey(), new TreeMap<>(node.getValue()));
         }
         a.nodeTypes.putAll(nodeTypes);
         a.nodeColors.putAll(nodeColors);
         return a;
     }
+
+    // makes parent(b) point to r
+    private void redirect(int r, int b) {
+        for (Map.Entry<String, Integer> entry : revEdges.get(b).entrySet()) {
+            operations.add(new NodePut(entry.getValue(), entry.getKey(), r));
+        }
+    }
     
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
+        final StringBuilder sb = new StringBuilder();
         sb.append("digraph APTA { node [shape=circle, width=0.7, fixedsize=true];\n");
 
-        for (int node : nodes.keySet()) {
+        for (int node : edges.keySet()) {
             sb.append(node + "" + nodeColors.get(node) + nodeTypes.get(node) + ";");
         }
         sb.append("\n");
-        for (Map.Entry<Integer, Map<String, Integer>> node : nodes.entrySet()) {
+        for (Map.Entry<Integer, Map<String, Integer>> node : edges.entrySet()) {
             for (Map.Entry<String, Integer> t : node.getValue().entrySet()) {
                 sb.append(node.getKey() + "->" + t.getValue() +
                         "[label=\"" + t.getKey() + "\"];");

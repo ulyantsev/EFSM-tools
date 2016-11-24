@@ -100,16 +100,13 @@ public class StateMergingNondetAutomatonBuilder extends ScenarioAndLtlAutomatonB
         int iterations = 1;
         while (true) {
             a.updateColors();
-            final Optional<APTA> merge = a.bestMerge();
-            if (merge.isPresent()) {
-                final APTA newA = merge.get();
-
-                final NondetMooreAutomaton moore = newA.toNondetMooreAutomaton(actions);
+            final boolean succ = a.bestMerge();
+            if (succ) {
+                final NondetMooreAutomaton moore = a.toNondetMooreAutomaton(actions);
                 final List<Counterexample> counterexamples = verifier.verifyNondetMoore(moore).stream()
                         .filter(ce -> !ce.isEmpty())
                         .distinct()
                         .collect(Collectors.toList());
-
                 if (!counterexamples.isEmpty()) {
                     System.out.println();
                     int added = 0;
@@ -131,7 +128,6 @@ public class StateMergingNondetAutomatonBuilder extends ScenarioAndLtlAutomatonB
                     a = StateMergingAutomatonBuilder.getAPTA(possc, negsc);
                     iterations++;
                 } else {
-                    a = newA;
                     System.out.print(".");
                 }
             } else {
