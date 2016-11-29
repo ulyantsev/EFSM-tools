@@ -86,7 +86,7 @@ public class NondetMooreAutomaton {
                 }
             }
         }
-        
+
         int maxState = 0;
         for (List<Pair<Integer, String>> list : transitionRelation.values()) {
             for (Pair<Integer, String> p : list) {
@@ -108,7 +108,70 @@ public class NondetMooreAutomaton {
         }
         return a;
     }
-    
+
+    @Deprecated
+    public static NondetMooreAutomaton readGV_old(String filename) throws FileNotFoundException {
+        final Map<String, List<String>> actionRelation = new LinkedHashMap<>();
+        final Map<String, List<Pair<Integer, String>>> transitionRelation = new LinkedHashMap<>();
+        actionRelation.put("init", new ArrayList<>());
+        transitionRelation.put("init", new ArrayList<>());
+        final Set<String> events = new LinkedHashSet<>();
+        final Set<String> actions = new LinkedHashSet<>();
+        final Set<Integer> initial = new LinkedHashSet<>();
+
+        try (Scanner sc = new Scanner(new File(filename))) {
+            while (sc.hasNextLine()) {
+                final String line = sc.nextLine();
+                final String tokens[] = line.split(" +");
+                if (!line.contains(";")) {
+                    continue;
+                }
+                if (line.contains("->")) {
+                    final String from = tokens[1];
+                    final Integer to = Integer.parseInt(tokens[3].replaceAll(";", ""));
+                    if (from.equals("init")) {
+                        initial.add(to);
+                    } else {
+                        final String event = tokens[6].replaceAll("[;\\]\"]", "");
+                        transitionRelation.get(from).add(Pair.of(to, event));
+                        events.add(event);
+                    }
+                } else {
+                    final String from = tokens[1];
+                    transitionRelation.put(from, new ArrayList<>());
+                    if (from.equals("init") || from.equals("node")) {
+                        continue;
+                    }
+                    final List<String> theseActions = Arrays.asList(line.split("\"")[1].split(":")[1].trim().split(", "));
+                    actionRelation.put(from, theseActions);
+                    actions.addAll(theseActions);
+                }
+            }
+        }
+
+        int maxState = 0;
+        for (List<Pair<Integer, String>> list : transitionRelation.values()) {
+            for (Pair<Integer, String> p : list) {
+                maxState = Math.max(maxState, p.getLeft());
+            }
+        }
+        final List<Boolean> initialVector = new ArrayList<>();
+        final List<StringActions> actionVector = new ArrayList<>();
+        for (int i = 0; i <= maxState; i++) {
+            initialVector.add(initial.contains(i));
+            actionVector.add(new StringActions(String.join(", ", actionRelation.get(i + ""))));
+        }
+
+        final NondetMooreAutomaton a = new NondetMooreAutomaton(maxState + 1, actionVector, initialVector);
+        for (int i = 0; i <= maxState; i++) {
+            for (Pair<Integer, String> p : transitionRelation.get(i + "")) {
+                a.state(i).addTransition(p.getRight(), a.state(p.getLeft()));
+            }
+        }
+        return a;
+    }
+
+
     public NondetMooreAutomaton(List<MooreNode> states, List<Boolean> isInitial) {
         this.states.addAll(states);
         this.isInitial.addAll(isInitial);
@@ -598,5 +661,21 @@ public class NondetMooreAutomaton {
         }
 
         return copy;
+    }
+
+    public Set<Integer> reachableStates() {
+        final Set<Integer> visited = new LinkedHashSet<>();
+        final Deque<Integer> queue = new ArrayDeque<>(initialStates());
+        while (!queue.isEmpty()) {
+            final int state = queue.removeFirst();
+            if (visited.contains(state)) {
+                continue;
+            }
+            visited.add(state);
+
+            states.get(state).transitions().stream().map(MooreTransition::dst).map(MooreNode::number)
+                    .forEach(queue::addLast);
+        }
+        return visited;
     }
 }

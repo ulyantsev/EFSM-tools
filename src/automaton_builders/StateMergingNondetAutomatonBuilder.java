@@ -103,23 +103,25 @@ public class StateMergingNondetAutomatonBuilder extends ScenarioAndLtlAutomatonB
             final boolean succ = a.bestMerge();
             if (succ) {
                 final NondetMooreAutomaton moore = a.toNondetMooreAutomaton(actions);
-                final List<Counterexample> counterexamples = verifier.verifyNondetMoore(moore).stream()
+                final List<Counterexample> counterexamplesAll = verifier.verifyNondetMoore(moore).stream()
                         .filter(ce -> !ce.isEmpty())
                         .distinct()
+                        .collect(Collectors.toList());
+                if (counterexamplesAll.stream().anyMatch(ce -> ce.loopLength > 0)) {
+                    logger.severe("Looping counterexample! There might be non-safety LTL properties"
+                            + " in the input specification.");
+                }
+                final List<Counterexample> counterexamples = counterexamplesAll.stream()
+                        .filter(ce -> ce.loopLength == 0)
                         .collect(Collectors.toList());
                 if (!counterexamples.isEmpty()) {
                     System.out.println();
                     int added = 0;
                     for (Counterexample ce : counterexamples) {
-                        if (ce.loopLength > 0) {
-                            throw new RuntimeException("Looping counterexample!");
-                        }
                         added++;
-
                         final List<String> transformedEvents = transformPath(ce.events(), ce.actions().stream().map(
                                 list -> new StringActions(String.join(",", list)))
                                 .collect(Collectors.toList()), actions);
-
                         negsc.add(transformedEvents);
                         logger.info("ADDING COUNTEREXAMPLE: " + transformedEvents);
                         System.out.println(ce.toString());

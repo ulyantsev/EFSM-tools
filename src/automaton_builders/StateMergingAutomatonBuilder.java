@@ -14,6 +14,7 @@ import java.io.FileNotFoundException;
 import java.text.ParseException;
 import java.util.*;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 public class StateMergingAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
     public static APTA getAPTA(List<List<String>> possc, Iterable<List<String>> negsc) {
@@ -59,17 +60,21 @@ public class StateMergingAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder
             a.updateColors();
             final boolean succ = a.bestMerge();
             if (succ) {
-                final List<Counterexample> counterexamples
+                final List<Counterexample> counterexamplesAll
                     = verifier.verifyWithCounterexamplesWithNoDeadEndRemoval(a.toAutomaton());
+                if (counterexamplesAll.stream().anyMatch(ce -> ce.loopLength > 0)) {
+                    logger.severe("Looping counterexample! There might be non-safety LTL properties"
+                            + " in the input specification.");
+                }
+                final List<Counterexample> counterexamples = counterexamplesAll.stream()
+                        .filter(ce -> ce.loopLength == 0)
+                        .collect(Collectors.toList());
                 if (!counterexamples.stream().allMatch(Counterexample::isEmpty)) {
                     System.out.println();
                     int added = 0;
                     for (Counterexample ce : counterexamples) {
                         if (ce.isEmpty()) {
                             continue;
-                        }
-                        if (ce.loopLength > 0) {
-                            throw new RuntimeException("Looping counterexample!");
                         }
                         added++;
                         negsc.add(ce.events());

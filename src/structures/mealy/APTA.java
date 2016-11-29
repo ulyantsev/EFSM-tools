@@ -60,33 +60,21 @@ public class APTA {
                 nodeTypes.put(index, prevType);
             }
         }
-
-        @Override
-        public String toString() {
-            return "NodeTypesPut{" + "index=" + index + ", type=" + type + ", prevType=" + prevType + '}';
-        }
     }
 
     private class NodePut implements Operation {
         final int from;
         final String event;
         final int to;
-        final boolean present;
         final Integer prevNode;
-        final boolean presentRev;
         final Integer prevRevNode;
 
         public NodePut(int from, String event, int to) {
             this.from = from;
             this.event = event;
             this.to = to;
-
-            present = edges.get(from).containsKey(event);
             prevNode = edges.get(from).get(event);
-
-            presentRev = revEdges.get(to).containsKey(event);
             prevRevNode = revEdges.get(to).get(event);
-
             apply();
         }
 
@@ -98,22 +86,16 @@ public class APTA {
 
         @Override
         public void revert() {
-            if (!present) {
+            if (prevNode == null) {
                 edges.get(from).remove(event);
             } else {
                 edges.get(from).put(event, prevNode);
             }
-            if (!presentRev) {
+            if (prevRevNode == null) {
                 revEdges.get(to).remove(event);
             } else {
                 revEdges.get(to).put(event, prevRevNode);
             }
-        }
-
-        @Override
-        public String toString() {
-            return "NodePut{" + "from=" + from + ", event='" + event + '\'' + ", to=" + to +
-                    ", prevNode=" + prevNode + '}';
         }
     }
 
@@ -170,7 +152,7 @@ public class APTA {
         final Set<Integer> visited = new LinkedHashSet<>();
         queue.add(0);
         while (!queue.isEmpty()) {
-            int node = queue.removeFirst();
+            final int node = queue.removeFirst();
             visited.add(node);
             edges.get(node).values().stream().filter(child -> !visited.contains(child)).forEach(queue::addLast);
         }

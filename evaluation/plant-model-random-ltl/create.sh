@@ -2,27 +2,28 @@
 
 events=5
 actions=5
-minstates=35
+minstates=10
 maxstates=35
+step=5
 instances=50
 
 echo "Generating plants and scenarios..."
 mkdir -p plants
-for ((size = $minstates; size <= $maxstates; size++)); do
-    for ((instance = 50; instance < $instances; instance++)); do
+for ((size = $minstates; size <= $maxstates; size += $step)); do
+    for ((instance = 0; instance < $instances; instance++)); do
         name="plants/plant-$size-$instance"
         echo $name : creating FSM
-        java -jar ../../jars/plant-generator.jar -an $actions -mina 1 -maxa 1 -en $events -ip 25 -o "$name.dot" -s $size -mint 1 -maxt 2
+        #java -jar ../../jars/plant-generator.jar -an $actions -mina 1 -maxa 1 -en $events -ip 25 -o "$name.dot" -s $size -mint 1 -maxt 2 --ensureReachability
         echo $name : creating scenarios
-        java -jar ../../jars/plant-scenario-generator.jar -a "$name.dot" -cnt $size -minl $size -maxl $size -o "$name.sc"
+        #java -jar ../../jars/plant-scenario-generator.jar -a "$name.dot" -cnt $size -minl $size -maxl $size -o "$name.sc"
     done
 done
 
 #exit
 
 echo "Generating LTL properties..."
-for ((size = $minstates; size <= $maxstates; size++)); do
-    for ((instance = 50; instance < $instances; instance++)); do
+for ((size = $minstates; size <= $maxstates; size += $step)); do
+    for ((instance = 0; instance < $instances; instance++)); do
         name="plants/plant-$size-$instance"
         ltl="$name.ltl"
         echo $name : creating formulae

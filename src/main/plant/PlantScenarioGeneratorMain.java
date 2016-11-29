@@ -4,21 +4,20 @@ package main.plant;
  * (c) Igor Buzhinsky
  */
 
+import bool.MyBooleanExpression;
+import meta.Author;
+import meta.MainBase;
+import org.kohsuke.args4j.Option;
+import scenario.StringActions;
+import scenario.StringScenario;
+import structures.moore.MooreTransition;
+import structures.moore.NondetMooreAutomaton;
+
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import meta.Author;
-import meta.MainBase;
-import org.kohsuke.args4j.Option;
-
-import scenario.StringActions;
-import scenario.StringScenario;
-import structures.moore.MooreTransition;
-import structures.moore.NondetMooreAutomaton;
-import bool.MyBooleanExpression;
 
 public class PlantScenarioGeneratorMain extends MainBase {
     @Option(name = "--automaton", aliases = { "-a" }, usage = "plant model", metaVar = "<fp>", required = true)
@@ -47,6 +46,11 @@ public class PlantScenarioGeneratorMain extends MainBase {
     protected void launcher() throws FileNotFoundException {
         initializeRandom(randseed);
         final NondetMooreAutomaton automaton = NondetMooreAutomaton.readGV(automatonFilepath);
+        final int reachable = automaton.reachableStates().size();
+        if (reachable < automaton.states().size()) {
+            System.err.println("Warning: only " + reachable + " out of " + automaton.states().size() +
+                " states are reachable in the automaton!");
+        }
         final List<StringScenario> scenarios = new ArrayList<>();
         
         for (int i = 0; i < scenarioNumber; i++) {

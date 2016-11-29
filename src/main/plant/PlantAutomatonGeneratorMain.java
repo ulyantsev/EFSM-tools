@@ -4,19 +4,15 @@ package main.plant;
  * (c) Igor Buzhinsky
  */
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
-
 import meta.Author;
 import meta.MainBase;
 import org.kohsuke.args4j.Option;
-
+import org.kohsuke.args4j.spi.BooleanOptionHandler;
 import scenario.StringActions;
 import structures.moore.NondetMooreAutomaton;
+
+import java.io.IOException;
+import java.util.*;
 
 public class PlantAutomatonGeneratorMain extends MainBase {
     @Option(name = "--size", aliases = { "-s" },
@@ -70,6 +66,10 @@ public class PlantAutomatonGeneratorMain extends MainBase {
             usage = "filepath to write the automaton in the GV format", metaVar = "<filepath>")
     private String filepath;
 
+    @Option(name = "--ensureReachability", handler = BooleanOptionHandler.class,
+            usage = "ensure that all states are reachable")
+    private boolean ensureReachability;
+
     public static void main(String[] args) {
         new PlantAutomatonGeneratorMain().run(args, Author.IB, "Random plant model generator");
     }
@@ -77,6 +77,7 @@ public class PlantAutomatonGeneratorMain extends MainBase {
     @Override
     protected void launcher() throws IOException {
         initializeRandom(randseed);
+
         final List<Boolean> isStart = new ArrayList<>();
         final List<StringActions> stringActions = new ArrayList<>();
         final List<String> eventnames = eventNames(eventNames, eventNumber);
@@ -99,22 +100,25 @@ public class PlantAutomatonGeneratorMain extends MainBase {
             isStart.set(0, true);
         }
 
-        final NondetMooreAutomaton automaton = new NondetMooreAutomaton(size, stringActions, isStart);
-        for (int i = 0; i < size; i++) {
-            for (int j = 0; j < eventNumber; j++) {
-                final String event = events.get(j);
-                final Set<Integer> present = new TreeSet<>();
-                final int transitions = minTrans + random().nextInt(maxTrans - minTrans + 1);
-                for (int k = 0; k < transitions; k++) {
-                    int dst;
-                    do {
-                        dst = random().nextInt(size);
-                    } while (present.contains(dst));
-                    automaton.state(i).addTransition(event, automaton.state(dst));
-                    present.add(dst);
+        NondetMooreAutomaton automaton;
+        do {
+            automaton = new NondetMooreAutomaton(size, stringActions, isStart);
+            for (int i = 0; i < size; i++) {
+                for (int j = 0; j < eventNumber; j++) {
+                    final String event = events.get(j);
+                    final Set<Integer> present = new TreeSet<>();
+                    final int transitions = minTrans + random().nextInt(maxTrans - minTrans + 1);
+                    for (int k = 0; k < transitions; k++) {
+                        int dst;
+                        do {
+                            dst = random().nextInt(size);
+                        } while (present.contains(dst));
+                        automaton.state(i).addTransition(event, automaton.state(dst));
+                        present.add(dst);
+                    }
                 }
             }
-        }
+        } while (ensureReachability && automaton.reachableStates().size() != automaton.states().size());
         
         if (filepath != null) {
             saveToFile(automaton, filepath);
