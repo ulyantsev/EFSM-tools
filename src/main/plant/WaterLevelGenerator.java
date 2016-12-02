@@ -4,17 +4,13 @@ package main.plant;
  * (c) Igor Buzhinsky
  */
 
+import scenario.StringActions;
+import structures.moore.NondetMooreAutomaton;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Random;
-import java.util.Scanner;
-
-import scenario.StringActions;
-import structures.moore.NondetMooreAutomaton;
+import java.util.*;
 
 public class WaterLevelGenerator {
     private static StringActions toStringActions(String action) {
@@ -63,7 +59,7 @@ public class WaterLevelGenerator {
                         List<String> scEvents;
                         List<String> scActions;
                         int currentState;
-                        
+
                         // up & down trace
                         scEvents = new ArrayList<>();
                         scActions = new ArrayList<>();

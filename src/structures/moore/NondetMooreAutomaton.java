@@ -330,24 +330,19 @@ public class NondetMooreAutomaton {
             final List<String> options = new ArrayList<>();
             final Map<List<Integer>, Set<String>> map = new LinkedHashMap<>();
             for (String event : events) {
-                final List<Integer> destinations = new ArrayList<>();
-                for (MooreTransition t : states.get(i).transitions()) {
-                    if (("input_" + t.event()).equals(event)) {
-                        destinations.add(t.dst().number());
-                    }
-                }
+                final List<Integer> destinations = states.get(i).transitions().stream()
+                        .filter(t -> ("input_" + t.event()).equals(event))
+                        .map(t -> t.dst().number()).collect(Collectors.toList());
                 Collections.sort(destinations);
                 Set<String> correspondingEvents = map.get(destinations);
                 if (correspondingEvents == null) {
                     correspondingEvents = new TreeSet<>();
                     map.put(destinations, correspondingEvents);
                 }
-                correspondingEvents.add("next(" + event + ")");
+                correspondingEvents.add(event);
             }
-            final Set<Integer> allSuccStates = new TreeSet<>();
-            for (MooreTransition t : states.get(i).transitions()) {
-                allSuccStates.add(t.dst().number());
-            }
+            final Set<Integer> allSuccStates = states.get(i).transitions().stream()
+                    .map(t -> t.dst().number()).collect(Collectors.toCollection(TreeSet::new));
             {
                 // if the input is unknown, then the choice for the next state is wide
                 final List<Integer> allSuccStatesList = new ArrayList<>(allSuccStates);
@@ -356,7 +351,7 @@ public class NondetMooreAutomaton {
                     correspondingEvents = new TreeSet<>();
                     map.put(allSuccStatesList, correspondingEvents);
                 }
-                correspondingEvents.add("!next(known_input)");
+                correspondingEvents.add("!known_input");
             }
             for (Map.Entry<List<Integer>, Set<String>> entry : map.entrySet()) {
                 final List<Integer> destinations = entry.getKey();
@@ -374,8 +369,13 @@ public class NondetMooreAutomaton {
         // marking that there was a transition unsupported by traces
         sb.append("ASSIGN\n");
         sb.append("    init(unsupported) := FALSE;\n");
+        sb.append("    next(unsupported) := unsupported | next(current_unsupported);\n");
+        sb.append("    init(loop_executed) := FALSE;\n");
+        sb.append("    next(loop_executed) := state = next(state);\n");
+        sb.append("DEFINE\n");
+        sb.append("    known_input := " + String.join(" | ", events) + ";\n");
         final List<String> unsupported = new ArrayList<>();
-        unsupported.add("unsupported | !next(known_input)");
+        unsupported.add("!known_input");
         for (String e : unmodifiedEvents) {
             final Set<Integer> sourceStates = new TreeSet<>();
             for (int i = 0; i < stateCount(); i++) {
@@ -390,15 +390,10 @@ public class NondetMooreAutomaton {
                 unsupported.add("input_" + e + " & state in "
                         + TraceModelGenerator.expressWithIntervals(sourceStates));
                 generatedStateSets.add(new ArrayList<>(sourceStates));
-            }   
+            }
         }
-        
-        sb.append("    next(unsupported) := " + String.join("\n        | ", unsupported) + ";\n");
-        sb.append("    init(loop_executed) := FALSE;\n");
-        sb.append("    next(loop_executed) := state = next(state);\n");
-        sb.append("DEFINE\n");
-        sb.append("    known_input := " + String.join(" | ", events) + ";\n");
 
+        sb.append("    current_unsupported := " + String.join("\n        | ", unsupported) + ";\n");
         for (String action : actions) {
             final List<Integer> properStates = new ArrayList<>();
             for (int i = 0; i < stateCount(); i++) {
