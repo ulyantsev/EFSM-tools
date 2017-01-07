@@ -70,6 +70,10 @@ public class AprosBuilderMain extends MainBase {
             usage = "disable CURRENT_NEXT_3D constraints")
     private boolean disableCurNext3D;
 
+    @Option(name = "--allowCurrentNextCrossOutputs", handler = BooleanOptionHandler.class,
+            usage = "enable current-next dependencies between different outputs")
+    private boolean allowCurrentNextCrossOutputs;
+
     public static void main(String[] args) {
         new AprosBuilderMain().run(args, Author.IB, "Toolset for NuSMV model generation from Apros traces");
     }
@@ -85,7 +89,7 @@ public class AprosBuilderMain extends MainBase {
                 ConstraintExtractor.run(conf, directory, datasetFilename);
             } else if (Objects.equals(type, "constraint-based-new")) {
                 ConstraintExtractorNew.run(conf, directory, datasetFilename, true, !disableCur2D, !disableCur3D,
-                        !disableCurNext2D, !disableCurNext3D);
+                        !disableCurNext2D, !disableCurNext3D, allowCurrentNextCrossOutputs);
             } else if (Objects.equals(type, "explicit-state")) {
                 CompositionalBuilder.run(Arrays.asList(conf), directory, datasetFilename, false, traceIncludeEach);
             } else if (Objects.equals(type, "sat-based")) {
