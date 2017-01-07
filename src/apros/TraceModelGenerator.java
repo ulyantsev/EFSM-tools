@@ -9,7 +9,6 @@ import org.apache.commons.lang3.tuple.Pair;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.*;
 
 public class TraceModelGenerator {
@@ -39,7 +38,7 @@ public class TraceModelGenerator {
     private static void writeTraceModel(Configuration conf, Dataset ds, int maxLength, int indexFrom, int indexTo,
                                         String filename) throws FileNotFoundException {
         final StringBuilder sb = new StringBuilder();
-        sb.append(ConstraintExtractor.plantCaption(conf));
+        sb.append(ConstraintExtractorNew.plantCaption(conf));
         sb.append("    step: 0.." + (maxLength - 1) + ";\n");
         sb.append("    unsupported: boolean;\n");
         sb.append("FROZENVAR\n    trace: " + indexFrom + ".." + (indexTo - 1) + ";\n");
@@ -90,7 +89,7 @@ public class TraceModelGenerator {
         sb.append("DEFINE\n");
         sb.append("    loop_executed := unsupported;\n");
 
-        sb.append(ConstraintExtractor.plantConversions(conf));
+        sb.append(ConstraintExtractorNew.plantConversions(conf));
 
         Utils.writeToFile(filename, sb.toString());
     }

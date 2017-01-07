@@ -4,17 +4,9 @@ package apros;
  * (c) Igor Buzhinsky
  */
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Scanner;
+import java.io.*;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class Dataset implements Serializable {
     private final Map<String, Integer> paramIndices = new HashMap<>();
@@ -29,6 +21,25 @@ public class Dataset implements Serializable {
         } catch (ClassNotFoundException e) {
             throw new RuntimeException();
         }
+    }
+
+    public Map<Parameter, int[][]> toParamIndices(Collection<Parameter> ps) {
+        final Map<Parameter, int[][]> res = new HashMap<>();
+        for (Parameter p : ps) {
+            final List<List<Integer>> traces = new ArrayList<>();
+            for (List<double[]> trace : values) {
+                traces.add(trace.stream().map(line -> p.traceNameIndex(get(line, p))).collect(Collectors.toList()));
+            }
+            final int[][] tracesM = new int[traces.size()][];
+            for (int i = 0; i < tracesM.length; i++) {
+                tracesM[i] = new int[traces.get(i).size()];
+                for (int j = 0; j < tracesM[i].length; j++) {
+                    tracesM[i][j] = traces.get(i).get(j);
+                }
+            }
+            res.put(p, tracesM);
+        }
+        return res;
     }
 
     public double get(double[] values, Parameter p) {

@@ -35,8 +35,7 @@ public class ConstraintExtractor {
         for (Parameter p : conf.outputParameters) {
             sb.append("    CONT_" + p.traceName() + " := case\n");
             for (int i = 0; i < p.valueCount(); i++) {
-                sb.append("        output_" + p.traceName() + " = " + i + ": "
-                        + p.nusmvInterval(i) + ";\n");
+                sb.append("        output_" + p.traceName() + " = " + i + ": " + p.nusmvInterval(i) + ";\n");
             }
             sb.append("    esac;\n");
         }
@@ -55,11 +54,11 @@ public class ConstraintExtractor {
                 return "TRUE";
             }
         }
-        return (next ? "next(" : "") + "output_" + p.traceName()
-                + (next ? ")" : "") + " in " + range;
+        return (next ? "next(" : "") + "output_" + p.traceName() + (next ? ")" : "") + " in " + range;
     }
 
-    private static void add1DConstraints(Configuration conf, List<String> initConstraints, List<String> transConstraints, Dataset ds) {
+    private static void add1DConstraints(Configuration conf, List<String> initConstraints,
+                                         List<String> transConstraints, Dataset ds) {
         for (Parameter p : conf.outputParameters) {
             final Set<Integer> indices = new TreeSet<>();
             for (List<double[]> trace : ds.values) {

@@ -8,6 +8,8 @@ import apros.*;
 import meta.Author;
 import meta.MainBase;
 import org.kohsuke.args4j.Option;
+import org.kohsuke.args4j.spi.BooleanOptionHandler;
+
 import java.io.IOException;
 import java.util.*;
 
@@ -52,6 +54,22 @@ public class AprosBuilderMain extends MainBase {
             metaVar = "<path>")
     private String directory = "";
 
+    @Option(name = "--disableCur2D", handler = BooleanOptionHandler.class,
+            usage = "disable CURRENT_2D constraints")
+    private boolean disableCur2D;
+
+    @Option(name = "--disableCur3D", handler = BooleanOptionHandler.class,
+            usage = "disable CURRENT_3D constraints")
+    private boolean disableCur3D;
+
+    @Option(name = "--disableCurNext2D", handler = BooleanOptionHandler.class,
+            usage = "disable CURRENT_NEXT_2D constraints")
+    private boolean disableCurNext2D;
+
+    @Option(name = "--disableCurNext3D", handler = BooleanOptionHandler.class,
+            usage = "disable CURRENT_NEXT_3D constraints")
+    private boolean disableCurNext3D;
+
     public static void main(String[] args) {
         new AprosBuilderMain().run(args, Author.IB, "Toolset for NuSMV model generation from Apros traces");
     }
@@ -65,6 +83,9 @@ public class AprosBuilderMain extends MainBase {
             final Configuration conf = Configuration.load(Utils.combinePaths(directory, confFilename));
             if (Objects.equals(type, "constraint-based")) {
                 ConstraintExtractor.run(conf, directory, datasetFilename);
+            } else if (Objects.equals(type, "constraint-based-new")) {
+                ConstraintExtractorNew.run(conf, directory, datasetFilename, true, !disableCur2D, !disableCur3D,
+                        !disableCurNext2D, !disableCurNext3D);
             } else if (Objects.equals(type, "explicit-state")) {
                 CompositionalBuilder.run(Arrays.asList(conf), directory, datasetFilename, false, traceIncludeEach);
             } else if (Objects.equals(type, "sat-based")) {
