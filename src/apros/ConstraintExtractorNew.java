@@ -163,17 +163,17 @@ public class ConstraintExtractorNew {
 
     private static void currentNext2d(Configuration conf, Collection<String> transConstraints,
                                       Map<Parameter, int[][]> paramIndices,
-                                      boolean allowCurrentNextCrossOutputs) {
+                                      boolean disableCurNextOutputs) {
         final Set<Parameter> inputParameters = new LinkedHashSet<>(conf.inputParameters);
         final Set<Parameter> outputParameters = new LinkedHashSet<>(conf.outputParameters);
         final Set<Parameter> allParameters = new LinkedHashSet<>(conf.inputParameters);
         allParameters.addAll(conf.outputParameters);
         for (Parameter pCurrent : allParameters) {
+            if (disableCurNextOutputs && outputParameters.contains(pCurrent)) {
+                continue;
+            }
             final int[][] tracesCurrent = paramIndices.get(pCurrent);
             for (Parameter pNext : outputParameters) {
-                if (!allowCurrentNextCrossOutputs && outputParameters.contains(pCurrent) && pCurrent != pNext) {
-                    continue;
-                }
                 final int[][] tracesNext = paramIndices.get(pNext);
                 final Set<Integer>[] indexPairs = new Set[pCurrent.valueCount()];
                 for (int index1 = 0; index1 < pCurrent.valueCount(); index1++) {
@@ -202,25 +202,25 @@ public class ConstraintExtractorNew {
 
     private static void currentNext3d(Configuration conf, Collection<String> transConstraints,
                                       Map<Parameter, int[][]> paramIndices,
-                                      boolean allowCurrentNextCrossOutputs) {
+                                      boolean disableCurNextOutputs) {
         final Set<Parameter> inputParameters = new LinkedHashSet<>(conf.inputParameters);
         final Set<Parameter> outputParameters = new LinkedHashSet<>(conf.outputParameters);
         final Set<Parameter> allParameters = new LinkedHashSet<>(conf.inputParameters);
         allParameters.addAll(conf.outputParameters);
         for (Parameter pCurrent1 : allParameters) {
+            if (disableCurNextOutputs && outputParameters.contains(pCurrent1)) {
+                continue;
+            }
             final int[][] tracesCurrent1 = paramIndices.get(pCurrent1);
             for (Parameter pCurrent2 : allParameters) {
                 if (pCurrent1 == pCurrent2) {
                     continue;
                 }
+                if (disableCurNextOutputs && outputParameters.contains(pCurrent2)) {
+                    continue;
+                }
                 final int[][] tracesCurrent2 = paramIndices.get(pCurrent2);
                 for (Parameter pNext : outputParameters) {
-                    if (!allowCurrentNextCrossOutputs && outputParameters.contains(pCurrent1) && pCurrent1 != pNext) {
-                        continue;
-                    }
-                    if (!allowCurrentNextCrossOutputs && outputParameters.contains(pCurrent2) && pCurrent2 != pNext) {
-                        continue;
-                    }
                     final int[][] tracesNext = paramIndices.get(pNext);
                     final Set<Integer>[][] indexTuples = new Set[pCurrent1.valueCount()][pCurrent2.valueCount()];
                     for (int index1 = 0; index1 < pCurrent1.valueCount(); index1++) {
@@ -294,7 +294,7 @@ public class ConstraintExtractorNew {
 
     public static void run(Configuration conf, String directory, String datasetFilename, boolean current1D,
                            boolean current2D, boolean current3D, boolean currentNext2D, boolean currentNext3D,
-                           boolean allowCurrentNextCrossOutputs)
+                           boolean disableCurNextOutputs)
             throws IOException {
         CURRENT_1D = current1D;
         CURRENT_2D = current2D;
@@ -339,14 +339,14 @@ public class ConstraintExtractorNew {
         // input combinations require non-intersecting actions
         if (CURRENT_NEXT_2D) {
             System.out.print("Constraints CURRENT_NEXT_2D...");
-            currentNext2d(conf, transConstraints, paramIndices, allowCurrentNextCrossOutputs);
+            currentNext2d(conf, transConstraints, paramIndices, disableCurNextOutputs);
             System.out.println(" done");
         }
 
         // 4. 3-dimensional constraints "(input or output) pair -> next output"
         if (CURRENT_NEXT_3D) {
             System.out.print("Constraints CURRENT_NEXT_3D...");
-            currentNext3d(conf, transConstraints, paramIndices, allowCurrentNextCrossOutputs);
+            currentNext3d(conf, transConstraints, paramIndices, disableCurNextOutputs);
             System.out.println(" done");
         }
 
