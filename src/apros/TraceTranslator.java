@@ -38,7 +38,7 @@ public class TraceTranslator {
     private final static String OUTPUT_ACTIONSPEC_FILENAME = "apros.actionspec";
     private final static String OUTPUT_LTL_FILENAME = "apros.ltl";
 
-    private static void allEventCombinations(char[] arr, int index, Set<String> result, List<Parameter> parameters) {
+    public static void allEventCombinations(char[] arr, int index, Set<String> result, List<Parameter> parameters) {
         if (index == arr.length) {
             result.add(String.valueOf(arr));
         } else {
@@ -51,7 +51,8 @@ public class TraceTranslator {
     }
 
     private static void printOutputTraces(Configuration conf, String directory, Set<String> allEvents,
-                Set<List<String>> allActionCombinations, Dataset ds, boolean satBased, int traceIncludeEach) throws FileNotFoundException {
+                Set<List<String>> allActionCombinations, Dataset ds, boolean satBased, int traceIncludeEach,
+                double traceFraction) throws FileNotFoundException {
         // coverage
         final Set<Pair<String, Integer>> inputCovered = new HashSet<>();
         final Set<Pair<String, Integer>> outputCovered = new HashSet<>();
@@ -69,6 +70,13 @@ public class TraceTranslator {
         for (Parameter p : conf.outputParameters) {
             smoothnessLevels.put(p, 1);
         }
+
+        // trace usage mask
+        Boolean[] use = new Boolean[ds.values.size()];
+        int max = (int) Math.round(use.length * traceFraction);
+        Arrays.fill(use, 0, max, true);
+        Arrays.fill(use, max, use.length, false);
+        Collections.shuffle(Arrays.asList(use));
 
         int addedTraces = 0;
         try (PrintWriter pw = new PrintWriter(new File(Utils.combinePaths(directory, OUTPUT_TRACE_FILENAME)))) {
@@ -109,19 +117,19 @@ public class TraceTranslator {
                 }
 
                 boolean skip = i % traceIncludeEach != 0;
-                if (!skip) {
-                    allActionCombinations.addAll(actionCombinations);
-                    allEvents.addAll(events);
-                    final List<String> actions = actionCombinations.stream()
-                            .map(l -> String.join(", ", l))
-                            .collect(Collectors.toList());
-
-                    events.add(0, "");
-                    events.remove(events.size() - 1);
-                    pw.println(String.join("; ", events));
-                    pw.println(String.join("; ", actions));
-                    addedTraces++;
+                if (skip || !use[i]) {
+                    continue;
                 }
+                allActionCombinations.addAll(actionCombinations);
+                allEvents.addAll(events);
+                final List<String> actions = actionCombinations.stream()
+                        .map(l -> String.join(", ", l))
+                        .collect(Collectors.toList());
+                events.add(0, "");
+                events.remove(events.size() - 1);
+                pw.println(String.join("; ", events));
+                pw.println(String.join("; ", actions));
+                addedTraces++;
             }
         }
         System.out.println("Traces: " + addedTraces);
@@ -142,9 +150,9 @@ public class TraceTranslator {
         }
     }
 
-    public static List<String> generateScenarios(Configuration conf, String directory, Dataset ds, Set<List<String>> allActionCombinations,
-            String gvOutput, String smvOutput, boolean addActionDescriptions, boolean satBased,
-            boolean allEventCombinations, int traceIncludeEach)
+    public static List<String> generateScenarios(Configuration conf, String directory, Dataset ds,
+            Set<List<String>> allActionCombinations, String gvOutput, String smvOutput, boolean addActionDescriptions,
+            boolean satBased, boolean allEventCombinations, int traceIncludeEach, double traceFraction)
             throws FileNotFoundException {
         // traces
         final Set<String> allEvents = new TreeSet<>();
@@ -154,9 +162,9 @@ public class TraceTranslator {
             arr[0] = 'A';
             allEventCombinations(arr, 1, allEvents, conf.inputParameters);
         }
-        
 
-        printOutputTraces(conf, directory, allEvents, allActionCombinations, ds, satBased, traceIncludeEach);
+        printOutputTraces(conf, directory, allEvents, allActionCombinations, ds, satBased, traceIncludeEach,
+                traceFraction);
 
         if (satBased) {
             // actionspec

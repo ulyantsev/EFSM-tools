@@ -13,8 +13,8 @@ import java.util.stream.Collectors;
 
 public class Configuration {
     final double intervalSec;
-    final List<Parameter> outputParameters;
-    final List<Parameter> inputParameters;
+    public final List<Parameter> outputParameters;
+    public final List<Parameter> inputParameters;
     final List<String> colorRules = new ArrayList<>();
 
     public List<String> actionDescriptions() {

@@ -13,7 +13,6 @@ import structures.moore.NondetMooreAutomaton;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -381,7 +380,7 @@ public class CompositionalBuilder {
     }
 
     public static void run(List<Configuration> confs, String directory, String datasetFilename, boolean satBased,
-                           int traceIncludeEach) throws IOException {
+                           int traceIncludeEach, double traceFraction) throws IOException {
         // 1. Unification of all configuration pairs:
         System.out.println("*** UNIFICATION");
         for (int i = 0; i < confs.size(); i++) {
@@ -409,7 +408,7 @@ public class CompositionalBuilder {
 
             final List<String> params = TraceTranslator.generateScenarios(conf, directory, ds, new HashSet<>(),
                     Utils.combinePaths(directory, namePrefix + "gv"), Utils.combinePaths(directory, namePrefix + "smv"),
-                    false, satBased, ALL_EVENT_COMBINATIONS, traceIncludeEach);
+                    false, satBased, ALL_EVENT_COMBINATIONS, traceIncludeEach, traceFraction);
             System.out.println();
             final PlantBuilderMain builder = new PlantBuilderMain();
             builder.run(params.toArray(new String[params.size()]), Author.IB, "");
@@ -438,7 +437,7 @@ public class CompositionalBuilder {
             final Set<List<String>> allActionCombinations = new HashSet<>();
             TraceTranslator.generateScenarios(outputConfigurationComposition(conf1, conf2),
                     directory, ds, allActionCombinations, "", "", false, satBased,
-                    ALL_EVENT_COMBINATIONS, traceIncludeEach);
+                    ALL_EVENT_COMBINATIONS, traceIncludeEach, traceFraction);
             final Set<List<String>> allActionCombinationsSorted = new HashSet<>();
             for (List<String> actionCombination : allActionCombinations) {
                 final List<String> copy = new ArrayList<>(actionCombination);

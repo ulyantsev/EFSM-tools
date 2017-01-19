@@ -46,6 +46,10 @@ public class AprosBuilderMain extends MainBase {
             metaVar = "<k>")
     private int traceIncludeEach = 1;
 
+    @Option(name = "--traceFraction", aliases = {}, usage = "use only a randomly selected fraction of available traces",
+            metaVar = "<k>")
+    private double traceFraction = 1;
+
     @Option(name = "--timeInterval", aliases = {}, usage = "minimum time interval between trace elements (default: 1)",
             metaVar = "<double>")
     private double timeInterval = 1.0;
@@ -91,9 +95,11 @@ public class AprosBuilderMain extends MainBase {
                 ConstraintExtractorNew.run(conf, directory, datasetFilename, true, !disableCur2D, !disableCur3D,
                         !disableCurNext2D, !disableCurNext3D, disableCurNextOutputs);
             } else if (Objects.equals(type, "explicit-state")) {
-                CompositionalBuilder.run(Arrays.asList(conf), directory, datasetFilename, false, traceIncludeEach);
+                CompositionalBuilder.run(Arrays.asList(conf), directory, datasetFilename, false, traceIncludeEach,
+                        traceFraction);
             } else if (Objects.equals(type, "sat-based")) {
-                CompositionalBuilder.run(Arrays.asList(conf), directory, datasetFilename, true, traceIncludeEach);
+                CompositionalBuilder.run(Arrays.asList(conf), directory, datasetFilename, true, traceIncludeEach,
+                        traceFraction);
             } else if (Objects.equals(type, "traces")) {
                 TraceModelGenerator.run(conf, directory, datasetFilename);
             } else {

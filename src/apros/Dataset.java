@@ -10,7 +10,7 @@ import java.util.stream.Collectors;
 
 public class Dataset implements Serializable {
     private final Map<String, Integer> paramIndices = new HashMap<>();
-    final List<List<double[]>> values = new ArrayList<>();
+    public final List<List<double[]>> values = new ArrayList<>();
     final Map<String, Double> paramScales;
 
     public final static long serialVersionUID = 1L;
