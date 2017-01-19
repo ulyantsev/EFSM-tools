@@ -482,6 +482,9 @@ public class CompositionalBuilder {
                 effectiveA.loopFraction());
         System.out.printf("Fraction of unsupported transitions in the automaton: %.2f\n",
                 effectiveA.unsupportedTransitionFraction());
+        System.out.printf("Number of states: %d\n", effectiveA.states().size());
+        System.out.printf("Number of supported transitions: %d\n",
+                (int) Math.round(effectiveA.transitionNumber() * (1 - effectiveA.unsupportedTransitionFraction())));
 
         Utils.writeToFile(Utils.combinePaths(directory, namePrefix + "gv"),
                           effectiveA.toString(colorRules, Optional.of(conf)));

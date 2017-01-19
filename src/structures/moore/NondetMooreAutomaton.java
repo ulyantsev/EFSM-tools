@@ -42,6 +42,14 @@ public class NondetMooreAutomaton {
         return transitionFraction(unsupportedTransitions::contains);
     }
 
+    public double transitionNumber() {
+        int sum = 0;
+        for (MooreNode state : states) {
+            sum += state.transitions().size();
+        }
+        return sum;
+    }
+
     public double loopFraction() {
         return transitionFraction(t -> t.dst() == t.src());
     }
