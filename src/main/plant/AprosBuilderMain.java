@@ -15,7 +15,7 @@ import java.util.*;
 
 public class AprosBuilderMain extends MainBase {
     @Option(name = "--type", aliases = {"-t"},
-            usage = "model type: explicit-state, constraint-based, traces, sat-based, prepare-dataset",
+            usage = "explicit-state, constraint-based, constraint-based-new, traces, sat-based, prepare-dataset",
             metaVar = "<type>", required = true)
     private String type;
 
@@ -26,15 +26,15 @@ public class AprosBuilderMain extends MainBase {
             metaVar = "<file>")
     private String confFilename;
 
-    @Option(name = "--traces", aliases = {"-tr"}, usage = "trace file location",
+    @Option(name = "--traces", aliases = {"-tr"}, usage = "prepare-dataset: trace file location",
             metaVar = "<directory>")
     private String traceLocation;
 
-    @Option(name = "--tracePrefix", aliases = {"-tp"}, usage = "trace filename prefix",
+    @Option(name = "--tracePrefix", aliases = {"-tp"}, usage = "prepare-dataset: trace filename prefix",
             metaVar = "<prefix>")
     private String traceFilenamePrefix;
 
-    @Option(name = "--paramScales", aliases = {"-ps"}, usage = "parameter scaling file",
+    @Option(name = "--paramScales", aliases = {"-ps"}, usage = "prepare-dataset: parameter scaling file",
             metaVar = "<file>")
     private String paramScaleFilename;
 
@@ -50,7 +50,8 @@ public class AprosBuilderMain extends MainBase {
             metaVar = "<k>")
     private double traceFraction = 1;
 
-    @Option(name = "--timeInterval", aliases = {}, usage = "minimum time interval between trace elements (default: 1)",
+    @Option(name = "--timeInterval", aliases = {},
+            usage = "prepare-dataset: minimum time interval between trace elements (default: 1)",
             metaVar = "<double>")
     private double timeInterval = 1.0;
 
@@ -59,24 +60,28 @@ public class AprosBuilderMain extends MainBase {
     private String directory = "";
 
     @Option(name = "--disableCur2D", handler = BooleanOptionHandler.class,
-            usage = "disable CURRENT_2D constraints")
+            usage = "constraint-based-new: disable CURRENT_2D constraints")
     private boolean disableCur2D;
 
     @Option(name = "--disableCur3D", handler = BooleanOptionHandler.class,
-            usage = "disable CURRENT_3D constraints")
+            usage = "constraint-based-new: disable CURRENT_3D constraints")
     private boolean disableCur3D;
 
     @Option(name = "--disableCurNext2D", handler = BooleanOptionHandler.class,
-            usage = "disable CURRENT_NEXT_2D constraints")
+            usage = "constraint-based-new: disable CURRENT_NEXT_2D constraints")
     private boolean disableCurNext2D;
 
     @Option(name = "--disableCurNext3D", handler = BooleanOptionHandler.class,
-            usage = "disable CURRENT_NEXT_3D constraints")
+            usage = "constraint-based-new: disable CURRENT_NEXT_3D constraints")
     private boolean disableCurNext3D;
 
     @Option(name = "--disableCurNextOutputs", handler = BooleanOptionHandler.class,
-            usage = "diable current-next dependencies between outputs")
+            usage = "constraint-based-new: disable current-next dependencies between outputs")
     private boolean disableCurNextOutputs;
+
+    @Option(name = "--includeFirstElement", handler = BooleanOptionHandler.class,
+            usage = "prepare-dataset: do not skip the first element of each trace")
+    private boolean includeFirstElement;
 
     public static void main(String[] args) {
         new AprosBuilderMain().run(args, Author.IB, "Toolset for NuSMV model generation from Apros traces");
@@ -86,7 +91,8 @@ public class AprosBuilderMain extends MainBase {
     protected void launcher() throws IOException {
         initializeLogger(logFilePath);
         if (Objects.equals(type, "prepare-dataset")) {
-            DatasetSerializer.run(directory, traceLocation, traceFilenamePrefix, paramScaleFilename, timeInterval);
+            DatasetSerializer.run(directory, traceLocation, traceFilenamePrefix, paramScaleFilename, timeInterval,
+                    includeFirstElement);
         } else {
             final Configuration conf = Configuration.load(Utils.combinePaths(directory, confFilename));
             if (Objects.equals(type, "constraint-based")) {

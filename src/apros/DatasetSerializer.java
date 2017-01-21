@@ -10,10 +10,11 @@ import java.io.ObjectOutputStream;
 
 public class DatasetSerializer {
     public final static void run(String directory, String traceLocation, String traceFilenamePrefix,
-                                 String paramScaleFilename, double intervalSec) throws IOException {
-        final Dataset ds =
-            new Dataset(intervalSec, Utils.combinePaths(directory, traceLocation),
-                        traceFilenamePrefix, TraceTranslator.paramScales(Utils.combinePaths(directory, paramScaleFilename)));
+                                 String paramScaleFilename, double intervalSec, boolean includeFirstElement)
+                                 throws IOException {
+        final Dataset ds = new Dataset(intervalSec, Utils.combinePaths(directory, traceLocation),
+                traceFilenamePrefix,
+                TraceTranslator.paramScales(Utils.combinePaths(directory, paramScaleFilename)), includeFirstElement);
         final String outFilename = Utils.combinePaths(directory, "dataset_" + traceFilenamePrefix + ".bin");
         try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(outFilename))) {
             out.writeObject(ds);

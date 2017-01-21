@@ -57,16 +57,15 @@ public class Dataset implements Serializable {
     }
 
     public Dataset(double intervalSec, String traceLocation, String traceFilenamePrefix,
-                   Map<String, Double> paramScales) throws FileNotFoundException {
+                   Map<String, Double> paramScales, boolean includeFirstElement) throws FileNotFoundException {
         this.paramScales = paramScales;
         for (String filename : new File(traceLocation).list()) {
             if (!filename.endsWith(".txt") || !filename.startsWith(traceFilenamePrefix)) {
                 continue;
             }
-            double timestampToRecord = intervalSec;
+            double timestampToRecord = includeFirstElement? 0 : intervalSec;
 
-            try (Scanner sc = new Scanner(new File(traceLocation
-                    + "/" + filename))) {
+            try (Scanner sc = new Scanner(new File(traceLocation + "/" + filename))) {
                 final List<double[]> valueLines = new ArrayList<>();
                 values.add(valueLines);
 
