@@ -413,7 +413,7 @@ public class CompositionalBuilder {
             final PlantBuilderMain builder = new PlantBuilderMain();
             builder.run(params.toArray(new String[params.size()]), Author.IB, "");
             if (!builder.resultAutomaton().isPresent()) {
-                System.err.println("Basic plant model constuction failed; "
+                System.err.println("Basic plant model construction failed; "
                         + "is the number of states sufficient?");
                 return;
             }

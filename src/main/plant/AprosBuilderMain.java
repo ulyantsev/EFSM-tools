@@ -15,7 +15,7 @@ import java.util.*;
 
 public class AprosBuilderMain extends MainBase {
     @Option(name = "--type", aliases = {"-t"},
-            usage = "explicit-state, constraint-based, constraint-based-new, traces, sat-based, prepare-dataset",
+            usage = "explicit-state, constraint-based, constraint-based-new, traces, sat-based, prepare-dataset, trace-evaluation",
             metaVar = "<type>", required = true)
     private String type;
 
@@ -102,6 +102,9 @@ public class AprosBuilderMain extends MainBase {
                         !disableCurNext2D, !disableCurNext3D, disableCurNextOutputs);
             } else if (Objects.equals(type, "explicit-state")) {
                 CompositionalBuilder.run(Arrays.asList(conf), directory, datasetFilename, false, traceIncludeEach,
+                        traceFraction);
+            } else if (Objects.equals(type, "trace-evaluation")) {
+                TraceEvaluationBuilder.run(conf, directory, datasetFilename, false, traceIncludeEach,
                         traceFraction);
             } else if (Objects.equals(type, "sat-based")) {
                 CompositionalBuilder.run(Arrays.asList(conf), directory, datasetFilename, true, traceIncludeEach,

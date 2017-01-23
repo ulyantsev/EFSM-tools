@@ -42,7 +42,7 @@ public class NondetMooreAutomaton {
         return transitionFraction(unsupportedTransitions::contains);
     }
 
-    public double transitionNumber() {
+    public int transitionNumber() {
         int sum = 0;
         for (MooreNode state : states) {
             sum += state.transitions().size();
