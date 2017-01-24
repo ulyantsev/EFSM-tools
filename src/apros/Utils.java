@@ -5,11 +5,11 @@ import java.nio.file.Paths;
 import java.io.*;
 
 public class Utils {
-    private static final String[] emptyStringArray = new String[0];
+    private static final String[] EMPTY_STRING_ARRAY = new String[0];
 
     public static String[] splitString(String str) {
         if (str.trim().equals("")) {
-            return emptyStringArray;
+            return EMPTY_STRING_ARRAY;
         }
         String[] temp = str.split(" +");
         int start = temp[0].equals("") ? 1 : 0;

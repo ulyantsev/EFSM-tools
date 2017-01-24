@@ -15,7 +15,7 @@ import java.util.*;
 
 public class AprosBuilderMain extends MainBase {
     @Option(name = "--type", aliases = {"-t"},
-            usage = "explicit-state, constraint-based, constraint-based-new, traces, sat-based, prepare-dataset, trace-evaluation",
+            usage = "explicit-state, constraint-based, constraint-based-new, traces, sat-based, prepare-dataset, trace-evaluation, quantiles",
             metaVar = "<type>", required = true)
     private String type;
 
@@ -111,6 +111,8 @@ public class AprosBuilderMain extends MainBase {
                         traceFraction);
             } else if (Objects.equals(type, "traces")) {
                 TraceModelGenerator.run(conf, directory, datasetFilename);
+            } else if (Objects.equals(type, "quantiles")) {
+                QuantileFinder.run(conf, directory, datasetFilename);
             } else {
                 System.err.println("Invalid request type!");
                 return;

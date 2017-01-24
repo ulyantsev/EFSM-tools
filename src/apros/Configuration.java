@@ -17,6 +17,12 @@ public class Configuration {
     public final List<Parameter> inputParameters;
     final List<String> colorRules = new ArrayList<>();
 
+    public List<Parameter> parameters() {
+        final List<Parameter> l = new ArrayList<>(outputParameters);
+        l.addAll(inputParameters);
+        return l;
+    }
+
     public List<String> actionDescriptions() {
         final List<String> result = new ArrayList<>();
         for (Parameter p : outputParameters) {
