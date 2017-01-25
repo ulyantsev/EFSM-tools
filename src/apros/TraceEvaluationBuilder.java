@@ -33,8 +33,12 @@ public class TraceEvaluationBuilder {
             return;
         }
         final NondetMooreAutomaton a = builder.resultAutomaton().get();
-        System.out.printf("Number of states: %d\n", a.states().size());
-        System.out.printf("Number of supported transitions: %d\n", a.transitionNumber()
-                - a.unsupportedTransitions().size());
+        final int nStates = a.states().size();
+        final int nTrans = a.transitionNumber();
+        final int nTransUnsup = a.unsupportedTransitions().size();
+        final int nTransSup = nTrans - nTransUnsup;
+        System.out.println("Number of states: " +  nStates);
+        System.out.println("Number of supported transitions: " + nTransSup);
+        System.out.println("Fraction of supported transitions: " + (float) ((double) nTransSup / nTrans));
     }
 }
