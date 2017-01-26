@@ -162,18 +162,15 @@ public class ConstraintExtractorNew {
     }
 
     private static void currentNext2d(Configuration conf, Collection<String> transConstraints,
-                                      Map<Parameter, int[][]> paramIndices,
-                                      boolean disableCurNextOutputs) {
-        final Set<Parameter> inputParameters = new LinkedHashSet<>(conf.inputParameters);
-        final Set<Parameter> outputParameters = new LinkedHashSet<>(conf.outputParameters);
-        final Set<Parameter> allParameters = new LinkedHashSet<>(conf.inputParameters);
-        allParameters.addAll(conf.outputParameters);
-        for (Parameter pCurrent : allParameters) {
+                                      Map<Parameter, int[][]> paramIndices, boolean disableCurNextOutputs) {
+        final Set<Parameter> inputParameters = new HashSet<>(conf.inputParameters);
+        final Set<Parameter> outputParameters = new HashSet<>(conf.outputParameters);
+        for (Parameter pCurrent : conf.parameters()) {
             if (disableCurNextOutputs && outputParameters.contains(pCurrent)) {
                 continue;
             }
             final int[][] tracesCurrent = paramIndices.get(pCurrent);
-            for (Parameter pNext : outputParameters) {
+            for (Parameter pNext : conf.outputParameters) {
                 final int[][] tracesNext = paramIndices.get(pNext);
                 final Set<Integer>[] indexPairs = new Set[pCurrent.valueCount()];
                 for (int index1 = 0; index1 < pCurrent.valueCount(); index1++) {
@@ -203,24 +200,22 @@ public class ConstraintExtractorNew {
     private static void currentNext3d(Configuration conf, Collection<String> transConstraints,
                                       Map<Parameter, int[][]> paramIndices,
                                       boolean disableCurNextOutputs) {
-        final Set<Parameter> inputParameters = new LinkedHashSet<>(conf.inputParameters);
-        final Set<Parameter> outputParameters = new LinkedHashSet<>(conf.outputParameters);
-        final Set<Parameter> allParameters = new LinkedHashSet<>(conf.inputParameters);
-        allParameters.addAll(conf.outputParameters);
-        for (Parameter pCurrent1 : allParameters) {
+        final Set<Parameter> inputParameters = new HashSet<>(conf.inputParameters);
+        final Set<Parameter> outputParameters = new HashSet<>(conf.outputParameters);
+        final List<Parameter> allParameters = new ArrayList(conf.parameters());
+        for (int pi1 = 0; pi1 < allParameters.size(); pi1++) {
+            final Parameter pCurrent1 = allParameters.get(pi1);
             if (disableCurNextOutputs && outputParameters.contains(pCurrent1)) {
                 continue;
             }
             final int[][] tracesCurrent1 = paramIndices.get(pCurrent1);
-            for (Parameter pCurrent2 : allParameters) {
-                if (pCurrent1 == pCurrent2) {
-                    continue;
-                }
+            for (int pi2 = 0; pi2 < pi1; pi2++) {
+                final Parameter pCurrent2 = allParameters.get(pi2);
                 if (disableCurNextOutputs && outputParameters.contains(pCurrent2)) {
                     continue;
                 }
                 final int[][] tracesCurrent2 = paramIndices.get(pCurrent2);
-                for (Parameter pNext : outputParameters) {
+                for (Parameter pNext : conf.outputParameters) {
                     final int[][] tracesNext = paramIndices.get(pNext);
                     final Set<Integer>[][] indexTuples = new Set[pCurrent1.valueCount()][pCurrent2.valueCount()];
                     for (int index1 = 0; index1 < pCurrent1.valueCount(); index1++) {
