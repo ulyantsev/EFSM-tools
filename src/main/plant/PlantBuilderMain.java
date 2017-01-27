@@ -149,6 +149,12 @@ public class PlantBuilderMain extends MainBase {
         actionNumber = actionNames == null ? actionNumber : actionNames.split(",").length;
         varNumber = varNames == null ? varNumber : varNames.split(",").length;
         registerVariableNames(varNames, varNumber);
+        if (resultFilePath.isEmpty()) {
+            resultFilePath = null;
+        }
+        if (nusmvFilePath.isEmpty()) {
+            nusmvFilePath = null;
+        }
 
         SatSolver solver;
         try {
@@ -227,7 +233,9 @@ public class PlantBuilderMain extends MainBase {
                 }
             }
 
-            saveToFile(a.toString(colorRuleMap, Optional.empty()), resultFilePath);
+            if (resultFilePath != null) {
+                saveToFile(a.toString(colorRuleMap, Optional.empty()), resultFilePath);
+            }
 
             if (nusmvFilePath != null) {
                 saveToFile(a.toNuSMVString(events, actions,

@@ -17,14 +17,12 @@ public class TraceEvaluationBuilder {
 
     public static void run(Configuration conf, String directory, String datasetFilename, boolean satBased,
                            int traceIncludeEach, double traceFraction) throws IOException {
-        System.out.println("*** LOADING THE DATASET");
-        final Dataset ds = Dataset.load(Utils.combinePaths(directory, datasetFilename));
+        Dataset ds = Dataset.load(Utils.combinePaths(directory, datasetFilename));
         System.out.println(conf);
         System.out.println();
-        final String namePrefix = "automaton" + 0 + ".";
         final List<String> params = TraceTranslator.generateScenarios(conf, directory, ds, new HashSet<>(),
-                Utils.combinePaths(directory, namePrefix + "gv"), Utils.combinePaths(directory, namePrefix + "smv"),
-                false, satBased, ALL_EVENT_COMBINATIONS, traceIncludeEach, traceFraction);
+                "", "", false, satBased, ALL_EVENT_COMBINATIONS, traceIncludeEach, traceFraction);
+        ds = null;
         System.out.println();
         final PlantBuilderMain builder = new PlantBuilderMain();
         builder.run(params.toArray(new String[params.size()]), Author.IB, "");
@@ -32,7 +30,10 @@ public class TraceEvaluationBuilder {
             System.err.println("No automaton found.");
             return;
         }
-        final NondetMooreAutomaton a = builder.resultAutomaton().get();
+        dumpProperties(builder.resultAutomaton().get());
+    }
+
+    static void dumpProperties(NondetMooreAutomaton a) {
         final int nStates = a.states().size();
         final int nTrans = a.transitionNumber();
         final int nTransUnsup = a.unsupportedTransitions().size();

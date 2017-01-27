@@ -9,7 +9,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class ConstraintExtractorNew {
+public class SymbolicBuilder {
     static boolean CURRENT_1D;
     static boolean CURRENT_2D;
     static boolean CURRENT_3D;
@@ -299,11 +299,9 @@ public class ConstraintExtractorNew {
 
         System.out.print("Loading the dataset...");
         final Dataset ds = Dataset.load(Utils.combinePaths(directory, datasetFilename));
-        final Set<Parameter> allParameters = new LinkedHashSet<>(conf.inputParameters);
-        allParameters.addAll(conf.outputParameters);
-        final Map<Parameter, int[][]> paramIndices = ds.toParamIndices(allParameters);
         System.out.println(" done");
-
+        final Set<Parameter> allParameters = new LinkedHashSet<>(conf.parameters());
+        final Map<Parameter, int[][]> paramIndices = ds.toParamIndices(allParameters);
         final Set<String> initConstraints = new LinkedHashSet<>();
         final Set<String> transConstraints = new LinkedHashSet<>();
 
@@ -345,6 +343,6 @@ public class ConstraintExtractorNew {
             System.out.println(" done");
         }
 
-        printRes(conf, initConstraints, transConstraints, Utils.combinePaths(directory, "plant-constraints.smv"));
+        printRes(conf, initConstraints, transConstraints, Utils.combinePaths(directory, "plant-symbolic.smv"));
     }
 }

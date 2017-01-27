@@ -98,17 +98,14 @@ public class AprosBuilderMain extends MainBase {
             if (Objects.equals(type, "constraint-based")) {
                 ConstraintExtractor.run(conf, directory, datasetFilename);
             } else if (Objects.equals(type, "constraint-based-new")) {
-                ConstraintExtractorNew.run(conf, directory, datasetFilename, true, !disableCur2D, !disableCur3D,
+                SymbolicBuilder.run(conf, directory, datasetFilename, true, !disableCur2D, !disableCur3D,
                         !disableCurNext2D, !disableCurNext3D, disableCurNextOutputs);
             } else if (Objects.equals(type, "explicit-state")) {
-                CompositionalBuilder.run(Arrays.asList(conf), directory, datasetFilename, false, traceIncludeEach,
-                        traceFraction);
+                ExplicitStateBuilder.run(conf, directory, datasetFilename, false, traceIncludeEach, traceFraction);
             } else if (Objects.equals(type, "trace-evaluation")) {
-                TraceEvaluationBuilder.run(conf, directory, datasetFilename, false, traceIncludeEach,
-                        traceFraction);
+                TraceEvaluationBuilder.run(conf, directory, datasetFilename, false, traceIncludeEach, traceFraction);
             } else if (Objects.equals(type, "sat-based")) {
-                CompositionalBuilder.run(Arrays.asList(conf), directory, datasetFilename, true, traceIncludeEach,
-                        traceFraction);
+                ExplicitStateBuilder.run(conf, directory, datasetFilename, true, traceIncludeEach, traceFraction);
             } else if (Objects.equals(type, "traces")) {
                 TraceModelGenerator.run(conf, directory, datasetFilename);
             } else if (Objects.equals(type, "quantiles")) {
