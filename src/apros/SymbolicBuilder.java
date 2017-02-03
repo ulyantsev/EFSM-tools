@@ -61,6 +61,9 @@ public class SymbolicBuilder {
                                   Collection<String> transConstraints,
                                   Map<Parameter, int[][]> paramIndices) {
         for (Parameter p : conf.outputParameters) {
+            if (p instanceof IgnoredBoolParameter) {
+                continue;
+            }
             final int[][] traces = paramIndices.get(p);
             final Set<Integer> indices = new TreeSet<>();
             for (int[] trace : traces) {
@@ -77,9 +80,15 @@ public class SymbolicBuilder {
                                   Collection<String> transConstraints, Map<Parameter, int[][]> paramIndices) {
         for (int i = 0; i < conf.outputParameters.size(); i++) {
             final Parameter pi = conf.outputParameters.get(i);
+            if (pi instanceof IgnoredBoolParameter) {
+                continue;
+            }
             final int[][] tracesI = paramIndices.get(pi);
             for (int j = 0; j < i; j++) {
                 final Parameter pj = conf.outputParameters.get(j);
+                if (pj instanceof IgnoredBoolParameter) {
+                    continue;
+                }
                 final int[][] tracesJ = paramIndices.get(pj);
                 final Set<Integer>[] indexPairs = new Set[pi.valueCount()];
                 for (int u = 0; u < tracesI.length; u++) {
@@ -118,12 +127,21 @@ public class SymbolicBuilder {
                                   Collection<String> transConstraints, Map<Parameter, int[][]> paramIndices) {
         for (int i = 0; i < conf.outputParameters.size(); i++) {
             final Parameter pi = conf.outputParameters.get(i);
+            if (pi instanceof IgnoredBoolParameter) {
+                continue;
+            }
             final int[][] tracesI = paramIndices.get(pi);
             for (int j = 0; j < i; j++) {
                 final Parameter pj = conf.outputParameters.get(j);
+                if (pj instanceof IgnoredBoolParameter) {
+                    continue;
+                }
                 final int[][] tracesJ = paramIndices.get(pj);
                 for (int k = 0; k < j; k++) {
                     final Parameter pk = conf.outputParameters.get(k);
+                    if (pk instanceof IgnoredBoolParameter) {
+                        continue;
+                    }
                     final int[][] tracesK = paramIndices.get(pk);
                     final Set<Integer>[][] indexTuples = new Set[pi.valueCount()][pj.valueCount()];
                     for (int u = 0; u < tracesI.length; u++) {
@@ -166,11 +184,17 @@ public class SymbolicBuilder {
         final Set<Parameter> inputParameters = new HashSet<>(conf.inputParameters);
         final Set<Parameter> outputParameters = new HashSet<>(conf.outputParameters);
         for (Parameter pCurrent : conf.parameters()) {
+            if (pCurrent instanceof IgnoredBoolParameter) {
+                continue;
+            }
             if (disableCurNextOutputs && outputParameters.contains(pCurrent)) {
                 continue;
             }
             final int[][] tracesCurrent = paramIndices.get(pCurrent);
             for (Parameter pNext : conf.outputParameters) {
+                if (pNext instanceof IgnoredBoolParameter) {
+                    continue;
+                }
                 final int[][] tracesNext = paramIndices.get(pNext);
                 final Set<Integer>[] indexPairs = new Set[pCurrent.valueCount()];
                 for (int index1 = 0; index1 < pCurrent.valueCount(); index1++) {
@@ -205,17 +229,26 @@ public class SymbolicBuilder {
         final List<Parameter> allParameters = new ArrayList(conf.parameters());
         for (int pi1 = 0; pi1 < allParameters.size(); pi1++) {
             final Parameter pCurrent1 = allParameters.get(pi1);
+            if (pCurrent1 instanceof IgnoredBoolParameter) {
+                continue;
+            }
             if (disableCurNextOutputs && outputParameters.contains(pCurrent1)) {
                 continue;
             }
             final int[][] tracesCurrent1 = paramIndices.get(pCurrent1);
             for (int pi2 = 0; pi2 < pi1; pi2++) {
                 final Parameter pCurrent2 = allParameters.get(pi2);
+                if (pCurrent2 instanceof IgnoredBoolParameter) {
+                    continue;
+                }
                 if (disableCurNextOutputs && outputParameters.contains(pCurrent2)) {
                     continue;
                 }
                 final int[][] tracesCurrent2 = paramIndices.get(pCurrent2);
                 for (Parameter pNext : conf.outputParameters) {
+                    if (pNext instanceof IgnoredBoolParameter) {
+                        continue;
+                    }
                     final int[][] tracesNext = paramIndices.get(pNext);
                     final Set<Integer>[][] indexTuples = new Set[pCurrent1.valueCount()][pCurrent2.valueCount()];
                     for (int index1 = 0; index1 < pCurrent1.valueCount(); index1++) {

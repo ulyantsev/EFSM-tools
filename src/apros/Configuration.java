@@ -103,6 +103,8 @@ public class Configuration {
                         p = new RealParameter(aprosName, traceName, Pair.of(lowerBound, upperBound), thresholds);
                     } else if (type.equals("bool")) {
                         p = new BoolParameter(aprosName, traceName);
+                    } else if (type.equals("ignored_bool")) {
+                        p = new IgnoredBoolParameter(aprosName, traceName);
                     } else {
                         throw new RuntimeException("Invalid parameter type: " + type);
                     }
