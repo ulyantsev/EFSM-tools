@@ -7,6 +7,7 @@ package main.plant;
 import apros.*;
 import meta.Author;
 import meta.MainBase;
+import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.Option;
 import org.kohsuke.args4j.spi.BooleanOptionHandler;
 
@@ -14,8 +15,11 @@ import java.io.IOException;
 import java.util.*;
 
 public class AprosBuilderMain extends MainBase {
+    @Argument(usage = "type-specific arguments", metaVar = "args", required = false)
+    private List<String> arguments = new ArrayList<>();
+
     @Option(name = "--type", aliases = {"-t"},
-            usage = "explicit-state, constraint-based, constraint-based-new, traces, sat-based, prepare-dataset, trace-evaluation, quantiles",
+            usage = "explicit-state, constraint-based, constraint-based-new, traces, sat-based, modular, prepare-dataset, trace-evaluation, quantiles",
             metaVar = "<type>", required = true)
     private String type;
 
@@ -94,25 +98,34 @@ public class AprosBuilderMain extends MainBase {
             DatasetSerializer.run(directory, traceLocation, traceFilenamePrefix, paramScaleFilename, timeInterval,
                     includeFirstElement);
         } else {
-            final Configuration conf = Configuration.load(Utils.combinePaths(directory, confFilename));
-            if (Objects.equals(type, "constraint-based")) {
-                ConstraintExtractor.run(conf, directory, datasetFilename);
-            } else if (Objects.equals(type, "constraint-based-new")) {
-                SymbolicBuilder.run(conf, directory, datasetFilename, true, !disableCur2D, !disableCur3D,
-                        !disableCurNext2D, !disableCurNext3D, disableCurNextOutputs);
-            } else if (Objects.equals(type, "explicit-state")) {
-                ExplicitStateBuilder.run(conf, directory, datasetFilename, false, traceIncludeEach, traceFraction);
-            } else if (Objects.equals(type, "trace-evaluation")) {
-                TraceEvaluationBuilder.run(conf, directory, datasetFilename, false, traceIncludeEach, traceFraction);
-            } else if (Objects.equals(type, "sat-based")) {
-                ExplicitStateBuilder.run(conf, directory, datasetFilename, true, traceIncludeEach, traceFraction);
-            } else if (Objects.equals(type, "traces")) {
-                TraceModelGenerator.run(conf, directory, datasetFilename);
-            } else if (Objects.equals(type, "quantiles")) {
-                QuantileFinder.run(conf, directory, datasetFilename);
+            if (Objects.equals(type, "modular")) {
+                final List<Configuration> confs = new ArrayList<>();
+                for (String arg : arguments) {
+                    confs.add(Configuration.load(Utils.combinePaths(directory, arg)));
+                }
+                CompositionalBuilder.run(confs, directory, datasetFilename, false, traceIncludeEach, traceFraction,
+                        false);
             } else {
-                System.err.println("Invalid request type!");
-                return;
+                final Configuration conf = Configuration.load(Utils.combinePaths(directory, confFilename));
+                if (Objects.equals(type, "constraint-based")) {
+                    ConstraintExtractor.run(conf, directory, datasetFilename);
+                } else if (Objects.equals(type, "constraint-based-new")) {
+                    SymbolicBuilder.run(conf, directory, datasetFilename, true, !disableCur2D, !disableCur3D,
+                            !disableCurNext2D, !disableCurNext3D, disableCurNextOutputs);
+                } else if (Objects.equals(type, "explicit-state")) {
+                    ExplicitStateBuilder.run(conf, directory, datasetFilename, false, traceIncludeEach, traceFraction);
+                } else if (Objects.equals(type, "trace-evaluation")) {
+                    TraceEvaluationBuilder.run(conf, directory, datasetFilename, false, traceIncludeEach, traceFraction);
+                } else if (Objects.equals(type, "sat-based")) {
+                    ExplicitStateBuilder.run(conf, directory, datasetFilename, true, traceIncludeEach, traceFraction);
+                } else if (Objects.equals(type, "traces")) {
+                    TraceModelGenerator.run(conf, directory, datasetFilename);
+                } else if (Objects.equals(type, "quantiles")) {
+                    QuantileFinder.run(conf, directory, datasetFilename);
+                } else {
+                    System.err.println("Invalid request type!");
+                    return;
+                }
             }
         }
         logger().info("Execution time: " + executionTime());

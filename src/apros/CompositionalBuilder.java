@@ -18,22 +18,14 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 public class CompositionalBuilder {
-    // Block-based composition
-    /*final static Configuration CONF_REAC = Configuration.load(Settings.CONF_LOCATION + "reactor.conf");
-    final static Configuration CONF_PRESSURIZER = Configuration.load(Settings.CONF_LOCATION + "pressurizer.conf");
-    final static Configuration CONF_MISC = Configuration.load(Settings.CONF_LOCATION + "misc.conf");
-    final static List<Configuration> CONF_STRUCTURE =
-            Arrays.asList(CONF_PRESSURIZER, CONF_REAC, CONF_MISC);
-    // Control diagram-based composition
+    /*
     final static List<Configuration> CONF_NETWORK = Arrays.asList(
             TraceTranslator.CONF_S1,
             TraceTranslator.CONF_S2,
             TraceTranslator.CONF_S4);
-    //final static List<Configuration> CONFS = CONF_STRUCTURE;
-    final static List<Configuration> CONFS = Arrays.asList(Settings.CONF);*/
+    */
 
     final static boolean ALL_EVENT_COMBINATIONS = false;
-    final static boolean ENSURE_COMPLETENESS = true;
 
     // assuming that we have at most 10 intervals
     static boolean isProperAction(String action, String prefix) {
@@ -121,7 +113,7 @@ public class CompositionalBuilder {
     }
 
     private static NondetMooreAutomaton compose(NondetMooreAutomaton a1, NondetMooreAutomaton a2,
-            Match match, Set<List<String>> allActionCombinationsSorted) throws FileNotFoundException {
+            Match match, Set<List<String>> allActionCombinationsSorted, boolean ensureCompleteness) throws FileNotFoundException {
         final List<MooreNode> compositeStates = new ArrayList<>();
         
         final Deque<Pair<StatePair, MooreNode>> q = new ArrayDeque<>();
@@ -211,7 +203,7 @@ public class CompositionalBuilder {
                     }
                 }
             }
-            if (ENSURE_COMPLETENESS) {
+            if (ensureCompleteness) {
                 if (!allEvents.isEmpty()) {
                     System.err.println("Missing transitions: " + allEvents.size());
                 }
@@ -327,7 +319,7 @@ public class CompositionalBuilder {
     }
 
     public static void run(List<Configuration> confs, String directory, String datasetFilename, boolean satBased,
-                           int traceIncludeEach, double traceFraction) throws IOException {
+                           int traceIncludeEach, double traceFraction, boolean ensureCompleteness) throws IOException {
         // 1. Unification of all configuration pairs:
         System.out.println("*** UNIFICATION");
         for (int i = 0; i < confs.size(); i++) {
@@ -394,8 +386,7 @@ public class CompositionalBuilder {
             // Compose
             System.out.println();
             System.out.println("Composing...");
-            lastAuto = compose(lastAuto, automata.get(i), match,
-                    allActionCombinationsSorted);
+            lastAuto = compose(lastAuto, automata.get(i), match, allActionCombinationsSorted, ensureCompleteness);
             lastConf = composeConfigurations(conf1, conf2, match);
             
             ExplicitStateBuilder.dumpAutomaton(lastAuto, lastConf, directory, namePrefix, Collections.emptyMap());
