@@ -111,6 +111,12 @@ public class Configuration {
                         }
                         final double upperBound = Double.parseDouble(tokens[tokens.length - 1]);
                         p = new RealParameter(aprosName, traceName, Pair.of(lowerBound, upperBound), thresholds);
+                    } else if (type.equals("set")) {
+                        final Double[] values = new Double[tokens.length - 4];
+                        for (int i = 4; i < tokens.length; i++) {
+                            values[i - 4] = Double.parseDouble(tokens[i]);
+                        }
+                        p = new SetParameter(aprosName, traceName, values);
                     } else if (type.equals("bool")) {
                         p = new BoolParameter(aprosName, traceName);
                     } else if (type.equals("ignored_bool")) {

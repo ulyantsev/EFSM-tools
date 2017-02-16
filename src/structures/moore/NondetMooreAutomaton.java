@@ -285,6 +285,9 @@ public class NondetMooreAutomaton {
                 final Parameter param = thresholds.get(i).getRight();
                 conditions.add(param.nusmvCondition("CONT_INPUT_" + paramName, arr[i]));
             }
+            if (conditions.isEmpty()) {
+                conditions.add("TRUE");
+            }
             result.append("    " + event + " := " + String.join(" & ", conditions) + ";\n");
         } else {
             final int intervalNum = thresholds.get(index).getRight().valueCount();
