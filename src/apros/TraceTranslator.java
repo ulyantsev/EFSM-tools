@@ -88,7 +88,16 @@ public class TraceTranslator {
                     final List<String> thisActions = new ArrayList<>();
                     
                     for (Parameter p : conf.inputParameters) {
-                        final double value = ds.get(snapshot, p);
+                        final double value;
+                        if (conf.isMealyInput(p)) {
+                            // the input part of last element of the trace is not important
+                            // since it will be removed later
+                            final double[] nextSnapshot = trace.get(Math.min(j + 1, trace.size() - 1));
+                            value = ds.get(nextSnapshot, p);
+                        } else {
+                            value = ds.get(snapshot, p);
+                        }
+
                         final int index = p.traceNameIndex(value);
                         inputCovered.add(Pair.of(p.aprosName(), index));
                         event.append(index);

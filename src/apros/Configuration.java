@@ -17,6 +17,17 @@ public class Configuration {
     public final List<Parameter> inputParameters;
     final List<String> colorRules = new ArrayList<>();
 
+    // for same-state dependencies (important in modular construction)
+    private final Set<Parameter> mealyInputs = new HashSet<>();
+
+    public void markInputAsMealy(Parameter p) {
+        mealyInputs.add(p);
+    }
+
+    public boolean isMealyInput(Parameter p) {
+        return mealyInputs.contains(p);
+    }
+
     public List<Parameter> parameters() {
         final List<Parameter> l = new ArrayList<>(outputParameters);
         l.addAll(inputParameters);
@@ -65,9 +76,7 @@ public class Configuration {
         return eventThresholds;
     }
 
-    public Configuration(double intervalSec,
-            List<Parameter> outputParameters,
-            List<Parameter> inputParameters) {
+    public Configuration(double intervalSec, List<Parameter> outputParameters, List<Parameter> inputParameters) {
         this.intervalSec = intervalSec;
         this.outputParameters = outputParameters;
         this.inputParameters = inputParameters;
@@ -78,6 +87,7 @@ public class Configuration {
         final List<Parameter> outputParameters = new ArrayList<>();
         final List<Parameter> inputParameters = new ArrayList<>();
         final List<String[]> colorRules = new ArrayList<>();
+        final Set<Parameter> mealyInputs = new HashSet<>();
         try (Scanner sc = new Scanner(new File(filename))) {
             while (sc.hasNextLine()) {
                 final String line = sc.nextLine().trim();
@@ -88,7 +98,7 @@ public class Configuration {
                 final String operation = tokens[0];
                 if (operation.equals("color_rule")) {
                     colorRules.add(tokens);
-                } else if (operation.equals("in") || operation.equals("out")) {
+                } else if (operation.equals("mealy_in") || operation.equals("in") || operation.equals("out")) {
                     final String type = tokens[1];
                     final String aprosName = tokens[2];
                     final String traceName = tokens[3];
@@ -109,6 +119,9 @@ public class Configuration {
                         throw new RuntimeException("Invalid parameter type: " + type);
                     }
                     (operation.equals("out") ? outputParameters : inputParameters).add(p);
+                    if (operation.equals("mealy_in")) {
+                        mealyInputs.add(p);
+                    }
                 } else {
                     throw new RuntimeException("Invalid operation type: " + operation);
                 }
@@ -117,6 +130,7 @@ public class Configuration {
             throw new RuntimeException(e);
         }
         final Configuration c = new Configuration(intervalSec, outputParameters, inputParameters);
+        mealyInputs.forEach(c::markInputAsMealy);
         for (String[] tokens : colorRules) {
             final String traceName = tokens[1];
             final int index = Integer.parseInt(tokens[2]);
