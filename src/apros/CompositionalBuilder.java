@@ -18,14 +18,8 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 public class CompositionalBuilder {
-    /*
-    final static List<Configuration> CONF_NETWORK = Arrays.asList(
-            TraceTranslator.CONF_S1,
-            TraceTranslator.CONF_S2,
-            TraceTranslator.CONF_S4);
-    */
-
     final static boolean ALL_EVENT_COMBINATIONS = false;
+    final static boolean EXTEND_STATE_SPACE_TO_ENSURE_COMPLETENESS = false;
 
     // assuming that we have at most 10 intervals
     static boolean isProperAction(String action, String prefix) {
@@ -112,8 +106,8 @@ public class CompositionalBuilder {
         return event.toString();
     }
 
-    private static NondetMooreAutomaton compose(NondetMooreAutomaton a1, NondetMooreAutomaton a2,
-            Match match, Set<List<String>> allActionCombinationsSorted, boolean ensureCompleteness) throws FileNotFoundException {
+    private static NondetMooreAutomaton compose(NondetMooreAutomaton a1, NondetMooreAutomaton a2, Match match,
+            Set<List<String>> allActionCombinationsSorted, boolean ensureCompleteness) throws FileNotFoundException {
         final List<MooreNode> compositeStates = new ArrayList<>();
         
         final Deque<Pair<StatePair, MooreNode>> q = new ArrayDeque<>();
@@ -140,7 +134,9 @@ public class CompositionalBuilder {
                 allEventsList.add(joinEvents(t1.event(), t2.event(), match));
             }
         }
-        
+
+        final List<MooreTransition> unsupportedTransitions = new ArrayList<>();
+
         while (!q.isEmpty()) {
             final Pair<StatePair, MooreNode> retrieved = q.removeLast();
             final StatePair pair = retrieved.getLeft();
@@ -149,7 +145,7 @@ public class CompositionalBuilder {
             final Set<String> allEvents = new TreeSet<>(allEventsList);
             final Map<String, StatePair> potentialTransitions = new TreeMap<>();
 
-            final BiConsumer<StatePair, String> add = (p, event) -> {
+            final BiConsumer<StatePair, Pair<String, Boolean>> add = (p, pairEventUnsupported) -> {
                 final Set<String> actionSet = p.actionSet(match);
                 MooreNode dst = allEnqueuedOutputCombinations.get(actionSet);
                 if (dst == null) {
@@ -158,9 +154,15 @@ public class CompositionalBuilder {
                     compositeStates.add(dst);
                     allEnqueuedOutputCombinations.put(actionSet, dst);
                 }
+                final String event = pairEventUnsupported.getLeft();
+                final boolean unsupported = pairEventUnsupported.getRight();
                 
                 if (!src.allDst(event).contains(dst)) {
-                    src.addTransition(event.toString(), dst);
+                    final MooreTransition t = new MooreTransition(src, dst, event.toString());
+                    src.addTransition(t);
+                    if (unsupported) {
+                        unsupportedTransitions.add(t);
+                    }
                 }
             };
             
@@ -170,9 +172,9 @@ public class CompositionalBuilder {
                 l: for (MooreTransition t2 : pair.second.transitions()) {
                     final String e2 = t2.event();
 
-                    // **** The event must be consistent with the NEXT state
+                    // **** The event must be consistent with the NEXT state.
                     // **** If it is required to be consistent with the FIRST state,
-                    // **** then there are some semantic problems
+                    // **** then there are some semantic problems.
                     
                     // internal connection consistency
                     final String event = joinEvents(e1, e2, match);
@@ -198,7 +200,9 @@ public class CompositionalBuilder {
                     potentialTransitions.put(event, p);
                     
                     if (p.isPresentInTraces(allActionCombinationsSorted)) {
-                        add.accept(p, event);
+                        final boolean unsupported = a1.unsupportedTransitions().contains(t1)
+                                || a2.unsupportedTransitions().contains(t2);
+                        add.accept(p, Pair.of(event, unsupported));
                         allEvents.remove(event);
                     }
                 }
@@ -208,12 +212,12 @@ public class CompositionalBuilder {
                     System.err.println("Missing transitions: " + allEvents.size());
                 }
                 for (String e : allEvents) {
-                    if (potentialTransitions.containsKey(e)) {
-                        add.accept(potentialTransitions.get(e), e);
+                    if (EXTEND_STATE_SPACE_TO_ENSURE_COMPLETENESS && potentialTransitions.containsKey(e)) {
+                        add.accept(potentialTransitions.get(e), Pair.of(e, true));
                         System.err.println("Expanding state space beyond traces...");
                     } else {
-                        add.accept(pair, e);
-                        System.err.println("Adding self-loop...");
+                        add.accept(pair, Pair.of(e, true));
+                        System.err.println("Adding a self-loop...");
                     }
                 }
             }
@@ -234,7 +238,9 @@ public class CompositionalBuilder {
         final List<Boolean> isInitial = new ArrayList<>();
         isInitial.addAll(Collections.nCopies(initialStateNum, true));
         isInitial.addAll(Collections.nCopies(compositeStates.size() - initialStateNum, false));
-        return new NondetMooreAutomaton(compositeStates, isInitial);
+        final NondetMooreAutomaton a = new NondetMooreAutomaton(compositeStates, isInitial);
+        unsupportedTransitions.forEach(t -> a.unsupportedTransitions().add(t));
+        return a;
     }
 
     private static Configuration outputConfigurationComposition(Configuration c1, Configuration c2) {
@@ -356,7 +362,7 @@ public class CompositionalBuilder {
                 return;
             }
             final NondetMooreAutomaton a = builder.resultAutomaton().get();
-            ExplicitStateBuilder.dumpAutomaton(a, conf, directory, namePrefix, builder.colorRuleMap());
+            ExplicitStateBuilder.dumpAutomaton(a, conf, directory, namePrefix, builder.colorRuleMap(), false);
             automata.add(a);
             System.out.println();
         }
@@ -388,8 +394,10 @@ public class CompositionalBuilder {
             System.out.println("Composing...");
             lastAuto = compose(lastAuto, automata.get(i), match, allActionCombinationsSorted, ensureCompleteness);
             lastConf = composeConfigurations(conf1, conf2, match);
-            
-            ExplicitStateBuilder.dumpAutomaton(lastAuto, lastConf, directory, namePrefix, Collections.emptyMap());
+
+            // mark unsupported transitions
+            ExplicitStateBuilder.dumpAutomaton(lastAuto, lastConf, directory, namePrefix, Collections.emptyMap(),
+                    false);
             System.out.println(lastConf);
             System.out.println();
         }

@@ -89,13 +89,14 @@ public class ExplicitStateBuilder {
             return;
         }
         final NondetMooreAutomaton a = builder.resultAutomaton().get();
-        dumpAutomaton(a, conf, directory, namePrefix, builder.colorRuleMap());
+        dumpAutomaton(a, conf, directory, namePrefix, builder.colorRuleMap(), true);
     }
 
-    static void dumpAutomaton(NondetMooreAutomaton a, Configuration conf,
-            String directory, String namePrefix, Map<String, String> colorRules) throws FileNotFoundException {
+    static void dumpAutomaton(NondetMooreAutomaton a, Configuration conf, String directory, String namePrefix,
+                              Map<String, String> colorRules, boolean proximityCompletion)
+            throws FileNotFoundException {
         NondetMooreAutomaton effectiveA = a;
-        if (PROXIMITY_COMPLETION) {
+        if (proximityCompletion) {
             effectiveA = proximityBasedCompletion(effectiveA, conf);
         }
         /*if (EVOLUTIONARY_NUSMV_OPTIMIZATION) {

@@ -308,8 +308,8 @@ public class NondetMooreAutomaton {
                 ? conf.get().actionThresholds() : new ArrayList<>();
         final Map<String, String> actionDescriptions = conf.isPresent()
                 ? conf.get().extendedActionDescriptions() : new HashMap<>();
-        final String inputLine = String.join(", ",
-                eventThresholds.stream().map(t -> "CONT_INPUT_" + t.getKey())
+        final String inputLine = String.join(", ", eventThresholds.stream()
+                .map(t -> "CONT_INPUT_" + t.getKey())
                 .collect(Collectors.toList()));
         final StringBuilder sb = new StringBuilder();
 
@@ -330,7 +330,7 @@ public class NondetMooreAutomaton {
         sb.append("VAR\n");
         sb.append("    unsupported: boolean;\n");
         sb.append("    loop_executed: boolean;\n");
-        sb.append("    state: 0.." + (stateCount() - 1) + ";\n");       
+        sb.append("    state: 0.." + (stateCount() - 1) + ";\n");
         sb.append("INIT\n");
         sb.append("    state in " + TraceModelGenerator.expressWithIntervals(initialStates()) + "\n");
         generatedStateSets.add(initialStates());

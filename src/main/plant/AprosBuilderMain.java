@@ -109,7 +109,7 @@ public class AprosBuilderMain extends MainBase {
                         Configuration.load(Utils.combinePaths(directory, arg))
                 ).collect(Collectors.toList());
                 CompositionalBuilder.run(confs, directory, datasetFilename, satBased, traceIncludeEach, traceFraction,
-                        false);
+                        true);
             } else {
                 final Configuration conf = Configuration.load(Utils.combinePaths(directory, confFilename));
                 if (Objects.equals(type, "constraint-based")) {
