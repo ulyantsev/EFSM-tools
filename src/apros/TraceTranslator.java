@@ -69,7 +69,7 @@ public class TraceTranslator {
         }
 
         // trace usage mask
-        Boolean[] use = new Boolean[ds.values.size()];
+        final Boolean[] use = new Boolean[ds.values.size()];
         int max = (int) Math.round(use.length * traceFraction);
         Arrays.fill(use, 0, max, true);
         Arrays.fill(use, max, use.length, false);
@@ -81,6 +81,10 @@ public class TraceTranslator {
                 final List<double[]> trace = ds.values.get(i);
                 final List<String> events = new ArrayList<>();
                 final List<List<String>> actionCombinations = new ArrayList<>();
+
+                if (i % traceIncludeEach != 0 || !use[i]) {
+                    continue;
+                }
 
                 for (int j = 0; j < trace.size(); j++) {
                     final double[] snapshot = trace.get(j);
@@ -109,7 +113,7 @@ public class TraceTranslator {
                         outputCovered.add(Pair.of(p.aprosName(), index));
                         thisActions.add(p.traceName(value));
 
-                        if (satBased && j > 1) {
+                        if (satBased && j > 0) {
                             final int lastTraceIndex = p.traceNameIndex(ds.get(trace.get(j - 1), p));
                             final int smoothnessLevel = Math.abs(lastTraceIndex - index);
                             if (smoothnessLevel > smoothnessLevels.get(p)) {
@@ -122,10 +126,6 @@ public class TraceTranslator {
                     actionCombinations.add(thisActions);
                 }
 
-                boolean skip = i % traceIncludeEach != 0;
-                if (skip || !use[i]) {
-                    continue;
-                }
                 allActionCombinations.addAll(actionCombinations);
                 allEvents.addAll(events);
                 final List<String> actions = actionCombinations.stream()

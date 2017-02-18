@@ -13,13 +13,14 @@ import org.kohsuke.args4j.spi.BooleanOptionHandler;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class AprosBuilderMain extends MainBase {
     @Argument(usage = "type-specific arguments", metaVar = "args", required = false)
     private List<String> arguments = new ArrayList<>();
 
     @Option(name = "--type", aliases = {"-t"},
-            usage = "explicit-state, constraint-based, constraint-based-new, traces, sat-based, modular, prepare-dataset, trace-evaluation, quantiles",
+            usage = "explicit-state, constraint-based, constraint-based-new, traces, modular, prepare-dataset, trace-evaluation, quantiles",
             metaVar = "<type>", required = true)
     private String type;
 
@@ -87,8 +88,13 @@ public class AprosBuilderMain extends MainBase {
             usage = "prepare-dataset: do not skip the first element of each trace")
     private boolean includeFirstElement;
 
+    @Option(name = "--satBased", handler = BooleanOptionHandler.class,
+            usage = "explicit-state and modular: use SAT-based synthesis")
+    private boolean satBased;
+
     public static void main(String[] args) {
-        new AprosBuilderMain().run(args, Author.IB, "Toolset for NuSMV model generation from Apros traces");
+        new AprosBuilderMain().run(args, Author.IB,
+                "Toolset for NuSMV plant model synthesis from simulation traces in the Apros format");
     }
 
     @Override
@@ -99,11 +105,10 @@ public class AprosBuilderMain extends MainBase {
                     includeFirstElement);
         } else {
             if (Objects.equals(type, "modular")) {
-                final List<Configuration> confs = new ArrayList<>();
-                for (String arg : arguments) {
-                    confs.add(Configuration.load(Utils.combinePaths(directory, arg)));
-                }
-                CompositionalBuilder.run(confs, directory, datasetFilename, false, traceIncludeEach, traceFraction,
+                final List<Configuration> confs = arguments.stream().map(arg ->
+                        Configuration.load(Utils.combinePaths(directory, arg))
+                ).collect(Collectors.toList());
+                CompositionalBuilder.run(confs, directory, datasetFilename, satBased, traceIncludeEach, traceFraction,
                         false);
             } else {
                 final Configuration conf = Configuration.load(Utils.combinePaths(directory, confFilename));
@@ -113,11 +118,11 @@ public class AprosBuilderMain extends MainBase {
                     SymbolicBuilder.run(conf, directory, datasetFilename, true, !disableCur2D, !disableCur3D,
                             !disableCurNext2D, !disableCurNext3D, disableCurNextOutputs);
                 } else if (Objects.equals(type, "explicit-state")) {
-                    ExplicitStateBuilder.run(conf, directory, datasetFilename, false, traceIncludeEach, traceFraction);
+                    ExplicitStateBuilder.run(conf, directory, datasetFilename, satBased, traceIncludeEach,
+                            traceFraction);
                 } else if (Objects.equals(type, "trace-evaluation")) {
-                    TraceEvaluationBuilder.run(conf, directory, datasetFilename, false, traceIncludeEach, traceFraction);
-                } else if (Objects.equals(type, "sat-based")) {
-                    ExplicitStateBuilder.run(conf, directory, datasetFilename, true, traceIncludeEach, traceFraction);
+                    TraceEvaluationBuilder.run(conf, directory, datasetFilename, satBased, traceIncludeEach,
+                            traceFraction);
                 } else if (Objects.equals(type, "traces")) {
                     TraceModelGenerator.run(conf, directory, datasetFilename);
                 } else if (Objects.equals(type, "quantiles")) {
