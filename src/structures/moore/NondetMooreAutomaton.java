@@ -238,7 +238,7 @@ public class NondetMooreAutomaton {
                 initialStates().stream().map(s -> "init" + s).collect(Collectors.toList()));
         
         sb.append("    " + initNodes + " [shape=point, width=0.01, height=0.01, label=\"\", color=white];\n");
-        sb.append("    node [shape=circle];\n");
+        sb.append("    node [shape=box, style=rounded];\n");
         for (int i = 0; i < states.size(); i++) {
             final MooreNode state = states.get(i);
             String color = "";
