@@ -20,7 +20,8 @@ public class AprosBuilderMain extends MainBase {
     private List<String> arguments = new ArrayList<>();
 
     @Option(name = "--type", aliases = {"-t"},
-            usage = "explicit-state, constraint-based, constraint-based-new, traces, modular, prepare-dataset, trace-evaluation, quantiles",
+            usage = "explicit-state, constraint-based, constraint-based-new, explicit-state-completion-with-loops, "
+                    + "traces, modular, prepare-dataset, trace-evaluation, quantiles",
             metaVar = "<type>", required = true)
     private String type;
 
@@ -119,7 +120,10 @@ public class AprosBuilderMain extends MainBase {
                             !disableCurNext2D, !disableCurNext3D, disableCurNextOutputs);
                 } else if (Objects.equals(type, "explicit-state")) {
                     ExplicitStateBuilder.run(conf, directory, datasetFilename, satBased, traceIncludeEach,
-                            traceFraction);
+                            traceFraction, true);
+                } else if (Objects.equals(type, "explicit-state-completion-with-loops")) {
+                    ExplicitStateBuilder.run(conf, directory, datasetFilename, satBased, traceIncludeEach,
+                            traceFraction, false);
                 } else if (Objects.equals(type, "trace-evaluation")) {
                     TraceEvaluationBuilder.run(conf, directory, datasetFilename, satBased, traceIncludeEach,
                             traceFraction);

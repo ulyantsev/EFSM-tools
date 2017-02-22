@@ -71,7 +71,7 @@ public class ExplicitStateBuilder {
     }
 
     public static void run(Configuration conf, String directory, String datasetFilename, boolean satBased,
-                           int traceIncludeEach, double traceFraction) throws IOException {
+                           int traceIncludeEach, double traceFraction, boolean proximityCompletion) throws IOException {
         System.out.print("Loading the dataset...");
         Dataset ds = Dataset.load(Utils.combinePaths(directory, datasetFilename));
         System.out.println(" done");
@@ -89,7 +89,7 @@ public class ExplicitStateBuilder {
             return;
         }
         final NondetMooreAutomaton a = builder.resultAutomaton().get();
-        dumpAutomaton(a, conf, directory, namePrefix, builder.colorRuleMap(), true);
+        dumpAutomaton(a, conf, directory, namePrefix, builder.colorRuleMap(), proximityCompletion);
     }
 
     static void dumpAutomaton(NondetMooreAutomaton a, Configuration conf, String directory, String namePrefix,
