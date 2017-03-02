@@ -38,8 +38,7 @@ public class CompositionalBuilder {
         return Integer.parseInt(String.valueOf(actions[i].charAt(actions[i].length() - 1)));
     }
 
-    static boolean isConsistentWithInputs(MooreNode node, String outgoingEvent,
-            Match match, boolean isOutputInput) {
+    static boolean isConsistentWithInputs(MooreNode node, String outgoingEvent, Match match, boolean isOutputInput) {
         if (isOutputInput) {
             for (Pair<Parameter, Integer> pair : match.outputInputPairs) {
                 final int firstIndex = actionIntervalIndex(node.actions().getActions(),
@@ -177,26 +176,26 @@ public class CompositionalBuilder {
                     // **** then there are some semantic problems.
                     
                     // internal connection consistency
-                    final String event = joinEvents(e1, e2, match);
-                    final StatePair p = new StatePair(t1.dst(), t2.dst());
-                    
                     if (!isConsistentWithInputs(t2.dst(), e1, match, false)) {
                         continue;
                     }
                     if (!isConsistentWithInputs(t1.dst(), e2, match, true)) {
                         continue;
                     }
-                    
+
                     for (Pair<Integer, Integer> ip : match.inputPairs) {
                         if (e1.charAt(ip.getLeft() + 1) != e2.charAt(ip.getRight() + 1)) {
                             continue l;
                         }
                     }
-                    
+
+                    final StatePair p = new StatePair(t1.dst(), t2.dst());
+
                     if (!p.isConsistent(match)) {
                         continue;
                     }
 
+                    final String event = joinEvents(e1, e2, match);
                     potentialTransitions.put(event, p);
                     
                     if (p.isPresentInTraces(allActionCombinationsSorted)) {
