@@ -58,11 +58,29 @@ public class BoolParameter extends Parameter {
     }
 
     @Override
+    public String spinCondition(String name, int index) {
+        return nusmvCondition(name, index);
+    }
+
+    @Override
     public String nusmvInterval(int index) {
         if (index != 0 && index != 1) {
             throw new AssertionError();
         }
         return index == 0 ? "FALSE" : "TRUE";
+    }
+
+    @Override
+    public String spinInterval(int index) {
+        if (index != 0 && index != 1) {
+            throw new AssertionError();
+        }
+        return index == 0 ? "0..0" : "1..1";
+    }
+
+    @Override
+    public String spinType() {
+        return "bool";
     }
 
     @Override

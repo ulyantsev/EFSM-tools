@@ -297,9 +297,34 @@ public class NondetMooreAutomaton {
             }
         }
     }
+
+    private static void spinEventDescriptions(int[] arr, int index, StringBuilder result,
+                                               List<Pair<String, Parameter>> thresholds, List<String> events) {
+        if (index == arr.length) {
+            final String event = "input_A" + Arrays.toString(arr).replaceAll("[,\\[\\] ]", "");
+            if (!events.contains(event)) {
+                return;
+            }
+            final List<String> conditions = new ArrayList<>();
+            for (int i = 0; i < arr.length; i++) {
+                final String paramName = thresholds.get(i).getLeft();
+                final Parameter param = thresholds.get(i).getRight();
+                conditions.add(param.spinCondition("PLANT_INPUT_" + paramName, arr[i]));
+            }
+            if (conditions.isEmpty()) {
+                conditions.add("true");
+            }
+            result.append("        bool " + event + " = " + String.join(" && ", conditions) + ";\n");
+        } else {
+            final int intervalNum = thresholds.get(index).getRight().valueCount();
+            for (int i = 0; i < intervalNum; i++) {
+                arr[index] = i;
+                spinEventDescriptions(arr, index + 1, result, thresholds, events);
+            }
+        }
+    }
     
-    public String toNuSMVString(List<String> events, List<String> actions, List<List<Integer>> generatedStateSets,
-                                Optional<Configuration> conf) {
+    public String toNuSMVString(List<String> events, List<String> actions, Optional<Configuration> conf) {
         final List<String> unmodifiedEvents = events;
         events = events.stream().map(s -> "input_" + s).collect(Collectors.toList());
         final List<Pair<String, Parameter>> eventThresholds = conf.isPresent()
@@ -309,8 +334,7 @@ public class NondetMooreAutomaton {
         final Map<String, String> actionDescriptions = conf.isPresent()
                 ? conf.get().extendedActionDescriptions() : new HashMap<>();
         final String inputLine = String.join(", ", eventThresholds.stream()
-                .map(t -> "CONT_INPUT_" + t.getKey())
-                .collect(Collectors.toList()));
+                .map(t -> "CONT_INPUT_" + t.getKey()).collect(Collectors.toList()));
         final StringBuilder sb = new StringBuilder();
 
         if (false) {
@@ -333,7 +357,6 @@ public class NondetMooreAutomaton {
         sb.append("    state: 0.." + (stateCount() - 1) + ";\n");
         sb.append("INIT\n");
         sb.append("    state in " + TraceModelGenerator.expressWithIntervals(initialStates()) + "\n");
-        generatedStateSets.add(initialStates());
         sb.append("TRANS\n");
         
         final List<String> stateConstraints = new ArrayList<>();
@@ -370,7 +393,6 @@ public class NondetMooreAutomaton {
                 
                 options.add("(" + String.join(" | ", correspondingEvents) + ") & next(state) in "
                         + TraceModelGenerator.expressWithIntervals(destinations));
-                generatedStateSets.add(destinations);
             }
 
             stateConstraints.add("state = " + i + " -> (\n      " + String.join("\n    | ", options));
@@ -400,7 +422,6 @@ public class NondetMooreAutomaton {
             if (!sourceStates.isEmpty()) {
                 unsupported.add("input_" + e + " & state in "
                         + TraceModelGenerator.expressWithIntervals(sourceStates));
-                generatedStateSets.add(new ArrayList<>(sourceStates));
             }
         }
 
@@ -415,7 +436,6 @@ public class NondetMooreAutomaton {
             final String condition = properStates.isEmpty()
                     ? "FALSE"
                     : ("state in " + TraceModelGenerator.expressWithIntervals(properStates));
-            generatedStateSets.add(properStates);
             final String comment = actionDescriptions.containsKey(action)
                     ? (" -- " + actionDescriptions.get(action)) : "";
             sb.append("    output_" + action + " := " + condition + ";" + comment + "\n");
@@ -437,7 +457,138 @@ public class NondetMooreAutomaton {
 
         return sb.toString();
     }
-    
+
+    public String toSPINString(List<String> events, List<String> actions, Optional<Configuration> conf) {
+        if (!conf.isPresent()) {
+            throw new AssertionError();
+        }
+        final StringBuilder sb = new StringBuilder();
+        sb.append("chan c_plant = [0] of {bool};\n");
+        sb.append("chan c_controller = [0] of {bool};\n");
+        sb.append("bool dummy_var;\n");
+        sb.append("\n");
+
+        events = events.stream().map(s -> "input_" + s).collect(Collectors.toList());
+        final List<Pair<String, Parameter>> eventThresholds = conf.isPresent()
+                ? conf.get().eventThresholds() : new ArrayList<>();
+        final List<Pair<String, Parameter>> actionThresholds = conf.isPresent()
+                ? conf.get().actionThresholds() : new ArrayList<>();
+
+        for (Pair<String, Parameter> p : eventThresholds) {
+            sb.append(p.getRight().spinType() + " PLANT_INPUT_" + p.getLeft() + ";\n");
+        }
+        for (Parameter p : conf.get().outputParameters) {
+            sb.append(p.spinType() + " PLANT_OUTPUT_" + p.traceName() + ";\n");
+            sb.append(p.spinType() + " CONT_PLANT_OUTPUT_" + p.traceName() + ";\n");
+        }
+
+        sb.append("\n");
+        sb.append("proctype Plant() {\n");
+        sb.append("    int state = -1;\n");
+        sb.append("    do\n");
+        sb.append("    ::  c_plant ? dummy_var;\n");
+
+        sb.append("\n");
+        spinEventDescriptions(new int[eventThresholds.size()], 0, sb, eventThresholds, events);
+        sb.append("        bool known_input = " + String.join(" || ", events) + ";\n");
+        sb.append("\n");
+
+        sb.append("        if\n");
+        for (int i : initialStates()) {
+            sb.append("        :: state == -1 -> state = " + i + ";\n");
+        }
+
+        for (int i = 0; i < stateCount(); i++) {
+            final Map<List<Integer>, Set<String>> map = new LinkedHashMap<>();
+            for (String event : events) {
+                final List<Integer> destinations = states.get(i).transitions().stream()
+                        .filter(t -> ("input_" + t.event()).equals(event))
+                        .map(t -> t.dst().number()).collect(Collectors.toList());
+                Collections.sort(destinations);
+                Set<String> correspondingEvents = map.get(destinations);
+                if (correspondingEvents == null) {
+                    correspondingEvents = new TreeSet<>();
+                    map.put(destinations, correspondingEvents);
+                }
+                correspondingEvents.add(event);
+            }
+            final Set<Integer> allSuccStates = states.get(i).transitions().stream()
+                    .map(t -> t.dst().number()).collect(Collectors.toCollection(TreeSet::new));
+            {
+                // if the input is unknown, then the choice for the next state is wide
+                final List<Integer> allSuccStatesList = new ArrayList<>(allSuccStates);
+                Set<String> correspondingEvents = map.get(allSuccStatesList);
+                if (correspondingEvents == null) {
+                    correspondingEvents = new TreeSet<>();
+                    map.put(allSuccStatesList, correspondingEvents);
+                }
+                correspondingEvents.add("!known_input");
+            }
+            for (Map.Entry<List<Integer>, Set<String>> entry : map.entrySet()) {
+                final List<Integer> destinations = entry.getKey();
+                final Set<String> correspondingEvents = entry.getValue();
+                for (String e : correspondingEvents) {
+                    for (int j : destinations) {
+                        sb.append("        :: state == " + i + " && " + e + " -> state = " + j + ";\n");
+                    }
+                }
+            }
+        }
+
+        sb.append("        fi\n");
+        sb.append("\n");
+
+        sb.append("        if\n");
+        for (int i = 0; i < stateCount(); i++) {
+            final List<String> properActions = new ArrayList<>();
+            for (String action : actions) {
+                if (ArrayUtils.contains(states.get(i).actions().getActions(), action)) {
+                    properActions.add("PLANT_OUTPUT_" + action.substring(0, action.length() - 1) + " = "
+                            + action.charAt(action.length() - 1));
+                }
+            }
+            sb.append("        :: state == " + i + " -> " + String.join("; ", properActions) + ";\n");
+        }
+        sb.append("        fi\n");
+        sb.append("\n");
+
+        // output conversion to continuous values
+        for (Pair<String, Parameter> entry : actionThresholds) {
+            final String paramName = entry.getKey();
+            final Parameter param = entry.getValue();
+            sb.append("        if\n");
+            for (int i = 0; i < param.valueCount(); i++) {
+                sb.append("        :: PLANT_OUTPUT_" + paramName + " == " + i + " -> select(CONT_PLANT_OUTPUT_"
+                        + paramName + " : " + param.spinInterval(i) + ");\n");
+            }
+            sb.append("        fi\n");
+            sb.append("\n");
+        }
+
+        sb.append("        c_controller ! false;\n");
+        sb.append("    od\n");
+        sb.append("}\n");
+        sb.append("\n");
+        sb.append("proctype Controller() {\n");
+        sb.append("    do\n");
+        sb.append("    ::  c_controller ? dummy_var;\n");
+        sb.append("\n");
+        sb.append("        c_plant ! false;\n");
+        sb.append("    od\n");
+        sb.append("}\n");
+        sb.append("\n");
+        sb.append("init {\n");
+        sb.append("    atomic {\n");
+        sb.append("        run Plant();\n");
+        sb.append("        run Controller();\n");
+        sb.append("        c_plant ! false;\n");
+        sb.append("    }\n");
+        sb.append("}\n");
+        sb.append("\n");
+
+        return sb.toString();
+    }
+
     public boolean compliesWith(List<StringScenario> scenarios, boolean positive, boolean markUnsupportedTransitions) {
         final Set<MooreTransition> supported = new HashSet<>();
 

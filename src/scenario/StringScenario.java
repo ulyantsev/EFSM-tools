@@ -32,7 +32,7 @@ public class StringScenario {
 
     public static List<StringScenario> loadScenarios(String filepath, boolean removeVars)
             throws ParseException, FileNotFoundException {
-        List<StringScenario> ans = new ArrayList<>();
+        final List<StringScenario> ans = new ArrayList<>();
         
         try (Scanner in = new Scanner(new File(filepath))) {
             String inp = "";
@@ -72,7 +72,7 @@ public class StringScenario {
                                         events.size() + " " + expressions.size() + " " + actions.size());
         }
 
-        this.events = events.stream().map(e -> Collections.singletonList(e)).collect(Collectors.toList());
+        this.events = events.stream().map(Collections::singletonList).collect(Collectors.toList());
         this.expressions = new ArrayList<>(expressions);
         this.actions = new ArrayList<>(actions);
     }
@@ -82,15 +82,14 @@ public class StringScenario {
     }
     
     public StringScenario(String input, String output) throws ParseException {
-        String[] events = input.split(";");
-        String[] actions = (output + " ").split(";");
+        final String[] events = input.split(";");
+        final String[] actions = (output + " ").split(";");
         if (actions.length != events.length) {
-            throw new ParseException("events length " + events.length + " != actions length " + actions.length + ": [" + input + "] / [" + output + "]", 0);
+            throw new ParseException("events length " + events.length + " != actions length " + actions.length
+                    + ": [" + input + "] / [" + output + "]", 0);
         }
-         
-        int n = actions.length;
-        
-        for (int i = 0; i < n; i++) {
+
+        for (int i = 0; i < actions.length; i++) {
             MyBooleanExpression expr;
             
             if (events[i].contains("[")) {
@@ -133,7 +132,8 @@ public class StringScenario {
     private static String eventListToString(List<String> eventList) {
         return eventList.size() == 1 ? eventList.get(0) : eventList.toString();
     }
-    
+
+    @Override
     public String toString() {
         String inp = "";
         String out = "";
@@ -146,21 +146,5 @@ public class StringScenario {
             out += actions.get(i).toString();
         }
         return inp + "\n" + out;
-    }
-    
-    // TODO
-    public String toJSON() {
-        String ans =
-            "{" + "'type': " + (isPositive ? "'positive'" : "'negative'") + ",\n" +
-            " 'scenario': [";
-        for (int pos = 0; pos < size(); pos++) {
-            if (pos > 0) {
-                ans += ",\n              ";
-            }
-            ans += "{'event': '" + events.get(pos) + "', 'guard': '" + expressions.get(pos) + "', 'actions': '" + actions.get(pos) + "'}";
-        }
-        ans += "             ]\n}\n";
-        
-        return ans;
     }
 }

@@ -93,6 +93,11 @@ public class AprosBuilderMain extends MainBase {
             usage = "explicit-state and modular: use SAT-based synthesis")
     private boolean satBased;
 
+    @Option(name = "--output", aliases = {},
+            usage = "list of comma-separated output languages (promela, nusmv), default: nusmv",
+            metaVar = "<output>")
+    private String output = "nusmv";
+
     public static void main(String[] args) {
         new AprosBuilderMain().run(args, Author.IB,
                 "Toolset for NuSMV plant model synthesis from simulation traces in the Apros format");
@@ -105,12 +110,15 @@ public class AprosBuilderMain extends MainBase {
             DatasetSerializer.run(directory, traceLocation, traceFilenamePrefix, paramScaleFilename, timeInterval,
                     includeFirstElement);
         } else {
+            final List<String> languages = Arrays.asList(output.split(","));
+            final boolean outputSmv = languages.contains("nusmv");
+            final boolean outputSpin = languages.contains("promela");
             if (Objects.equals(type, "modular")) {
                 final List<Configuration> confs = arguments.stream().map(arg ->
                         Configuration.load(Utils.combinePaths(directory, arg))
                 ).collect(Collectors.toList());
                 CompositionalBuilder.run(confs, directory, datasetFilename, satBased, traceIncludeEach, traceFraction,
-                        true);
+                        true, outputSmv, outputSpin);
             } else {
                 final Configuration conf = Configuration.load(Utils.combinePaths(directory, confFilename));
                 if (Objects.equals(type, "constraint-based")) {
@@ -120,10 +128,10 @@ public class AprosBuilderMain extends MainBase {
                             !disableCurNext2D, !disableCurNext3D, disableCurNextOutputs);
                 } else if (Objects.equals(type, "explicit-state")) {
                     ExplicitStateBuilder.run(conf, directory, datasetFilename, satBased, traceIncludeEach,
-                            traceFraction, true);
+                            traceFraction, true, outputSmv, outputSpin);
                 } else if (Objects.equals(type, "explicit-state-completion-with-loops")) {
                     ExplicitStateBuilder.run(conf, directory, datasetFilename, satBased, traceIncludeEach,
-                            traceFraction, false);
+                            traceFraction, false, outputSmv, outputSpin);
                 } else if (Objects.equals(type, "trace-evaluation")) {
                     TraceEvaluationBuilder.run(conf, directory, datasetFilename, satBased, traceIncludeEach,
                             traceFraction);

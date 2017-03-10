@@ -85,6 +85,10 @@ public abstract class Parameter {
     public abstract String nusmvInterval(int index);
     public abstract String nusmvCondition(String name, int index);
 
+    public abstract String spinType();
+    public abstract String spinInterval(int index);
+    public abstract String spinCondition(String name, int index);
+
     // assuming that this is an output parameter
     public List<String> actionspec() {
         final List<String> res = new ArrayList<>();

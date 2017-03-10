@@ -238,8 +238,7 @@ public class PlantBuilderMain extends MainBase {
             }
 
             if (nusmvFilePath != null) {
-                saveToFile(a.toNuSMVString(events, actions,
-                        new ArrayList<>(), Optional.empty()), nusmvFilePath);
+                saveToFile(a.toNuSMVString(events, actions, Optional.empty()), nusmvFilePath);
             }
 
             final Verifier usualVerifier = new Verifier(logger(), strFormulae, events, actions);

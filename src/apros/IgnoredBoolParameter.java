@@ -51,11 +51,29 @@ public class IgnoredBoolParameter extends Parameter {
     }
 
     @Override
+    public String spinCondition(String name, int index) {
+        return nusmvCondition(name, index).toLowerCase();
+    }
+
+    @Override
+    public String spinType() {
+        return "bool";
+    }
+
+    @Override
     public String nusmvInterval(int index) {
         if (index != 0) {
             throw new AssertionError();
         }
         return "{FALSE, TRUE}";
+    }
+
+    @Override
+    public String spinInterval(int index) {
+        if (index != 0) {
+            throw new AssertionError();
+        }
+        return "0..1";
     }
 
     @Override

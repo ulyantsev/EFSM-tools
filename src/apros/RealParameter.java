@@ -91,6 +91,11 @@ public class RealParameter extends Parameter {
     }
 
     @Override
+    public String spinType() {
+        return "int";
+    }
+
+    @Override
     public String nusmvCondition(String name, int index) {
         if (index == 0) {
             return name + " <= " + intervalMax(index);
@@ -98,6 +103,17 @@ public class RealParameter extends Parameter {
             return name + " >= " + intervalMin(index);
         } else {
             return name + " in " + nusmvInterval(index);
+        }
+    }
+
+    @Override
+    public String spinCondition(String name, int index) {
+        if (index == 0) {
+            return name + " <= " + intervalMax(index);
+        } else if (index == valueCount() - 1) {
+            return name + " >= " + intervalMin(index);
+        } else {
+            return "(" + name + " >= " + intervalMax(index) + " && " + name + " <= " + intervalMax(index) + ")";
         }
     }
 
@@ -113,6 +129,11 @@ public class RealParameter extends Parameter {
     
     @Override
     public String nusmvInterval(int index) {
+        return intervalMin(index) + ".." + intervalMax(index);
+    }
+
+    @Override
+    public String spinInterval(int index) {
         return intervalMin(index) + ".." + intervalMax(index);
     }
 

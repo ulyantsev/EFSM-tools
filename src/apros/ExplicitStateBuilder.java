@@ -71,7 +71,8 @@ public class ExplicitStateBuilder {
     }
 
     public static void run(Configuration conf, String directory, String datasetFilename, boolean satBased,
-                           int traceIncludeEach, double traceFraction, boolean proximityCompletion) throws IOException {
+                           int traceIncludeEach, double traceFraction, boolean proximityCompletion,
+                           boolean outputSmv, boolean outputSpin) throws IOException {
         System.out.print("Loading the dataset...");
         Dataset ds = Dataset.load(Utils.combinePaths(directory, datasetFilename));
         System.out.println(" done");
@@ -89,20 +90,17 @@ public class ExplicitStateBuilder {
             return;
         }
         final NondetMooreAutomaton a = builder.resultAutomaton().get();
-        dumpAutomaton(a, conf, directory, namePrefix, builder.colorRuleMap(), proximityCompletion);
+        dumpAutomaton(a, conf, directory, namePrefix, builder.colorRuleMap(), proximityCompletion, outputSmv,
+                outputSpin);
     }
 
     static void dumpAutomaton(NondetMooreAutomaton a, Configuration conf, String directory, String namePrefix,
-                              Map<String, String> colorRules, boolean proximityCompletion)
-            throws FileNotFoundException {
+                              Map<String, String> colorRules, boolean proximityCompletion, boolean outputSmv,
+                              boolean outputSpin) throws FileNotFoundException {
         NondetMooreAutomaton effectiveA = a;
         if (proximityCompletion) {
             effectiveA = proximityBasedCompletion(effectiveA, conf);
         }
-        /*if (EVOLUTIONARY_NUSMV_OPTIMIZATION) {
-            effectiveA = new EvolutionaryNuSMVOptimizer(effectiveA,
-                    eventsFromAutomaton(effectiveA), conf).run();
-        }*/
 
         TraceEvaluationBuilder.dumpProperties(effectiveA);
 
@@ -111,9 +109,14 @@ public class ExplicitStateBuilder {
         // reduced GV file with transitions merged for different inputs
         Utils.writeToFile(Utils.combinePaths(directory, namePrefix + "reduced." + "gv"),
                           effectiveA.simplify().toString(colorRules, Optional.of(conf)));
-        Utils.writeToFile(Utils.combinePaths(directory, namePrefix + "smv"),
-                          effectiveA.toNuSMVString(eventsFromAutomaton(a),
-                              conf.actions(), new ArrayList<>(), Optional.of(conf)));
+        if (outputSmv) {
+            Utils.writeToFile(Utils.combinePaths(directory, namePrefix + "smv"),
+                    effectiveA.toNuSMVString(eventsFromAutomaton(a), conf.actions(), Optional.of(conf)));
+        }
+        if (outputSpin) {
+            Utils.writeToFile(Utils.combinePaths(directory, namePrefix + "pml"),
+                    effectiveA.toSPINString(eventsFromAutomaton(a), conf.actions(), Optional.of(conf)));
+        }
     }
 
     // assuming completeness and checking only state 0

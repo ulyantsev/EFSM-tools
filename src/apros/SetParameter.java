@@ -63,13 +63,28 @@ public class SetParameter extends Parameter {
     }
 
     @Override
+    public String spinType() {
+        return "int";
+    }
+
+    @Override
     public String nusmvCondition(String name, int index) {
         return name + " = " + roundedValues.get(index);
     }
 
     @Override
+    public String spinCondition(String name, int index) {
+        return name + " == " + roundedValues.get(index);
+    }
+
+    @Override
     public String nusmvInterval(int index) {
         return String.valueOf(roundedValues.get(index));
+    }
+
+    @Override
+    public String spinInterval(int index) {
+        return roundedValues.get(index) + ".." + roundedValues.get(index);
     }
 
     @Override

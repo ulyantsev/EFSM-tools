@@ -324,7 +324,8 @@ public class CompositionalBuilder {
     }
 
     public static void run(List<Configuration> confs, String directory, String datasetFilename, boolean satBased,
-                           int traceIncludeEach, double traceFraction, boolean ensureCompleteness) throws IOException {
+                           int traceIncludeEach, double traceFraction, boolean ensureCompleteness,
+                           boolean outputSmv, boolean outputSpin) throws IOException {
         // 1. Unification of all configuration pairs:
         System.out.println("*** UNIFICATION");
         for (int i = 0; i < confs.size(); i++) {
@@ -361,7 +362,8 @@ public class CompositionalBuilder {
                 return;
             }
             final NondetMooreAutomaton a = builder.resultAutomaton().get();
-            ExplicitStateBuilder.dumpAutomaton(a, conf, directory, namePrefix, builder.colorRuleMap(), false);
+            ExplicitStateBuilder.dumpAutomaton(a, conf, directory, namePrefix, builder.colorRuleMap(), false,
+                    outputSmv, outputSpin);
             automata.add(a);
             System.out.println();
         }
@@ -396,7 +398,7 @@ public class CompositionalBuilder {
 
             // mark unsupported transitions
             ExplicitStateBuilder.dumpAutomaton(lastAuto, lastConf, directory, namePrefix, Collections.emptyMap(),
-                    false);
+                    false, outputSmv, outputSpin);
             System.out.println(lastConf);
             System.out.println();
         }
