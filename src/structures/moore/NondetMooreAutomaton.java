@@ -314,12 +314,29 @@ public class NondetMooreAutomaton {
             if (conditions.isEmpty()) {
                 conditions.add("true");
             }
-            result.append("        bool " + event + " = " + String.join(" && ", conditions) + ";\n");
+            result.append("          " + event + " = " + String.join(" && ", conditions) + ";\n");
         } else {
             final int intervalNum = thresholds.get(index).getRight().valueCount();
             for (int i = 0; i < intervalNum; i++) {
                 arr[index] = i;
                 spinEventDescriptions(arr, index + 1, result, thresholds, events);
+            }
+        }
+    }
+
+    private static void spinEventDeclarations(int[] arr, int index, StringBuilder result,
+                                              List<Pair<String, Parameter>> thresholds, List<String> events) {
+        if (index == arr.length) {
+            final String event = "input_A" + Arrays.toString(arr).replaceAll("[,\\[\\] ]", "");
+            if (!events.contains(event)) {
+                return;
+            }
+            result.append("bool " + event + ";\n");
+        } else {
+            final int intervalNum = thresholds.get(index).getRight().valueCount();
+            for (int i = 0; i < intervalNum; i++) {
+                arr[index] = i;
+                spinEventDeclarations(arr, index + 1, result, thresholds, events);
             }
         }
     }
@@ -463,11 +480,6 @@ public class NondetMooreAutomaton {
             throw new AssertionError();
         }
         final StringBuilder sb = new StringBuilder();
-        sb.append("chan c_plant = [0] of {bool};\n");
-        sb.append("chan c_controller = [0] of {bool};\n");
-        sb.append("bool dummy_var;\n");
-        sb.append("\n");
-
         events = events.stream().map(s -> "input_" + s).collect(Collectors.toList());
         final List<Pair<String, Parameter>> eventThresholds = conf.isPresent()
                 ? conf.get().eventThresholds() : new ArrayList<>();
@@ -483,19 +495,21 @@ public class NondetMooreAutomaton {
         }
 
         sb.append("\n");
-        sb.append("proctype Plant() {\n");
-        sb.append("    int state = -1;\n");
-        sb.append("    do\n");
-        sb.append("    ::  c_plant ? dummy_var;\n");
-
+        sb.append("int state = -1;\n");
+        spinEventDeclarations(new int[eventThresholds.size()], 0, sb, eventThresholds, events);
+        sb.append("bool known_input;\n");
         sb.append("\n");
+        sb.append("init { do :: atomic {\n");
+        sb.append("\n");
+        sb.append("      d_step {\n");
         spinEventDescriptions(new int[eventThresholds.size()], 0, sb, eventThresholds, events);
-        sb.append("        bool known_input = " + String.join(" || ", events) + ";\n");
+        sb.append("          known_input = " + String.join(" || ", events) + ";\n");
+        sb.append("      }\n");
         sb.append("\n");
 
-        sb.append("        if\n");
+        sb.append("      if\n");
         for (int i : initialStates()) {
-            sb.append("        :: state == -1 -> state = " + i + ";\n");
+            sb.append("      :: state == -1 -> state = " + i + ";\n");
         }
 
         for (int i = 0; i < stateCount(); i++) {
@@ -529,16 +543,17 @@ public class NondetMooreAutomaton {
                 final Set<String> correspondingEvents = entry.getValue();
                 for (String e : correspondingEvents) {
                     for (int j : destinations) {
-                        sb.append("        :: state == " + i + " && " + e + " -> state = " + j + ";\n");
+                        sb.append("      :: state == " + i + " && " + e + " -> state = " + j + ";\n");
                     }
                 }
             }
         }
 
-        sb.append("        fi\n");
+        sb.append("      fi\n");
         sb.append("\n");
 
-        sb.append("        if\n");
+        sb.append("      d_step {\n");
+        sb.append("          if\n");
         for (int i = 0; i < stateCount(); i++) {
             final List<String> properActions = new ArrayList<>();
             for (String action : actions) {
@@ -547,44 +562,26 @@ public class NondetMooreAutomaton {
                             + action.charAt(action.length() - 1));
                 }
             }
-            sb.append("        :: state == " + i + " -> " + String.join("; ", properActions) + ";\n");
+            sb.append("          :: state == " + i + " -> " + String.join("; ", properActions) + ";\n");
         }
-        sb.append("        fi\n");
+        sb.append("          fi\n");
+        sb.append("      }\n");
         sb.append("\n");
 
         // output conversion to continuous values
         for (Pair<String, Parameter> entry : actionThresholds) {
             final String paramName = entry.getKey();
             final Parameter param = entry.getValue();
-            sb.append("        if\n");
+            sb.append("      if\n");
             for (int i = 0; i < param.valueCount(); i++) {
-                sb.append("        :: PLANT_OUTPUT_" + paramName + " == " + i + " -> select(CONT_PLANT_OUTPUT_"
+                sb.append("      :: PLANT_OUTPUT_" + paramName + " == " + i + " -> select(CONT_PLANT_OUTPUT_"
                         + paramName + " : " + param.spinInterval(i) + ");\n");
             }
-            sb.append("        fi\n");
+            sb.append("      fi\n");
             sb.append("\n");
         }
 
-        sb.append("        c_controller ! false;\n");
-        sb.append("    od\n");
-        sb.append("}\n");
-        sb.append("\n");
-        sb.append("proctype Controller() {\n");
-        sb.append("    do\n");
-        sb.append("    ::  c_controller ? dummy_var;\n");
-        sb.append("\n");
-        sb.append("        c_plant ! false;\n");
-        sb.append("    od\n");
-        sb.append("}\n");
-        sb.append("\n");
-        sb.append("init {\n");
-        sb.append("    atomic {\n");
-        sb.append("        run Plant();\n");
-        sb.append("        run Controller();\n");
-        sb.append("        c_plant ! false;\n");
-        sb.append("    }\n");
-        sb.append("}\n");
-        sb.append("\n");
+        sb.append("} od }\n");
 
         return sb.toString();
     }
