@@ -1,8 +1,6 @@
 package structures.moore;
 
-import apros.Configuration;
-import apros.Parameter;
-import apros.TraceModelGenerator;
+import apros.*;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import scenario.StringActions;
@@ -314,7 +312,7 @@ public class NondetMooreAutomaton {
             if (conditions.isEmpty()) {
                 conditions.add("true");
             }
-            result.append("          " + event + " = " + String.join(" && ", conditions) + ";\n");
+            result.append("        " + event + " = " + String.join(" && ", conditions) + ";\n");
         } else {
             final int intervalNum = thresholds.get(index).getRight().valueCount();
             for (int i = 0; i < intervalNum; i++) {
@@ -501,15 +499,15 @@ public class NondetMooreAutomaton {
         sb.append("\n");
         sb.append("init { do :: atomic {\n");
         sb.append("\n");
-        sb.append("      d_step {\n");
+        sb.append("    d_step {\n");
         spinEventDescriptions(new int[eventThresholds.size()], 0, sb, eventThresholds, events);
-        sb.append("          known_input = " + String.join(" || ", events) + ";\n");
-        sb.append("      }\n");
+        sb.append("        known_input = " + String.join(" || ", events) + ";\n");
+        sb.append("    }\n");
         sb.append("\n");
 
-        sb.append("      if\n");
+        sb.append("    if\n");
         for (int i : initialStates()) {
-            sb.append("      :: state == -1 -> state = " + i + ";\n");
+            sb.append("    :: state == -1 -> state = " + i + ";\n");
         }
 
         for (int i = 0; i < stateCount(); i++) {
@@ -543,17 +541,17 @@ public class NondetMooreAutomaton {
                 final Set<String> correspondingEvents = entry.getValue();
                 for (String e : correspondingEvents) {
                     for (int j : destinations) {
-                        sb.append("      :: state == " + i + " && " + e + " -> state = " + j + ";\n");
+                        sb.append("    :: state == " + i + " && " + e + " -> state = " + j + ";\n");
                     }
                 }
             }
         }
 
-        sb.append("      fi\n");
+        sb.append("    fi\n");
         sb.append("\n");
 
-        sb.append("      d_step {\n");
-        sb.append("          if\n");
+        sb.append("    d_step {\n");
+        sb.append("        if\n");
         for (int i = 0; i < stateCount(); i++) {
             final List<String> properActions = new ArrayList<>();
             for (String action : actions) {
@@ -562,22 +560,40 @@ public class NondetMooreAutomaton {
                             + action.charAt(action.length() - 1));
                 }
             }
-            sb.append("          :: state == " + i + " -> " + String.join("; ", properActions) + ";\n");
+            sb.append("        :: state == " + i + " -> " + String.join("; ", properActions) + ";\n");
         }
-        sb.append("          fi\n");
-        sb.append("      }\n");
+        sb.append("        fi\n");
+        sb.append("    }\n");
         sb.append("\n");
 
         // output conversion to continuous values
         for (Pair<String, Parameter> entry : actionThresholds) {
             final String paramName = entry.getKey();
             final Parameter param = entry.getValue();
-            sb.append("      if\n");
+            sb.append("    if\n");
             for (int i = 0; i < param.valueCount(); i++) {
-                sb.append("      :: PLANT_OUTPUT_" + paramName + " == " + i + " -> select(CONT_PLANT_OUTPUT_"
-                        + paramName + " : " + param.spinInterval(i) + ");\n");
+                final String condition = "    :: PLANT_OUTPUT_" + paramName + " == " + i + " -> ";
+                if (param instanceof BoolParameter)
+                    sb.append(condition + "CONT_PLANT_OUTPUT_" + paramName + " = " + i + ";\n");
+                if (param instanceof IgnoredBoolParameter) {
+                    sb.append("    :: CONT_PLANT_OUTPUT_" + paramName + " = " + 0 + ";\n");
+                    sb.append("    :: CONT_PLANT_OUTPUT_" + paramName + " = " + 1 + ";\n");
+                } else if (param instanceof SetParameter) {
+                    sb.append(condition + "CONT_PLANT_OUTPUT_" + paramName + " = "
+                            + ((SetParameter) param).roundedValue(i) + ";\n");
+                } else if (param instanceof RealParameter) {
+                    final String[] tokens = param.spinInterval(i).split("\\.\\.");
+                    final int min = Integer.parseInt(tokens[0]);
+                    final int max = Integer.parseInt(tokens[1]);
+                    sb.append(condition + "CONT_PLANT_OUTPUT_" + paramName + " = " + min + ";\n");
+                    if (max >= min + 2) {
+                        final int mid = (max + min) / 2;
+                        sb.append(condition + "CONT_PLANT_OUTPUT_" + paramName + " = " + mid + ";\n");
+                    }
+                    sb.append(condition + "CONT_PLANT_OUTPUT_" + paramName + " = " + max + ";\n");
+                }
             }
-            sb.append("      fi\n");
+            sb.append("    fi\n");
             sb.append("\n");
         }
 

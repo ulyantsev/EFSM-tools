@@ -10,8 +10,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class SetParameter extends Parameter {
-    final List<Double> values;
-    final List<Integer> roundedValues;
+    private final List<Double> values;
+    private final List<Integer> roundedValues;
 
     public SetParameter(String aprosName, String traceName, Double... values) {
         super(aprosName, traceName);
@@ -45,6 +45,14 @@ public class SetParameter extends Parameter {
             }
         }
         throw new AssertionError();
+    }
+
+    public double value(int index) {
+        return values.get(index);
+    }
+
+    public int roundedValue(int index) {
+        return roundedValues.get(index);
     }
 
     @Override
