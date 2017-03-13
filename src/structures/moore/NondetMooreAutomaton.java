@@ -2,6 +2,7 @@ package structures.moore;
 
 import apros.*;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import scenario.StringActions;
 import scenario.StringScenario;
@@ -473,6 +474,11 @@ public class NondetMooreAutomaton {
         return sb.toString();
     }
 
+    private String indent(int spaces, String s) {
+        final String indent = StringUtils.repeat(' ', spaces);
+        return String.join("\n", Arrays.stream(s.split("\n")).map(x -> indent + x).collect(Collectors.toList()));
+    }
+
     public String toSPINString(List<String> events, List<String> actions, Optional<Configuration> conf) {
         if (!conf.isPresent()) {
             throw new AssertionError();
@@ -550,8 +556,10 @@ public class NondetMooreAutomaton {
         sb.append("    fi\n");
         sb.append("\n");
 
-        sb.append("    d_step {\n");
-        sb.append("        if\n");
+        final StringBuilder dstepSb = new StringBuilder();
+        final StringBuilder usualSb = new StringBuilder();
+
+        dstepSb.append("    if\n");
         for (int i = 0; i < stateCount(); i++) {
             final List<String> properActions = new ArrayList<>();
             for (String action : actions) {
@@ -560,42 +568,48 @@ public class NondetMooreAutomaton {
                             + action.charAt(action.length() - 1));
                 }
             }
-            sb.append("        :: state == " + i + " -> " + String.join("; ", properActions) + ";\n");
+            dstepSb.append("    :: state == " + i + " -> " + String.join("; ", properActions) + ";\n");
         }
-        sb.append("        fi\n");
-        sb.append("    }\n");
-        sb.append("\n");
+        dstepSb.append("    fi\n");
+        dstepSb.append("\n");
 
         // output conversion to continuous values
         for (Pair<String, Parameter> entry : actionThresholds) {
             final String paramName = entry.getKey();
             final Parameter param = entry.getValue();
-            sb.append("    if\n");
+            final StringBuilder effectiveSb = param instanceof IgnoredBoolParameter ? usualSb : dstepSb;
+            effectiveSb.append("    if\n");
             for (int i = 0; i < param.valueCount(); i++) {
                 final String condition = "    :: PLANT_OUTPUT_" + paramName + " == " + i + " -> ";
-                if (param instanceof BoolParameter)
-                    sb.append(condition + "CONT_PLANT_OUTPUT_" + paramName + " = " + i + ";\n");
-                if (param instanceof IgnoredBoolParameter) {
-                    sb.append("    :: CONT_PLANT_OUTPUT_" + paramName + " = " + 0 + ";\n");
-                    sb.append("    :: CONT_PLANT_OUTPUT_" + paramName + " = " + 1 + ";\n");
+                if (param instanceof BoolParameter) {
+                    effectiveSb.append(condition + "CONT_PLANT_OUTPUT_" + paramName + " = " + i + ";\n");
+                } else if (param instanceof IgnoredBoolParameter) {
+                    effectiveSb.append("    :: CONT_PLANT_OUTPUT_" + paramName + " = " + 0 + ";\n");
+                    effectiveSb.append("    :: CONT_PLANT_OUTPUT_" + paramName + " = " + 1 + ";\n");
                 } else if (param instanceof SetParameter) {
-                    sb.append(condition + "CONT_PLANT_OUTPUT_" + paramName + " = "
+                    effectiveSb.append(condition + "CONT_PLANT_OUTPUT_" + paramName + " = "
                             + ((SetParameter) param).roundedValue(i) + ";\n");
                 } else if (param instanceof RealParameter) {
                     final String[] tokens = param.spinInterval(i).split("\\.\\.");
                     final int min = Integer.parseInt(tokens[0]);
                     final int max = Integer.parseInt(tokens[1]);
-                    sb.append(condition + "CONT_PLANT_OUTPUT_" + paramName + " = " + min + ";\n");
-                    if (max >= min + 2) {
-                        final int mid = (max + min) / 2;
-                        sb.append(condition + "CONT_PLANT_OUTPUT_" + paramName + " = " + mid + ";\n");
-                    }
-                    sb.append(condition + "CONT_PLANT_OUTPUT_" + paramName + " = " + max + ";\n");
+                    final int mid = (max + min) / 2;
+                    // by default, only one value is allowed
+                    //effectiveSb.append(condition.replace("::", "// ::") + "CONT_PLANT_OUTPUT_" + paramName + " = "
+                    //        + min + ";\n");
+                    effectiveSb.append(condition + "CONT_PLANT_OUTPUT_" + paramName + " = " + mid + ";\n");
+                    //effectiveSb.append(condition.replace("::", "// ::") + "CONT_PLANT_OUTPUT_" + paramName + " = "
+                    //        + max + ";\n");
                 }
             }
-            sb.append("    fi\n");
-            sb.append("\n");
+            effectiveSb.append("    fi\n");
+            effectiveSb.append("\n");
         }
+
+        sb.append("    d_step {\n");
+        sb.append(indent(4, dstepSb.toString()));
+        sb.append("\n    }\n\n");
+        sb.append(usualSb);
 
         sb.append("} od }\n");
 
