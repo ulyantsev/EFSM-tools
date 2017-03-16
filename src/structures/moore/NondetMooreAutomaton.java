@@ -512,47 +512,53 @@ public class NondetMooreAutomaton {
         sb.append("\n");
 
         sb.append("    if\n");
-        for (int i : initialStates()) {
-            sb.append("    :: state == -1 -> state = " + i + ";\n");
+
+        // creation of the structure:
+        // destination -> source -> inputs which lead to this destination from this source
+        final List<Map<Integer, Set<String>>> mapList = new ArrayList<>();
+        for (int i = 0; i < stateCount(); i++) {
+            final Map<Integer, Set<String>> map = new TreeMap<>();
+            for (int j = -1; j < stateCount(); j++) {
+                map.put(j, new TreeSet<>());
+            }
+            mapList.add(map);
+        }
+        for (int source = 0; source < stateCount(); source++) {
+            for (String event : events) {
+                final List<Integer> destinations = states.get(source).transitions().stream()
+                        .filter(t -> ("input_" + t.event()).equals(event))
+                        .map(t -> t.dst().number()).collect(Collectors.toList());
+                for (int dest : destinations) {
+                    mapList.get(dest).get(source).add(event);
+                }
+                final Set<Integer> allSuccStates = states.get(source).transitions().stream()
+                        .map(t -> t.dst().number()).collect(Collectors.toCollection(TreeSet::new));
+                // if the input is unknown, then the choice for the next state is wide
+                for (int dest : allSuccStates) {
+                    mapList.get(dest).get(source).add("!known_input");
+                }
+            }
+        }
+        // transitions to initial states from the pseudo-initial state
+        for (int dest : initialStates()) {
+            mapList.get(dest).get(-1).add("true");
         }
 
         for (int i = 0; i < stateCount(); i++) {
-            final Map<List<Integer>, Set<String>> map = new LinkedHashMap<>();
-            for (String event : events) {
-                final List<Integer> destinations = states.get(i).transitions().stream()
-                        .filter(t -> ("input_" + t.event()).equals(event))
-                        .map(t -> t.dst().number()).collect(Collectors.toList());
-                Collections.sort(destinations);
-                Set<String> correspondingEvents = map.get(destinations);
-                if (correspondingEvents == null) {
-                    correspondingEvents = new TreeSet<>();
-                    map.put(destinations, correspondingEvents);
+            final Map<Integer, Set<String>> sources = mapList.get(i);
+            // outer loop: states
+            // inner loop: inputs
+            final List<String> sourceOptions = new ArrayList<>();
+            for (int j = -1; j < stateCount(); j++) {
+                final Set<String> inputs = sources.get(j);
+                if (inputs.isEmpty()) {
+                    continue;
                 }
-                correspondingEvents.add(event);
+                sourceOptions.add("(state == " + j + (j == -1 ? ""
+                        : (" && (" + String.join(" || ", inputs) + ")")) + ")");
             }
-            final Set<Integer> allSuccStates = states.get(i).transitions().stream()
-                    .map(t -> t.dst().number()).collect(Collectors.toCollection(TreeSet::new));
-            {
-                // if the input is unknown, then the choice for the next state is wide
-                final List<Integer> allSuccStatesList = new ArrayList<>(allSuccStates);
-                Set<String> correspondingEvents = map.get(allSuccStatesList);
-                if (correspondingEvents == null) {
-                    correspondingEvents = new TreeSet<>();
-                    map.put(allSuccStatesList, correspondingEvents);
-                }
-                correspondingEvents.add("!known_input");
-            }
-            for (Map.Entry<List<Integer>, Set<String>> entry : map.entrySet()) {
-                final List<Integer> destinations = entry.getKey();
-                final Set<String> correspondingEvents = entry.getValue();
-                for (String e : correspondingEvents) {
-                    for (int j : destinations) {
-                        sb.append("    :: state == " + i + " && " + e + " -> state = " + j + ";\n");
-                    }
-                }
-            }
+            sb.append("    :: " + String.join(" || ", sourceOptions) + " -> state = " + i + ";\n");
         }
-
         sb.append("    fi\n");
         sb.append("\n");
 
