@@ -541,13 +541,11 @@ public class NondetMooreAutomaton {
         }
         // transitions to initial states from the pseudo-initial state
         for (int dest : initialStates()) {
-            mapList.get(dest).get(-1).add("true");
+            mapList.get(dest).get(-1).add("");
         }
 
         for (int i = 0; i < stateCount(); i++) {
             final Map<Integer, Set<String>> sources = mapList.get(i);
-            // outer loop: states
-            // inner loop: inputs
             final List<String> sourceOptions = new ArrayList<>();
             for (int j = -1; j < stateCount(); j++) {
                 final Set<String> inputs = sources.get(j);
@@ -557,16 +555,10 @@ public class NondetMooreAutomaton {
                 sourceOptions.add("(state == " + j + (j == -1 ? ""
                         : (" && (" + String.join(" || ", inputs) + ")")) + ")");
             }
-            sb.append("    :: " + String.join(" || ", sourceOptions) + " -> state = " + i + ";\n");
-        }
-        sb.append("    fi\n");
-        sb.append("\n");
+            if (sourceOptions.isEmpty()) {
+                continue;
+            }
 
-        final StringBuilder dstepSb = new StringBuilder();
-        final StringBuilder usualSb = new StringBuilder();
-
-        dstepSb.append("    if\n");
-        for (int i = 0; i < stateCount(); i++) {
             final List<String> properActions = new ArrayList<>();
             for (String action : actions) {
                 if (ArrayUtils.contains(states.get(i).actions().getActions(), action)) {
@@ -574,10 +566,15 @@ public class NondetMooreAutomaton {
                             + action.charAt(action.length() - 1));
                 }
             }
-            dstepSb.append("    :: state == " + i + " -> " + String.join("; ", properActions) + ";\n");
+
+            sb.append("    :: " + String.join(" || ", sourceOptions) + " -> d_step { state = " + i + "; "
+                    + String.join("; ", properActions) + "; }\n");
         }
-        dstepSb.append("    fi\n");
-        dstepSb.append("\n");
+        sb.append("    fi\n");
+        sb.append("\n");
+
+        final StringBuilder dstepSb = new StringBuilder();
+        final StringBuilder usualSb = new StringBuilder();
 
         // output conversion to continuous values
         for (Pair<String, Parameter> entry : actionThresholds) {
@@ -616,7 +613,6 @@ public class NondetMooreAutomaton {
         sb.append(indent(4, dstepSb.toString()));
         sb.append("\n    }\n\n");
         sb.append(usualSb);
-
         sb.append("} od }\n");
 
         return sb.toString();
