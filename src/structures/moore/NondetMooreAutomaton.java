@@ -518,7 +518,7 @@ public class NondetMooreAutomaton {
         sb.append("#define LTL_UNSUPPORTED(x, y) ltl x { 0 }\n");
         sb.append("#endif\n");
         sb.append("\n");
-        sb.append("#if defined(INCLUDE_FAIRNESS) && defined(INCLUDE_UNSUPPORTED)\n\n");
+        sb.append("#if defined(INCLUDE_FAIRNESS) && defined(INCLUDE_UNSUPPORTED)\n");
         sb.append("#define LTL_FAIRNESS_UNSUPPORTED(x, y) ltl x { X((<> [] loop_executed) || (<> current_unsupported) || (y)) }\n");
         sb.append("#else\n");
         sb.append("#define LTL_FAIRNESS_UNSUPPORTED(x, y) ltl x { 0 }\n");
