@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 public class ConstraintExtractor {
     final static boolean OVERALL_1D = true;
     final static boolean OVERALL_2D = true;
+    final static boolean OIO_CONSTRAINTS = true;
     final static boolean INPUT_STATE = true;
     final static boolean CURRENT_NEXT = true;
 
@@ -111,6 +112,40 @@ public class ConstraintExtractor {
         }
     }
 
+    private static void addOIOConstraints(Configuration conf, List<String> initConstraints,
+                                         List<String> transConstraints, Dataset ds) {
+        for (Parameter pi : conf.inputParameters) {
+            for (Parameter po : conf.outputParameters) {
+                final Map<Integer, Set<Integer>> indexPairs = new TreeMap<>();
+                for (List<double[]> trace : ds.values) {
+                    for (int i = 0; i < trace.size() - 1; i++) {
+                        final int indexO1 = po.traceNameIndex(ds.get(trace.get(i), po));
+                        final int indexI = pi.traceNameIndex(ds.get(trace.get(i), pi));
+                        final int indexO2 = po.traceNameIndex(ds.get(trace.get(i + 1), po));
+                        int mapIndex = (indexO1 << 16) + indexI;
+                        Set<Integer> set = indexPairs.get(mapIndex);
+                        if (set == null) {
+                            indexPairs.put(mapIndex, set = new TreeSet<>());
+                        }
+                        set.add(indexO2);
+                    }
+                }
+                final List<String> optionList = new ArrayList<>();
+                for (Map.Entry<Integer, Set<Integer>> entry : indexPairs.entrySet()) {
+                    int indexI = entry.getKey() & ((1 << 16) - 1);
+                    int indexO1 = entry.getKey() >> 16;
+                    Set<Integer> indices = entry.getValue();
+                    String cond = "CONT_INPUT_" + pi.traceName() + " in " + pi.nusmvInterval(indexI)
+                            + " & output_" + po.traceName() + " = " + indexO1;
+                    String next = indices.isEmpty() ? "" : (" & " + interval(indices, po, true));
+                    optionList.add(cond + next);
+                }
+
+                transConstraints.add(String.join(" | ", optionList));
+            }
+        }
+    }
+
     private static void addInputStateConstraints(Configuration conf, List<String> transConstraints, Dataset ds) {
         for (Parameter pi : conf.inputParameters) {
             for (Parameter po : conf.outputParameters) {
@@ -196,8 +231,12 @@ public class ConstraintExtractor {
         sb.append("DEFINE\n");
         sb.append("    unsupported := FALSE;\n");
         sb.append(plantConversions(conf));
-
-        Utils.writeToFile(outFilename, sb.toString());
+        String transformed =
+                sb.toString()
+                        .replaceAll("& TRUE", "")
+                        .replaceAll("in TRUE", "")
+                        .replaceAll("\\s*&\\s*\\(TRUE\\)\\s*", "\n  ");
+        Utils.writeToFile(outFilename, transformed);
 
         System.out.println("Done; model has been written to: " + outFilename);
         System.out.println("Constraints generated: " + constraintsCount);
@@ -217,6 +256,11 @@ public class ConstraintExtractor {
         // "for each pair of outputs, only value pairs found in some trace element are possible"
         if (OVERALL_2D) {
             add2DConstraints(conf, initConstraints, transConstraints, ds);
+        }
+        // 3. overall 2-dimensional constraints
+        // "for each pair of outputs, only value pairs found in some trace element are possible"
+        if (OIO_CONSTRAINTS) {
+            addOIOConstraints(conf, initConstraints, transConstraints, ds);
         }
 
         // 2. 2-dimensional constraints "input -> possible next state"
