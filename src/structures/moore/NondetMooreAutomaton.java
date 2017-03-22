@@ -483,6 +483,7 @@ public class NondetMooreAutomaton {
         if (!conf.isPresent()) {
             throw new AssertionError();
         }
+        final List<String> unmodifiedEvents = events;
         final StringBuilder sb = new StringBuilder();
         events = events.stream().map(s -> "input_" + s).collect(Collectors.toList());
         final List<Pair<String, Parameter>> eventThresholds = conf.isPresent()
@@ -499,6 +500,33 @@ public class NondetMooreAutomaton {
         }
 
         sb.append("\n");
+
+        sb.append("#define INCLUDE_FAIRNESS\n");
+        sb.append("#define INCLUDE_UNSUPPORTED\n");
+        sb.append("\n");
+        sb.append("#define LTL(x, y) ltl x { X(y) }\n");
+        sb.append("\n");
+        sb.append("#ifdef INCLUDE_FAIRNESS\n");
+        sb.append("#define LTL_FAIRNESS(x, y) ltl x { X((<> [] loop_executed) || (y)) }\n");
+        sb.append("#else\n");
+        sb.append("#define LTL_FAIRNESS(x, y) ltl x { 0 }\n");
+        sb.append("#endif\n");
+        sb.append("\n");
+        sb.append("#ifdef INCLUDE_UNSUPPORTED\n");
+        sb.append("#define LTL_UNSUPPORTED(x, y) ltl x { X((<> current_unsupported) || (y)) }\n");
+        sb.append("#else\n");
+        sb.append("#define LTL_UNSUPPORTED(x, y) ltl x { 0 }\n");
+        sb.append("#endif\n");
+        sb.append("\n");
+        sb.append("#if defined(INCLUDE_FAIRNESS) && defined(INCLUDE_UNSUPPORTED)\n\n");
+        sb.append("#define LTL_FAIRNESS_UNSUPPORTED(x, y) ltl x { X((<> [] loop_executed) || (<> current_unsupported) || (y)) }\n");
+        sb.append("#else\n");
+        sb.append("#define LTL_FAIRNESS_UNSUPPORTED(x, y) ltl x { 0 }\n");
+        sb.append("#endif\n");
+        sb.append("\n");
+        sb.append("bool loop_executed;\n");
+        sb.append("bool current_unsupported;\n");
+        sb.append("\n");
         sb.append("int state = -1;\n");
         spinEventDeclarations(new int[eventThresholds.size()], 0, sb, eventThresholds, events);
         sb.append("bool known_input;\n");
@@ -508,9 +536,33 @@ public class NondetMooreAutomaton {
         sb.append("    d_step {\n");
         spinEventDescriptions(new int[eventThresholds.size()], 0, sb, eventThresholds, events);
         sb.append("        known_input = " + String.join(" || ", events) + ";\n");
+        sb.append("\n");
+        sb.append("        #ifdef INCLUDE_UNSUPPORTED\n");
+        final List<String> unsupported = new ArrayList<>();
+        unsupported.add("!known_input");
+        for (String e : unmodifiedEvents) {
+            final Set<Integer> sourceStates = new TreeSet<>();
+            for (int i = 0; i < stateCount(); i++) {
+                for (MooreTransition t : states.get(i).transitions()) {
+                    if (t.event().equals(e) && unsupportedTransitions.contains(t)) {
+                        sourceStates.add(i);
+                        break;
+                    }
+                }
+            }
+            if (!sourceStates.isEmpty()) {
+                unsupported.add("input_" + e + " && (" + String.join(" || ",
+                        sourceStates.stream().map(s -> "state == " + s).collect(Collectors.toList())) + ")");
+            }
+        }
+        sb.append("        current_unsupported = " +  String.join(" ||\n            ", unsupported) + ";\n");
+        sb.append("        #endif\n");
         sb.append("    }\n");
         sb.append("\n");
-
+        sb.append("    #ifdef INCLUDE_FAIRNESS\n");
+        sb.append("    int last_state = state;\n");
+        sb.append("    #endif\n");
+        sb.append("\n");
         sb.append("    if\n");
 
         // creation of the structure:
@@ -608,6 +660,11 @@ public class NondetMooreAutomaton {
             effectiveSb.append("    fi\n");
             effectiveSb.append("\n");
         }
+
+        dstepSb.append("    #ifdef INCLUDE_FAIRNESS\n");
+        dstepSb.append("    loop_executed = state == last_state;\n");
+        dstepSb.append("    #endif\n");
+        dstepSb.append("\n");
 
         sb.append("    d_step {\n");
         sb.append(indent(4, dstepSb.toString()));
