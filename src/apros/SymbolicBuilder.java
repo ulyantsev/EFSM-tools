@@ -43,7 +43,7 @@ public class SymbolicBuilder {
     }
 
     private static String interval(Collection<Integer> values, Parameter p, boolean next) {
-        final String range = TraceModelGenerator.expressWithIntervals(values);
+        final String range = TraceModelGenerator.expressWithIntervalsNuSMV(values);
         if (p.valueCount() == 2 && range.equals("{0, 1}")) {
             return "TRUE";
         } else if (!range.contains("{") && !range.contains("union")) {

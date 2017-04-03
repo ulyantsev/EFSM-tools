@@ -10,6 +10,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class TraceModelGenerator {
     public static void run(Configuration conf, String directory, String datasetFilename) throws IOException {
@@ -76,7 +77,7 @@ public class TraceModelGenerator {
 
                 for (int i = 0; i < pairs.size(); i++) {
                     final String condition = i == pairs.size() - 1 ? "TRUE"
-                            : ("step in " + expressWithIntervals(pairs.get(i).getRight()));
+                            : ("step in " + expressWithIntervalsNuSMV(pairs.get(i).getRight()));
                     sb.append("            " + condition + ": "
                             + pairs.get(i).getLeft() + ";\n");
 
@@ -114,7 +115,7 @@ public class TraceModelGenerator {
         return intervals;
     }
 
-    public static String expressWithIntervals(Collection<Integer> values) {
+    public static String expressWithIntervalsNuSMV(Collection<Integer> values) {
         final List<Pair<Integer, Integer>> intervals = intervals(values);
         final List<String> stringIntervals = new ArrayList<>();
         final Set<Integer> separate = new TreeSet<>();
@@ -130,5 +131,25 @@ public class TraceModelGenerator {
             stringIntervals.add(separate.toString().replace("[", "{").replace("]", "}"));
         }
         return String.join(" union ", stringIntervals);
+    }
+
+    public static String expressWithIntervalsSPIN(Collection<Integer> values, String varName) {
+        final List<Pair<Integer, Integer>> intervals = intervals(values);
+        final List<String> stringIntervals = new ArrayList<>();
+        final Set<Integer> separate = new TreeSet<>();
+        for (Pair<Integer, Integer> interval : intervals) {
+            if (interval.getLeft() + 1 >= interval.getRight()) {
+                separate.add(interval.getLeft());
+                separate.add(interval.getRight());
+            } else {
+                stringIntervals.add(varName + " >= " + interval.getLeft() + " && " + varName + " <= "
+                        + interval.getRight());
+            }
+        }
+        if (!separate.isEmpty()) {
+            stringIntervals.addAll(separate.stream().map(value -> varName + " == " + value)
+                    .collect(Collectors.toList()));
+        }
+        return String.join(" || ", stringIntervals);
     }
 }

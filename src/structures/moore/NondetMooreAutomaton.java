@@ -372,7 +372,7 @@ public class NondetMooreAutomaton {
         sb.append("    loop_executed: boolean;\n");
         sb.append("    state: 0.." + (stateCount() - 1) + ";\n");
         sb.append("INIT\n");
-        sb.append("    state in " + TraceModelGenerator.expressWithIntervals(initialStates()) + "\n");
+        sb.append("    state in " + TraceModelGenerator.expressWithIntervalsNuSMV(initialStates()) + "\n");
         sb.append("TRANS\n");
         
         final List<String> stateConstraints = new ArrayList<>();
@@ -408,7 +408,7 @@ public class NondetMooreAutomaton {
                 final Set<String> correspondingEvents = entry.getValue();
                 
                 options.add("(" + String.join(" | ", correspondingEvents) + ") & next(state) in "
-                        + TraceModelGenerator.expressWithIntervals(destinations));
+                        + TraceModelGenerator.expressWithIntervalsNuSMV(destinations));
             }
 
             stateConstraints.add("state = " + i + " -> (\n      " + String.join("\n    | ", options));
@@ -437,7 +437,7 @@ public class NondetMooreAutomaton {
             }
             if (!sourceStates.isEmpty()) {
                 unsupported.add("input_" + e + " & state in "
-                        + TraceModelGenerator.expressWithIntervals(sourceStates));
+                        + TraceModelGenerator.expressWithIntervalsNuSMV(sourceStates));
             }
         }
 
@@ -451,7 +451,7 @@ public class NondetMooreAutomaton {
             }
             final String condition = properStates.isEmpty()
                     ? "FALSE"
-                    : ("state in " + TraceModelGenerator.expressWithIntervals(properStates));
+                    : ("state in " + TraceModelGenerator.expressWithIntervalsNuSMV(properStates));
             final String comment = actionDescriptions.containsKey(action)
                     ? (" -- " + actionDescriptions.get(action)) : "";
             sb.append("    output_" + action + " := " + condition + ";" + comment + "\n");
@@ -551,8 +551,8 @@ public class NondetMooreAutomaton {
                 }
             }
             if (!sourceStates.isEmpty()) {
-                unsupported.add("input_" + e + " && (" + String.join(" || ",
-                        sourceStates.stream().map(s -> "state == " + s).collect(Collectors.toList())) + ")");
+                unsupported.add("input_" + e + " && ("
+                        + TraceModelGenerator.expressWithIntervalsSPIN(sourceStates, "state") + ")");
             }
         }
         sb.append("        current_unsupported = " +  String.join(" ||\n            ", unsupported) + ";\n");
