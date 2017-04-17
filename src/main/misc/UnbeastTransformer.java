@@ -179,7 +179,7 @@ public class UnbeastTransformer {
                 }
                 stringActions.add(new StringActions(String.join(", ", finalActions)));
             }
-            final StringScenario scReordered = new StringScenario(true, events, expressions, stringActions);
+            final StringScenario scReordered = new StringScenario(events, expressions, stringActions);
             if (!a.compliesWith(scReordered)) {
                 return false;
             }

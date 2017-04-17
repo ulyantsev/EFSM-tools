@@ -21,13 +21,7 @@ public class FormulaList {
         assert f != null;
         list.add(f);
     }
-    
-    public void addVarIfExists(BooleanVariable var) {
-        if (var != null) {
-            list.add(var);
-        }
-    }
-    
+
     public void addAll(Collection<BooleanFormula> f) {
         assert !f.contains(null);
         list.addAll(f);
@@ -39,10 +33,6 @@ public class FormulaList {
     
     public boolean isEmpty() {
         return list.isEmpty();
-    }
-    
-    public void clear() {
-        list.clear();
     }
     
     public BooleanFormula assemble(String comment) {

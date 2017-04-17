@@ -43,20 +43,16 @@ public class LtlParser {
                 for (int pos = 0; pos < varNumber; pos++) {
                     arr[pos] = ((j >> pos) & 1) == 1 ? '1' : '0';
                 }
-                expansion.add("event(" + event + String.valueOf(arr) + ")");
+                expansion.add(event + String.valueOf(arr));
             }
             lastPos = m.end();
-            String strToAppend = String.join(" || ", expansion);
-            if (expansion.size() > 1) {
-                strToAppend = "(" + strToAppend + ")";
-            }
-            sb.append(strToAppend);
+            sb.append("event(" + String.join(", ", expansion) + ")");
         }
         sb.append(formula.substring(lastPos, formula.length()));
         return sb.toString();
     }
     
-    private static String expandWasVariable(String formula, int varNumber, List<String> events) {
+    private static String expandVariable(String formula, int varNumber, List<String> events) {
         final Pattern p = Pattern.compile("variable\\((\\w+)\\)");
         final Matcher m = p.matcher(formula);
         final StringBuilder sb = new StringBuilder();
@@ -73,16 +69,12 @@ public class LtlParser {
                         arr[pos] = ((j >> pos) & 1) == 1 ? '1' : '0';
                     }
                     if (arr[varIndex] == '1') {
-                        expansion.add("event(" + event + String.valueOf(arr) + ")");
+                        expansion.add(event + String.valueOf(arr));
                     }
                 }
             }
             lastPos = m.end();
-            String strToAppend = String.join(" || ", expansion);
-            if (expansion.size() > 1) {
-                strToAppend = "(" + strToAppend + ")";
-            }
-            sb.append(strToAppend);
+            sb.append("event(" + String.join(", ", expansion) + ")");
         }
         sb.append(formula.substring(lastPos, formula.length()));
         return sb.toString();
@@ -97,7 +89,7 @@ public class LtlParser {
 
         try (Scanner in = new Scanner(new File(filepath))) {
             while (in.hasNextLine()) {
-                ans.add(expandWasVariable(duplicateEvents(simplify(in.nextLine()), varNumber), varNumber, events));
+                ans.add(expandVariable(duplicateEvents(simplify(in.nextLine()), varNumber), varNumber, events));
             }
         }
         return ans;

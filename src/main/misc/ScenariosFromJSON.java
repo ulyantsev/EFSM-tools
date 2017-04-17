@@ -62,7 +62,7 @@ public class ScenariosFromJSON {
                         final List<String> inputs = new ArrayList<>();
                         inputs.add("");
                         inputs.addAll(splitList(word).stream().map(t -> "e" + t).collect(Collectors.toList()));
-                        result.add(new StringScenario(true, inputs, Collections.nCopies(inputs.size(),
+                        result.add(new StringScenario(inputs, Collections.nCopies(inputs.size(),
                                 MyBooleanExpression.getTautology()), outputs));
                         break;
                     default:

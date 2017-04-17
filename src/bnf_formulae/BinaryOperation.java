@@ -14,11 +14,7 @@ public class BinaryOperation extends BooleanFormula {
     private final List<BooleanFormula> children;
     public final BinaryOperations type;
     private final String comment;
-    
-    public List<BooleanFormula> copyChildren() {
-        return new ArrayList<>(children);
-    }
-    
+
     private BinaryOperation(BooleanFormula left, BooleanFormula right, BinaryOperations type) {
         this(Arrays.asList(left, right), type, null);
     }

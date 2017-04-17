@@ -23,6 +23,7 @@ import structures.mealy.*;
 import verification.ltl.LtlParseException;
 import verification.ltl.LtlParser;
 import verification.ltl.grammar.LtlNode;
+import verification.ltl.grammar.LtlUtils;
 import verification.verifier.Verifier;
 
 import java.io.IOException;
@@ -177,7 +178,10 @@ public class QbfBuilderMain extends MainBase {
         final List<String> actions = actions(actionNames, actionNumber);
         
         try {
-            final List<String> strFormulae = LtlParser.load(ltlFilePath, varNumber, eventnames);
+            List<String> strFormulae = LtlParser.load(ltlFilePath, varNumber, eventnames);
+            if (ss == SolvingStrategy.QSAT || ss == SolvingStrategy.EXP_SAT) {
+                strFormulae = strFormulae.stream().map(LtlUtils::expandEventList).collect(Collectors.toList());
+            }
             final List<LtlNode> formulae = LtlParser.parse(strFormulae);
             logger().info("LTL formulae from " + ltlFilePath);
             

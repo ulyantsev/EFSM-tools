@@ -7,6 +7,8 @@ import verification.ltl.grammar.annotation.Predicate;
 import verification.statemachine.SimpleState;
 import verification.statemachine.StateTransition;
 
+import java.util.Arrays;
+
 /**
  * TODO: add comment
  *
@@ -33,7 +35,8 @@ public class PredicateFactory {
     
     @Predicate
     public Boolean event(String e) {
-        return wasTransition() ? e.equals(transition.event) : null;
+        // since 17.04.2017, "event" actually supports comma-separated lists of events
+        return wasTransition() ? Arrays.asList(e.split(",")).contains(transition.event) : null;
     }
 
     @Predicate

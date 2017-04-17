@@ -143,8 +143,7 @@ public class FastAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
         for (String formula : strFormulae) {
             if (formula.isEmpty()) {
                 continue;
-            }
-            if (formula.startsWith("G(") && formula.endsWith(")")) {
+            } else if (formula.startsWith("G(") && formula.endsWith(")")) {
                 formula = formula.substring(2, formula.length() - 1);
             } else {
                 continue;

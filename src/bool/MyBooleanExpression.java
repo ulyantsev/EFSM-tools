@@ -44,7 +44,7 @@ public class MyBooleanExpression {
         }
 
         if (varToNumber.size() >= 26) {
-            throw new RuntimeException("The number of variables should not exceed 25.");
+            throw new RuntimeException("The number of variables must not exceed 25.");
         }
 
         return value;
@@ -115,7 +115,6 @@ public class MyBooleanExpression {
     public List<String> getSatVarCombinations() {
         final List<String> combinations = new ArrayList<>();
         for (Map.Entry<Map<String, Boolean>, Boolean> entry : truthTable.entrySet()) {
-            //System.out.println(entry);
             if (entry.getValue()) {
                 final List<Map<String, Boolean>> varAssignments = extendForAllVars(entry.getKey());
                 for (Map<String, Boolean> varAssignment : varAssignments) {
@@ -127,7 +126,6 @@ public class MyBooleanExpression {
                 }
             }
         }
-        //System.out.println(this + " " + combinations);
         return combinations;
     }
     

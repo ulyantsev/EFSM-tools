@@ -4,26 +4,22 @@ package automaton_builders;
  * (c) Igor Buzhinsky
  */
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.TreeSet;
-import java.util.logging.Logger;
-import java.util.stream.Collectors;
-
+import algorithms.AutomatonCompleter.CompletenessType;
+import bnf_formulae.BooleanVariable;
+import bool.MyBooleanExpression;
 import org.apache.commons.lang3.tuple.Pair;
-
 import sat_solving.Assignment;
 import scenario.StringActions;
 import structures.mealy.MealyAutomaton;
 import structures.mealy.MealyNode;
-import structures.mealy.ScenarioTree;
 import structures.mealy.MealyTransition;
-import algorithms.AutomatonCompleter.CompletenessType;
-import bnf_formulae.BooleanVariable;
-import bool.MyBooleanExpression;
+import structures.mealy.ScenarioTree;
+import verification.ltl.grammar.LtlUtils;
+
+import java.io.File;
+import java.util.*;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 /**
  * (c) Igor Buzhinsky
@@ -130,7 +126,7 @@ public abstract class ScenarioAndLtlAutomatonBuilder {
     }
     
     protected static String ltl2limboole(String formula) {
-        return formula
+        return LtlUtils.expandEventList(formula)
                 .replace("&&", "&").replace("||", "|")
                 .replaceAll("\\band\\b", "&").replaceAll("\\bor\\b", "|")
                 .replaceAll("\\bnot\\b", "!");

@@ -4,16 +4,13 @@ package automaton_builders;
  * (c) Igor Buzhinsky
  */
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.util.List;
-import java.util.Optional;
-import java.util.Scanner;
-import java.util.Set;
-import java.util.TreeSet;
-import java.util.logging.Logger;
-
+import algorithms.AutomatonCompleter.CompletenessType;
+import bnf_formulae.BooleanFormula;
+import bnf_formulae.BooleanFormula.SolveAsSatResult;
+import bnf_formulae.QuantifiedBooleanFormula;
+import bnf_formulae.QuantifiedBooleanFormula.FormulaSizeException;
+import exception.TimeLimitExceededException;
+import formula_builders.QbfFormulaBuilder;
 import sat_solving.Assignment;
 import sat_solving.QbfSolver;
 import sat_solving.SatSolver;
@@ -23,13 +20,12 @@ import structures.mealy.MealyAutomaton;
 import structures.mealy.ScenarioTree;
 import verification.ltl.grammar.LtlNode;
 import verification.verifier.Verifier;
-import algorithms.AutomatonCompleter.CompletenessType;
-import exception.TimeLimitExceededException;
-import formula_builders.QbfFormulaBuilder;
-import bnf_formulae.BooleanFormula;
-import bnf_formulae.BooleanFormula.SolveAsSatResult;
-import bnf_formulae.QuantifiedBooleanFormula;
-import bnf_formulae.QuantifiedBooleanFormula.FormulaSizeException;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.*;
+import java.util.logging.Logger;
 
 public class QbfAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {   
     public final static String PRECOMPUTED_DIR_NAME = "qbf/bfs-prohibited-ys";
@@ -73,8 +69,7 @@ public class QbfAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
                     logger.info(new SolverResult(SolverResults.UNKNOWN).toString());
                     return Optional.empty();
                 }
-                SolveAsSatResult solution = BooleanFormula.solveAsSat(formula,
-                        logger, timeLeft, satSolver);
+                SolveAsSatResult solution = BooleanFormula.solveAsSat(formula, logger, timeLeft, satSolver);
                 List<Assignment> list = solution.list();
                 long time = solution.time;
                 if (list.isEmpty()) {

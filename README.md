@@ -7,8 +7,8 @@ EFSM-tools is a toolset for finite-state machine (FSM) synthesis. Is is mostly b
 The toolset implements the techniques described in the following papers:
 
 * [Ulyantsev V., Tsarev F. Extended Finite-State Machine Induction using SAT-Solver / Proceedings of the Tenth International Conference on Machine Learning and Applications. - Honolulu: IEEE Computer Society, 2011. - Vol. 2. - P. 346-349](http://dx.doi.org/10.1109/ICMLA.2011.166)
-* [Ulyantsev V., Buzhinsky I., Shalyto A. Exact Finite-State Machine Identification from Scenarios and Temporal Properties (arxiv preprint)](http://arxiv.org/abs/1601.06945)
-* Buzhinsky I., Vyatkin V. Plant Model Inference for Closed-Loop Verification of Control Systems: Initial Explorations. IEEE International Conference on Industrial Informatics (INDIN 2016), Poitiers, France, July 18–21, 2016 (to appear)
+* [Ulyantsev V., Buzhinsky I., Shalyto A. Exact Finite-State Machine Identification from Scenarios and Temporal Properties. International Journal on Software Tools for Technology Transfer, 2016, DOI: 10.1007/s10009-016-0442-1](http://arxiv.org/abs/1601.06945)
+* [Buzhinsky I., Vyatkin V. Automatic Inference of Finite-State Plant Models from Traces and Temporal Properties. IEEE Transactions on Industrial Informatics, 2017, DOI: 10.1109/TII.2017.2670146](http://rain.ifmo.ru/~buzhinsky/papers/tii-2017-automatic.pdf)
 
 EFSM-tools is developed in Computer Technologies Laboratory, ITMO University. You may find related projects by the same research group below:
 
@@ -70,7 +70,7 @@ More notes:
 
 ## Input data format for LTL properties
 
-LTL properties, or LTL formulae, are represented as text files. Each line represents a single LTL formula. Formulae may use temporal operators X (next), F (future), G (globally), U (until), R (release), Boolean operators "&&" (and), "||" (or), "!" (not), and atomic propositions *event(&lt;event name&gt;)*, *action(&lt;action name&gt;)*, *variable(&lt;variable name&gt;)*.
+LTL properties, or LTL formulae, are represented as text files. Each line represents a single LTL formula. Formulae may use temporal operators X (next), F (future), G (globally), U (until), R (release), Boolean operators "&&" (and), "||" (or), "!" (not), and atomic propositions *event(&lt;event name or a comma-separated list of event names&gt;)*, *action(&lt;action name&gt;)*, *variable(&lt;variable name&gt;)*.
 
 To see complete examples of LTL property files, you may examine the files [examples/elevator.ltl](/examples/elevator.ltl) and [examples/clock.ltl](/examples/clock.ltl).
 
@@ -81,7 +81,11 @@ More notes:
 
 ## Mealy machine synthesis from traces and LTL properties based on SAT and QSAT solvers
 
-This tool is described here: [http://arxiv.org/abs/1601.06945](http://arxiv.org/abs/1601.06945). It supports four methods of FSM synthesis based on:
+This tool is described in the paper:
+
+* [Ulyantsev V., Buzhinsky I., Shalyto A. Exact Finite-State Machine Identification from Scenarios and Temporal Properties. International Journal on Software Tools for Technology Transfer, 2016, DOI: 10.1007/s10009-016-0442-1](http://arxiv.org/abs/1601.06945).
+
+It supports four methods of FSM synthesis based on:
 
 * iterative running of a SAT solver (also check the next section for a faster implementation of this method!)
 * running a QSAT (QBF) solver (this method is quite slow)
@@ -114,7 +118,11 @@ Here are scripts to run several examples from the paper mentioned above:
 
 ## Mealy machine synthesis from traces and LTL properties based on incremental SAT solvers
 
-This is an enhanced version of the so-called "iterative" method described here: [http://arxiv.org/abs/1601.06945](http://arxiv.org/abs/1601.06945). It uses incremental cryptominisat by default, but switching to usual versions of cryptominisat or lingeling are possible using command line options. To run the tool:
+This is an enhanced version of the so-called "iterative" method described here:
+
+* [Ulyantsev V., Buzhinsky I., Shalyto A. Exact Finite-State Machine Identification from Scenarios and Temporal Properties. International Journal on Software Tools for Technology Transfer, 2016, DOI: 10.1007/s10009-016-0442-1](http://arxiv.org/abs/1601.06945).
+
+It uses incremental cryptominisat by default, but switching to usual versions of cryptominisat or lingeling are possible using command line options. To run the tool:
 
 > java -jar jars/fast-automaton-generator.jar
 
@@ -140,7 +148,7 @@ Here are scripts to run several examples from the paper mentioned above:
 
 This is a spin-off of the FSM synthesis project which focuses on Moore machine synthesis for a specific application. In the industrial automation domain, controllers co-exist with plants. In formal modeling, it is natural to represent plants as nondeterministic Moore machines. Read more in:
 
-* Buzhinsky I., Vyatkin V. Plant Model Inference for Closed-Loop Verification of Control Systems: Initial Explorations. IEEE International Conference on Industrial Informatics (INDIN 2016), Poitiers, France, July 18–21, 2016 (to appear)
+* [Buzhinsky I., Vyatkin V. Automatic Inference of Finite-State Plant Models from Traces and Temporal Properties. IEEE Transactions on Industrial Informatics, 2017, DOI: 10.1109/TII.2017.2670146](http://rain.ifmo.ru/~buzhinsky/papers/tii-2017-automatic.pdf)
 
 Run the tool:
 

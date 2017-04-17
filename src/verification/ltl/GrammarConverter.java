@@ -3,28 +3,19 @@
  */
 package verification.ltl;
 
-import java.lang.reflect.Method;
-import java.util.HashMap;
-import java.util.Map;
-
-import ognl.ASTAnd;
-import ognl.ASTConst;
-import ognl.ASTMethod;
-import ognl.ASTOr;
-import ognl.Node;
-import ognl.SimpleNode;
-import verification.ltl.grammar.BinaryOperator;
-import verification.ltl.grammar.BinaryOperatorType;
-import verification.ltl.grammar.BooleanNode;
-import verification.ltl.grammar.LtlNode;
-import verification.ltl.grammar.PredicateFactory;
-import verification.ltl.grammar.UnaryOperator;
-import verification.ltl.grammar.UnaryOperatorType;
+import ognl.*;
+import verification.ltl.grammar.*;
 import verification.ltl.grammar.annotation.Predicate;
 import verification.ltl.grammar.exception.NotPredicateException;
 import verification.ltl.grammar.exception.UnexpectedMethodException;
 import verification.ltl.grammar.exception.UnexpectedOperatorException;
 import verification.ltl.grammar.exception.UnexpectedParameterException;
+
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Convert from Ognl tree to LtlNode tree
@@ -72,7 +63,12 @@ public class GrammarConverter {
             //is predicate?
             final Method predMethod = predicates.get(name);
             if (predMethod != null) {
-                return new verification.ltl.grammar.Predicate(predicatesObj, predMethod, node.jjtGetChild(0).toString());
+                final List<String> args = new ArrayList<>();
+                final int numChildren = node.jjtGetNumChildren();
+                for (int i = 0; i < numChildren; i++) {
+                    args.add(node.jjtGetChild(i).toString());
+                }
+                return new verification.ltl.grammar.Predicate(predicatesObj, predMethod, String.join(",", args));
             }
             throw new UnexpectedMethodException(node.getMethodName());
         } else if (root instanceof ASTAnd) {

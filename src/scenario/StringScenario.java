@@ -92,7 +92,7 @@ public class StringScenario {
                 expr = MyBooleanExpression.get("1");            
             }
             
-            this.expressions.add(expr);
+            expressions.add(expr);
             this.actions.add(new StringActions(actions[i]));
         }
     }

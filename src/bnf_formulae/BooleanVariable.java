@@ -4,13 +4,7 @@ package bnf_formulae;
  * (c) Igor Buzhinsky
  */
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 public class BooleanVariable extends BooleanFormula implements Comparable<BooleanVariable> {
     public final String name;
@@ -26,10 +20,6 @@ public class BooleanVariable extends BooleanFormula implements Comparable<Boolea
     private static final List<BooleanVariable> ALL_VARS = new ArrayList<>();
     private static final Map<String, BooleanVariable> VARS_BY_NAME = new HashMap<>();
 
-    public static List<BooleanVariable> allVars() {
-        return Collections.unmodifiableList(ALL_VARS);
-    }
-
     private static String createName(String prefix, Object... indices) {
         assert indices.length == 0 || !prefix.contains("_");
         return indices.length == 0
@@ -43,10 +33,6 @@ public class BooleanVariable extends BooleanFormula implements Comparable<Boolea
         number = counter++;
         ALL_VARS.add(this);
         VARS_BY_NAME.put(name, this);
-    }
-
-    public static int variableCount() {
-        return counter;
     }
 
     public static BooleanVariable getVarByNumber(int num) {
