@@ -11,23 +11,23 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class StringScenario {
-    private static String removeVariables(String input) throws ParseException {
-        final Pattern p = Pattern.compile("(\\w+)(\\s)*+\\[([^\\[\\]]+)\\]");
-        final StringBuilder sb = new StringBuilder();
-        final Matcher m = p.matcher(input);
-        int lastPos = 0;
-        while (m.find()) {
-            final String event = m.group(1);
-            sb.append(input.substring(lastPos, m.start()));
-            final MyBooleanExpression expr = MyBooleanExpression.get(m.group(3));
-            final List<String> expansion = expr.getSatVarCombinations().stream()
-                    .map(varAssignment -> event + varAssignment)
-                    .collect(Collectors.toList());
-            lastPos = m.end();
-            sb.append(String.join("|", expansion) + "[1]");
+    private List<List<String>> events = new ArrayList<>();
+    private List<MyBooleanExpression> expressions = new ArrayList<>();
+    private List<StringActions> actions = new ArrayList<>();
+
+    @Override
+    public String toString() {
+        final StringBuilder inputs = new StringBuilder();
+        final StringBuilder outputs = new StringBuilder();
+        for (int i = 0; i < size(); i++) {
+            if (i > 0) {
+                inputs.append("; ");
+                outputs.append("; ");
+            }
+            inputs.append(eventListToString(events.get(i)) + "[" + expressions.get(i).toString() + "]");
+            outputs.append(actions.get(i).toString());
         }
-        sb.append(input.substring(lastPos, input.length()));
-        return sb.toString();
+        return inputs + "\n" + outputs;
     }
 
     public static List<StringScenario> loadScenarios(String filepath, boolean removeVars)
@@ -57,16 +57,7 @@ public class StringScenario {
         return ans;
     }
     
-    boolean isPositive;
-    
-    private List<List<String>> events = new ArrayList<>();
-    private List<MyBooleanExpression> expressions = new ArrayList<>();
-    private List<StringActions> actions = new ArrayList<>();
-    
-    public StringScenario(boolean isPositive, List<String> events, List<MyBooleanExpression> expressions,
-                          List<StringActions> actions) {
-        this.isPositive = isPositive;
-        
+    public StringScenario(List<String> events, List<MyBooleanExpression> expressions, List<StringActions> actions) {
         if (events.size() != expressions.size() || events.size() != actions.size()) {
             throw new RuntimeException("Events, expressions, actions sizes mismatch: " + 
                                         events.size() + " " + expressions.size() + " " + actions.size());
@@ -77,7 +68,7 @@ public class StringScenario {
         this.actions = new ArrayList<>(actions);
     }
     
-    private List<String> splitEvent(String event) {
+    private static List<String> splitEvent(String event) {
         return Arrays.asList(event.split("\\|"));
     }
     
@@ -102,11 +93,8 @@ public class StringScenario {
             }
             
             this.expressions.add(expr);
-            
             this.actions.add(new StringActions(actions[i]));
         }
-        
-        this.isPositive = true;
     }
     
     public int size() {
@@ -133,18 +121,22 @@ public class StringScenario {
         return eventList.size() == 1 ? eventList.get(0) : eventList.toString();
     }
 
-    @Override
-    public String toString() {
-        String inp = "";
-        String out = "";
-        for (int i = 0; i < size(); i++) {
-            if (i > 0) {
-                inp += "; ";
-                out += "; ";
-            }
-            inp += eventListToString(events.get(i)) + "[" + expressions.get(i).toString() + "]";
-            out += actions.get(i).toString();
+    private static String removeVariables(String input) throws ParseException {
+        final Pattern p = Pattern.compile("(\\w+)(\\s)*+\\[([^\\[\\]]+)\\]");
+        final StringBuilder sb = new StringBuilder();
+        final Matcher m = p.matcher(input);
+        int lastPos = 0;
+        while (m.find()) {
+            final String event = m.group(1);
+            sb.append(input.substring(lastPos, m.start()));
+            final MyBooleanExpression expr = MyBooleanExpression.get(m.group(3));
+            final List<String> expansion = expr.getSatVarCombinations().stream()
+                    .map(varAssignment -> event + varAssignment)
+                    .collect(Collectors.toList());
+            lastPos = m.end();
+            sb.append(String.join("|", expansion) + "[1]");
         }
-        return inp + "\n" + out;
+        sb.append(input.substring(lastPos, input.length()));
+        return sb.toString();
     }
 }

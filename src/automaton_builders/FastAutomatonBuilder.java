@@ -10,6 +10,7 @@ import bnf_formulae.BooleanVariable;
 import bnf_formulae.FormulaList;
 import bool.MyBooleanExpression;
 import formula_builders.MealyFormulaBuilder;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import sat_solving.Assignment;
 import sat_solving.SatSolver;
@@ -65,8 +66,7 @@ public class FastAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
 
         if (complete) {
             // add other transitions
-            for (Assignment a : ass.stream()
-                    .filter(a_ -> a_.value && a_.var.name.startsWith("y_"))
+            for (Assignment a : ass.stream().filter(a_ -> a_.value && a_.var.name.startsWith("y_"))
                     .collect(Collectors.toList())) {
                 String[] tokens = a.var.name.split("_");
                 assert tokens.length == 4;
@@ -86,8 +86,7 @@ public class FastAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
                 for (Assignment az : ass) {
                     if (az.value && az.var.name.startsWith("z_" + from + "_")
                             && az.var.name.endsWith("_" + eventIndex)) {
-                        properUniqueActions.add(actionList.get(
-                                Integer.parseInt(az.var.name.split("_")[2])));
+                        properUniqueActions.add(actionList.get(Integer.parseInt(az.var.name.split("_")[2])));
                     }
                 }
                 Collections.sort(properUniqueActions);
@@ -187,12 +186,7 @@ public class FastAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
     }
     
     private static boolean containsTrue(boolean[] array) {
-        for (boolean val : array) {
-            if (val) {
-                return true;
-            }
-        }
-        return false;
+       return Arrays.asList(ArrayUtils.toObject(array)).contains(true);
     }
     
     public static Optional<MealyAutomaton> build(Logger logger, ScenarioTree positiveTree,
@@ -200,8 +194,7 @@ public class FastAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
                                                  List<String> strFormulae, List<String> events,
                                                  List<String> actions, Verifier verifier, long finishTime,
                                                  boolean complete, boolean bfsConstraints, boolean useGlobalTree,
-                                                 SatSolver solver)
-            throws IOException {
+                                                 SatSolver solver) throws IOException {
         deleteTrash();
         
         final boolean[] ltlIsG = new boolean[strFormulae.size()];
@@ -284,8 +277,8 @@ public class FastAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
         final List<StringActions> actions = counterexample.actions().stream()
                 .map(action -> new StringActions(String.join(",", action))).collect(Collectors.toList());
         try {
-            negativeForest.addScenario(new StringScenario(true,
-                    counterexample.events(), expr, actions), counterexample.loopLength);
+            negativeForest.addScenario(new StringScenario(counterexample.events(), expr, actions),
+                    counterexample.loopLength);
         } catch (ParseException e) {
             throw new AssertionError();
         }

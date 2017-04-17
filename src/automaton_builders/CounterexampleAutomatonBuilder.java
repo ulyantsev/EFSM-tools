@@ -4,16 +4,16 @@ package automaton_builders;
  * (c) Igor Buzhinsky
  */
 
-import java.io.IOException;
-import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.logging.Logger;
-
+import algorithms.AutomatonCompleter;
+import algorithms.AutomatonCompleter.CompletenessType;
+import bnf_formulae.BinaryOperations;
+import bnf_formulae.BooleanFormula;
+import bnf_formulae.BooleanFormula.SolveAsSatResult;
+import bnf_formulae.FormulaList;
+import bool.MyBooleanExpression;
+import exception.AutomatonFoundException;
+import exception.TimeLimitExceededException;
+import formula_builders.CounterexampleFormulaBuilder;
 import sat_solving.Assignment;
 import sat_solving.ExpandableStringFormula;
 import sat_solving.SatSolver;
@@ -22,21 +22,16 @@ import sat_solving.SolverResult.SolverResults;
 import scenario.StringActions;
 import scenario.StringScenario;
 import structures.mealy.MealyAutomaton;
+import structures.mealy.MealyTransition;
 import structures.mealy.NegativeScenarioTree;
 import structures.mealy.ScenarioTree;
-import structures.mealy.MealyTransition;
 import verification.verifier.Counterexample;
 import verification.verifier.Verifier;
-import algorithms.AutomatonCompleter;
-import algorithms.AutomatonCompleter.CompletenessType;
-import exception.AutomatonFoundException;
-import exception.TimeLimitExceededException;
-import formula_builders.CounterexampleFormulaBuilder;
-import bnf_formulae.BinaryOperations;
-import bnf_formulae.BooleanFormula;
-import bnf_formulae.FormulaList;
-import bnf_formulae.BooleanFormula.SolveAsSatResult;
-import bool.MyBooleanExpression;
+
+import java.io.IOException;
+import java.text.ParseException;
+import java.util.*;
+import java.util.logging.Logger;
 
 public class CounterexampleAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
     protected static Optional<MealyAutomaton> reportResult(Logger logger, int iterations, Optional<MealyAutomaton> a) {
@@ -58,7 +53,7 @@ public class CounterexampleAutomatonBuilder extends ScenarioAndLtlAutomatonBuild
         }
         logger.info("ADDING COUNTEREXAMPLE: " + counterexample);
         try {
-            negativeTree.addScenario(new StringScenario(true, counterexample.events(), expressions, actions),
+            negativeTree.addScenario(new StringScenario(counterexample.events(), expressions, actions),
                     counterexample.loopLength);
         } catch (ParseException e) {
             throw new RuntimeException(e);

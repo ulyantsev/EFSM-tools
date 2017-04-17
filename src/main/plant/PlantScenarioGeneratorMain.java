@@ -71,7 +71,7 @@ public class PlantScenarioGeneratorMain extends MainBase {
                 actions.add(transition.dst().actions());
                 curState = transition.dst().number();
             }
-            scenarios.add(new StringScenario(true, events, expressions, actions));
+            scenarios.add(new StringScenario(events, expressions, actions));
         }
 
         final String scenarioString = String.join("\n\n",

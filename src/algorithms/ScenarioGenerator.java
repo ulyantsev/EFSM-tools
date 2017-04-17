@@ -13,23 +13,23 @@ import java.util.List;
 import java.util.Random;
 
 public class ScenarioGenerator {
-    static public ArrayList<ArrayList<MealyTransition>> getBFSPaths(MealyAutomaton automaton) {
-        ArrayList<ArrayList<MealyTransition>> ans = new ArrayList<>();
+    static public List<List<MealyTransition>> getBFSPaths(MealyAutomaton automaton) {
+        final List<List<MealyTransition>> ans = new ArrayList<>();
 
-        int size = automaton.stateCount();
+        final int size = automaton.stateCount();
         @SuppressWarnings("unchecked")
-        ArrayList<MealyTransition>[] shortestPaths = new ArrayList[size];
+        final List<MealyTransition>[] shortestPaths = new ArrayList[size];
 
-        ArrayList<MealyNode> order = new ArrayList<>();
+        final List<MealyNode> order = new ArrayList<>();
         order.add(automaton.startState());
         shortestPaths[automaton.startState().number()] = new ArrayList<>();
 
         for (int i = 0; i < size; i++) {
-            MealyNode current = order.get(i);
-            ArrayList<MealyTransition> path = shortestPaths[current.number()];
+            final MealyNode current = order.get(i);
+            final List<MealyTransition> path = shortestPaths[current.number()];
 
             for (MealyTransition t : current.transitions()) {
-                ArrayList<MealyTransition> newPath = new ArrayList<>(path);
+                final List<MealyTransition> newPath = new ArrayList<>(path);
                 newPath.add(t);
                 ans.add(newPath);
 
@@ -43,23 +43,23 @@ public class ScenarioGenerator {
         return ans;
     }
 
-    static public String pathToScenario(ArrayList<MealyTransition> path) {
-        ArrayList<String> events = new ArrayList<>();
-        ArrayList<MyBooleanExpression> expressions = new ArrayList<>();
-        ArrayList<StringActions> actions = new ArrayList<>();
+    static public String pathToScenario(List<MealyTransition> path) {
+        final ArrayList<String> events = new ArrayList<>();
+        final ArrayList<MyBooleanExpression> expressions = new ArrayList<>();
+        final ArrayList<StringActions> actions = new ArrayList<>();
 
         for (MealyTransition t : path) {
             events.add(t.event());
             expressions.add(t.expr());
             actions.add(t.actions());
         }
-        return new StringScenario(true, events, expressions, actions).toString();
+        return new StringScenario(events, expressions, actions).toString();
     }
     
     static public String generateScenariosWithBFS(MealyAutomaton automaton) {
-        ArrayList<ArrayList<MealyTransition>> paths = getBFSPaths(automaton);
+        final List<List<MealyTransition>> paths = getBFSPaths(automaton);
         int lenBFS = 0;
-        for (ArrayList<MealyTransition> path : paths) {
+        for (List<MealyTransition> path : paths) {
             lenBFS += path.size();
         }
  
@@ -67,26 +67,28 @@ public class ScenarioGenerator {
     }
     
     static public String generateScenariosWithBFS(MealyAutomaton automaton, int sumLength, Random random) {
-        ArrayList<ArrayList<MealyTransition>> paths = getBFSPaths(automaton);
+        final List<List<MealyTransition>> paths = getBFSPaths(automaton);
         int lenBFS = 0;
-        for (ArrayList<MealyTransition> path : paths) {
+        for (List<MealyTransition> path : paths) {
             lenBFS += path.size();
         }
         if (lenBFS > sumLength) {
-            throw new RuntimeException("Impossible to generate scenarios wits summary length [" + sumLength + "] with BFS");
+            throw new RuntimeException(
+                    "Impossible to generate scenarios wits summary length [" + sumLength + "] with BFS");
         }
 
         for (int i = lenBFS; i < sumLength; i++) {
-            int randomPathNum = random.nextInt(paths.size());
-            ArrayList<MealyTransition> randomPath = paths.get(randomPathNum);
+            final int randomPathNum = random.nextInt(paths.size());
+            final List<MealyTransition> randomPath = paths.get(randomPathNum);
 
-            MealyNode lastNode = randomPath.get(randomPath.size() - 1).dst();
-            int randomTransitionNumber = random.nextInt(lastNode.transitionCount());
-            MealyTransition randomTransition = lastNode.transitions().toArray(new MealyTransition[0])[randomTransitionNumber];
+            final MealyNode lastNode = randomPath.get(randomPath.size() - 1).dst();
+            final int randomTransitionNumber = random.nextInt(lastNode.transitionCount());
+            MealyTransition randomTransition = lastNode.transitions()
+                    .toArray(new MealyTransition[0])[randomTransitionNumber];
             randomPath.add(randomTransition);
         }
 
-        StringBuilder sb = new StringBuilder();
+        final StringBuilder sb = new StringBuilder();
         for (int i = 0; i < paths.size(); i++) {
             if (i > 0) {
                 sb.append("\n\n");
@@ -99,14 +101,14 @@ public class ScenarioGenerator {
 
     static public String generateScenarios(MealyAutomaton automaton, int scenariosCount, int minLength, int maxLength,
                                            int sumLength, Random random) {
-        int[] length = getRandomLength(scenariosCount, minLength, maxLength, sumLength, random);
+        final int[] length = getRandomLength(scenariosCount, minLength, maxLength, sumLength, random);
 
-        List<Collection<MealyTransition>> visitedTransitions = new ArrayList<>();
+        final List<Collection<MealyTransition>> visitedTransitions = new ArrayList<>();
         for (int i = 0; i < automaton.states().size(); i++) {
             visitedTransitions.add(new ArrayList<>());
         }
 
-        StringBuilder sb = new StringBuilder();
+        final StringBuilder sb = new StringBuilder();
         for (int i = 0; i < scenariosCount; i++) {
             if (i > 0) {
                 sb.append("\n");
@@ -119,21 +121,22 @@ public class ScenarioGenerator {
 
     static private String generateScenario(MealyAutomaton automaton, int length,
                                            List<Collection<MealyTransition>> visitedTransitions, Random random) {
-        String events = "", actions = "";
+        final StringBuilder events = new StringBuilder();
+        final StringBuilder actions = new StringBuilder();
 
         MealyNode curNode = automaton.startState();
         for (int i = 0; i < length; i++) {
             if (i > 0) {
-                events += "; ";
-                actions += "; ";
+                events.append("; ");
+                actions.append("; ");
             }
 
             if (curNode.transitions().isEmpty()) {
-                throw new RuntimeException("There is no outcoming transitions from node number " + curNode.number());
+                throw new RuntimeException("There is no outgoing transitions from node number " + curNode.number());
             }
                         
             MealyTransition transition = null;
-            Collection<MealyTransition> currentVisited = visitedTransitions.get(curNode.number());
+            final Collection<MealyTransition> currentVisited = visitedTransitions.get(curNode.number());
             if (currentVisited.size() == curNode.transitions().size()) {
                 int transitionNum = random.nextInt(curNode.transitions().size());
                 transition = curNode.transitions().toArray(new MealyTransition[0])[transitionNum];
@@ -153,8 +156,8 @@ public class ScenarioGenerator {
                 currentVisited.add(transition);
             }
             
-            events += transition.event() + "[" + transition.expr() + "]";
-            actions += transition.actions();
+            events.append(transition.event() + "[" + transition.expr() + "]");
+            actions.append(transition.actions());
 
             curNode = transition.dst();
         }
@@ -162,12 +165,19 @@ public class ScenarioGenerator {
         return events + "\n" + actions + "\n";
     }
 
-    static private int[] getRandomLength(int scenariosCount, int minLength, int maxLength, int sumLength, Random random) {
-        assert 0 < minLength && minLength <= maxLength;
-        assert minLength * scenariosCount <= sumLength;
-        assert sumLength <= maxLength * scenariosCount;
+    static private int[] getRandomLength(int scenariosCount, int minLength, int maxLength, int sumLength,
+                                         Random random) {
+        if (!(0 < minLength && minLength <= maxLength)) {
+            throw new RuntimeException();
+        }
+        if (!(minLength * scenariosCount <= sumLength)) {
+            throw new RuntimeException();
+        }
+        if (!(sumLength <= maxLength * scenariosCount)) {
+            throw new RuntimeException();
+        }
 
-        int[] length = new int[scenariosCount];
+        final int[] length = new int[scenariosCount];
         for (int i = 0; i < scenariosCount; i++) {
             length[i] = sumLength / scenariosCount;
         }
@@ -176,8 +186,8 @@ public class ScenarioGenerator {
         }
 
         for (int i = 0; i < scenariosCount; i++) {
-            int s1 = random.nextInt(scenariosCount);
-            int s2 = random.nextInt(scenariosCount);
+            final int s1 = random.nextInt(scenariosCount);
+            final int s2 = random.nextInt(scenariosCount);
 
             int maxDiff = Math.min(length[s1] - minLength, maxLength - length[s2]);
             if (maxDiff > 0) {

@@ -271,7 +271,7 @@ public class PlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
                 Collections.nCopies(counterexample.events().size(), MyBooleanExpression.getTautology());
         final List<StringActions> actions = counterexample.actions().stream()
                 .map(action -> new StringActions(String.join(",", action))).collect(Collectors.toList());
-        negativeForest.addScenario(new StringScenario(true, counterexample.events(), expr, actions));
+        negativeForest.addScenario(new StringScenario(counterexample.events(), expr, actions));
         logger.info("ADDING COUNTEREXAMPLE: " + counterexample);
     }
 }
