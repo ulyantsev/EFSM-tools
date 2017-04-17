@@ -79,46 +79,9 @@ More notes:
 * Empty lines are not permitted.
 * There is a deprecated format which requires to write atomic propositions as *wasAction(co.&lt;action name&gt;)* and *wasEvent(ep.&lt;event name&gt;)*. Avoid this format.
 
-## Mealy machine synthesis from traces and LTL properties based on SAT and QSAT solvers
-
-This tool is described in the paper:
-
-* [Ulyantsev V., Buzhinsky I., Shalyto A. Exact Finite-State Machine Identification from Scenarios and Temporal Properties. International Journal on Software Tools for Technology Transfer, 2016, DOI: 10.1007/s10009-016-0442-1](http://arxiv.org/abs/1601.06945).
-
-It supports four methods of FSM synthesis based on:
-
-* iterative running of a SAT solver (also check the next section for a faster implementation of this method!)
-* running a QSAT (QBF) solver (this method is quite slow)
-* translating the QSAT instance to a SAT one and running a SAT solver (this method may require much memory)
-* backtracking (no solver is used)
-
-To run the tool:
-
-> java -jar jars/qbf-automaton-generator.jar
-
-The desired method can be selected using the "--strategy" command line option. FSM completeness requirement can be switched on by adding "--completenessType NORMAL". The only supported QBF solver is DepQBF.
-
-Here are scripts to run several examples from the paper mentioned above:
-
-> cd examples
-
-> ln -s ../c-lib .
-
-> ./clock.sh # Alarm clock
-
-> ./elevator.sh # Elevator
-
-> ./cash-dispenser.sh # ATM
-
-> ./editor.sh # Text editor
-
-> ./jhotdraw.sh # JHotDraw
-
-> ./cvs.sh # CVS client
-
 ## Mealy machine synthesis from traces and LTL properties based on incremental SAT solvers
 
-This is an enhanced version of the so-called "iterative" method described here:
+This method is described here as the "Iterative SAT-based" one:
 
 * [Ulyantsev V., Buzhinsky I., Shalyto A. Exact Finite-State Machine Identification from Scenarios and Temporal Properties. International Journal on Software Tools for Technology Transfer, 2016, DOI: 10.1007/s10009-016-0442-1](http://arxiv.org/abs/1601.06945).
 
@@ -143,6 +106,43 @@ Here are scripts to run several examples from the paper mentioned above:
 > ./jhotdraw-fast.sh # JHotDraw
 
 > ./cvs-fast.sh # CVS client
+
+## Mealy machine synthesis from traces and LTL properties based on SAT and QSAT solvers
+
+Additional (but generally slower) methods are also available for the same problem. They are described here:
+
+* [Ulyantsev V., Buzhinsky I., Shalyto A. Exact Finite-State Machine Identification from Scenarios and Temporal Properties. International Journal on Software Tools for Technology Transfer, 2016, DOI: 10.1007/s10009-016-0442-1](http://arxiv.org/abs/1601.06945).
+
+Run the following tool:
+
+> java -jar jars/qbf-automaton-generator.jar
+
+It supports four methods of FSM synthesis based on:
+
+* running a QSAT (QBF) solver (this method is quite slow)
+* translating the QSAT instance to a SAT one and running a SAT solver (this method may require much memory)
+* backtracking (no solver is used)
+* iterative SAT-solving using a non-incremental solver (not described in the paper)
+
+The concrete method can be selected using the "--strategy" command line option. FSM completeness requirement can be switched on by adding "--completenessType NORMAL". The only supported QBF solver is DepQBF.
+
+Here are scripts to run several examples from the paper mentioned above:
+
+> cd examples
+
+> ln -s ../c-lib .
+
+> ./clock.sh # Alarm clock
+
+> ./elevator.sh # Elevator
+
+> ./cash-dispenser.sh # ATM
+
+> ./editor.sh # Text editor
+
+> ./jhotdraw.sh # JHotDraw
+
+> ./cvs.sh # CVS client
 
 ## Plant model synthesis from traces and LTL properties
 
