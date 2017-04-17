@@ -1,6 +1,6 @@
 package structures.moore;
 
-import apros.*;
+import continuous_trace_builders.*;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;

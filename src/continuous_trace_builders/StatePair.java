@@ -1,10 +1,10 @@
-package apros;
+package continuous_trace_builders;
 
 /**
  * (c) Igor Buzhinsky
  */
 
-import apros.CompositionalBuilder.Match;
+import continuous_trace_builders.CompositionalBuilder.Match;
 import org.apache.commons.lang3.tuple.Pair;
 import scenario.StringActions;
 import structures.moore.MooreNode;
