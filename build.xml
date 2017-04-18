@@ -63,6 +63,9 @@
     <property name="moore.scenario.compliance.checker.main" value="main/plant/MooreScenarioComplianceCheckerMain"/>
     <property name="moore.scenario.compliance.checker.jar" value="moore-scenario-compliance-checker.jar"/>
 
+    <property name="unbeast.translator.main" value="main/misc/UnbeastTranslator"/>
+    <property name="unbeast.translator.jar" value="unbeast-translator.jar"/>
+    
     <property name="debug" value="false"/>
     
     <target name="all" 
@@ -71,7 +74,7 @@
                      qbf-automaton-generator-jar, plant-automaton-generator-jar,
                      safety-ltl-generator-jar, max-clique-finder-jar, plant-generator-jar,
                      verifier-jar, plant-scenario-generator-jar, fast-automaton-generator-jar,
-                     apros-builder-jar, moore-scenario-compliance-checker-jar">
+                     apros-builder-jar, moore-scenario-compliance-checker-jar, unbeast-translator">
     </target>
 
     <target name="minizinc-generator-jar">
@@ -436,6 +439,28 @@
             <zipfileset src="${args4j.path}" excludes="META-INF/*.SF"/>
             <zipfileset src="${commons.lang3.path}" excludes="META-INF/*.SF"/>
             <zipfileset src="${javassist.path}" excludes="meta-inf/*.sf"/>
+        </jar>
+        <delete dir="${bin.dir}"/>
+    </target>
+    
+    <target name="unbeast-translator">
+        <mkdir dir="${bin.dir}"/>
+        <javac srcdir="${src.dir}"
+               destdir="${bin.dir}"
+               classpath="${commons.lang3.path}:${javassist.path}:${ltl2ba.path}:${ognl.path}"
+               includeantruntime="false"
+               debug="${debug}">
+            <include name="${unbeast.translator.main}.java"/>
+        </javac>
+        <jar destfile="${jars.dir}/${unbeast.translator.jar}"
+             basedir="${bin.dir}">
+            <manifest>
+                <attribute name="Main-Class" value="${unbeast.translator.main}"/>
+            </manifest>
+            <zipfileset src="${commons.lang3.path}" excludes="META-INF/*.SF"/>
+            <zipfileset src="${javassist.path}" excludes="meta-inf/*.sf"/>
+            <zipfileset src="${ltl2ba.path}" excludes="meta-inf/*.sf"/>
+            <zipfileset src="${ognl.path}" excludes="meta-inf/*.sf"/>
         </jar>
         <delete dir="${bin.dir}"/>
     </target>

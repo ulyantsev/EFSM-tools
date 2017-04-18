@@ -1,12 +1,12 @@
 package structures.mealy;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-
 import bool.MyBooleanExpression;
 import scenario.StringActions;
 import scenario.StringScenario;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 
 public class MealyAutomaton {
     private final MealyNode startState;
@@ -40,11 +40,7 @@ public class MealyAutomaton {
     public void addTransition(MealyNode state, MealyTransition transition) {
         state.addTransition(transition.event(), transition.expr(), transition.actions(), transition.dst());
     }
-    
-    public void removeTransition(MealyNode state, MealyTransition transition) {
-        state.removeTransition(transition);
-    }
-    
+
     private MealyNode nextNode(MealyNode node, String event, MyBooleanExpression expr) {
         for (MealyTransition tr : node.transitions()) {
             if (tr.event().equals(event) && tr.expr() == expr) {

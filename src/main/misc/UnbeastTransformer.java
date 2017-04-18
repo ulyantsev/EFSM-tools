@@ -5,7 +5,7 @@ package main.misc;
  */
 
 import bool.MyBooleanExpression;
-import choco.kernel.common.util.tools.ArrayUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import scenario.StringActions;
 import scenario.StringScenario;
 import structures.mealy.MealyAutomaton;
@@ -35,8 +35,7 @@ public class UnbeastTransformer {
         final List<String> actions = Arrays.asList("z0", "z1", "z2", "z3");
         final String prefix = "evaluation/testing/complete/fsm-3-";
         for (int i = 0; i < 50; i++) {
-            final Problem p = new Problem(prefix + i + "-true.ltl",
-                prefix + i + ".sc", events, actions, false);
+            final Problem p = new Problem(prefix + i + "-true.ltl", prefix + i + ".sc", events, actions);
             runUnbeast(p, "unbeast-automaton-" + i, "unbeast-log-" + i, true);
         }
     }
@@ -45,7 +44,7 @@ public class UnbeastTransformer {
             boolean reconstructAutomaton) throws IOException, ParseException, LtlParseException {
         final long startTime = System.currentTimeMillis();
         final String outputPath = "generated-problem.xml";
-        
+
         final List<String> formulae = LtlParser.load(p.ltlPath, 0, p.events);
         final List<LtlNode> nodes = LtlParser.parse(formulae);
         final List<StringScenario> scenarios = StringScenario.loadScenarios(p.scenarioPath, false);
@@ -57,9 +56,9 @@ public class UnbeastTransformer {
         
         final Verifier v = new Verifier(logger, formulae, p.events, p.actions);
         final List<String> specification = new ArrayList<>();
-        specification.addAll(Generator.ltlSpecification(nodes, p.incomplete));
-        specification.addAll(Generator.scenarioSpecification(scenarios, p.actions, p.incomplete));
-        final String problem = Generator.problemDescription(p.events, p.actions, specification, p.incomplete);
+        specification.addAll(Generator.ltlSpecification(nodes));
+        specification.addAll(Generator.scenarioSpecification(scenarios, p.actions));
+        final String problem = Generator.problemDescription(p.events, p.actions, specification);
         logger.info(problem);
         try (PrintWriter pw = new PrintWriter(new File(outputPath))) {
             pw.println(problem);
@@ -92,8 +91,7 @@ public class UnbeastTransformer {
                     break;
                 }
             }
-            final Game game = new Game(inputScanner, writer, p.actions, p.events,
-                    p.incomplete);
+            final Game game = new Game(inputScanner, writer, p.actions, p.events);
             final MealyAutomaton a = game.reconstructAutomaton(logger);
             unbeast.destroy();
             
@@ -266,16 +264,12 @@ public class UnbeastTransformer {
     }
     
     static class Generator {
-        static List<String> ltlSpecification(List<LtlNode> nodes, boolean incomplete) {
+        static List<String> ltlSpecification(List<LtlNode> nodes) {
             final List<String> ltlStrings = new ArrayList<>();
             for (LtlNode node : nodes) {
                 final StringBuilder xmlBuilder = new StringBuilder();
                 node.accept(new Visitor(), xmlBuilder);
-                String ltlString = xmlBuilder.toString();
-                if (incomplete) {
-                    ltlString = tag("Or", tag("F", tag("Var", "Invalid")) + ltlString);
-                }
-                ltlStrings.add(ltlString);
+                ltlStrings.add(xmlBuilder.toString());
             }
             return ltlStrings;
         }
@@ -318,30 +312,25 @@ public class UnbeastTransformer {
             return ans;
         }
         
-        static String outputFormula(StringScenario sc, int index, List<String> actions,
-                boolean incomplete) {
+        static String outputFormula(StringScenario sc, int index, List<String> actions) {
             final String[] thisActions = sc.getActions(index).getActions();
             String formula = actionFormula(actions.get(0), ArrayUtils.contains(thisActions, actions.get(0)));
             for (int i = 1; i < actions.size(); i++) {
                 formula = tag("And", actionFormula(actions.get(i),
                         ArrayUtils.contains(thisActions, actions.get(i))) + formula);
             }
-            if (incomplete) {
-                formula = tag("And", tag("Not", tag("Var", "Invalid")) + formula);
-            }
             
             return formula;
         }
         
-        static List<String> scenarioSpecification(List<StringScenario> scenarios, List<String> actions,
-                boolean incomplete) {
+        static List<String> scenarioSpecification(List<StringScenario> scenarios, List<String> actions) {
             final List<String> scenarioStrings = new ArrayList<>();
             for (StringScenario sc : scenarios) {
                 String formula = tag("Or", tag("Not", inputFormula(sc, sc.size() - 1))
-                        + outputFormula(sc, sc.size() - 1, actions, incomplete));
+                        + outputFormula(sc, sc.size() - 1, actions));
                 for (int i = sc.size() - 2; i >= 0; i--) {
                     formula = tag("Or", tag("Not", inputFormula(sc, i)) + tag("And", 
-                            outputFormula(sc, i, actions, incomplete) + tag("X", formula)));
+                            outputFormula(sc, i, actions) + tag("X", formula)));
                 }
                 scenarioStrings.add(formula);
             }
@@ -364,8 +353,7 @@ public class UnbeastTransformer {
             return assumptions;
         }
         
-        static String problemDescription(List<String> events,
-                List<String> actions, List<String> specification, boolean incomplete) {
+        static String problemDescription(List<String> events, List<String> actions, List<String> specification) {
             final StringBuilder sb = new StringBuilder();
             sb.append("<?xml version=\"1.0\" encoding=\"ISO-8859-1\" ?>\n");
             sb.append("<!DOCTYPE SynthesisProblem SYSTEM \"SynSpec.dtd\">\n");
@@ -379,9 +367,6 @@ public class UnbeastTransformer {
             sb.append("</GlobalInputs>\n");
             sb.append("<GlobalOutputs>\n");
             actions.forEach(a -> sb.append("  <Bit>" + a + "</Bit>\n"));
-            if (incomplete) {
-                sb.append("  <Bit>Invalid</Bit>\n");
-            }
             sb.append("</GlobalOutputs>\n");
             sb.append("<Assumptions>\n");
             eventAssumptions(events).forEach(a -> sb.append("  <LTL>" + a + "</LTL>\n"));
@@ -399,18 +384,12 @@ public class UnbeastTransformer {
         final String scenarioPath;
         final List<String> events;
         final List<String> actions;
-        final boolean incomplete;
-        
-        public Problem(String ltlPath, String scenarioPath,
-                List<String> events, List<String> actions, boolean incomplete) {
+
+        public Problem(String ltlPath, String scenarioPath, List<String> events, List<String> actions) {
             this.ltlPath = ltlPath;
             this.scenarioPath = scenarioPath;
             this.events = events;
             this.actions = actions;
-            this.incomplete = incomplete;
-            if (incomplete) {
-                throw new AssertionError("Incompleteness is not supported!");
-            }
         }
     }
     
@@ -419,15 +398,12 @@ public class UnbeastTransformer {
         private final PrintWriter output;
         private final List<String> actions;
         private final List<String> events;
-        private final boolean incomplete;
-        
-        public Game(Scanner input, PrintWriter output, List<String> actions,
-                List<String> events, boolean incomplete) {
+
+        public Game(Scanner input, PrintWriter output, List<String> actions, List<String> events) {
             this.input = input;
             this.output = output;
             this.actions = actions;
             this.events = events;
-            this.incomplete = incomplete;
         }
 
         static class GameState {
@@ -512,9 +488,6 @@ public class UnbeastTransformer {
         }
         
         private List<String> describeActions(String actionStr) {
-            if (incomplete && actionStr.charAt(actions.size()) == '1') {
-                return null; // special output
-            }
             final List<String> elements = new ArrayList<>();
             for (int i = 0; i < actions.size(); i++) {
                 if (actionStr.charAt(i) == '1') {
