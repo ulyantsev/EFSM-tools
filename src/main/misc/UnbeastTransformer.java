@@ -305,11 +305,8 @@ public class UnbeastTransformer {
         }
         
         static String actionFormula(String action, boolean present) {
-            String ans = tag("Var", action);
-            if (!present) {
-                ans = tag("Not", ans);
-            }
-            return ans;
+            final String ans = tag("Var", action);
+            return present ? ans : tag("Not", ans);
         }
         
         static String outputFormula(StringScenario sc, int index, List<String> actions) {
@@ -536,14 +533,10 @@ public class UnbeastTransformer {
                 for (int i = 0; i < s.transitions.size(); i++) {
                     final String input = describeEvents(s.events.get(i));
                     final List<String> output = describeActions(s.actions.get(i));
-                    if (output == null) {
-                        continue;
-                    }
                     final StringActions actions = new StringActions(output
                             .toString().replace("[", "").replace("]", ""));
                     final MealyNode dst = a.state(s.transitions.get(i).number);
-                    a.state(s.number).addTransition(input, MyBooleanExpression.getTautology(),
-                            actions, dst);
+                    a.state(s.number).addTransition(input, MyBooleanExpression.getTautology(), actions, dst);
                 }
             }
             return a;
