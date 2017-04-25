@@ -22,10 +22,6 @@ public class StateMachine {
         return initialState;
     }
 
-    /*public SimpleState getState(String stateName) {
-        return states.get(stateName);
-    }*/
-
     public void addState(SimpleState s) {
         checkInitial(s);
         states.put(s.name, s);

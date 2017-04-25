@@ -1,14 +1,9 @@
 package structures.moore;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-
 import scenario.StringActions;
+
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class MooreNode {
     private int number;
@@ -80,8 +75,7 @@ public class MooreNode {
     }
     
     public List<MooreNode> allDst(String event) {
-        return transitions.stream().filter(t -> t.event().equals(event))
-                .map(MooreTransition::dst)
+        return transitions.stream().filter(t -> t.event().equals(event)).map(MooreTransition::dst)
                 .collect(Collectors.toList());
     }
 }

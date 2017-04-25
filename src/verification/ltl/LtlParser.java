@@ -80,8 +80,7 @@ public class LtlParser {
         return sb.toString();
     }
     
-    public static List<String> load(String filepath, int varNumber, List<String> events)
-            throws FileNotFoundException {
+    public static List<String> load(String filepath, int varNumber, List<String> events) throws FileNotFoundException {
         if (filepath == null) {
             return Collections.emptyList();
         }

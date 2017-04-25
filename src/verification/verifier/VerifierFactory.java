@@ -3,16 +3,8 @@
  */
 package verification.verifier;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
-
 import structures.mealy.MealyAutomaton;
 import structures.mealy.MealyNode;
 import structures.mealy.MealyTransition;
@@ -31,6 +23,9 @@ import verification.ltl.grammar.PredicateFactory;
 import verification.statemachine.SimpleState;
 import verification.statemachine.StateMachine;
 import verification.statemachine.StateTransition;
+
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author kegorov
@@ -81,8 +76,7 @@ public class VerifierFactory {
         for (int i = 0; i < automaton.stateCount(); i++) {
             final MealyNode currentState = automaton.state(i);
             for (MealyTransition t : currentState.transitions()) {
-                final StateTransition out = new StateTransition(
-                        extractEvent(t.event()), statesArr[t.dst().number()]);
+                final StateTransition out = new StateTransition(extractEvent(t.event()), statesArr[t.dst().number()]);
                 Arrays.stream(t.actions().getActions()).forEach(out::addAction);
                 statesArr[i].addOutgoingTransition(out);
                 if (verifyFromAllStates) {
@@ -116,8 +110,7 @@ public class VerifierFactory {
         for (int i = 0; i < automaton.stateCount(); i++) {
             final MooreNode currentState = automaton.state(i);
             for (MooreTransition t : currentState.transitions()) {
-                final StateTransition out = new StateTransition(
-                        extractEvent(t.event()), statesArr[t.dst().number()]);
+                final StateTransition out = new StateTransition(extractEvent(t.event()), statesArr[t.dst().number()]);
                 Arrays.stream(t.dst().actions().getActions()).forEach(out::addAction);
                 statesArr[i].addOutgoingTransition(out);
                 if (verifyFromAllStates) {
@@ -138,11 +131,9 @@ public class VerifierFactory {
                     finiteCounterexampleBuchiStates.get(i));
             
             if (!list.getLeft().isEmpty()) {
-                final List<String> eventList = list.getLeft().stream()
-                        .map(t -> t.transition.event)
+                final List<String> eventList = list.getLeft().stream().map(t -> t.transition.event)
                         .collect(Collectors.toList());
-                final List<List<String>> actionList = list.getLeft().stream()
-                        .map(t -> t.transition.getActions())
+                final List<List<String>> actionList = list.getLeft().stream().map(t -> t.transition.getActions())
                         .collect(Collectors.toList());
                 counterexamples.add(new Counterexample(eventList, actionList, list.getRight()));
             } else {

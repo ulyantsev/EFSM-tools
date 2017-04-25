@@ -82,7 +82,8 @@ public class MaxCliqueFinderMain extends MainBase {
         return clique;
     }
 
-    private static MealyNode neighborWithHighestDegree(Set<MealyNode> cur, MealyNode v, Map<MealyNode, Set<MealyNode>> adjacent) {
+    private static MealyNode neighborWithHighestDegree(Set<MealyNode> cur, MealyNode v,
+                                                       Map<MealyNode, Set<MealyNode>> adjacent) {
         int maxDegree = 0;
         MealyNode maxNeighbour = null;
         for (MealyNode u : adjacent.get(v)) {

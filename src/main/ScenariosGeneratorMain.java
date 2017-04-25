@@ -1,14 +1,13 @@
 package main;
-import java.io.IOException;
-import java.text.ParseException;
-
+import algorithms.ScenarioGenerator;
 import meta.Author;
 import meta.MainBase;
 import org.kohsuke.args4j.Option;
 import org.kohsuke.args4j.spi.BooleanOptionHandler;
-
 import structures.mealy.MealyAutomaton;
-import algorithms.ScenarioGenerator;
+
+import java.io.IOException;
+import java.text.ParseException;
 
 public class ScenariosGeneratorMain extends MainBase {
     @Option(name = "--automaton", aliases = { "-a" }, usage = "given EFSM in GV format", metaVar = "<fp>", required = true)
@@ -48,7 +47,8 @@ public class ScenariosGeneratorMain extends MainBase {
         String scenarios = null;
         if (cover) {
             if (scenarioNumber != 0 || minLength != 0 || maxLength != 0) {
-                System.err.println("With --cover option on, --count, --minLength, --maxLength options are not available");
+                System.err.println(
+                        "With --cover option on, --count, --minLength, --maxLength options are not available");
                 return;
             }
 
@@ -69,8 +69,8 @@ public class ScenariosGeneratorMain extends MainBase {
                 sumLength = (maxLength + minLength) * scenarioNumber / 2;
             }
 
-            scenarios = ScenarioGenerator.generateScenarios(automaton, scenarioNumber,
-                    minLength, maxLength, sumLength, random());
+            scenarios = ScenarioGenerator.generateScenarios(automaton, scenarioNumber, minLength, maxLength, sumLength,
+                    random());
         }
         
         if (scenarioFilepath != null) {
