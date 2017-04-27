@@ -4,7 +4,11 @@ package continuous_trace_builders;
  * (c) Igor Buzhinsky
  */
 
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -113,9 +117,11 @@ public class ConstraintExtractor {
     }
 
     private static void addOIOConstraints(Configuration conf, List<String> initConstraints,
-                                         List<String> transConstraints, Dataset ds) {
+                                          List<String> transConstraints, Dataset ds, List<List<Parameter>> grouping) {
         for (Parameter pi : conf.inputParameters) {
             for (Parameter po : conf.outputParameters) {
+                if (grouping.stream().anyMatch(l -> l.contains(pi)))
+                    continue;
                 final Map<Integer, Set<Integer>> indexPairs = new TreeMap<>();
                 for (List<double[]> trace : ds.values) {
                     for (int i = 0; i < trace.size() - 1; i++) {
@@ -123,10 +129,7 @@ public class ConstraintExtractor {
                         final int indexI = pi.traceNameIndex(ds.get(trace.get(i), pi));
                         final int indexO2 = po.traceNameIndex(ds.get(trace.get(i + 1), po));
                         int mapIndex = (indexO1 << 16) + indexI;
-                        Set<Integer> set = indexPairs.get(mapIndex);
-                        if (set == null) {
-                            indexPairs.put(mapIndex, set = new TreeSet<>());
-                        }
+                        Set<Integer> set = indexPairs.computeIfAbsent(mapIndex, k -> new TreeSet<>());
                         set.add(indexO2);
                     }
                 }
@@ -139,6 +142,41 @@ public class ConstraintExtractor {
                             + " & output_" + po.traceName() + " = " + indexO1;
                     String next = indices.isEmpty() ? "" : (" & " + interval(indices, po, true));
                     optionList.add(cond + next);
+                }
+
+                transConstraints.add(String.join(" | ", optionList));
+            }
+        }
+        for (List<Parameter> inputs : grouping) {
+            for (Parameter po : conf.outputParameters) {
+                final Map<List<Integer>, Set<Integer>> indexPairs = new HashMap<>();
+                for (List<double[]> trace : ds.values) {
+                    for (int i = 0; i < trace.size() - 1; i++) {
+                        List<Integer> key = new ArrayList<>();
+                        for (Parameter pi : inputs) {
+                            final int indexI = pi.traceNameIndex(ds.get(trace.get(i), pi));
+                            key.add(indexI);
+                        }
+                        final int indexO1 = po.traceNameIndex(ds.get(trace.get(i), po));
+                        key.add(indexO1);
+                        Set<Integer> set = indexPairs.computeIfAbsent(key, k -> new TreeSet<>());
+                        final int indexO2 = po.traceNameIndex(ds.get(trace.get(i + 1), po));
+                        set.add(indexO2);
+                    }
+                }
+                final List<String> optionList = new ArrayList<>();
+                for (Map.Entry<List<Integer>, Set<Integer>> entry : indexPairs.entrySet()) {
+                    List<Integer> key = new ArrayList<>(entry.getKey());
+                    int indexO1 = key.remove(key.size() - 1);
+                    Set<Integer> indices = entry.getValue();
+                    StringBuilder sb = new StringBuilder();
+                    for (int i = 0; i < inputs.size(); i++) {
+                        Parameter pi = inputs.get(i);
+                        sb.append("CONT_INPUT_" + pi.traceName() + " in " + pi.nusmvInterval(key.get(i)) + " & ");
+                    }
+                    sb.append("output_" + po.traceName() + " = " + indexO1);
+                    String next = indices.isEmpty() ? "" : (" & " + interval(indices, po, true));
+                    optionList.add(sb.toString() + next);
                 }
 
                 transConstraints.add(String.join(" | ", optionList));
@@ -242,10 +280,33 @@ public class ConstraintExtractor {
         System.out.println("Constraints generated: " + constraintsCount);
     }
 
-    public static void run(Configuration conf, String directory, String datasetFilename) throws IOException {
+    public static void run(Configuration conf, String directory, String datasetFilename, String groupingFile) throws IOException {
         final Dataset ds = Dataset.load(Utils.combinePaths(directory, datasetFilename));
         final List<String> initConstraints = new ArrayList<>();
         final List<String> transConstraints = new ArrayList<>();
+        final List<List<Parameter>> grouping = new ArrayList<>();
+        if (groupingFile != null) {
+            Function<String, Parameter> findParameter = s -> {
+                for (Parameter par : conf.inputParameters) {
+                    if (par.traceName().equals(s)) {
+                        return par;
+                    }
+                }
+                return null;
+            };
+            try (BufferedReader in = new BufferedReader(new FileReader(Paths.get(directory, groupingFile).toString()))) {
+                while (true) {
+                    String line = in.readLine();
+                    if (line == null || line.trim().equals("")) {
+                        break;
+                    }
+                    grouping.add(Arrays.asList(line.trim().split(" "))
+                            .stream()
+                            .map(findParameter::apply)
+                            .collect(Collectors.toList()));
+                }
+            }
+        }
 
         // 1. overall 1-dimensional constraints
         // "each output may only have values found in the traces"
@@ -257,10 +318,9 @@ public class ConstraintExtractor {
         if (OVERALL_2D) {
             add2DConstraints(conf, initConstraints, transConstraints, ds);
         }
-        // 3. overall 2-dimensional constraints
-        // "for each pair of outputs, only value pairs found in some trace element are possible"
+        // 3. Ok = a & Ik = b -> O(k+1)=c
         if (OIO_CONSTRAINTS) {
-            addOIOConstraints(conf, initConstraints, transConstraints, ds);
+            addOIOConstraints(conf, initConstraints, transConstraints, ds, grouping);
         }
 
         // 2. 2-dimensional constraints "input -> possible next state"

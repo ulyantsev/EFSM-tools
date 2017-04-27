@@ -93,9 +93,14 @@ public class AprosBuilderMain extends MainBase {
             usage = "explicit-state and modular: use SAT-based synthesis")
     private boolean satBased;
 
+    @Option(name = "--grouping",
+            usage = "constraint-based: file where parameters grouping is described",
+            metaVar = "<file>")
+    private String groupingFile;
+
     @Option(name = "--output", aliases = {},
             usage = "list of comma-separated output languages (promela, nusmv), default: nusmv",
-            metaVar = "<output>")
+            metaVar = "<file>")
     private String output = "nusmv";
 
     public static void main(String[] args) {
@@ -122,7 +127,7 @@ public class AprosBuilderMain extends MainBase {
             } else {
                 final Configuration conf = Configuration.load(Utils.combinePaths(directory, confFilename));
                 if (Objects.equals(type, "constraint-based")) {
-                    ConstraintExtractor.run(conf, directory, datasetFilename);
+                    ConstraintExtractor.run(conf, directory, datasetFilename, groupingFile);
                 } else if (Objects.equals(type, "constraint-based-new")) {
                     SymbolicBuilder.run(conf, directory, datasetFilename, true, !disableCur2D, !disableCur3D,
                             !disableCurNext2D, !disableCurNext3D, disableCurNextOutputs);
