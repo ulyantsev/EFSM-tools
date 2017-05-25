@@ -1,4 +1,4 @@
-package continuous_trace_builders;
+package continuous_trace_builders.parameters;
 
 /**
  * (c) Igor Buzhinsky

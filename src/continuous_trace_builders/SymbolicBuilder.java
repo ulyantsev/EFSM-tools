@@ -4,6 +4,9 @@ package continuous_trace_builders;
  * (c) Igor Buzhinsky
  */
 
+import continuous_trace_builders.parameters.IgnoredBoolParameter;
+import continuous_trace_builders.parameters.Parameter;
+
 import java.io.IOException;
 import java.util.*;
 import java.util.function.Function;
