@@ -93,6 +93,10 @@ public class AprosBuilderMain extends MainBase {
             usage = "explicit-state and modular: use SAT-based synthesis")
     private boolean satBased;
 
+    @Option(name = "--timedConstraints", handler = BooleanOptionHandler.class,
+            usage = "explicit-state: limit loop execution times based on traces")
+    private boolean timedConstraints;
+
     @Option(name = "--grouping",
             usage = "constraint-based: file where parameters grouping is described",
             metaVar = "<file>")
@@ -133,10 +137,10 @@ public class AprosBuilderMain extends MainBase {
                             !disableCurNext2D, !disableCurNext3D, disableCurNextOutputs);
                 } else if (Objects.equals(type, "explicit-state")) {
                     ExplicitStateBuilder.run(conf, directory, datasetFilename, satBased, traceIncludeEach,
-                            traceFraction, true, outputSmv, outputSpin);
+                            traceFraction, true, outputSmv, outputSpin, timedConstraints);
                 } else if (Objects.equals(type, "explicit-state-completion-with-loops")) {
                     ExplicitStateBuilder.run(conf, directory, datasetFilename, satBased, traceIncludeEach,
-                            traceFraction, false, outputSmv, outputSpin);
+                            traceFraction, false, outputSmv, outputSpin, timedConstraints);
                 } else if (Objects.equals(type, "trace-evaluation")) {
                     TraceEvaluationBuilder.run(conf, directory, datasetFilename, satBased, traceIncludeEach,
                             traceFraction);

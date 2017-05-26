@@ -71,7 +71,7 @@ public class ExplicitStateBuilder {
 
     public static void run(Configuration conf, String directory, String datasetFilename, boolean satBased,
                            int traceIncludeEach, double traceFraction, boolean proximityCompletion,
-                           boolean outputSmv, boolean outputSpin) throws IOException {
+                           boolean outputSmv, boolean outputSpin, boolean timedConstraints) throws IOException {
         System.out.print("Loading the dataset...");
         Dataset ds = Dataset.load(Utils.combinePaths(directory, datasetFilename));
         System.out.println(" done");
@@ -79,7 +79,8 @@ public class ExplicitStateBuilder {
         System.out.println();
         final String namePrefix = "plant-explicit.";
         final List<String> params = TraceTranslator.generateScenarios(conf, directory, ds, new HashSet<>(),
-                "", "", false, satBased, ALL_EVENT_COMBINATIONS, traceIncludeEach, traceFraction);
+                "", "", false, satBased, ALL_EVENT_COMBINATIONS, traceIncludeEach, traceFraction,
+                timedConstraints ? new String[] { "--timedConstraints" } : new String[0]);
         ds = null;
         System.out.println();
         final PlantBuilderMain builder = new PlantBuilderMain();

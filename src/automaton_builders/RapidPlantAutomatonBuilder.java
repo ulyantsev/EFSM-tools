@@ -4,25 +4,21 @@ package automaton_builders;
  * (c) Igor Buzhinsky
  */
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-
 import scenario.StringActions;
 import structures.moore.MooreNode;
 import structures.moore.MooreTransition;
 import structures.moore.NondetMooreAutomaton;
 import structures.moore.PositivePlantScenarioForest;
 
+import java.io.IOException;
+import java.util.*;
+
 public class RapidPlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
+    /*
+     * positiveForest must be constructed with separatePaths
+     */
     public static Optional<NondetMooreAutomaton> build(PositivePlantScenarioForest positiveForest,
-            List<String> events) throws IOException {
+            List<String> events, boolean timedConstraints) throws IOException {
         final Map<StringActions, Set<MooreNode>> map = new LinkedHashMap<>();
         final Map<MooreNode, Integer> nodeToState = new HashMap<>();
         final Map<StringActions, Integer> actionsToState = new HashMap<>();
@@ -38,7 +34,7 @@ public class RapidPlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
             nodeToState.put(node, actionsToState.get(node.actions()));
             cluster.add(node);
         }
-        final List<Boolean> isStart = new ArrayList<>();
+        final List<Boolean> isInitial = new ArrayList<>();
         for (Map.Entry<StringActions, Set<MooreNode>> entry : map.entrySet()) {
             boolean initial = false;
             for (MooreNode root : positiveForest.roots()) {
@@ -47,11 +43,10 @@ public class RapidPlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
                     break;
                 }
             }
-            isStart.add(initial);
+            isInitial.add(initial);
         }
         // transitions from scenarios
-        final NondetMooreAutomaton automaton = new NondetMooreAutomaton(map.size(),
-                stateToActions, isStart);
+        final NondetMooreAutomaton automaton = new NondetMooreAutomaton(map.size(), stateToActions, isInitial);
         for (MooreNode node : positiveForest.nodes()) {
             final MooreNode sourceState = automaton.state(nodeToState.get(node));
             for (MooreTransition t : node.transitions()) {
@@ -71,6 +66,34 @@ public class RapidPlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
                 }
             }
         }
+
+        if (timedConstraints) {
+            final Set<MooreNode> processedNodes = new HashSet<>();
+            final Map<MooreNode, Integer> loopConstraints = new HashMap<>();
+            for (MooreNode node : positiveForest.nodes()) {
+                if (!processedNodes.add(node)) {
+                    continue;
+                }
+                int limit = 0;
+                MooreNode curNode = node;
+                while (!curNode.transitions().isEmpty()) {
+                    final MooreNode newNode = curNode.transitions().iterator().next().dst();
+                    processedNodes.add(curNode);
+                    if (newNode.actions().equals(curNode.actions())) {
+                        curNode = newNode;
+                        limit++;
+                    } else {
+                        break;
+                    }
+                }
+                final MooreNode automatonState = automaton.state(nodeToState.get(node));
+                Integer maxLimit = loopConstraints.get(automatonState);
+                maxLimit = maxLimit == null ? limit : Math.max(limit, maxLimit);
+                loopConstraints.put(automatonState, maxLimit);
+            }
+            automaton.setLoopConstraints(loopConstraints);
+        }
+
         return Optional.of(automaton);
     }
 }

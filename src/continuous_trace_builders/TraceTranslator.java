@@ -158,8 +158,8 @@ public class TraceTranslator {
 
     public static List<String> generateScenarios(Configuration conf, String directory, Dataset ds,
             Set<List<String>> allActionCombinations, String gvOutput, String smvOutput, boolean addActionDescriptions,
-            boolean satBased, boolean allEventCombinations, int traceIncludeEach, double traceFraction)
-            throws FileNotFoundException {
+            boolean satBased, boolean allEventCombinations, int traceIncludeEach, double traceFraction,
+            String... moreCommandLineOptions) throws FileNotFoundException {
         // traces
         final Set<String> allEvents = new TreeSet<>();
         if (allEventCombinations) {
@@ -244,6 +244,8 @@ public class TraceTranslator {
         for (Parameter p : conf.inputParameters) {
             System.out.println(" input " + describe.apply(p));
         }
+
+        Arrays.stream(moreCommandLineOptions).forEach(builderArgs::add);
 
         return builderArgs;
     }

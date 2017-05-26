@@ -19,6 +19,15 @@ public class NondetMooreAutomaton {
     
     private Set<MooreTransition> unsupportedTransitions = new HashSet<>();
 
+    private List<Integer> loopConstraints = null;
+
+    public void setLoopConstraints(Map<MooreNode, Integer> loopConstraints) {
+        this.loopConstraints = new ArrayList<>();
+        for (int i = 0; i < stateCount(); i++) {
+            this.loopConstraints.add(loopConstraints.get(states.get(i)));
+        }
+    }
+
     public Set<MooreTransition> unsupportedTransitions() {
         return unsupportedTransitions;
     }
@@ -29,9 +38,7 @@ public class NondetMooreAutomaton {
         for (MooreNode state : states) {
             for (MooreTransition t : state.transitions()) {
                 all++;
-                if (p.test(t)) {
-                    matched++;
-                }
+                matched += p.test(t) ? 1 : 0;
             }
         }
         return (double) matched / all;
@@ -42,11 +49,7 @@ public class NondetMooreAutomaton {
     }
 
     public int transitionNumber() {
-        int sum = 0;
-        for (MooreNode state : states) {
-            sum += state.transitions().size();
-        }
-        return sum;
+        return states.stream().mapToInt(s -> s.transitions().size()).sum();
     }
 
     public double loopFraction() {
@@ -115,69 +118,6 @@ public class NondetMooreAutomaton {
         }
         return a;
     }
-
-    @Deprecated
-    public static NondetMooreAutomaton readGV_old(String filename) throws FileNotFoundException {
-        final Map<String, List<String>> actionRelation = new LinkedHashMap<>();
-        final Map<String, List<Pair<Integer, String>>> transitionRelation = new LinkedHashMap<>();
-        actionRelation.put("init", new ArrayList<>());
-        transitionRelation.put("init", new ArrayList<>());
-        final Set<String> events = new LinkedHashSet<>();
-        final Set<String> actions = new LinkedHashSet<>();
-        final Set<Integer> initial = new LinkedHashSet<>();
-
-        try (Scanner sc = new Scanner(new File(filename))) {
-            while (sc.hasNextLine()) {
-                final String line = sc.nextLine();
-                final String tokens[] = line.split(" +");
-                if (!line.contains(";")) {
-                    continue;
-                }
-                if (line.contains("->")) {
-                    final String from = tokens[1];
-                    final Integer to = Integer.parseInt(tokens[3].replaceAll(";", ""));
-                    if (from.equals("init")) {
-                        initial.add(to);
-                    } else {
-                        final String event = tokens[6].replaceAll("[;\\]\"]", "");
-                        transitionRelation.get(from).add(Pair.of(to, event));
-                        events.add(event);
-                    }
-                } else {
-                    final String from = tokens[1];
-                    transitionRelation.put(from, new ArrayList<>());
-                    if (from.equals("init") || from.equals("node")) {
-                        continue;
-                    }
-                    final List<String> theseActions = Arrays.asList(line.split("\"")[1].split(":")[1].trim().split(", "));
-                    actionRelation.put(from, theseActions);
-                    actions.addAll(theseActions);
-                }
-            }
-        }
-
-        int maxState = 0;
-        for (List<Pair<Integer, String>> list : transitionRelation.values()) {
-            for (Pair<Integer, String> p : list) {
-                maxState = Math.max(maxState, p.getLeft());
-            }
-        }
-        final List<Boolean> initialVector = new ArrayList<>();
-        final List<StringActions> actionVector = new ArrayList<>();
-        for (int i = 0; i <= maxState; i++) {
-            initialVector.add(initial.contains(i));
-            actionVector.add(new StringActions(String.join(", ", actionRelation.get(i + ""))));
-        }
-
-        final NondetMooreAutomaton a = new NondetMooreAutomaton(maxState + 1, actionVector, initialVector);
-        for (int i = 0; i <= maxState; i++) {
-            for (Pair<Integer, String> p : transitionRelation.get(i + "")) {
-                a.state(i).addTransition(p.getRight(), a.state(p.getLeft()));
-            }
-        }
-        return a;
-    }
-
 
     public NondetMooreAutomaton(List<MooreNode> states, List<Boolean> isInitial) {
         this.states.addAll(states);
@@ -298,7 +238,7 @@ public class NondetMooreAutomaton {
     }
 
     private static void spinEventDescriptions(int[] arr, int index, StringBuilder result,
-                                               List<Pair<String, Parameter>> thresholds, List<String> events) {
+                                              List<Pair<String, Parameter>> thresholds, List<String> events) {
         if (index == arr.length) {
             final String event = "input_A" + Arrays.toString(arr).replaceAll("[,\\[\\] ]", "");
             if (!events.contains(event)) {
@@ -339,7 +279,11 @@ public class NondetMooreAutomaton {
             }
         }
     }
-    
+
+    private int maxLoopExecutions() {
+        return loopConstraints.stream().mapToInt(x -> x).max().getAsInt();
+    }
+
     public String toNuSMVString(List<String> events, List<String> actions, Optional<Configuration> conf) {
         final List<String> unmodifiedEvents = events;
         events = events.stream().map(s -> "input_" + s).collect(Collectors.toList());
@@ -371,6 +315,10 @@ public class NondetMooreAutomaton {
         sb.append("    unsupported: boolean;\n");
         sb.append("    loop_executed: boolean;\n");
         sb.append("    state: 0.." + (stateCount() - 1) + ";\n");
+        if (loopConstraints != null) {
+            sb.append("    loop_executions: 0.." + maxLoopExecutions() + ";\n");
+            sb.append("    loop_executions_violated: boolean;\n");
+        }
         sb.append("INIT\n");
         sb.append("    state in " + TraceModelGenerator.expressWithIntervalsNuSMV(initialStates()) + "\n");
         sb.append("TRANS\n");
@@ -421,6 +369,18 @@ public class NondetMooreAutomaton {
         sb.append("    next(unsupported) := unsupported | next(current_unsupported);\n");
         sb.append("    init(loop_executed) := FALSE;\n");
         sb.append("    next(loop_executed) := state = next(state);\n");
+        if (loopConstraints != null) {
+            sb.append("    init(loop_executions) := 0;\n");
+            sb.append("    next(loop_executions) := !next(loop_executed) ? 0 : loop_executions >= " + maxLoopExecutions() + " ? "
+                    + maxLoopExecutions() + " : (loop_executions + 1);\n");
+            sb.append("    init(loop_executions_violated) := FALSE;\n");
+            final List<String> options = new ArrayList<>();
+            options.add("loop_executions_violated");
+            for (int i = 0; i < stateCount(); i++) {
+                options.add("next(state) = " + i + " & next(loop_executions) = " + loopConstraints.get(i));
+            }
+            sb.append("    next(loop_executions_violated) := " + String.join("\n        | ", options) + ";\n");
+        }
         sb.append("DEFINE\n");
         sb.append("    known_input := " + String.join(" | ", events) + ";\n");
         final List<String> unsupported = new ArrayList<>();
@@ -859,6 +819,7 @@ public class NondetMooreAutomaton {
             }
         }
 
+        copy.loopConstraints = loopConstraints;
         return copy;
     }
     

@@ -102,7 +102,7 @@ public class PlantBuilderMain extends MainBase {
     private String nusmvFilePath;
 
     @Option(name = "--fast", handler = BooleanOptionHandler.class,
-            usage = "use the fast but inprecise way of model generation: "
+            usage = "use the fast but imprecise way of model generation: "
                     + "size, negative scenarios, LTL formulae and action specifications are ignored")
     private boolean fast = false;
 
@@ -126,6 +126,10 @@ public class PlantBuilderMain extends MainBase {
     @Option(name = "--sm", handler = BooleanOptionHandler.class,
             usage = "use state merging instead of satisfiability")
     private boolean stateMerging;
+
+    @Option(name = "--timedConstraints", handler = BooleanOptionHandler.class,
+            usage = "with --fast: limit loop execution times based on traces")
+    private boolean timedConstraints;
 
     private Optional<NondetMooreAutomaton> resultAutomaton = null;
     private final Map<String, String> colorRuleMap = new LinkedHashMap<>();
@@ -164,7 +168,7 @@ public class PlantBuilderMain extends MainBase {
             return;
         }
 
-        final PositivePlantScenarioForest positiveForest = new PositivePlantScenarioForest(!deterministic);
+        final PositivePlantScenarioForest positiveForest = new PositivePlantScenarioForest(!deterministic && !fast);
         final List<StringScenario> scenarios = new ArrayList<>();
         for (String scenarioPath : arguments) {
             scenarios.addAll(loadScenarios(scenarioPath, true));
@@ -196,7 +200,7 @@ public class PlantBuilderMain extends MainBase {
 
         resultAutomaton = stateMerging
                 ? StateMergingNondetAutomatonBuilder.build(logger(), events, actions, arguments, strFormulae)
-                : fast ? RapidPlantAutomatonBuilder.build(positiveForest, events)
+                : fast ? RapidPlantAutomatonBuilder.build(positiveForest, events, timedConstraints)
                 : PlantAutomatonBuilder.build(logger(), positiveForest, negativeForest, size, actionspecFilePath,
                 events, actions, verifier, finishTime, solver, deterministic, bfsConstraints, !incomplete);
 
