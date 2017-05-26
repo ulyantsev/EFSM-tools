@@ -4,6 +4,9 @@ package continuous_trace_builders;
  * (c) Igor Buzhinsky
  */
 
+import continuous_trace_builders.parameters.Parameter;
+import continuous_trace_builders.parameters.RealParameter;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;

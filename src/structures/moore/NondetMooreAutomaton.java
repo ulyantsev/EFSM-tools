@@ -1,6 +1,7 @@
 package structures.moore;
 
 import continuous_trace_builders.*;
+import continuous_trace_builders.parameters.*;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -212,7 +213,7 @@ public class NondetMooreAutomaton {
     }
 
     private static void nusmvEventDescriptions(int[] arr, int index, StringBuilder result,
-            List<Pair<String, Parameter>> thresholds, List<String> events) {
+                                               List<Pair<String, Parameter>> thresholds, List<String> events) {
         if (index == arr.length) {
             final String event = "input_A" + Arrays.toString(arr).replaceAll("[,\\[\\] ]", "");
             if (!events.contains(event)) {

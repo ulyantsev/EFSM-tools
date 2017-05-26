@@ -2,7 +2,7 @@ package main.plant;
 
 import continuous_trace_builders.Configuration;
 import continuous_trace_builders.Dataset;
-import continuous_trace_builders.Parameter;
+import continuous_trace_builders.parameters.Parameter;
 import continuous_trace_builders.TraceTranslator;
 
 import java.io.File;

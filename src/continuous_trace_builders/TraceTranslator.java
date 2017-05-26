@@ -4,6 +4,7 @@ package continuous_trace_builders;
  * (c) Igor Buzhinsky
  */
 
+import continuous_trace_builders.parameters.Parameter;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.File;

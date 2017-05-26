@@ -4,6 +4,7 @@ package continuous_trace_builders;
  * (c) Igor Buzhinsky
  */
 
+import continuous_trace_builders.parameters.*;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.File;
@@ -111,6 +112,12 @@ public class Configuration {
                         }
                         final double upperBound = Double.parseDouble(tokens[tokens.length - 1]);
                         p = new RealParameter(aprosName, traceName, Pair.of(lowerBound, upperBound), thresholds);
+                    } else if (type.equals("segments")) {
+                        List<Pair<Double, Double>> bounds = new ArrayList<>();
+                        for (int i = 4; i < tokens.length; i += 2) {
+                            bounds.add(Pair.of(Double.parseDouble(tokens[i]), Double.parseDouble(tokens[i + 1])));
+                        }
+                        p = new SegmentsParameter(aprosName, traceName, bounds);
                     } else if (type.equals("set")) {
                         final Double[] values = new Double[tokens.length - 4];
                         for (int i = 4; i < tokens.length; i++) {

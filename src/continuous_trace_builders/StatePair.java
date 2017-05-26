@@ -5,6 +5,7 @@ package continuous_trace_builders;
  */
 
 import continuous_trace_builders.CompositionalBuilder.Match;
+import continuous_trace_builders.parameters.Parameter;
 import org.apache.commons.lang3.tuple.Pair;
 import scenario.StringActions;
 import structures.moore.MooreNode;

@@ -4,6 +4,8 @@ package continuous_trace_builders;
  * (c) Igor Buzhinsky
  */
 
+import continuous_trace_builders.parameters.Parameter;
+
 import java.io.*;
 import java.util.*;
 import java.util.stream.Collectors;
