@@ -42,20 +42,16 @@ public class CompositionalBuilder {
     static boolean isConsistentWithInputs(MooreNode node, String outgoingEvent, Match match, boolean isOutputInput) {
         if (isOutputInput) {
             for (Pair<Parameter, Integer> pair : match.outputInputPairs) {
-                final int firstIndex = actionIntervalIndex(node.actions().getActions(),
-                        pair.getLeft().traceName());
-                final int secondIndex = Integer.parseInt(String.valueOf(
-                        outgoingEvent.charAt(pair.getRight() + 1)));
+                final int firstIndex = actionIntervalIndex(node.actions().getActions(), pair.getLeft().traceName());
+                final int secondIndex = Integer.parseInt(String.valueOf(outgoingEvent.charAt(pair.getRight() + 1)));
                 if (firstIndex != secondIndex) {
                     return false;
                 }
             }
         } else {
             for (Pair<Integer, Parameter> pair : match.inputOutputPairs) {
-                final int secondIndex = actionIntervalIndex(node.actions().getActions(),
-                        pair.getRight().traceName());
-                final int firstIndex = Integer.parseInt(String.valueOf(
-                        outgoingEvent.charAt(pair.getLeft() + 1)));
+                final int secondIndex = actionIntervalIndex(node.actions().getActions(), pair.getRight().traceName());
+                final int firstIndex = Integer.parseInt(String.valueOf(outgoingEvent.charAt(pair.getLeft() + 1)));
                 if (firstIndex != secondIndex) {
                     return false;
                 }
@@ -67,9 +63,7 @@ public class CompositionalBuilder {
     private static Configuration composeConfigurations(Configuration c1, Configuration c2, Match match) {
         // outputs
         final Map<String, Parameter> traceNameToParam = new TreeMap<>();
-        final Consumer<Parameter> process = p -> {
-            traceNameToParam.putIfAbsent(p.traceName(), p);
-        };
+        final Consumer<Parameter> process = p -> traceNameToParam.putIfAbsent(p.traceName(), p);
         c1.outputParameters.forEach(process);
         c2.outputParameters.forEach(process);
         match.badActionPrefixes.forEach(traceNameToParam::remove);
@@ -247,10 +241,10 @@ public class CompositionalBuilder {
         final List<Parameter> outputParams = new ArrayList<>(c1.outputParameters);
         final Set<String> allParamNames = new HashSet<>();
         for (Parameter p : c1.outputParameters) {
-            allParamNames.add(p.aprosName());
+            allParamNames.add(p.simulationEnvironmentName());
         }
         for (Parameter p : c2.outputParameters) {
-            if (allParamNames.add(p.aprosName())) {
+            if (allParamNames.add(p.simulationEnvironmentName())) {
                 outputParams.add(p);
             }
         }
@@ -327,6 +321,7 @@ public class CompositionalBuilder {
     public static void run(List<Configuration> confs, String directory, String datasetFilename, boolean satBased,
                            int traceIncludeEach, double traceFraction, boolean ensureCompleteness,
                            boolean outputSmv, boolean outputSpin) throws IOException {
+
         // 1. Unification of all configuration pairs:
         System.out.println("*** UNIFICATION");
         for (int i = 0; i < confs.size(); i++) {
@@ -334,6 +329,7 @@ public class CompositionalBuilder {
                 new Match(confs.get(i), confs.get(j));
             }
         }
+
         if (confs.stream().map(s -> s.intervalSec).distinct().count() > 1) {
             System.err.println("Incompatible intervals, stopping.");
             return;

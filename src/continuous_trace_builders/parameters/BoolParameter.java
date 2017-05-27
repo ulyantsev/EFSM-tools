@@ -8,8 +8,8 @@ import java.util.Arrays;
 import java.util.List;
 
 public class BoolParameter extends Parameter {
-    public BoolParameter(String aprosName, String traceName) {
-        super(aprosName, traceName);
+    public BoolParameter(String simulationEnvironmentName, String traceName) {
+        super(simulationEnvironmentName, traceName);
     }
 
     @Override
@@ -41,7 +41,7 @@ public class BoolParameter extends Parameter {
 
     @Override
     public String toString() {
-        return "param " + aprosName() + " (" + traceName() + "): BOOL";
+        return "param " + simulationEnvironmentName() + " (" + traceName() + "): BOOL";
     }
 
     @Override

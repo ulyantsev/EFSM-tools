@@ -13,8 +13,8 @@ public class SetParameter extends Parameter {
     private final List<Double> values;
     private final List<Integer> roundedValues;
 
-    public SetParameter(String aprosName, String traceName, Double... values) {
-        super(aprosName, traceName);
+    public SetParameter(String simulationEnvironmentName, String traceName, Double... values) {
+        super(simulationEnvironmentName, traceName);
         this.values = new ArrayList<>(Arrays.asList(values));
         roundedValues = this.values.stream().map(v -> (int) Math.round(v)).collect(Collectors.toList());
     }
@@ -62,7 +62,7 @@ public class SetParameter extends Parameter {
 
     @Override
     public String toString() {
-        return "param " + aprosName() + " (" + traceName() + "): SET" + values;
+        return "param " + simulationEnvironmentName() + " (" + traceName() + "): SET" + values;
     }
 
     @Override

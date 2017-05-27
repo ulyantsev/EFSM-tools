@@ -16,7 +16,6 @@ public class Configuration {
     final double intervalSec;
     public final List<Parameter> outputParameters;
     public final List<Parameter> inputParameters;
-    final List<String> colorRules = new ArrayList<>();
 
     // for same-state dependencies (important in modular construction)
     private final Set<Parameter> mealyInputs = new HashSet<>();
@@ -87,7 +86,6 @@ public class Configuration {
         final double intervalSec = 1.0;
         final List<Parameter> outputParameters = new ArrayList<>();
         final List<Parameter> inputParameters = new ArrayList<>();
-        final List<String[]> colorRules = new ArrayList<>();
         final Set<Parameter> mealyInputs = new HashSet<>();
         try (Scanner sc = new Scanner(new File(filename))) {
             while (sc.hasNextLine()) {
@@ -97,9 +95,7 @@ public class Configuration {
                 }
                 final String[] tokens = Utils.splitString(line);
                 final String operation = tokens[0];
-                if (operation.equals("color_rule")) {
-                    colorRules.add(tokens);
-                } else if (operation.equals("mealy_in") || operation.equals("in") || operation.equals("out")) {
+                if (operation.equals("mealy_in") || operation.equals("in") || operation.equals("out")) {
                     final String type = tokens[1];
                     final String aprosName = tokens[2];
                     final String traceName = tokens[3];
@@ -144,26 +140,14 @@ public class Configuration {
         }
         final Configuration c = new Configuration(intervalSec, outputParameters, inputParameters);
         mealyInputs.forEach(c::markInputAsMealy);
-        for (String[] tokens : colorRules) {
-            final String traceName = tokens[1];
-            final int index = Integer.parseInt(tokens[2]);
-            final String color = tokens[3];
-            c.addColorRule(traceName, index, color);
-        }
         return c;
-    }
-
-    public void addColorRule(String traceName, int index, String color) {
-        colorRules.add(traceName + index + "->" + color);
     }
 
     @Override
     public String toString() {
         return "out:\n  " +
-                String.join("\n  ", outputParameters.stream()
-                        .map(p -> p.toString()).collect(Collectors.toList()))
+                String.join("\n  ", outputParameters.stream().map(Object::toString).collect(Collectors.toList()))
                 + "\nin:\n  " +
-                String.join("\n  ", inputParameters.stream()
-                    .map(p -> p.toString()).collect(Collectors.toList()));
+                String.join("\n  ", inputParameters.stream().map(Object::toString).collect(Collectors.toList()));
     }
 }

@@ -8,8 +8,8 @@ import java.util.Arrays;
 import java.util.List;
 
 public class IgnoredBoolParameter extends Parameter {
-    public IgnoredBoolParameter(String aprosName, String traceName) {
-        super(aprosName, traceName);
+    public IgnoredBoolParameter(String simulationEnvironmentName, String traceName) {
+        super(simulationEnvironmentName, traceName);
     }
 
     @Override
@@ -34,7 +34,7 @@ public class IgnoredBoolParameter extends Parameter {
 
     @Override
     public String toString() {
-        return "param " + aprosName() + " (" + traceName() + "): IGNORED_BOOL";
+        return "param " + simulationEnvironmentName() + " (" + traceName() + "): IGNORED_BOOL";
     }
 
     @Override

@@ -13,8 +13,8 @@ public class DatasetSerializer {
                                  String paramScaleFilename, double intervalSec, boolean includeFirstElement)
                                  throws IOException {
         final Dataset ds = new Dataset(intervalSec, Utils.combinePaths(directory, traceLocation),
-                traceFilenamePrefix,
-                TraceTranslator.paramScales(Utils.combinePaths(directory, paramScaleFilename)), includeFirstElement);
+                traceFilenamePrefix, TraceTranslator.paramScales(Utils.combinePaths(directory, paramScaleFilename)),
+                includeFirstElement);
         final String outFilename = Utils.combinePaths(directory, "dataset_" + traceFilenamePrefix + ".bin");
         try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(outFilename))) {
             out.writeObject(ds);

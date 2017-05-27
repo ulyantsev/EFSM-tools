@@ -45,15 +45,15 @@ public class Dataset implements Serializable {
     }
 
     public double get(double[] values, Parameter p) {
-        final Integer index = paramIndices.get(p.aprosName());
+        final Integer index = paramIndices.get(p.simulationEnvironmentName());
         if (index == null) {
-            throw new RuntimeException("Missing parameter: " + p.aprosName());
+            throw new RuntimeException("Missing parameter: " + p.simulationEnvironmentName());
         }
         // possible scaling
-        final Double oScale = paramScales.get(p.aprosName());
+        final Double oScale = paramScales.get(p.simulationEnvironmentName());
         final double scale = oScale == null? 1.0 : oScale;
 
-        final double result = values[paramIndices.get(p.aprosName())] * scale;
+        final double result = values[paramIndices.get(p.simulationEnvironmentName())] * scale;
         p.updateLimits(result);
         return result;
     }

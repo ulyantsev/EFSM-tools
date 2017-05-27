@@ -7,15 +7,14 @@ package continuous_trace_builders.parameters;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class SegmentsParameter extends Parameter {
     private final List<Pair<Double, Double>> doubleBounds;
-    final double eps = 1e-10;
+    private final static double EPS = 1e-10;
 
-    public SegmentsParameter(String aprosName, String traceName, List<Pair<Double, Double>> bounds) {
-        super(aprosName, traceName);
+    public SegmentsParameter(String simulationEnvironmentName, String traceName, List<Pair<Double, Double>> bounds) {
+        super(simulationEnvironmentName, traceName);
         this.doubleBounds = bounds;
     }
 
@@ -42,7 +41,7 @@ public class SegmentsParameter extends Parameter {
     public int traceNameIndex(double value) {
         for (int i = 0; i < doubleBounds.size(); i++) {
             Pair<Double, Double> pair = doubleBounds.get(i);
-            if (pair.getLeft() <= value + eps && value <= pair.getRight() + eps) {
+            if (pair.getLeft() <= value + EPS && value <= pair.getRight() + EPS) {
                 return i;
             }
         }
@@ -56,15 +55,16 @@ public class SegmentsParameter extends Parameter {
 
     @Override
     public String toString() {
-        return "param " + aprosName() + " (" + traceName() + "): REAL" + doubleBounds;
+        return "param " + simulationEnvironmentName() + " (" + traceName() + "): REAL" + doubleBounds;
     }
 
     private String nusmvTypeCached = null;
 
     @Override
     public String nusmvType() {
-        if (nusmvTypeCached != null)
+        if (nusmvTypeCached != null) {
             return nusmvTypeCached;
+        }
         int min = intervalMin(0);
         int max = intervalMax(0);
         for (int i = 1; i < doubleBounds.size(); i++) {
@@ -102,11 +102,11 @@ public class SegmentsParameter extends Parameter {
     }
 
     private int intervalMin(int interval) {
-        return (int) Math.round(Math.floor(doubleBounds.get(interval).getLeft() + eps));
+        return (int) Math.round(Math.floor(doubleBounds.get(interval).getLeft() + EPS));
     }
 
     private int intervalMax(int interval) {
-        return (int) Math.round(Math.ceil(doubleBounds.get(interval).getRight() - eps));
+        return (int) Math.round(Math.ceil(doubleBounds.get(interval).getRight() - EPS));
     }
 
     @Override

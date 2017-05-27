@@ -6,47 +6,43 @@ package continuous_trace_builders.parameters;
 
 import org.apache.commons.lang3.tuple.Pair;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public abstract class Parameter {
     private String traceName;
-    private final String aprosName;
+    private final String simulationEnvironmentName;
     private double min = Double.POSITIVE_INFINITY;
     private double max = Double.NEGATIVE_INFINITY;
 
-    public String aprosName() {
-        return aprosName;
+    public String simulationEnvironmentName() {
+        return simulationEnvironmentName;
     }
 
     public abstract int valueCount();
 
     public static boolean unify(Parameter p, Parameter q) {
-        if (p.aprosName.equals(q.aprosName)) {
+        if (p.simulationEnvironmentName.equals(q.simulationEnvironmentName) && p.traceName.equals(q.traceName)) {
             if (p instanceof RealParameter && q instanceof RealParameter) {
                 final RealParameter rp = (RealParameter) p;
                 final RealParameter rq = (RealParameter) q;
                 final Set<Double> allCutoffs = new TreeSet<>(rp.cutoffs);
                 allCutoffs.addAll(rq.cutoffs);
-                rp.cutoffs.clear();
-                rp.cutoffs.addAll(allCutoffs);
-                rq.cutoffs.clear();
-                rq.cutoffs.addAll(allCutoffs);
+                for (RealParameter x : Arrays.asList(rp, rq)) {
+                    x.cutoffs.clear();
+                    x.cutoffs.addAll(allCutoffs);
+                }
             } else if (p instanceof BoolParameter && q instanceof BoolParameter) {
             } else {
                 throw new RuntimeException("Incompatible parameter types.");
             }
-            q.traceName = p.traceName;
             return true;
         }
         return false;
     }
 
-    public Parameter(String aprosName, String traceName) {
-        this.aprosName = aprosName;
+    public Parameter(String simulationEnvironmentName, String traceName) {
+        this.simulationEnvironmentName = simulationEnvironmentName;
         this.traceName = traceName;
     }
 

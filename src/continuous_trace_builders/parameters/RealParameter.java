@@ -16,13 +16,9 @@ public class RealParameter extends Parameter {
     private int upperBound = Integer.MAX_VALUE;
     private final Pair<Double, Double> doubleBounds;
 
-    public RealParameter(String aprosName, String traceName, Double... cutoffs) {
-        this(aprosName, traceName, Pair.of(-Double.MAX_VALUE, Double.MAX_VALUE), cutoffs);
-    }
-
-    public RealParameter(String aprosName, String traceName,
-            Pair<Double, Double> bounds, Double... cutoffs) {
-        super(aprosName, traceName);
+    public RealParameter(String simulationEnvironmentName, String traceName, Pair<Double, Double> bounds,
+                         Double... cutoffs) {
+        super(simulationEnvironmentName, traceName);
         this.doubleBounds = bounds;
         this.cutoffs = new ArrayList<>(Arrays.asList(cutoffs));
         this.cutoffs.add(Double.POSITIVE_INFINITY);
@@ -81,7 +77,7 @@ public class RealParameter extends Parameter {
         thresholds.addAll(cutoffs.subList(0, cutoffs.size() - 1));
         thresholds.add((double) upperBound);
 
-        return "param " + aprosName() + " (" + traceName() + "): REAL"
+        return "param " + simulationEnvironmentName() + " (" + traceName() + "): REAL"
                 + thresholds;
     }
 

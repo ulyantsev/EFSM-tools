@@ -61,11 +61,6 @@ public class PlantBuilderMain extends MainBase {
             usage = "optional comma-separated variable names (default: x0, x1, ...)", metaVar = "<varNames>")
     private String varNames;
 
-    @Option(name = "--colorRules",
-            usage = "comma-separated state coloring rules for GV output, each in the form action->color",
-            metaVar = "<rules>")
-    private String colorRules;
-
     @Option(name = "--log", aliases = {"-l"},
             usage = "write log to this file", metaVar = "<file>")
     private String logFilePath;
@@ -222,19 +217,6 @@ public class PlantBuilderMain extends MainBase {
                 logger().info("COMPLIES WITH NEGATIVE SCENARIOS");
             } else {
                 logger().severe("NOT COMPLIES WITH NEGATIVE SCENARIOS");
-            }
-
-            if (colorRules != null) {
-                final String[] tokens = colorRules.split(",");
-                // linked, since the order is important
-                for (String token : tokens) {
-                    final String[] parts = token.split("->");
-                    if (parts.length != 2 || !actions.contains(parts[0])) {
-                        logger().warning("Invalid color rule " + token + "!");
-                    } else {
-                        colorRuleMap.put(parts[0], parts[1]);
-                    }
-                }
             }
 
             if (resultFilePath != null) {

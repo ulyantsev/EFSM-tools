@@ -104,14 +104,14 @@ public class TraceTranslator {
                         }
 
                         final int index = p.traceNameIndex(value);
-                        inputCovered.add(Pair.of(p.aprosName(), index));
+                        inputCovered.add(Pair.of(p.simulationEnvironmentName(), index));
                         event.append(index);
                     }
                     
                     for (Parameter p : conf.outputParameters) {
                         final double value = ds.get(snapshot, p);
                         final int index = p.traceNameIndex(value);
-                        outputCovered.add(Pair.of(p.aprosName(), index));
+                        outputCovered.add(Pair.of(p.simulationEnvironmentName(), index));
                         thisActions.add(p.traceName(value));
 
                         if (satBased && j > 0) {
@@ -200,8 +200,6 @@ public class TraceTranslator {
             builderArgs.add("--actionDescriptions");
             builderArgs.add(String.join(",", allActionDescriptions));
         }
-        builderArgs.add("--colorRules");
-        builderArgs.add(String.join(",", conf.colorRules));
         builderArgs.add("--actionNumber");
         builderArgs.add(String.valueOf(allActions.size()));
         builderArgs.add("--eventNames");
