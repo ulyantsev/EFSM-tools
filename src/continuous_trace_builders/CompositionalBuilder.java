@@ -241,10 +241,10 @@ public class CompositionalBuilder {
         final List<Parameter> outputParams = new ArrayList<>(c1.outputParameters);
         final Set<String> allParamNames = new HashSet<>();
         for (Parameter p : c1.outputParameters) {
-            allParamNames.add(p.simulationEnvironmentName());
+            allParamNames.add(p.traceName());
         }
         for (Parameter p : c2.outputParameters) {
-            if (allParamNames.add(p.simulationEnvironmentName())) {
+            if (allParamNames.add(p.traceName())) {
                 outputParams.add(p);
             }
         }
