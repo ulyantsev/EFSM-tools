@@ -18,6 +18,7 @@ public class ConstraintExtractor {
     final static boolean OVERALL_1D = true;
     final static boolean OVERALL_2D = true;
     final static boolean OIO_CONSTRAINTS = true;
+    final static boolean FAIRNESS_CONSTRAINS = true;
     final static boolean INPUT_STATE = true;
     final static boolean CURRENT_NEXT = true;
 
@@ -238,7 +239,8 @@ public class ConstraintExtractor {
         }
     }
 
-    private static void printRes(Configuration conf, List<String> initConstraints, List<String> transConstraints, String outFilename) throws IOException {
+    private static void printRes(Configuration conf, List<String> initConstraints, List<String> transConstraints,
+                                 List<String> fairnessConstraints, String outFilename) throws IOException {
         final StringBuilder sb = new StringBuilder();
         sb.append(plantCaption(conf));
         sb.append("    loop_executed: boolean;\n");
@@ -270,6 +272,9 @@ public class ConstraintExtractor {
         sb.append("DEFINE\n");
         sb.append("    unsupported := FALSE;\n");
         sb.append(plantConversions(conf));
+        for (String fair: fairnessConstraints) {
+            sb.append(fair + "\n");
+        }
         String transformed =
                 sb.toString()
                         .replaceAll("& TRUE", "")
@@ -341,6 +346,9 @@ public class ConstraintExtractor {
             addCurrentNextConstraints(conf, transConstraints, ds);
         }
 
-        printRes(conf, initConstraints, transConstraints, Utils.combinePaths(directory, "plant-constraints.smv"));
+        List<String> fairnessConstraints = FAIRNESS_CONSTRAINS ?
+                FairnessConstraintGenerator.generateFairnessConstraints(conf, ds, grouping) : new ArrayList<>();
+
+        printRes(conf, initConstraints, transConstraints, fairnessConstraints, Utils.combinePaths(directory, "plant-constraints.smv"));
     }
 }
