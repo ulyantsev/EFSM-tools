@@ -115,8 +115,8 @@ public class FairnessConstraintGenerator {
                             continue;
                         int mid = i + 1;
                         for (ControlParameter control : getControlParameters(inputsCount[i][j], inputsCount[j][i])) {
-                            constraints.add("FAIRNESS !(" + po.traceName() + " = " + mid + control.keyToString(groups, inputs, true) + ")");
-                            constraints.add("FAIRNESS !(" + po.traceName() + " = " + mid + control.keyToString(groups, inputs, false) + ")");
+                            constraints.add("FAIRNESS !(output_" + po.traceName() + " = " + mid + control.keyToString(groups, inputs, true) + ")");
+                            constraints.add("FAIRNESS !(output_" + po.traceName() + " = " + mid + control.keyToString(groups, inputs, false) + ")");
                         }
                     }
                 }
@@ -139,7 +139,8 @@ public class FairnessConstraintGenerator {
             StringBuilder res = new StringBuilder();
             List<Integer> list = isPlus ? plusKey : minusKey;
             for (int i = 0; i < list.size(); i++) {
-                res.append(" & " + inputs.get(groups.get(group).get(i)).traceName() + "=" + list.get(i));
+                Parameter param = inputs.get(groups.get(group).get(i));
+                res.append(" & CONT_INPUT_" + param.traceName() + " in " + param.nusmvInterval(list.get(i)));
             }
             return res.toString();
         }
