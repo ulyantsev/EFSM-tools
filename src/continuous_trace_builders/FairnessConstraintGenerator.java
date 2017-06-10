@@ -3,8 +3,6 @@ package continuous_trace_builders;
 import continuous_trace_builders.parameters.Parameter;
 import continuous_trace_builders.parameters.RealParameter;
 import continuous_trace_builders.parameters.SegmentsParameter;
-import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.*;
 
@@ -16,7 +14,8 @@ public class FairnessConstraintGenerator {
     private final static int MIN_VISIT_COUNT = 5;
     private final static double REL_ERROR = 1. / 20;
 
-    private static void initIntGroups(List<Parameter> inputs, List<List<Parameter>> grouping, List<List<Integer>> groups, List<List<Integer>> paramIndexToGroup) {
+    private static void initIntGroups(List<Parameter> inputs, List<List<Parameter>> grouping,
+                                      List<List<Integer>> groups, List<List<Integer>> paramIndexToGroup) {
         Map<Parameter, Integer> index = new HashMap<>();
         for (int i = 0; i < inputs.size(); i++) {
             index.put(inputs.get(i), i);
@@ -45,9 +44,10 @@ public class FairnessConstraintGenerator {
         return par.traceNameIndex(ds.get(trace.get(traceElement), par));
     }
 
-    private static Counter[][] collectCounts(Dataset ds, Parameter po, List<List<Integer>> groups, List<Parameter> inputs) {
+    @SuppressWarnings("unchecked")
+    private static Counter[][] collectCounts(Dataset ds, Parameter po, List<List<Integer>> groups,
+                                             List<Parameter> inputs) {
         int outValsCount = po.valueCount();
-        @SuppressWarnings("unchecked")
         Counter[][] inputsCount = new Counter[outValsCount][outValsCount];
         int groupsSize = groups.size();
         for (int i = 0; i < outValsCount; i++) {
@@ -96,7 +96,6 @@ public class FairnessConstraintGenerator {
         return inputsCount;
     }
 
-
     static List<String> generateFairnessConstraints(Configuration conf, Dataset ds, List<List<Parameter>> grouping) {
         List<Parameter> inputs = conf.inputParameters;
         int inputsSize = inputs.size();
@@ -111,12 +110,15 @@ public class FairnessConstraintGenerator {
                 int outValsCount = po.valueCount();
                 for (int i = 0; i < outValsCount; i++) {
                     for (int j = 0; j < outValsCount; j++) {
-                        if (j != i + 2)
+                        if (j != i + 2) {
                             continue;
+                        }
                         int mid = i + 1;
                         for (ControlParameter control : getControlParameters(inputsCount[i][j], inputsCount[j][i])) {
-                            constraints.add("FAIRNESS !(output_" + po.traceName() + " = " + mid + control.keyToString(groups, inputs, true) + ")");
-                            constraints.add("FAIRNESS !(output_" + po.traceName() + " = " + mid + control.keyToString(groups, inputs, false) + ")");
+                            constraints.add("FAIRNESS !(output_" + po.traceName() + " = "
+                                    + mid + control.keyToString(groups, inputs, true) + ")");
+                            constraints.add("FAIRNESS !(output_" + po.traceName() + " = "
+                                    + mid + control.keyToString(groups, inputs, false) + ")");
                         }
                     }
                 }
@@ -140,15 +142,17 @@ public class FairnessConstraintGenerator {
             List<Integer> list = isPlus ? plusKey : minusKey;
             for (int i = 0; i < list.size(); i++) {
                 Parameter param = inputs.get(groups.get(group).get(i));
-                res.append(" & CONT_INPUT_" + param.traceName() + " in " + param.nusmvInterval(list.get(i)));
+                res.append(" & CONT_INPUT_").append(param.traceName()).append(" in ")
+                        .append(param.nusmvInterval(list.get(i)));
             }
             return res.toString();
         }
     }
 
-    static List<ControlParameter> getControlParameters(Counter c1, Counter c2) {
-        if (c1.vals.size() < MIN_VISIT_COUNT || c2.vals.size() < MIN_VISIT_COUNT)
+    private static List<ControlParameter> getControlParameters(Counter c1, Counter c2) {
+        if (c1.vals.size() < MIN_VISIT_COUNT || c2.vals.size() < MIN_VISIT_COUNT) {
             return new ArrayList<>();
+        }
         List<ControlParameter> res = new ArrayList<>();
         for (int i = 0; i < c1.groupsCount; i++) {
             List<List<Integer>> gKeys = new ArrayList<>(c1.keys[i]);
@@ -171,8 +175,10 @@ public class FairnessConstraintGenerator {
                     Collections.sort(dif1);
                     Collections.sort(dif2);
                     int mid = dif1.get(dif1.size() / 2);
-                    if (mid > MIN_LEN && dif1.get(0) >= mid * (1 - REL_ERROR) && dif1.get(dif1.size()-1) <= mid * (1 + REL_ERROR)
-                            && dif2.get(0) >= mid * (1 - REL_ERROR) && dif2.get(dif2.size()-1) <= mid * (1 + REL_ERROR)) {
+                    if (mid > MIN_LEN && dif1.get(0) >= mid * (1 - REL_ERROR)
+                            && dif1.get(dif1.size()-1) <= mid * (1 + REL_ERROR)
+                            && dif2.get(0) >= mid * (1 - REL_ERROR)
+                            && dif2.get(dif2.size()-1) <= mid * (1 + REL_ERROR)) {
                         res.add(new ControlParameter(i, k1, k2));
                     }
                 }
@@ -180,7 +186,6 @@ public class FairnessConstraintGenerator {
         }
         return res;
     }
-
 
     private static class Counter {
         final List<Map<List<Integer>, Integer>[]> vals = new ArrayList<>();
@@ -190,8 +195,7 @@ public class FairnessConstraintGenerator {
         private void go(int ind, int[] counts, Integer[] cur, List<List<Integer>> ans) {
             if (ind == counts.length) {
                 List<Integer> res = new ArrayList<>(ind);
-                for (Integer x : cur)
-                    res.add(x);
+                Collections.addAll(res, cur);
                 ans.add(res);
                 return;
             }
@@ -201,7 +205,7 @@ public class FairnessConstraintGenerator {
             }
         }
 
-        private List<List<Integer>> kollectKeys(List<Integer> group, List<Parameter> parameters) {
+        private List<List<Integer>> collectKeys(List<Integer> group, List<Parameter> parameters) {
             List<List<Integer>> ans = new ArrayList<>();
             Integer[] cur = new Integer[group.size()];
             int[] counts= new int[group.size()];
@@ -212,18 +216,17 @@ public class FairnessConstraintGenerator {
             return ans;
         }
 
+        @SuppressWarnings("unchecked")
         public Counter(List<List<Integer>> groups, List<Parameter> parameters) {
             groupsCount = groups.size();
             keys = new List[groupsCount];
             for (int i = 0; i < keys.length; i++) {
-                keys[i] = kollectKeys(groups.get(i), parameters);
+                keys[i] = collectKeys(groups.get(i), parameters);
             }
         }
 
         void add(Map<List<Integer>, Integer>[] inputsCount) {
             vals.add(inputsCount);
         }
-
     }
-
 }
