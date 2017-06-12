@@ -171,12 +171,12 @@ Here are scripts to run some examples (the first one is from the paper):
 **Explicit-state method.** Enhanced explicit-state plant model construction with completion of trace-unsupported transitions based on input proximity:
 > java -jar /jars/apros-builder.jar --type explicit-state --config <config file> --dataset <dataset file>
 
-Configuration files describe inputs and outputs of the plant model. A dataset file must be precompiled from traces represented in the format of the Apros continuous process simulator. Examples of configuration, a script to generate traces and a script to precompile a dataset can be found in [ulyantsev/EFSM-tools/tree/devel/evaluation/counter](/ulyantsev/EFSM-tools/tree/devel/evaluation/counter).
+Configuration files describe inputs and outputs of the plant model. A dataset file must be precompiled from traces represented in the format of the Apros continuous process simulator. Examples of configuration, a script to generate traces and a script to precompile a dataset can be found in [evaluation/counter](/evaluation/counter).
 
-**Constraint-based (symbolic) method.** Synthesizes purely symbolic models which are easier for the verifier NuSMV to process. Run:
+**Constraint-based (symbolic) method.** Synthesizes purely symbolic models which are easier for the verifier [NuSMV](http://nusmv.fbk.eu/) to process. Run:
 > java -jar /jars/apros-builder.jar --type constraint-based --config <config file> --dataset <dataset file> --constraintBasedDisableOIO_CONSTRAINTS --constraintBasedDisableFAIRNESS_CONSTRAINTS
 
-**Modular method**. Modular explicit-state plant model construction. An example is given in [ulyantsev/EFSM-tools/blob/devel/evaluation/counter/modular.sh](/ulyantsev/EFSM-tools/blob/devel/evaluation/counter/modular.sh).
+**Modular method**. Modular explicit-state plant model construction. An example is given in [evaluation/counter/modular.sh](/evaluation/counter/modular.sh).
 
 ## Moore machine synthesis from traces and LTL properties
 
