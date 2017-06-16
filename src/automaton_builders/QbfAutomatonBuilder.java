@@ -46,7 +46,8 @@ public class QbfAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
                                                  List<LtlNode> formulae, int size, QbfSolver qbfSolver,
                                                  boolean useSat, List<String> events, List<String> actions,
                                                  SatSolver satSolver, Verifier verifier, long finishTime,
-                                                 CompletenessType completenessType) throws IOException {
+                                                 CompletenessType completenessType,
+                                                 int generateQsatForK) throws IOException {
         if (useSat) {
             final Set<String> forbiddenYs = getForbiddenYs(logger, size, events.size());
             for (int k = 0; ; k++) {
@@ -88,6 +89,12 @@ public class QbfAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
                 }
             }
         } else {
+            if (generateQsatForK > -1) {
+                final QuantifiedBooleanFormula qbf = new QbfFormulaBuilder(logger, tree, formulae, size,
+                        generateQsatForK, completenessType, events, actions).getFormula(false);
+                qbf.printQdimacs(logger, "out.qdimacs", "out.pretty");
+                return Optional.empty();
+            }
             for (int k = 0; ; k++) {
                 if (System.currentTimeMillis() > finishTime) {
                     logger.info("TIME LIMIT EXCEEDED");
@@ -95,15 +102,15 @@ public class QbfAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
                 }
                 logger.info("TRYING k = " + k);
                 deleteTrash();
-                QuantifiedBooleanFormula qbf = new QbfFormulaBuilder(logger, tree,
-                        formulae, size, k, completenessType, events, actions).getFormula(false);
+                final QuantifiedBooleanFormula qbf = new QbfFormulaBuilder(logger, tree, formulae, size, k,
+                        completenessType, events, actions).getFormula(false);
                 final int timeLeft = (int) (finishTime - System.currentTimeMillis()) / 1000 + 1;
-                SolverResult ass = qbf.solve(logger, qbfSolver, timeLeft);
+                final SolverResult ass = qbf.solve(logger, qbfSolver, timeLeft);
                 logger.info(ass.toString().split("\n")[0]);
 
                 if (ass.type() == SolverResults.SAT) {
-                    final MealyAutomaton a = constructAutomatonFromAssignment(logger, ass.list(),
-                            tree, size, true, completenessType).getLeft();
+                    final MealyAutomaton a = constructAutomatonFromAssignment(logger, ass.list(), tree, size, true,
+                            completenessType).getLeft();
                     if (verifier.verify(a)) {
                         return Optional.of(a);
                     } else {

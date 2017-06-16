@@ -4,28 +4,17 @@ package bnf_formulae;
  * (c) Igor Buzhinsky
  */
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.TreeSet;
-import java.util.logging.Logger;
-import java.util.stream.Collectors;
-
+import bnf_formulae.BooleanFormula.DimacsConversionInfo;
+import exception.TimeLimitExceededException;
 import sat_solving.Assignment;
 import sat_solving.QbfSolver;
 import sat_solving.SolverResult;
 import sat_solving.SolverResult.SolverResults;
-import exception.TimeLimitExceededException;
-import bnf_formulae.BooleanFormula.DimacsConversionInfo;
+
+import java.io.*;
+import java.util.*;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 public class QuantifiedBooleanFormula {
     private final List<BooleanVariable> existVars;
@@ -106,6 +95,7 @@ public class QuantifiedBooleanFormula {
     }
 
     private static final String QDIMACS_FILENAME = "_tmp.qdimacs";
+    private static final String QDIMACS_PRETTY_FILENAME = "_tmp.pretty";
     
     private SolverResult depqbfSolve(Logger logger, int timeoutSeconds,
             QdimacsConversionInfo qdimacs) throws IOException {
@@ -141,17 +131,21 @@ public class QuantifiedBooleanFormula {
         return properVars.equals(actualVars);
     }
 
-    public SolverResult solve(Logger logger, QbfSolver solver, int timeoutSeconds) throws IOException {
+    public QdimacsConversionInfo printQdimacs(Logger logger, String filename, String prettyFilename)
+            throws IOException {
         final QdimacsConversionInfo qdimacs = toQdimacs(logger);
         logger.info("DIMACS CNF: " + qdimacs.info.title());
-        
-        try (PrintWriter pw = new PrintWriter(QDIMACS_FILENAME)) {
+        try (PrintWriter pw = new PrintWriter(filename)) {
             pw.print(qdimacs.qdimacsString);
         }
-        try (PrintWriter pw = new PrintWriter("_tmp.pretty")) {
+        try (PrintWriter pw = new PrintWriter(prettyFilename)) {
             pw.print(toString());
         }
-        
+        return qdimacs;
+    }
+
+    public SolverResult solve(Logger logger, QbfSolver solver, int timeoutSeconds) throws IOException {
+        final QdimacsConversionInfo qdimacs = printQdimacs(logger, QDIMACS_FILENAME, QDIMACS_PRETTY_FILENAME);
         switch (solver) {
         case DEPQBF:
             return depqbfSolve(logger, timeoutSeconds, qdimacs);

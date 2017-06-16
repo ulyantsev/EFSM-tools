@@ -4,29 +4,18 @@ package formula_builders;
  * (c) Igor Buzhinsky
  */
 
+import algorithms.AutomatonCompleter.CompletenessType;
+import bnf_formulae.*;
+import structures.mealy.ScenarioTree;
+import verification.ltl.LtlNormalizer;
+import verification.ltl.grammar.*;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.logging.Logger;
-
-import structures.mealy.ScenarioTree;
-import verification.ltl.LtlNormalizer;
-import verification.ltl.grammar.BinaryOperator;
-import verification.ltl.grammar.BooleanNode;
-import verification.ltl.grammar.LtlNode;
-import verification.ltl.grammar.Predicate;
-import verification.ltl.grammar.UnaryOperator;
-import algorithms.AutomatonCompleter.CompletenessType;
-import bnf_formulae.BinaryOperation;
-import bnf_formulae.BinaryOperations;
-import bnf_formulae.BooleanFormula;
-import bnf_formulae.BooleanVariable;
-import bnf_formulae.FalseFormula;
-import bnf_formulae.FormulaList;
-import bnf_formulae.QuantifiedBooleanFormula;
-import bnf_formulae.TrueFormula;
 
 public class QbfFormulaBuilder extends FormulaBuilder {
     private final Logger logger;
@@ -129,8 +118,7 @@ public class QbfFormulaBuilder extends FormulaBuilder {
         addVars();
         BooleanFormula scenarioConstraints = scenarioConstraints(true).assemble();
         BooleanFormula mainQbfConstraint = mainQbfConstraint(forFurtherSatReduction);
-        return new QuantifiedBooleanFormula(existVars, forallVars,
-                scenarioConstraints.and(varPresenceConstraints()),
+        return new QuantifiedBooleanFormula(existVars, forallVars, scenarioConstraints.and(varPresenceConstraints()),
                 mainQbfConstraint);
     }
 
