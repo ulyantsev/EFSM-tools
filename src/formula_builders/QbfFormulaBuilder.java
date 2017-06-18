@@ -70,40 +70,28 @@ public class QbfFormulaBuilder extends FormulaBuilder {
     }
     
     private LtlNode formulaToCheck() {
-        if (formulae.isEmpty()) {
-            return BooleanNode.FALSE;
-        }
-        
-        LtlNode f = formulae.stream().skip(1)
-                .reduce(formulae.get(0), (f1, f2) -> LtlNormalizer.and(f1, f2));
-        f = LtlNormalizer.toNegationNormalForm(LtlNormalizer.not(f));
-        
-        return f;
+        return formulae.isEmpty() ? BooleanNode.FALSE : LtlNormalizer.toNegationNormalForm(
+                LtlNormalizer.not(formulae.stream().skip(1).reduce(formulae.get(0), LtlNormalizer::and)));
     }
     
     protected BooleanFormula mainQbfConstraint(boolean forFurtherSatReduction) {
-        LtlNode formulaToCheck = formulaToCheck();
+        final LtlNode formulaToCheck = formulaToCheck();
         logger.info(formulaToCheck.toString());
         
-        BooleanFormula pathIsCorrect = forFurtherSatReduction
+        final BooleanFormula pathIsCorrect = forFurtherSatReduction
                 ? cTerm().and(dTerm())
                 : BinaryOperation.and(sigmaVar(0, 0), aTerm(), bTerm(), cTerm(), dTerm());
         
-        FormulaList cyclicPathFormula = new FormulaList(BinaryOperations.OR);
+        final FormulaList cyclicPathFormula = new FormulaList(BinaryOperations.OR);
         for (int l = 0; l <= k; l++) {
             cyclicPathFormula.add(llkTerm(l).and(translateCyclic(formulaToCheck, l, 0)));
         }
         
-        BooleanFormula pathFormula = lkTerm().not()
+        final BooleanFormula pathFormula = lkTerm().not()
                 .and(translateNonCyclic(formulaToCheck, 0))
                 .or(cyclicPathFormula.assemble());
         
-        BooleanFormula mainQbfConstraint = BinaryOperation.or(Arrays.asList(
-                pathIsCorrect.not(),
-                pathFormula.not()
-        ), "main QBF constraint");
-        
-        return mainQbfConstraint;
+        return BinaryOperation.or(Arrays.asList(pathIsCorrect.not(), pathFormula.not()), "main QBF constraint");
     }
     
     protected void addVars() {
@@ -124,7 +112,7 @@ public class QbfFormulaBuilder extends FormulaBuilder {
 
     // not more than one state/event in the same place of the path
     private BooleanFormula aTerm() {
-        FormulaList constraints = new FormulaList(BinaryOperations.AND);
+        final FormulaList constraints = new FormulaList(BinaryOperations.AND);
         
         for (int j = 0; j <= k; j++) {
             for (int i1 = 0; i1 < colorSize; i1++) {
@@ -145,7 +133,7 @@ public class QbfFormulaBuilder extends FormulaBuilder {
     
     // at least one state/event in each position of the path
     private BooleanFormula bTerm() {
-        FormulaList constraints = new FormulaList(BinaryOperations.AND);
+        final FormulaList constraints = new FormulaList(BinaryOperations.AND);
         for (int j = 0; j <= k; j++) {
             FormulaList optionsS = new FormulaList(BinaryOperations.OR);
             for (int i = 0; i < colorSize; i++) {
@@ -164,7 +152,7 @@ public class QbfFormulaBuilder extends FormulaBuilder {
     
     // forall-variables are consistent with y's
     private BooleanFormula cTerm() {
-        FormulaList constraints = new FormulaList(BinaryOperations.AND);
+        final FormulaList constraints = new FormulaList(BinaryOperations.AND);
         for (int j = 0; j < k; j++) {
             for (int i1 = 0; i1 < colorSize; i1++) {
                 for (int i2 = 0; i2 < colorSize; i2++) {
@@ -198,7 +186,7 @@ public class QbfFormulaBuilder extends FormulaBuilder {
     
     // forall-variables are consistent with z's
     private BooleanFormula dTerm() {
-        FormulaList constraints = new FormulaList(BinaryOperations.AND);
+        final FormulaList constraints = new FormulaList(BinaryOperations.AND);
         for (int j = 0; j <= k; j++) {
             for (int i1 = 0; i1 < colorSize; i1++) {
                 for (String action : actions) {
@@ -217,8 +205,8 @@ public class QbfFormulaBuilder extends FormulaBuilder {
     // path is a (k, l)-loop
     private BooleanFormula llkTerm(int l) {
         assert l >= 0 && l <= k;
-        
-        FormulaList options = new FormulaList(BinaryOperations.OR);
+
+        final FormulaList options = new FormulaList(BinaryOperations.OR);
         for (int i1 = 0; i1 < colorSize; i1++) {
             for (int i2 = 0; i2 < colorSize; i2++) {
                 for (String e : events) {
@@ -232,7 +220,7 @@ public class QbfFormulaBuilder extends FormulaBuilder {
     
     // path is a loop
     private BooleanFormula lkTerm() {
-        FormulaList options = new FormulaList(BinaryOperations.OR);
+        final FormulaList options = new FormulaList(BinaryOperations.OR);
         for (int l = 0; l <= k; l++) {
             options.add(llkTerm(l));
         }
@@ -295,11 +283,11 @@ public class QbfFormulaBuilder extends FormulaBuilder {
                 throw new RuntimeException("Unknown unary operator " + op);
             }
         } else if (node instanceof BinaryOperator) {
-            BinaryOperator op = (BinaryOperator) node;
-            LtlNode a = op.getLeftOperand();
-            LtlNode b = op.getRightOperand();
-            
-            Function<Boolean, BooleanFormula> untilRelease = isUntil -> {
+            final BinaryOperator op = (BinaryOperator) node;
+            final LtlNode a = op.getLeftOperand();
+            final LtlNode b = op.getRightOperand();
+
+            final Function<Boolean, BooleanFormula> untilRelease = isUntil -> {
                 FormulaList orList = new FormulaList(BinaryOperations.OR);
                 for (int j = index; j <= k; j++) {
                     FormulaList andList = new FormulaList(BinaryOperations.AND);
@@ -348,8 +336,8 @@ public class QbfFormulaBuilder extends FormulaBuilder {
         if (node instanceof UnaryOperator) {
             UnaryOperator op = (UnaryOperator) node;
             LtlNode a = op.getOperand();
-            
-            Function<BinaryOperations, BooleanFormula> globalFuture = operation -> {
+
+            final Function<BinaryOperations, BooleanFormula> globalFuture = operation -> {
                 FormulaList list = new FormulaList(operation);
                 for (int j = Math.min(index, l); j <= k; j++) {
                     list.add(translateCyclic(a, l, j));
@@ -375,12 +363,12 @@ public class QbfFormulaBuilder extends FormulaBuilder {
                 throw new RuntimeException("Unknown unary operator " + op);
             }
         } else if (node instanceof BinaryOperator) {
-            BinaryOperator op = (BinaryOperator) node;
-            LtlNode a = op.getLeftOperand();
-            LtlNode b = op.getRightOperand();
-            
-            BiFunction<BinaryOperations, BinaryOperations, BooleanFormula> untilRelease = (op1, op2) -> {
-                FormulaList l1 = new FormulaList(op1);
+            final BinaryOperator op = (BinaryOperator) node;
+            final LtlNode a = op.getLeftOperand();
+            final LtlNode b = op.getRightOperand();
+
+            final BiFunction<BinaryOperations, BinaryOperations, BooleanFormula> untilRelease = (op1, op2) -> {
+                final FormulaList l1 = new FormulaList(op1);
                 for (int j = index; j <= k; j++) {
                     FormulaList l2 = new FormulaList(op2);
                     l2.add(translateCyclic(b, l, j));

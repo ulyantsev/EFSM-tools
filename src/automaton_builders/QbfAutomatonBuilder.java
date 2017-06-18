@@ -10,6 +10,7 @@ import bnf_formulae.BooleanFormula.SolveAsSatResult;
 import bnf_formulae.QuantifiedBooleanFormula;
 import bnf_formulae.QuantifiedBooleanFormula.FormulaSizeException;
 import exception.TimeLimitExceededException;
+import formula_builders.BFSVariableProhibitionDeterminer;
 import formula_builders.QbfFormulaBuilder;
 import sat_solving.Assignment;
 import sat_solving.QbfSolver;
@@ -21,27 +22,15 @@ import structures.mealy.ScenarioTree;
 import verification.ltl.grammar.LtlNode;
 import verification.verifier.Verifier;
 
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.logging.Logger;
 
-public class QbfAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {   
-    public final static String PRECOMPUTED_DIR_NAME = "qbf/bfs-prohibited-ys";
+public class QbfAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
     private static final int MAX_FORMULA_SIZE = 1000 * 1000 * 1000;
-    
-    public static Set<String> getForbiddenYs(Logger logger, int states, int events) throws FileNotFoundException {
-        final Set<String> ys = new TreeSet<>();
-        try (Scanner sc = new Scanner(new File(PRECOMPUTED_DIR_NAME + "/" + states + "_" + events))) {
-            while (sc.hasNext()) {
-                ys.add(sc.next());
-            }
-        }
-        logger.info("FORBIDDEN YS: " + ys);
-        return ys;
-    }
-    
+
     public static Optional<MealyAutomaton> build(Logger logger, ScenarioTree tree,
                                                  List<LtlNode> formulae, int size, QbfSolver qbfSolver,
                                                  boolean useSat, List<String> events, List<String> actions,
@@ -49,7 +38,11 @@ public class QbfAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
                                                  CompletenessType completenessType,
                                                  int generateQsatForK) throws IOException {
         if (useSat) {
-            final Set<String> forbiddenYs = getForbiddenYs(logger, size, events.size());
+            logger.info("COMPOTING FORBIDDEN YS...");
+            final Set<String> forbiddenYs = BFSVariableProhibitionDeterminer.getForbiddenYs(size, events.size(),
+                    logger);
+            logger.info("FORBIDDEN YS: " + forbiddenYs);
+
             for (int k = 0; ; k++) {
                 if (System.currentTimeMillis() > finishTime) {
                     logger.info("TIME LIMIT EXCEEDED");

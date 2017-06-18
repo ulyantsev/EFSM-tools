@@ -1,58 +1,24 @@
-package main.misc;
+package formula_builders;
 
 /**
  * (c) Igor Buzhinsky
  */
 
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.logging.Logger;
-
-import org.apache.commons.lang3.tuple.Pair;
-
-import bnf_formulae.BinaryOperation;
-import bnf_formulae.BinaryOperations;
-import bnf_formulae.BooleanFormula;
-import bnf_formulae.BooleanVariable;
-import bnf_formulae.FormulaList;
+import bnf_formulae.*;
 import sat_solving.Assignment;
 import sat_solving.SatSolver;
-import automaton_builders.QbfAutomatonBuilder;
+
+import java.io.IOException;
+import java.util.*;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 public class BFSVariableProhibitionDeterminer {
-    public static void main(String[] args) throws ParseException, IOException {
-        new File(QbfAutomatonBuilder.PRECOMPUTED_DIR_NAME).mkdir();
-        Map<Pair<Integer, Integer>, Map<String, Boolean>> allRes = new HashMap<>();
-        for (int statesNum = 2; statesNum <= 12; statesNum++) {
-            for (int eventNum = 2; eventNum <= 40; eventNum++) {
-                System.out.println(statesNum + " " + eventNum);
-                int effectiveEventNum = Math.max(2, Math.min(eventNum, statesNum - 2));
-                Map<String, Boolean> res = allRes.get(Pair.of(statesNum, effectiveEventNum));
-                if (res == null) {
-                    BFSVariableProhibitionDeterminer d = new BFSVariableProhibitionDeterminer(statesNum,
-                            effectiveEventNum);
-                    Logger logger = Logger.getLogger("Logger");
-                    logger.setUseParentHandlers(false);
-                    res = d.check(logger);
-                    allRes.put(Pair.of(statesNum, eventNum), res);
-                }
-                try (PrintWriter pw = new PrintWriter(new File(QbfAutomatonBuilder.PRECOMPUTED_DIR_NAME
-                        + "/" + statesNum + "_" + eventNum))) {
-                    for (Map.Entry<String, Boolean> e : res.entrySet()) {
-                        if (!e.getValue()) {
-                            pw.println(e.getKey());
-                        }
-                    }
-                }
-            }
-        }
+    public static Set<String> getForbiddenYs(int statesNum, int eventNum, Logger logger) throws IOException {
+        final int effectiveEventNum = Math.max(2, Math.min(eventNum, statesNum - 2));
+        final BFSVariableProhibitionDeterminer d = new BFSVariableProhibitionDeterminer(statesNum, effectiveEventNum);
+        return new TreeSet<>(d.check(logger).entrySet().stream().filter(e -> !e.getValue())
+                .map(Map.Entry::getKey).collect(Collectors.toList()));
     }
     
     private final List<BooleanVariable> existVars = new ArrayList<>();
@@ -116,11 +82,11 @@ public class BFSVariableProhibitionDeterminer {
     }
     
     public Map<String, Boolean> check(Logger logger) throws IOException {
-        Map<String, Boolean> results = new LinkedHashMap<>();
+        final Map<String, Boolean> results = new LinkedHashMap<>();
         for (BooleanVariable v : existVars) {
             if (v.name.startsWith("y")) {
                 constraints.add(v);
-                List<Assignment> list = BooleanFormula.solveAsSat(constraints.assemble().toLimbooleString(),
+                final List<Assignment> list = BooleanFormula.solveAsSat(constraints.assemble().toLimbooleString(),
                         logger, 100000, SatSolver.CRYPTOMINISAT).list();
                 results.put(v.name, !list.isEmpty());
                 constraints.removeLast();
