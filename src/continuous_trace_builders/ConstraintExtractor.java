@@ -4,6 +4,8 @@ package continuous_trace_builders;
  * (c) Igor Buzhinsky
  */
 
+import continuous_trace_builders.fairness_constraints.FairnessConstraintGenerator;
+import continuous_trace_builders.fairness_constraints.FairnessMonotonicConstraintGenerator;
 import continuous_trace_builders.parameters.Parameter;
 
 import java.io.BufferedReader;
@@ -346,8 +348,10 @@ public class ConstraintExtractor {
             addCurrentNextConstraints(conf, transConstraints, ds);
         }
 
-        List<String> fairnessConstraints = FAIRNESS_CONSTRAINS ?
-                FairnessConstraintGenerator.generateFairnessConstraints(conf, ds, grouping) : new ArrayList<>();
+        List<String> fairnessConstraints = FAIRNESS_CONSTRAINS ? FairnessConstraintGenerator.generateFairnessConstraints(conf, ds, grouping) : new ArrayList<>();
+        if (FAIRNESS_CONSTRAINS) {
+            fairnessConstraints.addAll(FairnessMonotonicConstraintGenerator.generateFairnessConstraints(conf, ds, grouping));
+        }
 
         printRes(conf, initConstraints, transConstraints, fairnessConstraints, Utils.combinePaths(directory, "plant-constraints.smv"));
     }
