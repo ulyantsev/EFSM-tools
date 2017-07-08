@@ -151,7 +151,7 @@ public class PlantBuilderMain extends MainBase {
         if (resultFilePath.isEmpty()) {
             resultFilePath = null;
         }
-        if (nusmvFilePath.isEmpty()) {
+        if (nusmvFilePath != null && nusmvFilePath.isEmpty()) {
             nusmvFilePath = null;
         }
 
