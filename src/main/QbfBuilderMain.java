@@ -126,6 +126,11 @@ public class QbfBuilderMain extends MainBase {
             metaVar = "<errorNumber>")
     private int backtrackingErrorNumber = -1;
 
+    @Option(name = "--generateQsatForK",
+            usage = "if strategy = QSAT, then instead of solving only a QDIMACS file is generated for the given k",
+            metaVar = "<errorNumber>")
+    private int generateQsatForK = -1;
+
     public static void main(String[] args) {
         new QbfBuilderMain().run(args, Author.IB, "Automaton builder from scenarios and LTL formulae");
     }
@@ -203,23 +208,23 @@ public class QbfBuilderMain extends MainBase {
             switch (ss) {
             case QSAT: case EXP_SAT:
                 resultAutomaton = QbfAutomatonBuilder.build(logger(), tree, formulae, size,
-                        qbfsolver, ss == SolvingStrategy.EXP_SAT,
-                        events, actions, satsolver, verifier, finishTime, completenesstype);
+                        qbfsolver, ss == SolvingStrategy.EXP_SAT, events, actions, satsolver, verifier, finishTime,
+                        completenesstype, generateQsatForK);
+                if (generateQsatForK > -1) {
+                    return;
+                }
                 break;
             case COUNTEREXAMPLE:
-                resultAutomaton = CounterexampleAutomatonBuilder.build(logger(), tree, size,
-                        events, actions, satsolver, verifier, finishTime,
-                        completenesstype, negativeTree, !noCompletenessHeuristics);
+                resultAutomaton = CounterexampleAutomatonBuilder.build(logger(), tree, size, events, actions, satsolver,
+                        verifier, finishTime, completenesstype, negativeTree, !noCompletenessHeuristics);
                 break;
             case STATE_MERGING:
-                resultAutomaton = StateMergingAutomatonBuilder.build(logger(),
-                        verifier, arguments, negscFilePath);
+                resultAutomaton = StateMergingAutomatonBuilder.build(logger(), verifier, arguments, negscFilePath);
                 break;
             case BACKTRACKING:
-                resultAutomaton = BacktrackingAutomatonBuilder.build(logger(), tree, size,
-                        formulae, events, actions, verifier, finishTime,
-                        completenesstype, varNumber, ensureCoverageAndWeakCompleteness, eventnames,
-                        backtrackingErrorNumber, scenarios);
+                resultAutomaton = BacktrackingAutomatonBuilder.build(logger(), tree, size, formulae, events, actions,
+                        verifier, finishTime, completenesstype, varNumber, ensureCoverageAndWeakCompleteness,
+                        eventnames, backtrackingErrorNumber, scenarios);
                 break;
             }
 

@@ -65,26 +65,6 @@ public class AprosBuilderMain extends MainBase {
             metaVar = "<path>")
     private String directory = "";
 
-    @Option(name = "--disableCur2D", handler = BooleanOptionHandler.class,
-            usage = "constraint-based-new: disable CURRENT_2D constraints")
-    private boolean disableCur2D;
-
-    @Option(name = "--disableCur3D", handler = BooleanOptionHandler.class,
-            usage = "constraint-based-new: disable CURRENT_3D constraints")
-    private boolean disableCur3D;
-
-    @Option(name = "--disableCurNext2D", handler = BooleanOptionHandler.class,
-            usage = "constraint-based-new: disable CURRENT_NEXT_2D constraints")
-    private boolean disableCurNext2D;
-
-    @Option(name = "--disableCurNext3D", handler = BooleanOptionHandler.class,
-            usage = "constraint-based-new: disable CURRENT_NEXT_3D constraints")
-    private boolean disableCurNext3D;
-
-    @Option(name = "--disableCurNextOutputs", handler = BooleanOptionHandler.class,
-            usage = "constraint-based-new: disable current-next dependencies between outputs")
-    private boolean disableCurNextOutputs;
-
     @Option(name = "--includeFirstElement", handler = BooleanOptionHandler.class,
             usage = "prepare-dataset: do not skip the first element of each trace")
     private boolean includeFirstElement;
@@ -106,6 +86,41 @@ public class AprosBuilderMain extends MainBase {
             usage = "list of comma-separated output languages (promela, nusmv), default: nusmv",
             metaVar = "<file>")
     private String output = "nusmv";
+
+    @Option(name = "--disableCur2D", handler = BooleanOptionHandler.class,
+            usage = "constraint-based-new: disable CURRENT_2D constraints")
+    private boolean disableCur2D;
+    @Option(name = "--disableCur3D", handler = BooleanOptionHandler.class,
+            usage = "constraint-based-new: disable CURRENT_3D constraints")
+    private boolean disableCur3D;
+    @Option(name = "--disableCurNext2D", handler = BooleanOptionHandler.class,
+            usage = "constraint-based-new: disable CURRENT_NEXT_2D constraints")
+    private boolean disableCurNext2D;
+    @Option(name = "--disableCurNext3D", handler = BooleanOptionHandler.class,
+            usage = "constraint-based-new: disable CURRENT_NEXT_3D constraints")
+    private boolean disableCurNext3D;
+    @Option(name = "--disableCurNextOutputs", handler = BooleanOptionHandler.class,
+            usage = "constraint-based-new: disable current-next dependencies between outputs")
+    private boolean disableCurNextOutputs;
+
+    @Option(name = "--constraintBasedDisableOVERALL_1D", handler = BooleanOptionHandler.class,
+            usage = "constraint-based: disable overall 1D constraints")
+    private boolean constraintBasedDisableOVERALL_1D;
+    @Option(name = "--constraintBasedDisableOVERALL_2D", handler = BooleanOptionHandler.class,
+            usage = "constraint-based: disable overall 2D constraints")
+    private boolean constraintBasedDisableOVERALL_2D;
+    @Option(name = "--constraintBasedDisableOIO_CONSTRAINTS", handler = BooleanOptionHandler.class,
+            usage = "constraint-based: disable output-input-output constraints")
+    private boolean constraintBasedDisableOIO_CONSTRAINTS;
+    @Option(name = "--constraintBasedDisableFAIRNESS_CONSTRAINTS", handler = BooleanOptionHandler.class,
+            usage = "constraint-based: disable fairness constraints")
+    private boolean constraintBasedDisableFAIRNESS_CONSTRAINTS;
+    @Option(name = "--constraintBasedDisableINPUT_STATE", handler = BooleanOptionHandler.class,
+            usage = "constraint-based: disable input-state constraints")
+    private boolean constraintBasedDisableINPUT_STATE;
+    @Option(name = "--constraintBasedDisableCURRENT_NEXT", handler = BooleanOptionHandler.class,
+            usage = "constraint-based: disable current-next constraints")
+    private boolean constraintBasedDisableCURRENT_NEXT;
 
     public static void main(String[] args) {
         new AprosBuilderMain().run(args, Author.IB,
@@ -131,7 +146,10 @@ public class AprosBuilderMain extends MainBase {
             } else {
                 final Configuration conf = Configuration.load(Utils.combinePaths(directory, confFilename));
                 if (Objects.equals(type, "constraint-based")) {
-                    ConstraintExtractor.run(conf, directory, datasetFilename, groupingFile);
+                    ConstraintExtractor.run(conf, directory, datasetFilename, groupingFile,
+                            constraintBasedDisableOVERALL_1D, constraintBasedDisableOVERALL_2D,
+                            constraintBasedDisableOIO_CONSTRAINTS, constraintBasedDisableFAIRNESS_CONSTRAINTS,
+                            constraintBasedDisableINPUT_STATE, constraintBasedDisableCURRENT_NEXT);
                 } else if (Objects.equals(type, "constraint-based-new")) {
                     SymbolicBuilder.run(conf, directory, datasetFilename, true, !disableCur2D, !disableCur3D,
                             !disableCurNext2D, !disableCurNext3D, disableCurNextOutputs);

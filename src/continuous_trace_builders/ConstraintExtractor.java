@@ -17,13 +17,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class ConstraintExtractor {
-    final static boolean OVERALL_1D = true;
-    final static boolean OVERALL_2D = true;
-    final static boolean OIO_CONSTRAINTS = true;
-    final static boolean FAIRNESS_CONSTRAINS = true;
-    final static boolean INPUT_STATE = true;
-    final static boolean CURRENT_NEXT = true;
-
     public static String plantCaption(Configuration conf) {
         final StringBuilder sb = new StringBuilder();
         final String inputLine = String.join(", ",
@@ -288,7 +281,10 @@ public class ConstraintExtractor {
         System.out.println("Constraints generated: " + constraintsCount);
     }
 
-    public static void run(Configuration conf, String directory, String datasetFilename, String groupingFile) throws IOException {
+    public static void run(Configuration conf, String directory, String datasetFilename, String groupingFile,
+                           boolean disableOVERALL_1D, boolean disableOVERALL_2D, boolean disableOIO_CONSTRAINTS,
+                           boolean disableFAIRNESS_CONSTRAINTS, boolean disableINPUT_STATE, boolean disableCURRENT_NEXT)
+            throws IOException {
         final Dataset ds = Dataset.load(Utils.combinePaths(directory, datasetFilename));
         final List<String> initConstraints = new ArrayList<>();
         final List<String> transConstraints = new ArrayList<>();
@@ -318,16 +314,16 @@ public class ConstraintExtractor {
 
         // 1. overall 1-dimensional constraints
         // "each output may only have values found in the traces"
-        if (OVERALL_1D) {
+        if (!disableOVERALL_1D) {
             add1DConstraints(conf, initConstraints, transConstraints, ds);
         }
         // 2. overall 2-dimensional constraints
         // "for each pair of outputs, only value pairs found in some trace element are possible"
-        if (OVERALL_2D) {
+        if (!disableOVERALL_2D) {
             add2DConstraints(conf, initConstraints, transConstraints, ds);
         }
         // 3. Ok = a & Ik = b -> O(k+1)=c
-        if (OIO_CONSTRAINTS) {
+        if (!disableOIO_CONSTRAINTS) {
             addOIOConstraints(conf, initConstraints, transConstraints, ds, grouping);
         }
 
@@ -337,22 +333,24 @@ public class ConstraintExtractor {
         // if the input is unknown, then no constraint
         // FIXME do something with potential deadlocks, when unknown
         // input combinations require non-intersecting actions
-        if (INPUT_STATE) {
+        if (!disableINPUT_STATE) {
             addInputStateConstraints(conf, transConstraints, ds);
         }
 
         // 2. 2-dimensional constraints "current state -> next state"
         // "for each output, only its value transitions found in some pair of contiguous trace
         // elements are possible"
-        if (CURRENT_NEXT) {
+        if (!disableCURRENT_NEXT) {
             addCurrentNextConstraints(conf, transConstraints, ds);
         }
 
-        List<String> fairnessConstraints = FAIRNESS_CONSTRAINS ? FairnessConstraintGenerator.generateFairnessConstraints(conf, ds, grouping) : new ArrayList<>();
-        if (FAIRNESS_CONSTRAINS) {
+        List<String> fairnessConstraints = !disableFAIRNESS_CONSTRAINTS ?
+                FairnessConstraintGenerator.generateFairnessConstraints(conf, ds, grouping) : new ArrayList<>();
+        if (!disableFAIRNESS_CONSTRAINTS) {
             fairnessConstraints.addAll(FairnessMonotonicConstraintGenerator.generateFairnessConstraints(conf, ds, grouping));
         }
 
-        printRes(conf, initConstraints, transConstraints, fairnessConstraints, Utils.combinePaths(directory, "plant-constraints.smv"));
+        printRes(conf, initConstraints, transConstraints, fairnessConstraints, Utils.combinePaths(directory,
+                "plant-constraints.smv"));
     }
 }

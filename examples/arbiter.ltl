@@ -1,0 +1,3 @@
+G ((!(action(G0))) || (!(action(G1))))
+G (!(variable(R0)) || (F(action(G0))))
+G (!(variable(R1)) || (F(action(G1))))
