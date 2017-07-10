@@ -12,14 +12,14 @@ import static continuous_trace_builders.fairness_constraints.Helper.*;
 /**
  * Created by Dmitry on 07-Jun-17.
  */
-public class FairnessConstraintGenerator {
+public class ComplexFairnessConstraintGenerator {
     private final static int MIN_LEN = 5;
     private final static int MIN_VISIT_COUNT = 5;
     private final static double REL_ERROR = 1. / 20;
 
+    @SuppressWarnings("unchecked")
     private static Counter[][] collectCounts(Dataset ds, Parameter po, List<List<Integer>> groups, List<Parameter> inputs) {
         int outValsCount = po.valueCount();
-        @SuppressWarnings("unchecked")
         Counter[][] inputsCount = new Counter[outValsCount][outValsCount];
         int groupsSize = groups.size();
         for (int i = 0; i < outValsCount; i++) {
@@ -27,7 +27,6 @@ public class FairnessConstraintGenerator {
                 inputsCount[i][j] = new Counter(groups, inputs);
             }
         }
-        int inputsSize = inputs.size();
         for (List<double[]> trace : ds.values) {
             int curOutInterval = get(ds, trace, 0, po);
             int start = 1;
@@ -118,8 +117,10 @@ public class FairnessConstraintGenerator {
                     Collections.sort(dif1);
                     Collections.sort(dif2);
                     int mid = dif1.get(dif1.size() / 2);
-                    if (mid > MIN_LEN && dif1.get(0) >= mid * (1 - REL_ERROR) && dif1.get(dif1.size()-1) <= mid * (1 + REL_ERROR)
-                            && dif2.get(0) >= mid * (1 - REL_ERROR) && dif2.get(dif2.size()-1) <= mid * (1 + REL_ERROR)) {
+                    if (mid > MIN_LEN && dif1.get(0) >= mid * (1 - REL_ERROR)
+                            && dif1.get(dif1.size()-1) <= mid * (1 + REL_ERROR)
+                            && dif2.get(0) >= mid * (1 - REL_ERROR)
+                            && dif2.get(dif2.size()-1) <= mid * (1 + REL_ERROR)) {
                         res.add(new ControlParameter(i, k1, k2));
                     }
                 }

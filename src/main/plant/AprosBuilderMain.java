@@ -112,9 +112,15 @@ public class AprosBuilderMain extends MainBase {
     @Option(name = "--constraintBasedDisableOIO_CONSTRAINTS", handler = BooleanOptionHandler.class,
             usage = "constraint-based: disable output-input-output constraints")
     private boolean constraintBasedDisableOIO_CONSTRAINTS;
-    @Option(name = "--constraintBasedDisableFAIRNESS_CONSTRAINTS", handler = BooleanOptionHandler.class,
-            usage = "constraint-based: disable fairness constraints")
-    private boolean constraintBasedDisableFAIRNESS_CONSTRAINTS;
+
+    @Option(name = "--constraintBasedDisableCOMPLEX_FAIRNESS_CONSTRAINTS", handler = BooleanOptionHandler.class,
+            usage = "constraint-based: disable complex fairness constraints, generated on base of constant difference of two values to move from one parameter to another")
+    private boolean constraintBasedDisableCOMPLEX_FAIRNESS_CONSTRAINTS;
+
+    @Option(name = "--constraintBasedDisableMONOTONIC_FAIRNESS_CONSTRAINTS", handler = BooleanOptionHandler.class,
+            usage = "constraint-based: disable fairness constraints, generated on the base of monotonicity")
+    private boolean constraintBasedDisableMONOTONIC_FAIRNESS_CONSTRAINTS;
+
     @Option(name = "--constraintBasedDisableINPUT_STATE", handler = BooleanOptionHandler.class,
             usage = "constraint-based: disable input-state constraints")
     private boolean constraintBasedDisableINPUT_STATE;
@@ -148,8 +154,10 @@ public class AprosBuilderMain extends MainBase {
                 if (Objects.equals(type, "constraint-based")) {
                     ConstraintExtractor.run(conf, directory, datasetFilename, groupingFile,
                             constraintBasedDisableOVERALL_1D, constraintBasedDisableOVERALL_2D,
-                            constraintBasedDisableOIO_CONSTRAINTS, constraintBasedDisableFAIRNESS_CONSTRAINTS,
-                            constraintBasedDisableINPUT_STATE, constraintBasedDisableCURRENT_NEXT);
+                            constraintBasedDisableOIO_CONSTRAINTS,
+                            constraintBasedDisableINPUT_STATE, constraintBasedDisableCURRENT_NEXT,
+                            constraintBasedDisableMONOTONIC_FAIRNESS_CONSTRAINTS,
+                            constraintBasedDisableCOMPLEX_FAIRNESS_CONSTRAINTS);
                 } else if (Objects.equals(type, "constraint-based-new")) {
                     SymbolicBuilder.run(conf, directory, datasetFilename, true, !disableCur2D, !disableCur3D,
                             !disableCurNext2D, !disableCurNext3D, disableCurNextOutputs);

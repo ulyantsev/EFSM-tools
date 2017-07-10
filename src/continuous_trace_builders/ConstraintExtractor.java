@@ -4,8 +4,8 @@ package continuous_trace_builders;
  * (c) Igor Buzhinsky
  */
 
-import continuous_trace_builders.fairness_constraints.FairnessConstraintGenerator;
-import continuous_trace_builders.fairness_constraints.FairnessMonotonicConstraintGenerator;
+import continuous_trace_builders.fairness_constraints.ComplexFairnessConstraintGenerator;
+import continuous_trace_builders.fairness_constraints.MonotonicFairnessConstraintGenerator;
 import continuous_trace_builders.parameters.Parameter;
 
 import java.io.BufferedReader;
@@ -283,7 +283,9 @@ public class ConstraintExtractor {
 
     public static void run(Configuration conf, String directory, String datasetFilename, String groupingFile,
                            boolean disableOVERALL_1D, boolean disableOVERALL_2D, boolean disableOIO_CONSTRAINTS,
-                           boolean disableFAIRNESS_CONSTRAINTS, boolean disableINPUT_STATE, boolean disableCURRENT_NEXT)
+                           boolean disableINPUT_STATE, boolean disableCURRENT_NEXT,
+                           boolean constraintBasedDisableMONOTONIC_FAIRNESS_CONSTRAINTS,
+                           boolean constraintBasedDisableCOMPLEX_FAIRNESS_CONSTRAINTS)
             throws IOException {
         final Dataset ds = Dataset.load(Utils.combinePaths(directory, datasetFilename));
         final List<String> initConstraints = new ArrayList<>();
@@ -344,10 +346,12 @@ public class ConstraintExtractor {
             addCurrentNextConstraints(conf, transConstraints, ds);
         }
 
-        List<String> fairnessConstraints = !disableFAIRNESS_CONSTRAINTS ?
-                FairnessConstraintGenerator.generateFairnessConstraints(conf, ds, grouping) : new ArrayList<>();
-        if (!disableFAIRNESS_CONSTRAINTS) {
-            fairnessConstraints.addAll(FairnessMonotonicConstraintGenerator.generateFairnessConstraints(conf, ds, grouping));
+        List<String> fairnessConstraints = new ArrayList<>();
+        if (!constraintBasedDisableMONOTONIC_FAIRNESS_CONSTRAINTS) {
+            fairnessConstraints.addAll(MonotonicFairnessConstraintGenerator.generateFairnessConstraints(conf, ds, grouping));
+        }
+        if (!constraintBasedDisableCOMPLEX_FAIRNESS_CONSTRAINTS) {
+            fairnessConstraints.addAll(ComplexFairnessConstraintGenerator.generateFairnessConstraints(conf, ds, grouping));
         }
 
         printRes(conf, initConstraints, transConstraints, fairnessConstraints, Utils.combinePaths(directory,
