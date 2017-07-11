@@ -3,17 +3,10 @@ package continuous_trace_builders.fairness_constraints;
 import continuous_trace_builders.Configuration;
 import continuous_trace_builders.Dataset;
 import continuous_trace_builders.parameters.Parameter;
-import continuous_trace_builders.parameters.RealParameter;
-import continuous_trace_builders.parameters.SegmentsParameter;
-
+import static continuous_trace_builders.fairness_constraints.Helper.*;
 import java.util.*;
 import java.util.function.Supplier;
 
-import static continuous_trace_builders.fairness_constraints.Helper.*;
-
-/**
- * Created by Dmitry on 07-Jun-17.
- */
 public class MonotonicFairnessConstraintGenerator {
     public static List<String> generateFairnessConstraints(Configuration conf, Dataset ds, List<List<Parameter>> grouping) {
         List<Parameter> inputs = conf.inputParameters;
@@ -40,9 +33,6 @@ public class MonotonicFairnessConstraintGenerator {
         }
         return constraints;
     }
-
-
-
 
     private static List<ControlParameter>[] getControlParameters(Dataset ds, List<Parameter> outputParameters,
                                                                  List<List<Integer>> groups, List<List<List<Integer>>> keys,

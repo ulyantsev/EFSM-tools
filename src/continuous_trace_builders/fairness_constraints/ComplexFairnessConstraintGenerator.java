@@ -9,9 +9,6 @@ import continuous_trace_builders.parameters.SegmentsParameter;
 import static continuous_trace_builders.fairness_constraints.Helper.*;
 
 
-/**
- * Created by Dmitry on 07-Jun-17.
- */
 public class ComplexFairnessConstraintGenerator {
     private final static int MIN_LEN = 5;
     private final static int MIN_VISIT_COUNT = 5;
@@ -92,7 +89,7 @@ public class ComplexFairnessConstraintGenerator {
         return constraints;
     }
 
-    static List<ControlParameter> getControlParameters(Counter c1, Counter c2) {
+    private static List<ControlParameter> getControlParameters(Counter c1, Counter c2) {
         if (c1.vals.size() < MIN_VISIT_COUNT || c2.vals.size() < MIN_VISIT_COUNT)
             return new ArrayList<>();
         List<ControlParameter> res = new ArrayList<>();
@@ -135,8 +132,9 @@ public class ComplexFairnessConstraintGenerator {
         final List<List<Integer>>[] keys;
         final int groupsCount;
 
-        public Counter(List<List<Integer>> groups, List<Parameter> parameters) {
+        Counter(List<List<Integer>> groups, List<Parameter> parameters) {
             groupsCount = groups.size();
+            //noinspection unchecked
             keys = new List[groupsCount];
             for (int i = 0; i < keys.length; i++) {
                 keys[i] = collectKeys(groups.get(i), parameters);
