@@ -166,17 +166,29 @@ Here are scripts to run some examples (the first one is from the paper):
 
 ## Plant model synthesis from behavior traces only
 
-**Simplified version of the previous method.** If the input data does not have any LTL formulae, run plant-automaton-generator.jar with the option "--fast". This will switch the solver-based algorithm to a much simpler and faster graph algorithm. The proper number of states will be determined automatically.
+*1. Simplified version of the previous method.* If the input data does not have any LTL formulae, run plant-automaton-generator.jar with the option "--fast". This will switch the solver-based algorithm to a much simpler and faster graph algorithm. The proper number of states will be determined automatically.
 
-**Explicit-state method.** Enhanced explicit-state plant model construction with completion of trace-unsupported transitions based on input proximity:
-> java -jar /jars/apros-builder.jar --type explicit-state --config <config file> --dataset <dataset file>
+*2. Explicit-state method.* Enhanced explicit-state plant model construction with completion of trace-unsupported transitions based on input proximity:
+> java -jar jars/apros-builder.jar --type explicit-state --config <config file> --dataset <dataset file>
 
 Configuration files describe inputs and outputs of the plant model. A dataset file must be precompiled from traces represented in the format of the Apros continuous process simulator. Examples of configuration, a script to generate traces and a script to precompile a dataset can be found in [evaluation/counter](/evaluation/counter).
 
-**Constraint-based (symbolic) method.** Synthesizes purely symbolic models which are easier for the verifier [NuSMV](http://nusmv.fbk.eu/) to process. Run:
-> java -jar /jars/apros-builder.jar --type constraint-based --config <config file> --dataset <dataset file> --constraintBasedDisableOIO_CONSTRAINTS --constraintBasedDisableFAIRNESS_CONSTRAINTS
+This method will be described in:
 
-**Modular method**. Modular explicit-state plant model construction. An example is given in [evaluation/counter/modular.sh](/evaluation/counter/modular.sh).
+* Buzhinsky I., Pakonen A., Vyatkin V. Scalable methods of discrete plant model generation for closed-loop model checking. Accepted to IECON 2017 
+
+*3. Constraint-based (symbolic) method.* Synthesizes purely symbolic models which are easier for the verifier [NuSMV](http://nusmv.fbk.eu/) to process. Run:
+> java -jar jars/apros-builder.jar --type constraint-based --config <config file> --dataset <dataset file> --constraintBasedDisableOIO_CONSTRAINTS --constraintBasedDisableFAIRNESS_CONSTRAINTS
+
+This method will be described in:
+
+* Buzhinsky I., Pakonen A., Vyatkin V. Scalable methods of discrete plant model generation for closed-loop model checking. Accepted to IECON 2017 
+
+*4. Modular method*. Modular explicit-state plant model construction. An example is given in [evaluation/counter/modular.sh](/evaluation/counter/modular.sh).
+
+This method will be described in:
+
+* Buzhinsky I., Vyatkin V. Modular Plant Model Synthesis from Behavior Traces and Temporal Properties. Accepted to ETFA 2017 
 
 ## Moore machine synthesis from traces and LTL properties
 
