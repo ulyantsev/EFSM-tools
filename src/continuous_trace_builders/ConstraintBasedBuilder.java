@@ -16,13 +16,13 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class ConstraintExtractor {
+public class ConstraintBasedBuilder {
     public static String plantCaption(Configuration conf) {
         final StringBuilder sb = new StringBuilder();
         final String inputLine = String.join(", ",
                 conf.inputParameters.stream().map(p -> "CONT_INPUT_" + p.traceName())
                         .collect(Collectors.toList()));
-        sb.append("MODULE PLANT(" + inputLine + ")\n");
+        sb.append("MODULE PLANT(").append(inputLine).append(")\n");
         sb.append("VAR\n");
         for (Parameter p : conf.outputParameters) {
             sb.append("    output_" + p.traceName() + ": 0.." + (p.valueCount() - 1) + ";\n");
@@ -30,14 +30,15 @@ public class ConstraintExtractor {
         return sb.toString();
     }
 
-    public static String plantConversions(Configuration conf) {
+    private static String plantConversions(Configuration conf) {
         final StringBuilder sb = new StringBuilder();
         sb.append("DEFINE\n");
         // output conversion to continuous values
         for (Parameter p : conf.outputParameters) {
-            sb.append("    CONT_" + p.traceName() + " := case\n");
+            sb.append("    CONT_").append(p.traceName()).append(" := case\n");
             for (int i = 0; i < p.valueCount(); i++) {
-                sb.append("        output_" + p.traceName() + " = " + i + ": " + p.nusmvInterval(i) + ";\n");
+                sb.append("        output_").append(p.traceName()).append(" = ").append(i).append(": ")
+                        .append(p.nusmvInterval(i)).append(";\n");
             }
             sb.append("    esac;\n");
         }
@@ -169,9 +170,10 @@ public class ConstraintExtractor {
                     StringBuilder sb = new StringBuilder();
                     for (int i = 0; i < inputs.size(); i++) {
                         Parameter pi = inputs.get(i);
-                        sb.append("CONT_INPUT_" + pi.traceName() + " in " + pi.nusmvInterval(key.get(i)) + " & ");
+                        sb.append("CONT_INPUT_").append(pi.traceName()).append(" in ")
+                                .append(pi.nusmvInterval(key.get(i))).append(" & ");
                     }
-                    sb.append("output_" + po.traceName() + " = " + indexO1);
+                    sb.append("output_").append(po.traceName()).append(" = ").append(indexO1);
                     String next = indices.isEmpty() ? "" : (" & " + interval(indices, po, true));
                     optionList.add(sb.toString() + next);
                 }
@@ -245,16 +247,12 @@ public class ConstraintExtractor {
         if (initConstraints.isEmpty()) {
             initConstraints.add("TRUE");
         }
-        sb.append("    ("
-                + String.join(")\n  & (", initConstraints)
-                + ")\n");
+        sb.append("    (").append(String.join(")\n  & (", initConstraints)).append(")\n");
         sb.append("TRANS\n");
         if (transConstraints.isEmpty()) {
             transConstraints.add("TRUE");
         }
-        sb.append("    ("
-                + String.join(")\n  & (", transConstraints)
-                + ")\n");
+        sb.append("    (").append(String.join(")\n  & (", transConstraints)).append(")\n");
 
         final List<String> outParameters = conf.outputParameters.stream()
             .map(p -> "output_" + p.traceName() + " = next(output_" + p.traceName() + ")")
@@ -268,7 +266,7 @@ public class ConstraintExtractor {
         sb.append("    unsupported := FALSE;\n");
         sb.append(plantConversions(conf));
         for (String fair: fairnessConstraints) {
-            sb.append(fair + "\n");
+            sb.append(fair).append("\n");
         }
         String transformed =
                 sb.toString()
@@ -308,7 +306,7 @@ public class ConstraintExtractor {
                     }
                     grouping.add(Arrays.asList(line.trim().split(" "))
                             .stream()
-                            .map(findParameter::apply)
+                            .map(findParameter)
                             .collect(Collectors.toList()));
                 }
             }

@@ -130,7 +130,8 @@ public class AprosBuilderMain extends MainBase {
     }
 
     @Option(name = "--constraintBasedDisableCOMPLEX_FAIRNESS_CONSTRAINTS", handler = BooleanOptionHandler.class,
-            usage = "constraint-based: disable complex fairness constraints, generated on base of constant difference of two values to move from one parameter to another")
+            usage = "constraint-based: disable complex fairness constraints, generated on base of constant difference" +
+                    " of two values to move from one parameter to another")
     private boolean constraintBasedDisableCOMPLEX_FAIRNESS_CONSTRAINTS;
 
     @Override
@@ -152,7 +153,7 @@ public class AprosBuilderMain extends MainBase {
             } else {
                 final Configuration conf = Configuration.load(Utils.combinePaths(directory, confFilename));
                 if (Objects.equals(type, "constraint-based")) {
-                    ConstraintExtractor.run(conf, directory, datasetFilename, groupingFile,
+                    ConstraintBasedBuilder.run(conf, directory, datasetFilename, groupingFile,
                             constraintBasedDisableOVERALL_1D, constraintBasedDisableOVERALL_2D,
                             constraintBasedDisableOIO_CONSTRAINTS,
                             constraintBasedDisableINPUT_STATE, constraintBasedDisableCURRENT_NEXT,

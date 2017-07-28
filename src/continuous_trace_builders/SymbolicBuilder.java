@@ -19,7 +19,7 @@ public class SymbolicBuilder {
     static boolean CURRENT_NEXT_2D;
     static boolean CURRENT_NEXT_3D;
 
-    public static String plantCaption(Configuration conf) {
+    static String plantCaption(Configuration conf) {
         final StringBuilder sb = new StringBuilder();
         final String inputLine = String.join(", ", conf.inputParameters.stream()
                 .map(p -> "CONT_INPUT_" + p.traceName()).collect(Collectors.toList()));
@@ -31,14 +31,15 @@ public class SymbolicBuilder {
         return sb.toString();
     }
 
-    public static String plantConversions(Configuration conf) {
+    static String plantConversions(Configuration conf) {
         final StringBuilder sb = new StringBuilder();
         sb.append("DEFINE\n");
         // output conversion to continuous values
         for (Parameter p : conf.outputParameters) {
-            sb.append("    CONT_" + p.traceName() + " := case\n");
+            sb.append("    CONT_").append(p.traceName()).append(" := case\n");
             for (int i = 0; i < p.valueCount(); i++) {
-                sb.append("        output_" + p.traceName() + " = " + i + ": " + p.nusmvInterval(i) + ";\n");
+                sb.append("        output_").append(p.traceName()).append(" = ").append(i).append(": ")
+                        .append(p.nusmvInterval(i)).append(";\n");
             }
             sb.append("    esac;\n");
         }
@@ -298,12 +299,12 @@ public class SymbolicBuilder {
         if (initConstraints.isEmpty()) {
             initConstraints.add("TRUE");
         }
-        sb.append("    (" + String.join(")\n  & (", initConstraints) + ")\n");
+        sb.append("    (").append(String.join(")\n  & (", initConstraints)).append(")\n");
         sb.append("TRANS\n");
         if (transConstraints.isEmpty()) {
             transConstraints.add("TRUE");
         }
-        sb.append("    (" + String.join(")\n  & (", transConstraints) + ")\n");
+        sb.append("    (").append(String.join(")\n  & (", transConstraints)).append(")\n");
 
         final List<String> outParameters = conf.outputParameters.stream()
             .map(p -> "output_" + p.traceName() + " = next(output_" + p.traceName() + ")")
@@ -311,7 +312,7 @@ public class SymbolicBuilder {
 
         sb.append("ASSIGN\n");
         sb.append("    init(loop_executed) := FALSE;\n");
-        sb.append("    next(loop_executed) := " + String.join(" & ", outParameters) + ";\n");
+        sb.append("    next(loop_executed) := ").append(String.join(" & ", outParameters)).append(";\n");
 
         sb.append("DEFINE\n");
         sb.append("    unsupported := FALSE;\n");

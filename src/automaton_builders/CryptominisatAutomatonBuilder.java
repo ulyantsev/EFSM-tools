@@ -20,8 +20,8 @@ public class CryptominisatAutomatonBuilder {
         return build(tree, k, cnfPrintWriter, null);
     }
 
-    public static MealyAutomaton build(ScenarioTree tree, int k, PrintWriter cnfPrintWriter, PrintWriter solverPrintWriter)
-            throws IOException {
+    public static MealyAutomaton build(ScenarioTree tree, int k, PrintWriter cnfPrintWriter,
+                                       PrintWriter solverPrintWriter) throws IOException {
 
         final String cnf = DimacsCnfBuilder.getCnf(tree, k);
         if (cnfPrintWriter != null) {

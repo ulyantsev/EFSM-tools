@@ -60,6 +60,5 @@ public class MooreScenarioComplianceCheckerMain extends MainBase {
         default:
             System.err.println("Unknown compliance measure!");
         }
-
     }
 }
