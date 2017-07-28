@@ -3,10 +3,7 @@ package continuous_trace_builders.fairness_constraints;
 import continuous_trace_builders.Dataset;
 import continuous_trace_builders.parameters.Parameter;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by Dmitry on 07-Jul-17.
@@ -40,8 +37,7 @@ public class Helper {
     private static void goCollectKeys(int ind, int[] counts, Integer[] cur, List<List<Integer>> ans) {
         if (ind == counts.length) {
             List<Integer> res = new ArrayList<>(ind);
-            for (Integer x : cur)
-                res.add(x);
+            Collections.addAll(res, cur);
             ans.add(res);
             return;
         }
@@ -81,7 +77,8 @@ public class Helper {
             List<Integer> list = isPlus ? plusKey : minusKey;
             for (int i = 0; i < list.size(); i++) {
                 Parameter param = inputs.get(groups.get(group).get(i));
-                res.append(" & CONT_INPUT_" + param.traceName() + " in " + param.nusmvInterval(list.get(i)));
+                res.append(" & CONT_INPUT_").append(param.traceName()).append(" in ")
+                        .append(param.nusmvInterval(list.get(i)));
             }
             return res.toString();
         }

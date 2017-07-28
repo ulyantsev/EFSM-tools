@@ -20,11 +20,11 @@ public class Configuration {
     // for same-state dependencies (important in modular construction)
     private final Set<Parameter> mealyInputs = new HashSet<>();
 
-    public void markInputAsMealy(Parameter p) {
+    private void markInputAsMealy(Parameter p) {
         mealyInputs.add(p);
     }
 
-    public boolean isMealyInput(Parameter p) {
+    boolean isMealyInput(Parameter p) {
         return mealyInputs.contains(p);
     }
 
@@ -34,7 +34,7 @@ public class Configuration {
         return l;
     }
 
-    public List<String> actionDescriptions() {
+    List<String> actionDescriptions() {
         final List<String> result = new ArrayList<>();
         for (Parameter p : outputParameters) {
             result.addAll(p.descriptions());

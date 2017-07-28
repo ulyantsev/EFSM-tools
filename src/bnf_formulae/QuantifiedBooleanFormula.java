@@ -46,10 +46,10 @@ public class QuantifiedBooleanFormula {
     }
     
     private static class QdimacsConversionInfo {
-        public final String qdimacsString;
+        final String qdimacsString;
         private final DimacsConversionInfo info;
         
-        public QdimacsConversionInfo(String qdimacsString, DimacsConversionInfo info) {
+        QdimacsConversionInfo(String qdimacsString, DimacsConversionInfo info) {
             this.qdimacsString = qdimacsString;
             this.info = info;
         }
@@ -65,17 +65,17 @@ public class QuantifiedBooleanFormula {
         return nums.toString().replaceAll("[,\\[\\]]", "");
     }
     
-    public QdimacsConversionInfo toQdimacs(Logger logger) throws IOException {
+    private QdimacsConversionInfo toQdimacs(Logger logger) throws IOException {
         final StringBuilder sb = new StringBuilder();
         final DimacsConversionInfo info = formula().toDimacs(logger, BooleanFormula.DIMACS_FILENAME);
         
-        sb.append(info.title() + "\n");
-        sb.append("e " + varsToNumbers(existVars, info) + " 0\n");
-        sb.append("a " + varsToNumbers(forallVars, info) + " 0\n");
-        sb.append("e " + otherVars(info) + " 0\n");
+        sb.append(info.title()).append("\n");
+        sb.append("e ").append(varsToNumbers(existVars, info)).append(" 0\n");
+        sb.append("a ").append(varsToNumbers(forallVars, info)).append(" 0\n");
+        sb.append("e ").append(otherVars(info)).append(" 0\n");
         try (BufferedReader input = new BufferedReader(new FileReader(BooleanFormula.DIMACS_FILENAME))) {
             // skip title
-            input.lines().skip(1).forEach(line -> sb.append(line + "\n"));
+            input.lines().skip(1).forEach(line -> sb.append(line).append("\n"));
         }
         
         return new QdimacsConversionInfo(sb.toString(), info);
@@ -249,12 +249,12 @@ public class QuantifiedBooleanFormula {
         }
     }
 
-    static class FormulaBuffer {
+    private static class FormulaBuffer {
         private final StringBuilder formula = new StringBuilder();
         private final int sizeLimit;
         private final long timeToFinish;
         
-        public FormulaBuffer(long timeToFinish, int sizeLimit) {
+        FormulaBuffer(long timeToFinish, int sizeLimit) {
             this.timeToFinish = timeToFinish;
             this.sizeLimit = sizeLimit;
         }

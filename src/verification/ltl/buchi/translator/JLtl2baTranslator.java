@@ -3,12 +3,6 @@
  */
 package verification.ltl.buchi.translator;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
 import rwth.i2.ltl2ba4j.LTL2BA4J;
 import rwth.i2.ltl2ba4j.formula.IFormula;
 import rwth.i2.ltl2ba4j.formula.IFormulaFactory;
@@ -16,18 +10,10 @@ import rwth.i2.ltl2ba4j.formula.impl.FormulaFactory;
 import rwth.i2.ltl2ba4j.model.IGraphProposition;
 import rwth.i2.ltl2ba4j.model.IState;
 import rwth.i2.ltl2ba4j.model.ITransition;
-import verification.ltl.buchi.BuchiAutomaton;
-import verification.ltl.buchi.BuchiNode;
-import verification.ltl.buchi.BuchiNodeFactory;
-import verification.ltl.buchi.ExpressionMap;
-import verification.ltl.buchi.TransitionCondition;
-import verification.ltl.grammar.BinaryOperator;
-import verification.ltl.grammar.BooleanNode;
-import verification.ltl.grammar.IExpression;
-import verification.ltl.grammar.INodeVisitor;
-import verification.ltl.grammar.LtlNode;
-import verification.ltl.grammar.Predicate;
-import verification.ltl.grammar.UnaryOperator;
+import verification.ltl.buchi.*;
+import verification.ltl.grammar.*;
+
+import java.util.*;
 
 /**
  * Ltl formula translator to Buchi automata.
@@ -67,7 +53,7 @@ public class JLtl2baTranslator {
         Map<IState, BuchiNode> bNodes;
         Set<BuchiNode> acceptNodes;
 
-        public BuchiAutomaton convert(Collection<ITransition> transitions) {
+        BuchiAutomaton convert(Collection<ITransition> transitions) {
             buchi = new BuchiAutomaton();
             nodeFactory = new BuchiNodeFactory();
 

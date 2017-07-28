@@ -190,7 +190,7 @@ public class DimacsCnfBuilder {
 
                         String transitionThenMin = -edgeVar + " " + -relationVar + " ";
                         for (String otherEventExpr : eventExprOrder) {
-                            if (otherEventExpr == eventExpr) {
+                            if (Objects.equals(otherEventExpr, eventExpr)) {
                                 break;
                             }
                             final int otherRelationVar = vars.get("y_" + otherEventExpr + "_" + nodeColor
@@ -213,7 +213,7 @@ public class DimacsCnfBuilder {
                         
                     for (String eventExpr : eventExprOrder) {
                         for (String otherEventExpr : eventExprOrder) {
-                            if (otherEventExpr == eventExpr) {
+                            if (Objects.equals(otherEventExpr, eventExpr)) {
                                 break;
                             }
                             final int minTransition = vars.get("m_" + eventExpr + "_" + nodeColor + "_" + childColor);

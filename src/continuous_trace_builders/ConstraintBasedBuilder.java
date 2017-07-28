@@ -6,6 +6,7 @@ package continuous_trace_builders;
 
 import continuous_trace_builders.fairness_constraints.ComplexFairnessConstraintGenerator;
 import continuous_trace_builders.fairness_constraints.MonotonicFairnessConstraintGenerator;
+import continuous_trace_builders.parameters.IgnoredBoolParameter;
 import continuous_trace_builders.parameters.Parameter;
 
 import java.io.BufferedReader;
@@ -17,7 +18,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class ConstraintBasedBuilder {
-    public static String plantCaption(Configuration conf) {
+    static String plantCaption(Configuration conf) {
         final StringBuilder sb = new StringBuilder();
         final String inputLine = String.join(", ",
                 conf.inputParameters.stream().map(p -> "CONT_INPUT_" + p.traceName())
@@ -25,12 +26,12 @@ public class ConstraintBasedBuilder {
         sb.append("MODULE PLANT(").append(inputLine).append(")\n");
         sb.append("VAR\n");
         for (Parameter p : conf.outputParameters) {
-            sb.append("    output_" + p.traceName() + ": 0.." + (p.valueCount() - 1) + ";\n");
+            sb.append("    output_").append(p.traceName()).append(": 0..").append(p.valueCount() - 1).append(";\n");
         }
         return sb.toString();
     }
 
-    private static String plantConversions(Configuration conf) {
+    static String plantConversions(Configuration conf) {
         final StringBuilder sb = new StringBuilder();
         sb.append("DEFINE\n");
         // output conversion to continuous values
@@ -45,7 +46,7 @@ public class ConstraintBasedBuilder {
         return sb.toString();
     }
 
-    private static String interval(Collection<Integer> values, Parameter p, boolean next) {
+    static String interval(Collection<Integer> values, Parameter p, boolean next) {
         final String range = TraceModelGenerator.expressWithIntervalsNuSMV(values);
         if (p.valueCount() == 2 && range.equals("{0, 1}")) {
             return "TRUE";
@@ -60,14 +61,17 @@ public class ConstraintBasedBuilder {
         return (next ? "next(" : "") + "output_" + p.traceName() + (next ? ")" : "") + " in " + range;
     }
 
-    private static void add1DConstraints(Configuration conf, List<String> initConstraints,
-                                         List<String> transConstraints, Dataset ds) {
+    private static void add1DConstraints(Configuration conf, Collection<String> initConstraints,
+                                  Collection<String> transConstraints, Map<Parameter, int[][]> paramIndices) {
         for (Parameter p : conf.outputParameters) {
+            if (p instanceof IgnoredBoolParameter) {
+                continue;
+            }
+            final int[][] traces = paramIndices.get(p);
             final Set<Integer> indices = new TreeSet<>();
-            for (List<double[]> trace : ds.values) {
-                for (double[] snapshot : trace) {
-                    final int index = p.traceNameIndex(ds.get(snapshot, p));
-                    indices.add(index);
+            for (int[] trace : traces) {
+                for (int elem : trace) {
+                    indices.add(elem);
                 }
             }
             initConstraints.add(interval(indices, p, false));
@@ -75,26 +79,32 @@ public class ConstraintBasedBuilder {
         }
     }
 
-    private static void add2DConstraints(Configuration conf, List<String> initConstraints,
-                                         List<String> transConstraints, Dataset ds) {
+    private static void add2DConstraints(Configuration conf, Collection<String> initConstraints,
+                                  Collection<String> transConstraints, Map<Parameter, int[][]> paramIndices) {
         for (int i = 0; i < conf.outputParameters.size(); i++) {
             final Parameter pi = conf.outputParameters.get(i);
+            if (pi instanceof IgnoredBoolParameter) {
+                continue;
+            }
+            final int[][] tracesI = paramIndices.get(pi);
             for (int j = 0; j < i; j++) {
                 final Parameter pj = conf.outputParameters.get(j);
-                final Map<Integer, Set<Integer>> indexPairs = new TreeMap<>();
-                for (List<double[]> trace : ds.values) {
-                    for (double[] snapshot : trace) {
-                        final int index1 = pi.traceNameIndex(ds.get(snapshot, pi));
-                        final int index2 = pj.traceNameIndex(ds.get(snapshot, pj));
-                        Set<Integer> secondIndices = indexPairs.get(index1);
-                        if (secondIndices == null) {
-                            secondIndices = new TreeSet<>();
-                            indexPairs.put(index1, secondIndices);
+                if (pj instanceof IgnoredBoolParameter) {
+                    continue;
+                }
+                final int[][] tracesJ = paramIndices.get(pj);
+                final Set<Integer>[] indexPairs = new Set[pi.valueCount()];
+                for (int u = 0; u < tracesI.length; u++) {
+                    for (int v = 0; v < tracesI[u].length; v++) {
+                        final int index1 = tracesI[u][v];
+                        final int index2 = tracesJ[u][v];
+                        if (indexPairs[index1] == null) {
+                            indexPairs[index1] = new TreeSet<>();
                         }
-                        secondIndices.add(index2);
+                        indexPairs[index1].add(index2);
                     }
                 }
-                for (List<String> list : Arrays.asList(initConstraints, transConstraints)) {
+                for (Collection<String> list : Arrays.asList(initConstraints, transConstraints)) {
                     final boolean next = list == transConstraints;
                     final Function<Parameter, String> varName = p -> {
                         final String res = "output_" + p.traceName();
@@ -102,10 +112,12 @@ public class ConstraintBasedBuilder {
                     };
 
                     final List<String> optionList = new ArrayList<>();
-                    for (Map.Entry<Integer, Set<Integer>> implication : indexPairs.entrySet()) {
-                        final int index1 = implication.getKey();
-                        optionList.add(varName.apply(pi) + " = " + index1 + " & "
-                                + interval(implication.getValue(), pj, next));
+                    for (int i1 = 0; i1 < pi.valueCount(); i1++) {
+                        if (indexPairs[i1] == null) {
+                            continue;
+                        }
+                        optionList.add(varName.apply(pi) + " = " + i1 + " & "
+                                + ConstraintBasedBuilder.interval(indexPairs[i1], pj, next));
                     }
 
                     list.add(String.join(" | ", optionList));
@@ -114,12 +126,19 @@ public class ConstraintBasedBuilder {
         }
     }
 
-    private static void addOIOConstraints(Configuration conf, List<String> initConstraints,
-                                          List<String> transConstraints, Dataset ds, List<List<Parameter>> grouping) {
+    private static void addOIOConstraints(Configuration conf, Collection<String> transConstraints,
+                                          Dataset ds, List<List<Parameter>> grouping) {
         for (Parameter pi : conf.inputParameters) {
+            if (pi instanceof IgnoredBoolParameter) {
+                continue;
+            }
             for (Parameter po : conf.outputParameters) {
-                if (grouping.stream().anyMatch(l -> l.contains(pi)))
+                if (po instanceof IgnoredBoolParameter) {
                     continue;
+                }
+                if (grouping.stream().anyMatch(l -> l.contains(pi))) {
+                    continue;
+                }
                 final Map<Integer, Set<Integer>> indexPairs = new TreeMap<>();
                 for (List<double[]> trace : ds.values) {
                     for (int i = 0; i < trace.size() - 1; i++) {
@@ -147,6 +166,9 @@ public class ConstraintBasedBuilder {
         }
         for (List<Parameter> inputs : grouping) {
             for (Parameter po : conf.outputParameters) {
+                if (po instanceof IgnoredBoolParameter) {
+                    continue;
+                }
                 final Map<List<Integer>, Set<Integer>> indexPairs = new HashMap<>();
                 for (List<double[]> trace : ds.values) {
                     for (int i = 0; i < trace.size() - 1; i++) {
@@ -183,9 +205,15 @@ public class ConstraintBasedBuilder {
         }
     }
 
-    private static void addInputStateConstraints(Configuration conf, List<String> transConstraints, Dataset ds) {
+    private static void addInputStateConstraints(Configuration conf, Collection<String> transConstraints, Dataset ds) {
         for (Parameter pi : conf.inputParameters) {
+            if (pi instanceof IgnoredBoolParameter) {
+                continue;
+            }
             for (Parameter po : conf.outputParameters) {
+                if (po instanceof IgnoredBoolParameter) {
+                    continue;
+                }
                 final Map<Integer, Set<Integer>> indexPairs = new TreeMap<>();
                 for (int index1 = 0; index1 < pi.valueCount(); index1++) {
                     indexPairs.put(index1, new TreeSet<>());
@@ -210,8 +238,11 @@ public class ConstraintBasedBuilder {
         }
     }
 
-    private static void addCurrentNextConstraints(Configuration conf, List<String> transConstraints, Dataset ds) {
+    private static void addCurrentNextConstraints(Configuration conf, Collection<String> transConstraints, Dataset ds) {
         for (Parameter p : conf.outputParameters) {
+            if (p instanceof IgnoredBoolParameter) {
+                continue;
+            }
             final Map<Integer, Set<Integer>> indexPairs = new TreeMap<>();
             for (List<double[]> trace : ds.values) {
                 for (int i = 0; i < trace.size() - 1; i++) {
@@ -236,8 +267,9 @@ public class ConstraintBasedBuilder {
         }
     }
 
-    private static void printRes(Configuration conf, List<String> initConstraints, List<String> transConstraints,
-                                 List<String> fairnessConstraints, String outFilename) throws IOException {
+    private static void printRes(Configuration conf, Collection<String> initConstraints,
+                                 Collection<String> transConstraints, List<String> fairnessConstraints,
+                                 String outFilename) throws IOException {
         final StringBuilder sb = new StringBuilder();
         sb.append(plantCaption(conf));
         sb.append("    loop_executed: boolean;\n");
@@ -260,19 +292,20 @@ public class ConstraintBasedBuilder {
 
         sb.append("ASSIGN\n");
         sb.append("    init(loop_executed) := FALSE;\n");
-        sb.append("    next(loop_executed) := " + String.join(" & ", outParameters) + ";\n");
+        sb.append("    next(loop_executed) := ").append(String.join(" & ", outParameters)).append(";\n");
 
         sb.append("DEFINE\n");
         sb.append("    unsupported := FALSE;\n");
         sb.append(plantConversions(conf));
-        for (String fair: fairnessConstraints) {
+        for (String fair : fairnessConstraints) {
             sb.append(fair).append("\n");
         }
-        String transformed =
-                sb.toString()
-                        .replaceAll("& TRUE", "")
-                        .replaceAll("in TRUE", "")
-                        .replaceAll("\\s*&\\s*\\(TRUE\\)\\s*", "\n  ");
+        final String transformed = sb.toString()
+                .replaceAll("& TRUE", "")
+                .replaceAll("in TRUE", "")
+                .replaceAll("\\s*&\\s*\\(TRUE\\)\\s*", "\n  ")
+                .replaceAll("\\s+\\|", " |")
+                .replaceAll("\\s+\\)", ")");
         Utils.writeToFile(outFilename, transformed);
 
         System.out.println("Done; model has been written to: " + outFilename);
@@ -285,9 +318,14 @@ public class ConstraintBasedBuilder {
                            boolean constraintBasedDisableMONOTONIC_FAIRNESS_CONSTRAINTS,
                            boolean constraintBasedDisableCOMPLEX_FAIRNESS_CONSTRAINTS)
             throws IOException {
+        System.out.print("Loading the dataset...");
         final Dataset ds = Dataset.load(Utils.combinePaths(directory, datasetFilename));
-        final List<String> initConstraints = new ArrayList<>();
-        final List<String> transConstraints = new ArrayList<>();
+        System.out.println(" done");
+        final Set<String> initConstraints = new LinkedHashSet<>();
+        final Set<String> transConstraints = new LinkedHashSet<>();
+        final Set<Parameter> allParameters = new LinkedHashSet<>(conf.parameters());
+        final Map<Parameter, int[][]> paramIndices = ds.toParamIndices(allParameters);
+
         final List<List<Parameter>> grouping = new ArrayList<>();
         if (groupingFile != null) {
             Function<String, Parameter> findParameter = s -> {
@@ -315,16 +353,16 @@ public class ConstraintBasedBuilder {
         // 1. overall 1-dimensional constraints
         // "each output may only have values found in the traces"
         if (!disableOVERALL_1D) {
-            add1DConstraints(conf, initConstraints, transConstraints, ds);
+            add1DConstraints(conf, initConstraints, transConstraints, paramIndices);
         }
         // 2. overall 2-dimensional constraints
         // "for each pair of outputs, only value pairs found in some trace element are possible"
         if (!disableOVERALL_2D) {
-            add2DConstraints(conf, initConstraints, transConstraints, ds);
+            add2DConstraints(conf, initConstraints, transConstraints, paramIndices);
         }
         // 3. Ok = a & Ik = b -> O(k+1)=c
         if (!disableOIO_CONSTRAINTS) {
-            addOIOConstraints(conf, initConstraints, transConstraints, ds, grouping);
+            addOIOConstraints(conf, transConstraints, ds, grouping);
         }
 
         // 2. 2-dimensional constraints "input -> possible next state"

@@ -195,8 +195,7 @@ public abstract class BooleanFormula {
     }
 
     public static void transformConstraints(List<int[]> cnfConstraints, DimacsConversionInfo info) {
-        for (int i = 0; i < cnfConstraints.size(); i++) {
-            final int[] terms = cnfConstraints.get(i);
+        for (final int[] terms : cnfConstraints) {
             for (int j = 0; j < terms.length; j++) {
                 final int term = terms[j];
                 final int var = Math.abs(term);
@@ -238,7 +237,7 @@ public abstract class BooleanFormula {
         private Integer varNumber;
         private PrintWriter pw;
         
-        public DimacsConversionInfo(String filename) throws FileNotFoundException {
+        DimacsConversionInfo(String filename) throws FileNotFoundException {
              pw = new PrintWriter(new File(filename));
         }
         
@@ -264,12 +263,12 @@ public abstract class BooleanFormula {
             }
         }
         
-        public String title() {
+        String title() {
             assert title != null;
             return title;
         }
         
-        public Optional<Integer> toDimacsNumber(int num) {
+        Optional<Integer> toDimacsNumber(int num) {
             return Optional.of(limbooleNumberToDimacs.get(num));
         }
         
@@ -289,7 +288,7 @@ public abstract class BooleanFormula {
     
     public abstract String toLimbooleString();
     
-    public static DimacsConversionInfo toDimacs(String limbooleFormula, Logger logger, String dimacsFilename)
+    private static DimacsConversionInfo toDimacs(String limbooleFormula, Logger logger, String dimacsFilename)
             throws IOException {
         final String beforeLimbooleFilename = "_tmp.limboole";
         final String afterLimbooleFilename = "_tmp.after.limboole.dimacs";
@@ -316,7 +315,7 @@ public abstract class BooleanFormula {
         return info;
     }
     
-    public DimacsConversionInfo toDimacs(Logger logger, String dimacsFilename) throws IOException {
+    DimacsConversionInfo toDimacs(Logger logger, String dimacsFilename) throws IOException {
         return toDimacs(simplify().toLimbooleString(), logger, dimacsFilename);
     }
     

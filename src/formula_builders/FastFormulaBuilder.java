@@ -13,17 +13,17 @@ import java.util.TreeMap;
 public abstract class FastFormulaBuilder {
     protected final int colorSize;
     protected final List<String> events;
-    protected final Map<String, Integer> eventIndices = new TreeMap<>();
+    final Map<String, Integer> eventIndices = new TreeMap<>();
     protected final List<String> actions;
-    protected final Map<String, Integer> actionIndices = new TreeMap<>();
-    protected final List<BooleanVariable> vars = new ArrayList<>();
+    final Map<String, Integer> actionIndices = new TreeMap<>();
+    final List<BooleanVariable> vars = new ArrayList<>();
 
-    protected final boolean deterministic;
+    final boolean deterministic;
     protected final boolean complete;
-    protected final boolean bfsConstraints;
+    private final boolean bfsConstraints;
 
-    protected FastFormulaBuilder(int colorSize, List<String> events, List<String> actions,
-                                 boolean deterministic, boolean complete, boolean bfsConstraints) {
+    FastFormulaBuilder(int colorSize, List<String> events, List<String> actions,
+                       boolean deterministic, boolean complete, boolean bfsConstraints) {
         this.colorSize = colorSize;
         this.events = events;
         for (int i = 0; i < events.size(); i++) {
@@ -38,19 +38,19 @@ public abstract class FastFormulaBuilder {
         this.bfsConstraints = bfsConstraints;
     }
 
-    public static BooleanVariable xVar(int node, int color) {
+    static BooleanVariable xVar(int node, int color) {
         return BooleanVariable.byName("x", node, color).get();
     }
 
-    public static BooleanVariable yVar(int from, int to, int event) {
+    static BooleanVariable yVar(int from, int to, int event) {
         return BooleanVariable.byName("y", from, to, event).get();
     }
 
-    public static BooleanVariable xxVar(int node, int color, boolean isGlobal) {
+    static BooleanVariable xxVar(int node, int color, boolean isGlobal) {
         return BooleanVariable.byName(isGlobal ? "xxg" : "xx", node, color).get();
     }
 
-    protected void eventCompletenessConstraints(List<int[]> constraints) {
+    void eventCompletenessConstraints(List<int[]> constraints) {
         for (int i1 = 0; i1 < colorSize; i1++) {
             if (complete) {
                 for (int ei = 0; ei < events.size(); ei++) {
@@ -73,7 +73,7 @@ public abstract class FastFormulaBuilder {
         }
     }
 
-    protected void notMoreThanOneEdgeConstraints(List<int[]> constraints) {
+    void notMoreThanOneEdgeConstraints(List<int[]> constraints) {
         for (int i1 = 0; i1 < colorSize; i1++) {
             for (int ei = 0; ei < events.size(); ei++) {
                 for (int i2 = 0; i2 < colorSize; i2++) {
@@ -90,19 +90,19 @@ public abstract class FastFormulaBuilder {
 
     // BFS constraints
 
-    protected BooleanVariable pVar(int j, int i) {
+    private BooleanVariable pVar(int j, int i) {
         return BooleanVariable.byName("p", j, i).get();
     }
 
-    protected BooleanVariable tVar(int i, int j) {
+    private BooleanVariable tVar(int i, int j) {
         return BooleanVariable.byName("t", i, j).get();
     }
 
-    protected BooleanVariable mVar(int event, int i, int j) {
+    private BooleanVariable mVar(int event, int i, int j) {
         return BooleanVariable.byName("m", event, i, j).get();
     }
 
-    protected void addBFSVars() {
+    void addBFSVars() {
         if (!bfsConstraints) {
             return;
         }
@@ -125,7 +125,7 @@ public abstract class FastFormulaBuilder {
         }
     }
 
-    protected void addBFSConstraints(List<int[]> constraints) {
+    void addBFSConstraints(List<int[]> constraints) {
         if (bfsConstraints) {
             parentConstraints(constraints);
             pDefinitions(constraints);
@@ -134,7 +134,7 @@ public abstract class FastFormulaBuilder {
         }
     }
 
-    protected void parentConstraints(List<int[]> constraints) {
+    private void parentConstraints(List<int[]> constraints) {
         for (int j = 1; j < colorSize; j++) {
             final int[] options = new int[j];
             for (int i = 0; i < j; i++) {
@@ -152,7 +152,7 @@ public abstract class FastFormulaBuilder {
         }
     }
 
-    protected void pDefinitions(List<int[]> constraints) {
+    private void pDefinitions(List<int[]> constraints) {
         for (int i = 0; i < colorSize; i++) {
             for (int j = i + 1; j < colorSize; j++) {
                 constraints.add(new int[] { -pVar(j, i).number, tVar(i, j).number });
@@ -168,7 +168,7 @@ public abstract class FastFormulaBuilder {
         }
     }
 
-    protected void tDefinitions(List<int[]> constraints) {
+    private void tDefinitions(List<int[]> constraints) {
         for (int i = 0; i < colorSize; i++) {
             for (int j = i + 1; j < colorSize; j++) {
                 final int[] options = new int[events.size() + 1];
@@ -182,7 +182,7 @@ public abstract class FastFormulaBuilder {
         }
     }
 
-    protected void childrenOrderConstraints(List<int[]> constraints) {
+    private void childrenOrderConstraints(List<int[]> constraints) {
         if (events.size() > 2) {
             // m definitions
             for (int i = 0; i < colorSize; i++) {

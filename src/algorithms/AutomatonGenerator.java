@@ -41,9 +41,9 @@ public class AutomatonGenerator {
         return generate(statesCount, events, actions, minActions, maxActions, vars, transitionsPersent, random);
     }
 
-    public static MealyAutomaton generate(int statesCount, List<String> events, List<String> actions, int minActions,
-                                          int maxActions, List<String> vars, double transitionsPercentage,
-                                          Random random) {
+    private static MealyAutomaton generate(int statesCount, List<String> events, List<String> actions, int minActions,
+                                           int maxActions, List<String> vars, double transitionsPercentage,
+                                           Random random) {
 
         assert 0.1 <= transitionsPercentage && transitionsPercentage <= 1;
 

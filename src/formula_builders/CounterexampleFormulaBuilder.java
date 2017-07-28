@@ -4,26 +4,16 @@ package formula_builders;
  * (c) Igor Buzhinsky
  */
 
+import algorithms.AutomatonCompleter.CompletenessType;
+import bnf_formulae.*;
+import org.apache.commons.lang3.ArrayUtils;
+import structures.mealy.*;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import org.apache.commons.lang3.ArrayUtils;
-
-import structures.mealy.NegativeMealyNode;
-import structures.mealy.NegativeScenarioTree;
-import structures.mealy.MealyNode;
-import structures.mealy.ScenarioTree;
-import structures.mealy.MealyTransition;
-import algorithms.AutomatonCompleter.CompletenessType;
-import bnf_formulae.BinaryOperation;
-import bnf_formulae.BinaryOperations;
-import bnf_formulae.BooleanFormula;
-import bnf_formulae.BooleanVariable;
-import bnf_formulae.FalseFormula;
-import bnf_formulae.FormulaList;
 
 public class CounterexampleFormulaBuilder extends FormulaBuilder {
     private final NegativeScenarioTree negativeTree;
@@ -42,11 +32,11 @@ public class CounterexampleFormulaBuilder extends FormulaBuilder {
         return existVars.stream().filter(v -> v.name.startsWith("xx_")).collect(Collectors.toList());
     }
     
-    public static BooleanVariable xxVar(int state, int color) {
+    private static BooleanVariable xxVar(int state, int color) {
         return BooleanVariable.byName("xx", state, color).get();
     }
 
-    public void addNegativeScenarioVars() {
+    private void addNegativeScenarioVars() {
         for (MealyNode node : negativeTree.nodes()) {
             for (int color = 0; color <= colorSize; color++) {
                 if (!BooleanVariable.byName("xx", node.number(), color).isPresent()) {
@@ -185,7 +175,7 @@ public class CounterexampleFormulaBuilder extends FormulaBuilder {
         prohibitedFsms.forEach(constraints::add);
     }
     
-    public List<BooleanFormula> negativeConstraints() {
+    private List<BooleanFormula> negativeConstraints() {
         final List<BooleanFormula> constraints = new ArrayList<>();
         eachNegativeNodeHasOneColorConstraints(constraints);
         properTransitionYConstraints(constraints);

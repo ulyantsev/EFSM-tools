@@ -294,7 +294,7 @@ public class QbfBuilderMain extends MainBase {
         }
     }
 
-    static boolean checkBfs(MealyAutomaton a, List<String> events, Logger logger) {
+    private static boolean checkBfs(MealyAutomaton a, List<String> events, Logger logger) {
         final Deque<Integer> queue = new ArrayDeque<>();
         final boolean[] visited = new boolean[a.stateCount()];
         visited[a.startState().number()] = true;

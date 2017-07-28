@@ -20,8 +20,8 @@ public class QuantileFinder {
                 final List<Double> values = new ArrayList<>();
                 for (int i = 0; i < ds.values.size(); i++) {
                     final List<double[]> trace = ds.values.get(i);
-                    for (int j = 0; j < trace.size(); j++) {
-                        values.add(ds.get(trace.get(j), p));
+                    for (double[] aTrace : trace) {
+                        values.add(ds.get(aTrace, p));
                     }
                 }
                 Collections.sort(values);

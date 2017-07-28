@@ -4,22 +4,14 @@ package formula_builders;
  * (c) Igor Buzhinsky
  */
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import structures.mealy.MealyNode;
-import structures.mealy.ScenarioTree;
-import structures.mealy.MealyTransition;
 import algorithms.AdjacencyCalculator;
 import algorithms.AutomatonCompleter.CompletenessType;
-import bnf_formulae.BinaryOperation;
-import bnf_formulae.BinaryOperations;
-import bnf_formulae.BooleanFormula;
-import bnf_formulae.BooleanVariable;
-import bnf_formulae.FormulaList;
+import bnf_formulae.*;
+import structures.mealy.MealyNode;
+import structures.mealy.MealyTransition;
+import structures.mealy.ScenarioTree;
+
+import java.util.*;
 
 /**
  * (c) Igor Buzhinsky
@@ -31,10 +23,10 @@ public abstract class FormulaBuilder {
     protected final List<String> actions;
     protected final ScenarioTree tree;
     protected final CompletenessType completenessType;
-    protected final List<BooleanVariable> existVars = new ArrayList<>();
+    final List<BooleanVariable> existVars = new ArrayList<>();
     
-    public FormulaBuilder(int colorSize, ScenarioTree tree,
-            CompletenessType completenessType, List<String> events, List<String> actions) {
+    FormulaBuilder(int colorSize, ScenarioTree tree,
+                   CompletenessType completenessType, List<String> events, List<String> actions) {
         this.colorSize = colorSize;
         this.events = events;
         this.actions = actions;
@@ -42,15 +34,15 @@ public abstract class FormulaBuilder {
         this.completenessType = completenessType;
     }
     
-    public static BooleanVariable xVar(int state, int color) {
+    private static BooleanVariable xVar(int state, int color) {
         return BooleanVariable.byName("x", state, color).get();
     }
     
-    public static BooleanVariable yVar(int from, int to, String event) {
+    static BooleanVariable yVar(int from, int to, String event) {
         return BooleanVariable.byName("y", from, to, event).get();
     }
     
-    public static BooleanVariable zVar(int from, String action, String event) {
+    static BooleanVariable zVar(int from, String action, String event) {
         return BooleanVariable.byName("z", from, action, event).get();
     }
     
@@ -66,7 +58,7 @@ public abstract class FormulaBuilder {
         return BooleanVariable.byName("m", event, i, j).get();
     }
     
-    protected void addColorVars() {
+    void addColorVars() {
         // color variables x_#node_color
         for (MealyNode node : tree.nodes()) {
             for (int color = 0; color < colorSize; color++) {
@@ -75,7 +67,7 @@ public abstract class FormulaBuilder {
         }
     }
     
-    protected void addTransitionVars(boolean addActionVars) {
+    void addTransitionVars(boolean addActionVars) {
         for (int nodeColor = 0; nodeColor < colorSize; nodeColor++) {
             for (String e : events) {
                 // transition variables y_color_childColor_event_formula
@@ -253,7 +245,7 @@ public abstract class FormulaBuilder {
                 .assemble("additional scenario constraints: if there exists z, then it exists for some transition");
     }
     
-    protected FormulaList scenarioConstraints(boolean includeActionConstrains) {
+    FormulaList scenarioConstraints(boolean includeActionConstrains) {
         FormulaList constraints = new FormulaList(BinaryOperations.AND);
         // first node has color 0
         constraints.add(xVar(0, 0));
@@ -407,7 +399,7 @@ public abstract class FormulaBuilder {
         return constraints.assemble();
     }
     
-    protected BooleanFormula varPresenceConstraints() {
+    BooleanFormula varPresenceConstraints() {
         FormulaList constraints = new FormulaList(BinaryOperations.AND);
         for (BooleanVariable v : existVars) {
             if (v.name.startsWith("z")) {

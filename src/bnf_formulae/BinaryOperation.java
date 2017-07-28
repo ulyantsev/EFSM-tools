@@ -75,7 +75,7 @@ public class BinaryOperation extends BooleanFormula {
         }
         
         final List<String> strChildren = children.stream()
-                .map(f -> f.toLimbooleString())
+                .map(BooleanFormula::toLimbooleString)
                 .collect(Collectors.toList());
         
         // limboole does not like '->' without the left space
@@ -110,7 +110,7 @@ public class BinaryOperation extends BooleanFormula {
             return comment(children.get(0).toString());
         }
         
-        final List<String> strChildren = children.stream().map(f -> f.toString()).collect(Collectors.toList());
+        final List<String> strChildren = children.stream().map(Object::toString).collect(Collectors.toList());
         return "(" + comment(String.join(" " + type + " ", strChildren)) + ")";
     }
 

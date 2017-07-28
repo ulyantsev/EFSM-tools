@@ -4,11 +4,11 @@
 package verification.ltl.buchi.translator;
 
 public class TranslationException extends RuntimeException {
-    public TranslationException(String message) {
+    TranslationException(String message) {
         super(message);
     }
 
-    public TranslationException(Throwable cause) {
+    TranslationException(Throwable cause) {
         super(cause);
     }
 }

@@ -13,7 +13,7 @@ import java.util.List;
  */
 public class SimpleState {
     public final String name;
-    public final boolean isInitial;
+    final boolean isInitial;
     private final List<StateTransition> outTransitions = new ArrayList<>();
 
     public SimpleState(String name, boolean isInitial) {

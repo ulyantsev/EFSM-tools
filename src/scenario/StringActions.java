@@ -49,9 +49,7 @@ public class StringActions {
         if (getClass() != obj.getClass())
             return false;
         StringActions other = (StringActions) obj;
-        if (!Arrays.equals(actions, other.actions))
-            return false;
-        return true;
+        return Arrays.equals(actions, other.actions);
     }
 
     @Override

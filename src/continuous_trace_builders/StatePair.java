@@ -10,16 +10,13 @@ import org.apache.commons.lang3.tuple.Pair;
 import scenario.StringActions;
 import structures.moore.MooreNode;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 
 public class StatePair {
     final MooreNode first;
     final MooreNode second;
 
-    public StatePair(MooreNode first, MooreNode second) {
+    StatePair(MooreNode first, MooreNode second) {
         this.first = first;
         this.second = second;
     }
@@ -38,14 +35,10 @@ public class StatePair {
         return true;
     }
 
-    Set<String> actionSet() {
+    private Set<String> actionSet() {
         final Set<String> actions = new TreeSet<>();
-        for (String action : first.actions().getActions()) {
-            actions.add(action);
-        }
-        for (String action : second.actions().getActions()) {
-            actions.add(action);
-        }
+        Collections.addAll(actions, first.actions().getActions());
+        Collections.addAll(actions, second.actions().getActions());
         return actions;
     }
 

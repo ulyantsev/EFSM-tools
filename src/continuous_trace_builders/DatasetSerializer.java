@@ -9,8 +9,8 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 
 public class DatasetSerializer {
-    public final static void run(String directory, String traceLocation, String traceFilenamePrefix,
-                                 String paramScaleFilename, double intervalSec, boolean includeFirstElement)
+    public static void run(String directory, String traceLocation, String traceFilenamePrefix,
+                           String paramScaleFilename, double intervalSec, boolean includeFirstElement)
                                  throws IOException {
         final Dataset ds = new Dataset(intervalSec, Utils.combinePaths(directory, traceLocation),
                 traceFilenamePrefix, TraceTranslator.paramScales(Utils.combinePaths(directory, paramScaleFilename)),

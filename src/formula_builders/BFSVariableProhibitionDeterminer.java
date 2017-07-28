@@ -70,7 +70,7 @@ public class BFSVariableProhibitionDeterminer {
         }
     }
     
-    public BFSVariableProhibitionDeterminer(int colorSize, int eventNum) {
+    private BFSVariableProhibitionDeterminer(int colorSize, int eventNum) {
         this.eventNum = eventNum;
         this.colorSize = colorSize;
         addVariables();

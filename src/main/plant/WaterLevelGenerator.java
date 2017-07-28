@@ -27,8 +27,7 @@ public class WaterLevelGenerator {
             // generate the model
             final List<StringActions> actions = new ArrayList<>();
             final List<Boolean> isStart = new ArrayList<>();
-            for (int i = 0; i < allActions.size(); i++) {
-                final String action = allActions.get(i);
+            for (final String action : allActions) {
                 for (int j = 0; j < k; j++) {
                     actions.add(toStringActions(action));
                     isStart.add(action.contains("sp"));
@@ -153,7 +152,7 @@ public class WaterLevelGenerator {
         for (int i = 0; i < times; i++) {
             sb.append("X(");
         }
-        sb.append((wasAction ? "action" : "event") + "(" + str + ")");
+        sb.append(wasAction ? "action" : "event").append("(").append(str).append(")");
         for (int i = 0; i < times; i++) {
             sb.append(")");
         }

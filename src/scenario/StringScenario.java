@@ -24,7 +24,8 @@ public class StringScenario {
                 inputs.append("; ");
                 outputs.append("; ");
             }
-            inputs.append(eventListToString(events.get(i)) + "[" + expressions.get(i).toString() + "]");
+            inputs.append(eventListToString(events.get(i))).append("[").append(expressions.get(i).toString())
+                    .append("]");
             outputs.append(actions.get(i).toString());
         }
         return inputs + "\n" + outputs;
@@ -134,7 +135,7 @@ public class StringScenario {
                     .map(varAssignment -> event + varAssignment)
                     .collect(Collectors.toList());
             lastPos = m.end();
-            sb.append(String.join("|", expansion) + "[1]");
+            sb.append(String.join("|", expansion)).append("[1]");
         }
         sb.append(input.substring(lastPos, input.length()));
         return sb.toString();

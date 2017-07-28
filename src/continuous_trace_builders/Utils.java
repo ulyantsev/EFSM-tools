@@ -7,7 +7,7 @@ import java.io.*;
 public class Utils {
     private static final String[] EMPTY_STRING_ARRAY = new String[0];
 
-    public static String[] splitString(String str) {
+    static String[] splitString(String str) {
         if (str.trim().equals("")) {
             return EMPTY_STRING_ARRAY;
         }
@@ -22,7 +22,7 @@ public class Utils {
         return Paths.get("", paths).toString();
     }
 
-    public static void writeToFile(String path, String text) throws FileNotFoundException {
+    static void writeToFile(String path, String text) throws FileNotFoundException {
         try (PrintWriter pw = new PrintWriter(path)) {
             pw.print(text);
         }

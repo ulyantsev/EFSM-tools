@@ -98,7 +98,7 @@ public class LtlUtils {
             return BooleanNode.TRUE.equals(b) ? BooleanNode.FALSE : BooleanNode.TRUE;
         }
 
-        protected LtlNode visitBinaryOperator(BinaryOperator op, BinaryOperatorType newType) {
+        LtlNode visitBinaryOperator(BinaryOperator op, BinaryOperatorType newType) {
             BinaryOperator newOp = new BinaryOperator(newType);
             newOp.setLeftOperand(new UnaryOperator(UnaryOperatorType.NEG, op.getLeftOperand()));
             newOp.setRightOperand(new UnaryOperator(UnaryOperatorType.NEG, op.getRightOperand()));
@@ -117,7 +117,7 @@ public class LtlUtils {
             sb.append(input.substring(lastPos, m.start()));
             final List<String> tokens = Arrays.stream(events.split(", *"))
                     .map(s -> "event(" + s + ")").collect(Collectors.toList());
-            sb.append("(" + String.join(" || ", tokens) + ")");
+            sb.append("(").append(String.join(" || ", tokens)).append(")");
             lastPos = m.end();
         }
         sb.append(input.substring(lastPos, input.length()));

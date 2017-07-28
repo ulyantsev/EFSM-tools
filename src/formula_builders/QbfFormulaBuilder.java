@@ -74,7 +74,7 @@ public class QbfFormulaBuilder extends FormulaBuilder {
                 LtlNormalizer.not(formulae.stream().skip(1).reduce(formulae.get(0), LtlNormalizer::and)));
     }
     
-    protected BooleanFormula mainQbfConstraint(boolean forFurtherSatReduction) {
+    private BooleanFormula mainQbfConstraint(boolean forFurtherSatReduction) {
         final LtlNode formulaToCheck = formulaToCheck();
         logger.info(formulaToCheck.toString());
         
@@ -94,7 +94,7 @@ public class QbfFormulaBuilder extends FormulaBuilder {
         return BinaryOperation.or(Arrays.asList(pathIsCorrect.not(), pathFormula.not()), "main QBF constraint");
     }
     
-    protected void addVars() {
+    private void addVars() {
         addColorVars(); // exist
         addTransitionVars(true); // exist
         addSigmaVars(); // forall

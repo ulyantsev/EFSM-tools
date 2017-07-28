@@ -29,7 +29,7 @@ public class ExplicitStateBuilder {
         return sum / conf.inputParameters.size();
     }
 
-    static NondetMooreAutomaton proximityBasedCompletion(NondetMooreAutomaton a, Configuration conf) {
+    private static NondetMooreAutomaton proximityBasedCompletion(NondetMooreAutomaton a, Configuration conf) {
         final NondetMooreAutomaton res = a.copy();
         int redirected = 0;
         for (MooreNode state : res.states()) {

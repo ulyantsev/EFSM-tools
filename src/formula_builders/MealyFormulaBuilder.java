@@ -4,22 +4,12 @@ package formula_builders;
  * (c) Igor Buzhinsky
  */
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import org.apache.commons.lang3.tuple.Pair;
-
-import structures.mealy.NegativeMealyNode;
-import structures.mealy.NegativeScenarioTree;
-import structures.mealy.MealyNode;
-import structures.mealy.ScenarioTree;
-import structures.mealy.MealyTransition;
 import algorithms.AdjacencyCalculator;
 import bnf_formulae.BooleanVariable;
+import org.apache.commons.lang3.tuple.Pair;
+import structures.mealy.*;
+
+import java.util.*;
 
 public class MealyFormulaBuilder extends FastFormulaBuilder {
     private final ScenarioTree positiveTree;
@@ -35,7 +25,7 @@ public class MealyFormulaBuilder extends FastFormulaBuilder {
         this.globalNegativeTree = globalNegativeTree;
     }
 
-    public static BooleanVariable zVar(int from, int action, int event) {
+    private static BooleanVariable zVar(int from, int action, int event) {
         return BooleanVariable.byName("z", from, action, event).get();
     }
     
@@ -235,7 +225,7 @@ public class MealyFormulaBuilder extends FastFormulaBuilder {
                         for (int color2 = 0; color2 < colorSize; color2++) {
                             final int[] constraint = new int[actions.size() + 3];
                             System.arraycopy(actionEq[color1], 0, constraint, 0, actions.size());
-                            constraint[actions.size() + 0] = -xxParent[color1];
+                            constraint[actions.size()] = -xxParent[color1];
                             constraint[actions.size() + 1] = -yVar(color1, color2,
                                     eventIndices.get(event)).number;
                             constraint[actions.size() + 2] = xxChild[color2];

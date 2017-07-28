@@ -11,7 +11,7 @@ package verification.ltl.grammar;
 public abstract class Operator<E extends IOperatorType> extends LtlNode {
     private E type;
 
-    public Operator(E type) {
+    Operator(E type) {
         super(type.getName());
         this.type = type;
     }

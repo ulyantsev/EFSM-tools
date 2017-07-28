@@ -12,9 +12,9 @@ import java.lang.reflect.Method;
  * @author Kirill Egorov
  */
 public class Predicate extends LtlNode implements IExpression<Boolean> {
-    protected final String arg;
-    protected final Method method;
-    protected final Object target;
+    private final String arg;
+    private final Method method;
+    private final Object target;
 
     /*
      * For simplified usage.

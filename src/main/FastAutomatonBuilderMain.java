@@ -161,7 +161,7 @@ public class FastAutomatonBuilderMain extends MainBase {
                 logger().info("Automaton with " + size + " states WAS FOUND!");
                 logger().info("Automaton builder execution time: " + executionTime());
 
-                if (scenarios.stream().allMatch(sc -> a.compliesWith(sc))) {
+                if (scenarios.stream().allMatch(a::compliesWith)) {
                     logger().info("COMPLIES WITH SCENARIOS");
                 } else {
                     logger().severe("NOT COMPLIES WITH SCENARIOS");

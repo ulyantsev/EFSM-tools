@@ -17,8 +17,8 @@ public class TraceModelGenerator {
     public static void run(Configuration conf, String directory, String datasetFilename) throws IOException {
         final Dataset ds = Dataset.load(Utils.combinePaths(directory, datasetFilename));
 
-        final int maxLength = ds.values.stream().mapToInt(v -> v.size()).max().getAsInt();
-        final int minLength = ds.values.stream().mapToInt(v -> v.size()).min().getAsInt();
+        final int maxLength = ds.values.stream().mapToInt(List::size).max().getAsInt();
+        final int minLength = ds.values.stream().mapToInt(List::size).min().getAsInt();
         if (maxLength != minLength) {
             throw new AssertionError("All traces are currently assumed to have equal lengths.");
         }
@@ -40,21 +40,20 @@ public class TraceModelGenerator {
     private static void writeTraceModel(Configuration conf, Dataset ds, int maxLength, int indexFrom, int indexTo,
                                         String filename) throws FileNotFoundException {
         final StringBuilder sb = new StringBuilder();
-        sb.append(SymbolicBuilder.plantCaption(conf));
-        sb.append("    step: 0.." + (maxLength - 1) + ";\n");
+        sb.append(ConstraintBasedBuilder.plantCaption(conf));
+        sb.append("    step: 0..").append(maxLength - 1).append(";\n");
         sb.append("    unsupported: boolean;\n");
-        sb.append("FROZENVAR\n    trace: " + indexFrom + ".." + (indexTo - 1) + ";\n");
+        sb.append("FROZENVAR\n    trace: ").append(indexFrom).append("..").append(indexTo - 1).append(";\n");
         sb.append("ASSIGN\n");
         sb.append("    init(step) := 0;\n");
-        sb.append("    next(step) := step < " + (maxLength - 1)
-                + " ? step + 1 : " + (maxLength - 1) + ";\n");
+        sb.append("    next(step) := step < ").append(maxLength - 1).append(" ? step + 1 : ").append(maxLength - 1).append(";\n");
         sb.append("    init(unsupported) := FALSE;\n");
-        sb.append("    next(unsupported) := step = " + (maxLength - 1) + ";\n");
+        sb.append("    next(unsupported) := step = ").append(maxLength - 1).append(";\n");
 
         for (Parameter p : conf.outputParameters) {
-            sb.append("    output_" + p.traceName() + " := case\n");
+            sb.append("    output_").append(p.traceName()).append(" := case\n");
             for (int traceIndex = indexFrom; traceIndex < indexTo; traceIndex++) {
-                sb.append("        trace = " + traceIndex + ": case\n");
+                sb.append("        trace = ").append(traceIndex).append(": case\n");
                 final List<Set<Integer>> valuesToSteps = new ArrayList<>();
                 for (int i = 0; i < p.valueCount(); i++) {
                     valuesToSteps.add(new TreeSet<>());
@@ -79,8 +78,8 @@ public class TraceModelGenerator {
                 for (int i = 0; i < pairs.size(); i++) {
                     final String condition = i == pairs.size() - 1 ? "TRUE"
                             : ("step in " + expressWithIntervalsNuSMV(pairs.get(i).getRight()));
-                    sb.append("            " + condition + ": "
-                            + pairs.get(i).getLeft() + ";\n");
+                    sb.append("            ").append(condition).append(": ").append(pairs.get(i).getLeft())
+                            .append(";\n");
 
                 }
                 sb.append("        esac;\n");
@@ -91,12 +90,12 @@ public class TraceModelGenerator {
         sb.append("DEFINE\n");
         sb.append("    loop_executed := unsupported;\n");
 
-        sb.append(SymbolicBuilder.plantConversions(conf));
+        sb.append(ConstraintBasedBuilder.plantConversions(conf));
 
         Utils.writeToFile(filename, sb.toString());
     }
 
-    public static List<Pair<Integer, Integer>> intervals(Collection<Integer> values) {
+    private static List<Pair<Integer, Integer>> intervals(Collection<Integer> values) {
         final List<Pair<Integer, Integer>> intervals = new ArrayList<>();
         int min = -1;
         int max = -1;

@@ -152,7 +152,7 @@ public class CompositionalBuilder {
                 final boolean unsupported = pairEventUnsupported.getRight();
                 
                 if (!src.allDst(event).contains(dst)) {
-                    final MooreTransition t = new MooreTransition(src, dst, event.toString());
+                    final MooreTransition t = new MooreTransition(src, dst, event);
                     src.addTransition(t);
                     if (unsupported) {
                         unsupportedTransitions.add(t);

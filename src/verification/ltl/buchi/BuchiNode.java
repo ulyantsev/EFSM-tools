@@ -33,14 +33,7 @@ public class BuchiNode {
     }
 
     public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (!(o instanceof BuchiNode)) {
-            return false;
-        }
-
-        return id == ((BuchiNode) o).id;
+        return this == o || o instanceof BuchiNode && id == ((BuchiNode) o).id;
     }
 
     public int hashCode() {

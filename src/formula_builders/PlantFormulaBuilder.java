@@ -4,15 +4,15 @@ package formula_builders;
  * (c) Igor Buzhinsky
  */
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
+import bnf_formulae.BooleanVariable;
 import structures.moore.MooreNode;
 import structures.moore.MooreTransition;
 import structures.moore.NegativePlantScenarioForest;
 import structures.moore.PositivePlantScenarioForest;
-import bnf_formulae.BooleanVariable;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class PlantFormulaBuilder extends FastFormulaBuilder {
     private final PositivePlantScenarioForest positiveForest;
@@ -33,15 +33,15 @@ public class PlantFormulaBuilder extends FastFormulaBuilder {
         this.globalNegativeForest = globalNegativeForest;
     }
 
-    public BooleanVariable yVar(int from, int to, String event) {
+    private BooleanVariable yVar(int from, int to, String event) {
         return yVar(from, to, eventIndices.get(event));
     }
 
-    public BooleanVariable zVar(int state, String action) {
+    private BooleanVariable zVar(int state, String action) {
         return zVar(state, actionIndices.get(action));
     }
     
-    public static BooleanVariable zVar(int state, int action) {
+    private static BooleanVariable zVar(int state, int action) {
         return BooleanVariable.byName("z", state, action).get();
     }
     
@@ -212,7 +212,7 @@ public class PlantFormulaBuilder extends FastFormulaBuilder {
                     for (int color2 = 0; color2 < colorSize; color2++) {
                         final int[] constraint = new int[actions.size() + 3];
                         System.arraycopy(actionEq[color2], 0, constraint, 0, actions.size());
-                        constraint[actions.size() + 0] = -xxParent[color1];
+                        constraint[actions.size()] = -xxParent[color1];
                         constraint[actions.size() + 1] = -yVar(color1, color2, event).number;
                         constraint[actions.size() + 2] = xxChild[color2];
                         constraints.add(constraint);

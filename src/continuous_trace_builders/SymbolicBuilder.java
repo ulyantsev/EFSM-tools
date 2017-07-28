@@ -19,51 +19,8 @@ public class SymbolicBuilder {
     static boolean CURRENT_NEXT_2D;
     static boolean CURRENT_NEXT_3D;
 
-    static String plantCaption(Configuration conf) {
-        final StringBuilder sb = new StringBuilder();
-        final String inputLine = String.join(", ", conf.inputParameters.stream()
-                .map(p -> "CONT_INPUT_" + p.traceName()).collect(Collectors.toList()));
-        sb.append("MODULE PLANT(" + inputLine + ")\n");
-        sb.append("VAR\n");
-        for (Parameter p : conf.outputParameters) {
-            sb.append("    output_" + p.traceName() + ": 0.." + (p.valueCount() - 1) + ";\n");
-        }
-        return sb.toString();
-    }
-
-    static String plantConversions(Configuration conf) {
-        final StringBuilder sb = new StringBuilder();
-        sb.append("DEFINE\n");
-        // output conversion to continuous values
-        for (Parameter p : conf.outputParameters) {
-            sb.append("    CONT_").append(p.traceName()).append(" := case\n");
-            for (int i = 0; i < p.valueCount(); i++) {
-                sb.append("        output_").append(p.traceName()).append(" = ").append(i).append(": ")
-                        .append(p.nusmvInterval(i)).append(";\n");
-            }
-            sb.append("    esac;\n");
-        }
-        return sb.toString();
-    }
-
-    private static String interval(Collection<Integer> values, Parameter p, boolean next) {
-        final String range = TraceModelGenerator.expressWithIntervalsNuSMV(values);
-        if (p.valueCount() == 2 && range.equals("{0, 1}")) {
-            return "TRUE";
-        } else if (!range.contains("{") && !range.contains("union")) {
-            final String[] tokens = range.split("\\.\\.");
-            final int first = Integer.parseInt(tokens[0]);
-            final int second = Integer.parseInt(tokens[1]);
-            if (first == 0 && second == p.valueCount() - 1) {
-                return "TRUE";
-            }
-        }
-        return (next ? "next(" : "") + "output_" + p.traceName() + (next ? ")" : "") + " in " + range;
-    }
-
     private static void current1d(Configuration conf, Collection<String> initConstraints,
-                                  Collection<String> transConstraints,
-                                  Map<Parameter, int[][]> paramIndices) {
+                                  Collection<String> transConstraints, Map<Parameter, int[][]> paramIndices) {
         for (Parameter p : conf.outputParameters) {
             if (p instanceof IgnoredBoolParameter) {
                 continue;
@@ -75,8 +32,8 @@ public class SymbolicBuilder {
                     indices.add(elem);
                 }
             }
-            initConstraints.add(interval(indices, p, false));
-            transConstraints.add(interval(indices, p, true));
+            initConstraints.add(ConstraintBasedBuilder.interval(indices, p, false));
+            transConstraints.add(ConstraintBasedBuilder.interval(indices, p, true));
         }
     }
 
@@ -118,7 +75,7 @@ public class SymbolicBuilder {
                             continue;
                         }
                         optionList.add(varName.apply(pi) + " = " + i1 + " & "
-                                + interval(indexPairs[i1], pj, next));
+                                + ConstraintBasedBuilder.interval(indexPairs[i1], pj, next));
                     }
 
                     list.add(String.join(" | ", optionList));
@@ -173,7 +130,7 @@ public class SymbolicBuilder {
                                 }
                                 optionList.add(varName.apply(pi) + " = " + i1 + " & "
                                         + varName.apply(pj) + " = " + i2 + " & "
-                                        + interval(indexTuples[i1][i2], pk, next));
+                                        + ConstraintBasedBuilder.interval(indexTuples[i1][i2], pk, next));
                             }
                         }
                         list.add(String.join(" | ", optionList));
@@ -217,7 +174,7 @@ public class SymbolicBuilder {
                             ? ("CONT_INPUT_" + pCurrent.traceName() + " in " + pCurrent.nusmvInterval(i1))
                             : ("output_" + pCurrent.traceName() + " = " + i1);
                     final String nextCondition = indexPairs[i1].isEmpty() ? ""
-                            : (" & " + interval(indexPairs[i1], pNext, true));
+                            : (" & " + ConstraintBasedBuilder.interval(indexPairs[i1], pNext, true));
                     optionList.add(currentCondition + nextCondition);
                 }
                 transConstraints.add(String.join(" | ", optionList));
@@ -278,7 +235,7 @@ public class SymbolicBuilder {
                                     ? ("CONT_INPUT_" + pCurrent2.traceName() + " in " + pCurrent2.nusmvInterval(i2))
                                     : ("output_" + pCurrent2.traceName() + " = " + i2);
                             final String nextCondition = indexTuples[i1][i2].isEmpty() ? ""
-                                    : (" & " + interval(indexTuples[i1][i2], pNext, true));
+                                    : (" & " + ConstraintBasedBuilder.interval(indexTuples[i1][i2], pNext, true));
                             optionList.add(currentCondition1 + " & " + currentCondition2 + nextCondition);
                         }
                     }
@@ -291,7 +248,7 @@ public class SymbolicBuilder {
     private static void printRes(Configuration conf, Collection<String> initConstraints,
                                  Collection<String> transConstraints, String outFilename) throws IOException {
         final StringBuilder sb = new StringBuilder();
-        sb.append(plantCaption(conf));
+        sb.append(ConstraintBasedBuilder.plantCaption(conf));
         sb.append("    loop_executed: boolean;\n");
         sb.append("INIT\n");
 
@@ -316,7 +273,7 @@ public class SymbolicBuilder {
 
         sb.append("DEFINE\n");
         sb.append("    unsupported := FALSE;\n");
-        sb.append(plantConversions(conf));
+        sb.append(ConstraintBasedBuilder.plantConversions(conf));
 
         Utils.writeToFile(outFilename, sb.toString());
 
