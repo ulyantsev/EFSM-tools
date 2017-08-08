@@ -1,11 +1,13 @@
 package continuous_trace_builders.fairness_constraints;
 
-import java.util.*;
 import continuous_trace_builders.Configuration;
 import continuous_trace_builders.Dataset;
 import continuous_trace_builders.parameters.Parameter;
 import continuous_trace_builders.parameters.RealParameter;
 import continuous_trace_builders.parameters.SegmentsParameter;
+
+import java.util.*;
+
 import static continuous_trace_builders.fairness_constraints.Helper.*;
 
 
@@ -29,6 +31,9 @@ public class ComplexFairnessConstraintGenerator {
             int start = 1;
             while (start < trace.size() && get(ds, trace, start, po) == curOutInterval) {
                 start++;
+            }
+            if (start == trace.size()) {
+                continue;
             }
             int prevOutInterval = curOutInterval;
             curOutInterval = get(ds, trace, start, po);
