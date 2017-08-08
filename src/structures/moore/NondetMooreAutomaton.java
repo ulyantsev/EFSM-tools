@@ -610,7 +610,7 @@ public class NondetMooreAutomaton {
                 } else if (param instanceof SetParameter) {
                     effectiveSb.append(condition).append("CONT_PLANT_OUTPUT_").append(paramName).append(" = ")
                             .append(((SetParameter) param).roundedValue(i)).append(";\n");
-                } else if (param instanceof RealParameter) {
+                } else if (param instanceof RealParameter || param instanceof SegmentsParameter) {
                     final String[] tokens = param.spinInterval(i).split("\\.\\.");
                     final int min = Integer.parseInt(tokens[0]);
                     final int max = Integer.parseInt(tokens[1]);
@@ -622,6 +622,8 @@ public class NondetMooreAutomaton {
                             .append(mid).append(";\n");
                     //effectiveSb.append(condition.replace("::", "// ::") + "CONT_PLANT_OUTPUT_" + paramName + " = "
                     //        + max + ";\n");
+                } else {
+                    throw new AssertionError("Unknown parameter type!");
                 }
             }
             effectiveSb.append("    fi\n").append("\n");
@@ -629,14 +631,10 @@ public class NondetMooreAutomaton {
 
         dstepSb.append("    #ifdef INCLUDE_FAIRNESS\n");
         dstepSb.append("    loop_executed = state == last_state;\n");
-        dstepSb.append("    #endif\n");
-        dstepSb.append("\n");
+        dstepSb.append("    #endif\n\n");
 
-        sb.append("    d_step {\n");
-        sb.append(indent(4, dstepSb.toString()));
-        sb.append("\n    }\n\n");
-        sb.append(usualSb);
-        sb.append("} od }\n");
+        sb.append("    d_step {\n").append(indent(4, dstepSb.toString())).append("\n    }\n\n").append(usualSb)
+                .append("} od }\n");
 
         return sb.toString();
     }

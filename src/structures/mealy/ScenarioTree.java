@@ -133,11 +133,9 @@ public class ScenarioTree {
     public Collection<MyBooleanExpression> expressions() {
         final List<MyBooleanExpression> ans = new ArrayList<>();
         for (MealyNode node : nodes) {
-            for (MealyTransition t : node.transitions()) {
-                if (!ans.contains(t.expr())) {
-                    ans.add(t.expr());
-                }
-            }
+            node.transitions().stream().filter(t -> !ans.contains(t.expr())).forEach(t -> {
+                ans.add(t.expr());
+            });
         }
         return ans;
     }
