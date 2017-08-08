@@ -228,7 +228,7 @@ public class NondetMooreAutomaton {
             if (conditions.isEmpty()) {
                 conditions.add("TRUE");
             }
-            result.append("    " + event + " := " + String.join(" & ", conditions) + ";\n");
+            result.append("    ").append(event).append(" := ").append(String.join(" & ", conditions)).append(";\n");
         } else {
             final int intervalNum = thresholds.get(index).getRight().valueCount();
             for (int i = 0; i < intervalNum; i++) {
@@ -254,7 +254,7 @@ public class NondetMooreAutomaton {
             if (conditions.isEmpty()) {
                 conditions.add("true");
             }
-            result.append("        " + event + " = " + String.join(" && ", conditions) + ";\n");
+            result.append("        ").append(event).append(" = ").append(String.join(" && ", conditions)).append(";\n");
         } else {
             final int intervalNum = thresholds.get(index).getRight().valueCount();
             for (int i = 0; i < intervalNum; i++) {
@@ -271,7 +271,7 @@ public class NondetMooreAutomaton {
             if (!events.contains(event)) {
                 return;
             }
-            result.append("bool " + event + ";\n");
+            result.append("bool ").append(event).append(";\n");
         } else {
             final int intervalNum = thresholds.get(index).getRight().valueCount();
             for (int i = 0; i < intervalNum; i++) {
@@ -301,27 +301,26 @@ public class NondetMooreAutomaton {
         if (false) {
             sb.append("MODULE main()\n");
             sb.append("VAR\n");
-            sb.append("    plant: PLANT(" + inputLine + ");\n");
+            sb.append("    plant: PLANT(").append(inputLine).append(");\n");
             for (Pair<String, Parameter> entry : eventThresholds) {
                 final String paramName = entry.getLeft();
                 final Parameter param = entry.getRight();
-                sb.append("    CONT_INPUT_" + paramName + ": " + param.nusmvType()
-                        + ";\n");
+                sb.append("    CONT_INPUT_").append(paramName).append(": ").append(param.nusmvType()).append(";\n");
             }
             sb.append("\n");
         }
 
-        sb.append("MODULE PLANT(" + inputLine + ")\n");
+        sb.append("MODULE PLANT(").append(inputLine).append(")\n");
         sb.append("VAR\n");
         sb.append("    unsupported: boolean;\n");
         sb.append("    loop_executed: boolean;\n");
-        sb.append("    state: 0.." + (stateCount() - 1) + ";\n");
+        sb.append("    state: 0..").append(stateCount() - 1).append(";\n");
         if (loopConstraints != null) {
-            sb.append("    loop_executions: 0.." + maxLoopExecutions() + ";\n");
+            sb.append("    loop_executions: 0..").append(maxLoopExecutions()).append(";\n");
             sb.append("    loop_executions_violated: boolean;\n");
         }
         sb.append("INIT\n");
-        sb.append("    state in " + TraceModelGenerator.expressWithIntervalsNuSMV(initialStates()) + "\n");
+        sb.append("    state in ").append(TraceModelGenerator.expressWithIntervalsNuSMV(initialStates())).append("\n");
         sb.append("TRANS\n");
         
         final List<String> stateConstraints = new ArrayList<>();
@@ -362,7 +361,7 @@ public class NondetMooreAutomaton {
 
             stateConstraints.add("state = " + i + " -> (\n      " + String.join("\n    | ", options));
         }
-        sb.append("    (" + String.join("\n    )) & (", stateConstraints) + "))\n");
+        sb.append("    (").append(String.join("\n    )) & (", stateConstraints)).append("))\n");
         
         // marking that there was a transition unsupported by traces
         sb.append("ASSIGN\n");
@@ -372,18 +371,20 @@ public class NondetMooreAutomaton {
         sb.append("    next(loop_executed) := state = next(state);\n");
         if (loopConstraints != null) {
             sb.append("    init(loop_executions) := 0;\n");
-            sb.append("    next(loop_executions) := !next(loop_executed) ? 0 : loop_executions >= " + maxLoopExecutions() + " ? "
-                    + maxLoopExecutions() + " : (loop_executions + 1);\n");
+            sb.append("    next(loop_executions) := !next(loop_executed) ? 0 : loop_executions >= ")
+                    .append(maxLoopExecutions()).append(" ? ").append(maxLoopExecutions())
+                    .append(" : (loop_executions + 1);\n");
             sb.append("    init(loop_executions_violated) := FALSE;\n");
             final List<String> options = new ArrayList<>();
             options.add("loop_executions_violated");
             for (int i = 0; i < stateCount(); i++) {
                 options.add("next(state) = " + i + " & next(loop_executions) = " + loopConstraints.get(i));
             }
-            sb.append("    next(loop_executions_violated) := " + String.join("\n        | ", options) + ";\n");
+            sb.append("    next(loop_executions_violated) := ").append(String.join("\n        | ", options))
+                    .append(";\n");
         }
         sb.append("DEFINE\n");
-        sb.append("    known_input := " + String.join(" | ", events) + ";\n");
+        sb.append("    known_input := ").append(String.join(" | ", events)).append(";\n");
         final List<String> unsupported = new ArrayList<>();
         unsupported.add("!known_input");
         for (String e : unmodifiedEvents) {
@@ -402,7 +403,7 @@ public class NondetMooreAutomaton {
             }
         }
 
-        sb.append("    current_unsupported := " + String.join("\n        | ", unsupported) + ";\n");
+        sb.append("    current_unsupported := ").append(String.join("\n        | ", unsupported)).append(";\n");
         for (String action : actions) {
             final List<Integer> properStates = new ArrayList<>();
             for (int i = 0; i < stateCount(); i++) {
@@ -415,17 +416,18 @@ public class NondetMooreAutomaton {
                     : ("state in " + TraceModelGenerator.expressWithIntervalsNuSMV(properStates));
             final String comment = actionDescriptions.containsKey(action)
                     ? (" -- " + actionDescriptions.get(action)) : "";
-            sb.append("    output_" + action + " := " + condition + ";" + comment + "\n");
+            sb.append("    output_").append(action).append(" := ").append(condition).append(";").append(comment)
+                    .append("\n");
         }
 
         // output conversion to continuous values
         for (Pair<String, Parameter> entry : actionThresholds) {
             final String paramName = entry.getKey();
             final Parameter param = entry.getValue();
-            sb.append("    CONT_" + paramName + " := case\n");
+            sb.append("    CONT_").append(paramName).append(" := case\n");
             for (int i = 0; i < param.valueCount(); i++) {
-                sb.append("        output_" + paramName + i + ": "
-                        + param.nusmvInterval(i) + ";\n");
+                sb.append("        output_").append(paramName).append(i).append(": ").append(param.nusmvInterval(i))
+                        .append(";\n");
             }
             sb.append("    esac;\n");
         }
@@ -453,11 +455,11 @@ public class NondetMooreAutomaton {
                 ? conf.get().actionThresholds() : new ArrayList<>();
 
         for (Pair<String, Parameter> p : eventThresholds) {
-            sb.append(p.getRight().spinType() + " PLANT_INPUT_" + p.getLeft() + ";\n");
+            sb.append(p.getRight().spinType()).append(" PLANT_INPUT_").append(p.getLeft()).append(";\n");
         }
         for (Parameter p : conf.get().outputParameters) {
-            sb.append(p.spinType() + " PLANT_OUTPUT_" + p.traceName() + ";\n");
-            sb.append(p.spinType() + " CONT_PLANT_OUTPUT_" + p.traceName() + ";\n");
+            sb.append(p.spinType()).append(" PLANT_OUTPUT_").append(p.traceName()).append(";\n");
+            sb.append(p.spinType()).append(" CONT_PLANT_OUTPUT_").append(p.traceName()).append(";\n");
         }
 
         sb.append("\n");
@@ -496,7 +498,7 @@ public class NondetMooreAutomaton {
         sb.append("\n");
         sb.append("    d_step {\n");
         spinEventDescriptions(new int[eventThresholds.size()], 0, sb, eventThresholds, events);
-        sb.append("        known_input = " + String.join(" || ", events) + ";\n");
+        sb.append("        known_input = ").append(String.join(" || ", events)).append(";\n");
         sb.append("\n");
         sb.append("        #ifdef INCLUDE_UNSUPPORTED\n");
         final List<String> unsupported = new ArrayList<>();
@@ -516,7 +518,7 @@ public class NondetMooreAutomaton {
                         + TraceModelGenerator.expressWithIntervalsSPIN(sourceStates, "state") + ")");
             }
         }
-        sb.append("        current_unsupported = " +  String.join(" ||\n            ", unsupported) + ";\n");
+        sb.append("        current_unsupported = ").append(String.join(" ||\n            ", unsupported)).append(";\n");
         sb.append("        #endif\n");
         sb.append("    }\n");
         sb.append("\n");
@@ -580,8 +582,8 @@ public class NondetMooreAutomaton {
                 }
             }
 
-            sb.append("    :: " + String.join(" || ", sourceOptions) + " -> d_step { state = " + i + "; "
-                    + String.join("; ", properActions) + "; }\n");
+            sb.append("    :: ").append(String.join(" || ", sourceOptions)).append(" -> d_step { state = ").append(i)
+                    .append("; ").append(String.join("; ", properActions)).append("; }\n");
         }
         sb.append("    fi\n");
         sb.append("\n");
@@ -598,13 +600,16 @@ public class NondetMooreAutomaton {
             for (int i = 0; i < param.valueCount(); i++) {
                 final String condition = "    :: PLANT_OUTPUT_" + paramName + " == " + i + " -> ";
                 if (param instanceof BoolParameter) {
-                    effectiveSb.append(condition + "CONT_PLANT_OUTPUT_" + paramName + " = " + i + ";\n");
+                    effectiveSb.append(condition).append("CONT_PLANT_OUTPUT_").append(paramName).append(" = ").append(i)
+                            .append(";\n");
                 } else if (param instanceof IgnoredBoolParameter) {
-                    effectiveSb.append("    :: CONT_PLANT_OUTPUT_" + paramName + " = " + 0 + ";\n");
-                    effectiveSb.append("    :: CONT_PLANT_OUTPUT_" + paramName + " = " + 1 + ";\n");
+                    effectiveSb.append("    :: CONT_PLANT_OUTPUT_").append(paramName).append(" = ").append(0)
+                            .append(";\n");
+                    effectiveSb.append("    :: CONT_PLANT_OUTPUT_").append(paramName).append(" = ").append(1)
+                            .append(";\n");
                 } else if (param instanceof SetParameter) {
-                    effectiveSb.append(condition + "CONT_PLANT_OUTPUT_" + paramName + " = "
-                            + ((SetParameter) param).roundedValue(i) + ";\n");
+                    effectiveSb.append(condition).append("CONT_PLANT_OUTPUT_").append(paramName).append(" = ")
+                            .append(((SetParameter) param).roundedValue(i)).append(";\n");
                 } else if (param instanceof RealParameter) {
                     final String[] tokens = param.spinInterval(i).split("\\.\\.");
                     final int min = Integer.parseInt(tokens[0]);
@@ -613,13 +618,13 @@ public class NondetMooreAutomaton {
                     // by default, only one value is allowed
                     //effectiveSb.append(condition.replace("::", "// ::") + "CONT_PLANT_OUTPUT_" + paramName + " = "
                     //        + min + ";\n");
-                    effectiveSb.append(condition + "CONT_PLANT_OUTPUT_" + paramName + " = " + mid + ";\n");
+                    effectiveSb.append(condition).append("CONT_PLANT_OUTPUT_").append(paramName).append(" = ")
+                            .append(mid).append(";\n");
                     //effectiveSb.append(condition.replace("::", "// ::") + "CONT_PLANT_OUTPUT_" + paramName + " = "
                     //        + max + ";\n");
                 }
             }
-            effectiveSb.append("    fi\n");
-            effectiveSb.append("\n");
+            effectiveSb.append("    fi\n").append("\n");
         }
 
         dstepSb.append("    #ifdef INCLUDE_FAIRNESS\n");
@@ -701,7 +706,7 @@ public class NondetMooreAutomaton {
     /*
      * Requires determinism.
      */
-    public double strongCompliance(StringScenario scenario) {
+    private double strongCompliance(StringScenario scenario) {
         MooreNode node = states.get(initialStates().get(0));
         for (int pos = 0; pos < scenario.size(); pos++) {
             final StringActions actions = scenario.getActions(pos);
@@ -730,7 +735,7 @@ public class NondetMooreAutomaton {
     /*
      * Requires determinism.
      */
-    public double mediumCompliance(StringScenario scenario) {
+    private double mediumCompliance(StringScenario scenario) {
         MooreNode node = states.get(initialStates().get(0));
         for (int pos = 0; pos < scenario.size(); pos++) {
             final StringActions actions = scenario.getActions(pos);
@@ -759,7 +764,7 @@ public class NondetMooreAutomaton {
     /*
      * Requires determinism.
      */
-    public double weakCompliance(StringScenario scenario) {
+    private double weakCompliance(StringScenario scenario) {
         MooreNode node = states.get(initialStates().get(0));
         int matched = 0;
         for (int pos = 0; pos < scenario.size(); pos++) {
@@ -782,29 +787,26 @@ public class NondetMooreAutomaton {
         if (!isDeterministic()) {
             throw new RuntimeException("The automaton must be deterministic.");
         }
-        return scenarios.stream().mapToDouble(s -> strongCompliance(s)).average().getAsDouble();
+        return scenarios.stream().mapToDouble(this::strongCompliance).average().getAsDouble();
     }
 
     public double mediumCompliance(List<StringScenario> scenarios) {
         if (!isDeterministic()) {
             throw new RuntimeException("The automaton must be deterministic.");
         }
-        return scenarios.stream().mapToDouble(s -> mediumCompliance(s)).average().getAsDouble();
+        return scenarios.stream().mapToDouble(this::mediumCompliance).average().getAsDouble();
     }
 
     public double weakCompliance(List<StringScenario> scenarios) {
         if (!isDeterministic()) {
             throw new RuntimeException("The automaton must be deterministic.");
         }
-        return scenarios.stream().mapToDouble(s -> weakCompliance(s)).average().getAsDouble();
+        return scenarios.stream().mapToDouble(this::weakCompliance).average().getAsDouble();
     }
     
     public NondetMooreAutomaton copy() {
-        final List<StringActions> actions = new ArrayList<>();
-        for (MooreNode state : states) {
-            actions.add(state.actions());
-        }
-
+        final List<StringActions> actions = states.stream().map(MooreNode::actions)
+                .collect(Collectors.toCollection(ArrayList::new));
         final NondetMooreAutomaton copy = new NondetMooreAutomaton(states.size(), actions,
                 new ArrayList<>(this.isInitial));
 

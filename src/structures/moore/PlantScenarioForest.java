@@ -37,14 +37,14 @@ public abstract class PlantScenarioForest {
     protected abstract void addScenario(StringScenario scenario);
     protected abstract MooreNode addTransition(MooreNode src, String event, StringActions actions);
 
-    protected MooreNode addScenarioFrom(MooreNode node, StringScenario scenario) {
+    MooreNode addScenarioFrom(MooreNode node, StringScenario scenario) {
         for (int i = 1; i < scenario.size(); i++) {
             node = addTransition(node, scenario.getEvents(i).get(0), scenario.getActions(i));
         }
         return node;
     }
 
-    protected MooreNode properRoot(StringActions actions) {
+    MooreNode properRoot(StringActions actions) {
         MooreNode properRoot = null;
         for (MooreNode root : roots) {
             if (root.actions().equals(actions)) {
@@ -55,7 +55,7 @@ public abstract class PlantScenarioForest {
         return properRoot;
     }
 
-    protected void checkScenario(StringScenario scenario) {
+    void checkScenario(StringScenario scenario) {
         for (int i = 0; i < scenario.size(); i++) {
             if (scenario.getEvents(i).size() != 1) {
                 throw new RuntimeException("Multi-edges are not supported!");
@@ -74,13 +74,13 @@ public abstract class PlantScenarioForest {
         sb.append("digraph ScenarioForest {\n    node [shape = circle];\n");
 
         for (MooreNode node : nodes) {
-            sb.append("    " + node.number() + " [label = \"" + node + "\"];\n");
+            sb.append("    ").append(node.number()).append(" [label = \"").append(node).append("\"];\n");
         }
 
         for (MooreNode node : nodes) {
             for (MooreTransition t : node.transitions()) {
-                sb.append("    " + t.src().number() + " -> " + t.dst().number()
-                        + " [label = \"" + t.event() + "\"];\n");
+                sb.append("    ").append(t.src().number()).append(" -> ").append(t.dst().number())
+                        .append(" [label = \"").append(t.event()).append("\"];\n");
             }
         }
 

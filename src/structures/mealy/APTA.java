@@ -235,7 +235,6 @@ public class APTA {
                 }
             }
             if (recoloredBlueRed || recoloredWriteBlue) {
-                continue;
             } else {
                 break;
             }
@@ -472,13 +471,13 @@ public class APTA {
         sb.append("digraph APTA { node [shape=circle, width=0.7, fixedsize=true];\n");
 
         for (int node : edges.keySet()) {
-            sb.append(node + "" + nodeColors.get(node) + nodeTypes.get(node) + ";");
+            sb.append(node).append(nodeColors.get(node)).append(nodeTypes.get(node)).append(";");
         }
         sb.append("\n");
         for (Map.Entry<Integer, Map<String, Integer>> node : edges.entrySet()) {
             for (Map.Entry<String, Integer> t : node.getValue().entrySet()) {
-                sb.append(node.getKey() + "->" + t.getValue() +
-                        "[label=\"" + t.getKey() + "\"];");
+                sb.append(node.getKey()).append("->").append(t.getValue()).append("[label=\"").append(t.getKey())
+                        .append("\"];");
             }
         }
         sb.append(" }\n");

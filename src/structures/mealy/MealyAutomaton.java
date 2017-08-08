@@ -118,9 +118,9 @@ public class MealyAutomaton {
 
         for (MealyNode state : states) {
             for (MealyTransition t : state.transitions()) {
-                sb.append("    " + t.src().number() + " -> " + t.dst().number());
-                sb.append(" [label = \"" + t.event() + " [" + t.expr().toString()
-                    + "] (" + t.actions().toString() + ") \"];\n");
+                sb.append("    ").append(t.src().number()).append(" -> ").append(t.dst().number());
+                sb.append(" [label = \"").append(t.event()).append(" [").append(t.expr().toString()).append("] (")
+                        .append(t.actions().toString()).append(") \"];\n");
             }
         }
 

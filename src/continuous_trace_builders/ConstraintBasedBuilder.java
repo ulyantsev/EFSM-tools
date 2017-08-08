@@ -338,7 +338,7 @@ public class ConstraintBasedBuilder {
             };
             try (BufferedReader in = new BufferedReader(new FileReader(Paths.get(directory, groupingFile).toString()))) {
                 while (true) {
-                    String line = in.readLine();
+                    final String line = in.readLine();
                     if (line == null || line.trim().equals("")) {
                         break;
                     }

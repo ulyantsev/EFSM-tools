@@ -91,13 +91,13 @@ public class NegativeScenarioTree {
 
         for (NegativeMealyNode node : nodes) {
             for (MealyTransition t : node.transitions()) {
-                sb.append("    " + t.src().number() + " -> " + t.dst().number());
-                sb.append(" [label = \"" + t.event() + " [" + t.expr().toString() + "] ("
-                        + t.actions().toString() + ") \"];\n");
+                sb.append("    ").append(t.src().number()).append(" -> ").append(t.dst().number());
+                sb.append(" [label = \"").append(t.event()).append(" [").append(t.expr().toString()).append("] (")
+                        .append(t.actions().toString()).append(") \"];\n");
             }
             if (node.weakInvalid()) {
                 for (NegativeMealyNode loop : node.loops()) {
-                    sb.append("    " + node.number() + " -> " + loop.number() + ";\n");
+                    sb.append("    ").append(node.number()).append(" -> ").append(loop.number()).append(";\n");
                 }
             }
         }

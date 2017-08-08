@@ -91,9 +91,7 @@ public class ScenarioTree {
         final Set<String> actions = new TreeSet<>();
         for (MealyNode node : nodes) {
             for (MealyTransition transition : node.transitions()) {
-                for (String action : transition.actions().getActions()) {
-                    actions.add(action);
-                }
+                Collections.addAll(actions, transition.actions().getActions());
             }
         }
         return new ArrayList<>(actions);
@@ -153,9 +151,9 @@ public class ScenarioTree {
 
         for (MealyNode node : nodes) {
             for (MealyTransition t : node.transitions()) {
-                sb.append("    " + t.src().number() + " -> " + t.dst().number());
-                sb.append(" [label = \"" + t.event() + " [" + t.expr().toString() + "] ("
-                        + t.actions().toString() + ") \"];\n");
+                sb.append("    ").append(t.src().number()).append(" -> ").append(t.dst().number());
+                sb.append(" [label = \"").append(t.event()).append(" [").append(t.expr().toString()).append("] (")
+                        .append(t.actions().toString()).append(") \"];\n");
             }
         }
 
