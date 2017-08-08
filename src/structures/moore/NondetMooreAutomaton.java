@@ -596,37 +596,39 @@ public class NondetMooreAutomaton {
             final String paramName = entry.getKey();
             final Parameter param = entry.getValue();
             final StringBuilder effectiveSb = param instanceof IgnoredBoolParameter ? usualSb : dstepSb;
-            effectiveSb.append("    if\n");
-            for (int i = 0; i < param.valueCount(); i++) {
-                final String condition = "    :: PLANT_OUTPUT_" + paramName + " == " + i + " -> ";
-                if (param instanceof BoolParameter) {
-                    effectiveSb.append(condition).append("CONT_PLANT_OUTPUT_").append(paramName).append(" = ").append(i)
-                            .append(";\n");
-                } else if (param instanceof IgnoredBoolParameter) {
-                    effectiveSb.append("    :: CONT_PLANT_OUTPUT_").append(paramName).append(" = ").append(0)
-                            .append(";\n");
-                    effectiveSb.append("    :: CONT_PLANT_OUTPUT_").append(paramName).append(" = ").append(1)
-                            .append(";\n");
-                } else if (param instanceof SetParameter) {
-                    effectiveSb.append(condition).append("CONT_PLANT_OUTPUT_").append(paramName).append(" = ")
-                            .append(((SetParameter) param).roundedValue(i)).append(";\n");
-                } else if (param instanceof RealParameter || param instanceof SegmentsParameter) {
-                    final String[] tokens = param.spinInterval(i).split("\\.\\.");
-                    final int min = Integer.parseInt(tokens[0]);
-                    final int max = Integer.parseInt(tokens[1]);
-                    final int mid = (max + min) / 2;
-                    // by default, only one value is allowed
-                    //effectiveSb.append(condition.replace("::", "// ::") + "CONT_PLANT_OUTPUT_" + paramName + " = "
-                    //        + min + ";\n");
-                    effectiveSb.append(condition).append("CONT_PLANT_OUTPUT_").append(paramName).append(" = ")
-                            .append(mid).append(";\n");
-                    //effectiveSb.append(condition.replace("::", "// ::") + "CONT_PLANT_OUTPUT_" + paramName + " = "
-                    //        + max + ";\n");
-                } else {
-                    throw new AssertionError("Unknown parameter type!");
+            if (param instanceof BoolParameter) {
+                effectiveSb.append("    CONT_PLANT_OUTPUT_").append(paramName).append(" = PLANT_OUTPUT_")
+                        .append(paramName).append(";\n\n");
+            } else {
+                effectiveSb.append("    if\n");
+                for (int i = 0; i < param.valueCount(); i++) {
+                    final String condition = "    :: PLANT_OUTPUT_" + paramName + " == " + i + " -> ";
+                    if (param instanceof IgnoredBoolParameter) {
+                        effectiveSb.append("    :: CONT_PLANT_OUTPUT_").append(paramName).append(" = ").append(0)
+                                .append(";\n");
+                        effectiveSb.append("    :: CONT_PLANT_OUTPUT_").append(paramName).append(" = ").append(1)
+                                .append(";\n");
+                    } else if (param instanceof SetParameter) {
+                        effectiveSb.append(condition).append("CONT_PLANT_OUTPUT_").append(paramName).append(" = ")
+                                .append(((SetParameter) param).roundedValue(i)).append(";\n");
+                    } else if (param instanceof RealParameter || param instanceof SegmentsParameter) {
+                        final String[] tokens = param.spinInterval(i).split("\\.\\.");
+                        final int min = Integer.parseInt(tokens[0]);
+                        final int max = Integer.parseInt(tokens[1]);
+                        final int mid = (max + min) / 2;
+                        // by default, only one value is allowed
+                        //effectiveSb.append(condition.replace("::", "// ::") + "CONT_PLANT_OUTPUT_" + paramName + " = "
+                        //        + min + ";\n");
+                        effectiveSb.append(condition).append("CONT_PLANT_OUTPUT_").append(paramName).append(" = ")
+                                .append(mid).append(";\n");
+                        //effectiveSb.append(condition.replace("::", "// ::") + "CONT_PLANT_OUTPUT_" + paramName + " = "
+                        //        + max + ";\n");
+                    } else {
+                        throw new AssertionError("Unknown parameter type!");
+                    }
                 }
+                effectiveSb.append("    fi\n\n");
             }
-            effectiveSb.append("    fi\n").append("\n");
         }
 
         dstepSb.append("    #ifdef INCLUDE_FAIRNESS\n");
