@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class QuantileFinder {
     public static void run(Configuration conf, String directory, String datasetFilename) throws IOException {
@@ -21,9 +22,7 @@ public class QuantileFinder {
                 final List<Double> values = new ArrayList<>();
                 for (int i = 0; i < ds.values.size(); i++) {
                     final List<double[]> trace = ds.values.get(i);
-                    for (double[] aTrace : trace) {
-                        values.add(ds.get(aTrace, p));
-                    }
+                    values.addAll(trace.stream().map(aTrace -> ds.get(aTrace, p)).collect(Collectors.toList()));
                 }
                 Collections.sort(values);
                 System.out.println(p);
