@@ -6,6 +6,7 @@ package continuous_trace_builders;
 
 import continuous_trace_builders.parameters.Parameter;
 import continuous_trace_builders.parameters.RealParameter;
+import continuous_trace_builders.parameters.SegmentsParameter;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -16,7 +17,7 @@ public class QuantileFinder {
     public static void run(Configuration conf, String directory, String datasetFilename) throws IOException {
         final Dataset ds = Dataset.load(Utils.combinePaths(directory, datasetFilename));
         for (Parameter p : conf.parameters()) {
-            if (p instanceof RealParameter) {
+            if (p instanceof RealParameter || p instanceof SegmentsParameter) {
                 final List<Double> values = new ArrayList<>();
                 for (int i = 0; i < ds.values.size(); i++) {
                     final List<double[]> trace = ds.values.get(i);
