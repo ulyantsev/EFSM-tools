@@ -8,7 +8,6 @@ import continuous_trace_builders.parameters.Parameter;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -17,8 +16,8 @@ public class TraceModelGenerator {
     public static void run(Configuration conf, String directory, String datasetFilename) throws IOException {
         final Dataset ds = Dataset.load(Utils.combinePaths(directory, datasetFilename));
 
-        final int maxLength = ds.values.stream().mapToInt(List::size).max().getAsInt();
-        final int minLength = ds.values.stream().mapToInt(List::size).min().getAsInt();
+        final int maxLength = ds.maxTraceLength();
+        final int minLength = ds.minTraceLength();
         if (maxLength != minLength) {
             throw new AssertionError("All traces are currently assumed to have equal lengths.");
         }
@@ -27,10 +26,10 @@ public class TraceModelGenerator {
         final String individualTraceDir = Utils.combinePaths(directory, "individual-trace-models");
         new File(individualTraceDir).mkdir();
 
-        writeTraceModel(conf, ds, maxLength, 0, ds.values.size(), outFilename);
-        for (int i = 0; i < ds.values.size(); i++) {
-            writeTraceModel(conf, ds, maxLength, i, i + 1,
-                    individualTraceDir + "/trace-model-" + i + ".smv");
+        writeTraceModel(conf, ds, maxLength, 0, ds.totalTraces(), outFilename, ds.reader());
+        final Dataset.Reader reader = ds.reader();
+        for (int i = 0; i < ds.totalTraces(); i++) {
+            writeTraceModel(conf, ds, maxLength, i, i + 1, individualTraceDir + "/trace-model-" + i + ".smv", reader);
         }
 
         System.out.println("Done; the model has been written to: " + outFilename);
@@ -38,7 +37,7 @@ public class TraceModelGenerator {
     }
 
     private static void writeTraceModel(Configuration conf, Dataset ds, int maxLength, int indexFrom, int indexTo,
-                                        String filename) throws FileNotFoundException {
+                                        String filename, Dataset.Reader reader) throws IOException {
         final StringBuilder sb = new StringBuilder();
         sb.append(ConstraintBasedBuilder.plantCaption(conf));
         sb.append("    step: 0..").append(maxLength - 1).append(";\n");
@@ -53,13 +52,14 @@ public class TraceModelGenerator {
         for (Parameter p : conf.outputParameters) {
             sb.append("    output_").append(p.traceName()).append(" := case\n");
             for (int traceIndex = indexFrom; traceIndex < indexTo; traceIndex++) {
+                final List<double[]> trace = reader.next();
                 sb.append("        trace = ").append(traceIndex).append(": case\n");
                 final List<Set<Integer>> valuesToSteps = new ArrayList<>();
                 for (int i = 0; i < p.valueCount(); i++) {
                     valuesToSteps.add(new TreeSet<>());
                 }
-                for (int step = 0; step < ds.values.get(traceIndex).size(); step++) {
-                    final double value = ds.get(ds.values.get(traceIndex).get(step), p);
+                for (int step = 0; step < trace.size(); step++) {
+                    final double value = ds.get(trace.get(step), p);
                     final int res = p.traceNameIndex(value);
                     valuesToSteps.get(res).add(step);
                 }

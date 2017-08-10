@@ -9,14 +9,15 @@ import java.util.*;
  * Created by Dmitry on 07-Jul-17.
  */
 public class Helper {
-    static void initIntGroups(List<Parameter> inputs, List<List<Parameter>> grouping, List<List<Integer>> groups, List<List<Integer>> paramIndexToGroup) {
-        Map<Parameter, Integer> index = new HashMap<>();
+    static void initIntGroups(List<Parameter> inputs, List<List<Parameter>> grouping, List<List<Integer>> groups,
+                              List<List<Integer>> paramIndexToGroup) {
+        final Map<Parameter, Integer> index = new HashMap<>();
         for (int i = 0; i < inputs.size(); i++) {
             index.put(inputs.get(i), i);
             paramIndexToGroup.add(null);
         }
         for (List<Parameter> group: grouping) {
-            List<Integer> intGroup = new ArrayList<>();
+            final List<Integer> intGroup = new ArrayList<>();
             for (Parameter param : group) {
                 Integer ind = index.get(param);
                 intGroup.add(ind);
@@ -26,7 +27,7 @@ public class Helper {
         }
         for (int i = 0; i < inputs.size(); i++) {
             if (paramIndexToGroup.get(i) == null) {
-                List<Integer> intGroup = new ArrayList<>(1);
+                final List<Integer> intGroup = new ArrayList<>(1);
                 intGroup.add(i);
                 groups.add(intGroup);
                 paramIndexToGroup.set(i, intGroup);
@@ -36,7 +37,7 @@ public class Helper {
 
     private static void goCollectKeys(int ind, int[] counts, Integer[] cur, List<List<Integer>> ans) {
         if (ind == counts.length) {
-            List<Integer> res = new ArrayList<>(ind);
+            final List<Integer> res = new ArrayList<>(ind);
             Collections.addAll(res, cur);
             ans.add(res);
             return;
@@ -48,9 +49,9 @@ public class Helper {
     }
 
     static List<List<Integer>> collectKeys(List<Integer> group, List<Parameter> parameters) {
-        List<List<Integer>> ans = new ArrayList<>();
-        Integer[] cur = new Integer[group.size()];
-        int[] counts= new int[group.size()];
+        final List<List<Integer>> ans = new ArrayList<>();
+        final Integer[] cur = new Integer[group.size()];
+        final int[] counts = new int[group.size()];
         for (int i = 0; i < counts.length; i++) {
             counts[i] = parameters.get(i).valueCount();
         }
@@ -73,8 +74,8 @@ public class Helper {
         }
 
         String keyToString(List<List<Integer>> groups, List<Parameter> inputs, boolean isPlus) {
-            StringBuilder res = new StringBuilder();
-            List<Integer> list = isPlus ? plusKey : minusKey;
+            final StringBuilder res = new StringBuilder();
+            final List<Integer> list = isPlus ? plusKey : minusKey;
             for (int i = 0; i < list.size(); i++) {
                 Parameter param = inputs.get(groups.get(group).get(i));
                 res.append(" & CONT_INPUT_").append(param.traceName()).append(" in ")

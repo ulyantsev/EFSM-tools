@@ -15,7 +15,7 @@ import java.io.IOException;
 import java.util.*;
 
 public class ExplicitStateBuilder {
-    final static boolean ALL_EVENT_COMBINATIONS = false;
+    private final static boolean ALL_EVENT_COMBINATIONS = false;
 
     private static double proximity(String e1, String e2, Configuration conf) {
         double sum = 0;

@@ -39,7 +39,8 @@ public class CompositionalBuilder {
         return Integer.parseInt(String.valueOf(actions[i].charAt(actions[i].length() - 1)));
     }
 
-    static boolean isConsistentWithInputs(MooreNode node, String outgoingEvent, Match match, boolean isOutputInput) {
+    private static boolean isConsistentWithInputs(MooreNode node, String outgoingEvent, Match match,
+                                                  boolean isOutputInput) {
         if (isOutputInput) {
             for (Pair<Parameter, Integer> pair : match.outputInputPairs) {
                 final int firstIndex = actionIntervalIndex(node.actions().getActions(), pair.getLeft().traceName());

@@ -3,31 +3,38 @@ package continuous_trace_builders.fairness_constraints;
 import continuous_trace_builders.Configuration;
 import continuous_trace_builders.Dataset;
 import continuous_trace_builders.parameters.Parameter;
-import static continuous_trace_builders.fairness_constraints.Helper.*;
+
+import java.io.IOException;
 import java.util.*;
 import java.util.function.Supplier;
 
+import static continuous_trace_builders.fairness_constraints.Helper.*;
+
 public class MonotonicFairnessConstraintGenerator {
-    public static List<String> generateFairnessConstraints(Configuration conf, Dataset ds, List<List<Parameter>> grouping) {
-        List<Parameter> inputs = conf.inputParameters;
-        int inputsSize = inputs.size();
-        List<List<Integer>> groups = new ArrayList<>(inputsSize); // groups.toInt() + single elements
-        List<List<Integer>> paramIndexToGroup = new ArrayList<>(inputsSize);
+    public static List<String> generateFairnessConstraints(Configuration conf, Dataset ds,
+                                                           List<List<Parameter>> grouping) throws IOException {
+        final List<Parameter> inputs = conf.inputParameters;
+        final int inputsSize = inputs.size();
+        final List<List<Integer>> groups = new ArrayList<>(inputsSize); // groups.toInt() + single elements
+        final List<List<Integer>> paramIndexToGroup = new ArrayList<>(inputsSize);
         Helper.initIntGroups(inputs, grouping, groups, paramIndexToGroup);
-        List<String> constraints = new ArrayList<>();
-        List<List<List<Integer>>> keys = new ArrayList<>();
+        final List<String> constraints = new ArrayList<>();
+        final List<List<List<Integer>>> keys = new ArrayList<>();
         for (List<Integer> group : groups) {
             keys.add(collectKeys(group, inputs));
         }
 
-        List<ControlParameter>[] controlParameters = getControlParameters(ds, conf.outputParameters, groups, keys, inputs);
+        final List<ControlParameter>[] controlParameters = getControlParameters(ds, conf.outputParameters, groups, keys,
+                inputs);
         for (int out = 0; out < conf.outputParameters.size(); out++) {
             Parameter po = conf.outputParameters.get(out);
             int outValsCount = po.valueCount();
             for (ControlParameter control : controlParameters[out]) {
                 for (int pos = 0; pos < outValsCount - 1; pos++) {
-                    constraints.add("FAIRNESS !(output_" + po.traceName() + " = " + pos + control.keyToString(groups, inputs, true) + ")");
-                    constraints.add("FAIRNESS !(output_" + po.traceName() + " = " + (pos + 1) + control.keyToString(groups, inputs, false) + ")");
+                    constraints.add("FAIRNESS !(output_" + po.traceName() + " = " + pos
+                            + control.keyToString(groups, inputs, true) + ")");
+                    constraints.add("FAIRNESS !(output_" + po.traceName() + " = " + (pos + 1)
+                            + control.keyToString(groups, inputs, false) + ")");
                 }
             }
         }
@@ -36,10 +43,10 @@ public class MonotonicFairnessConstraintGenerator {
 
     private static List<ControlParameter>[] getControlParameters(Dataset ds, List<Parameter> outputParameters,
                                                                  List<List<Integer>> groups, List<List<List<Integer>>> keys,
-                                                                 List<Parameter> inputs) {
+                                                                 List<Parameter> inputs) throws IOException {
         // Init
-        int outputsCount = outputParameters.size();
-        int groupsCount = groups.size();
+        final int outputsCount = outputParameters.size();
+        final int groupsCount = groups.size();
 
         Supplier<boolean[][][]> initBoolArray = () -> {
             boolean[][][] res = new boolean[outputsCount][groupsCount][];
@@ -63,10 +70,10 @@ public class MonotonicFairnessConstraintGenerator {
             }
             keyToPos[group] = map;
         }
-        boolean[][][] canPlus = initBoolArray.get(), canStay = initBoolArray.get(), canMinus = initBoolArray.get();
+        final boolean[][][] canPlus = initBoolArray.get(), canStay = initBoolArray.get(), canMinus = initBoolArray.get();
 
-        double[] minOut = new double[outputsCount];
-        double[] maxOut = new double[outputsCount];
+        final double[] minOut = new double[outputsCount];
+        final double[] maxOut = new double[outputsCount];
 
         initMinMax(ds, outputParameters, outputsCount, minOut, maxOut);
 
@@ -75,11 +82,14 @@ public class MonotonicFairnessConstraintGenerator {
         return collectConstraints(outputParameters, groups, keys, canPlus, canStay, canMinus, minOut, maxOut);
     }
 
-    private static void initMinMax(Dataset ds, List<Parameter> outputParameters, int outputsCount, double[] minOut, double[] maxOut) {
+    private static void initMinMax(Dataset ds, List<Parameter> outputParameters, int outputsCount, double[] minOut,
+                                   double[] maxOut) throws IOException {
         for (int out = 0; out < outputsCount; out++) {
-            minOut[out] = maxOut[out] = ds.get(ds.values.get(0).get(0), outputParameters.get(out));
+            minOut[out] = maxOut[out] = ds.get(ds.reader().next().get(0), outputParameters.get(out));
         }
-        for (List<double[]> trace : ds.values) {
+        final Dataset.Reader reader = ds.reader();
+        while (reader.hasNext()) {
+            final List<double[]> trace = reader.next();
             for (double[] elem : trace) {
                 for (int out = 0; out < outputsCount; out++) {
                     double val = ds.get(elem, outputParameters.get(out));
@@ -134,19 +144,21 @@ public class MonotonicFairnessConstraintGenerator {
     private static void findContradictions(Dataset ds, List<Parameter> outputParameters, List<List<Integer>> groups,
                                            List<Parameter> inputs, Map<List<Integer>, Integer>[] keyToPos,
                                            boolean[][][] canPlus, boolean[][][] canStay, boolean[][][] canMinus,
-                                           double[] minOut, double[] maxOut) {
-        for (List<double[]> trace : ds.values) {
+                                           double[] minOut, double[] maxOut) throws IOException {
+        final Dataset.Reader reader = ds.reader();
+        while (reader.hasNext()) {
+            final List<double[]> trace = reader.next();
             for (int i = 0; i < trace.size() - 1; i++) {
                 for (int j = 0; j < groups.size(); j++) {
-                    List<Integer> group = groups.get(j);
-                    List<Integer> key = new ArrayList<>(group.size());
+                    final List<Integer> group = groups.get(j);
+                    final List<Integer> key = new ArrayList<>(group.size());
                     for (int item : group) {
                         key.add(get(ds, trace, i, inputs.get(item)));
                     }
-                    int index = keyToPos[j].get(key);
+                    final int index = keyToPos[j].get(key);
                     for (int out = 0; out < outputParameters.size(); out++) {
-                        Parameter po = outputParameters.get(out);
-                        double outDif = ds.get(trace.get(i+1), po) - ds.get(trace.get(i), po);
+                        final Parameter po = outputParameters.get(out);
+                        final double outDif = ds.get(trace.get(i+1), po) - ds.get(trace.get(i), po);
                         if (outDif < 0) {
                             canPlus[out][j][index] = false;
                             canStay[out][j][index] = false;

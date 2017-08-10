@@ -27,4 +27,20 @@ public class Utils {
             pw.print(text);
         }
     }
+
+    static boolean deleteDir(File dir) {
+        final File[] files = dir.listFiles();
+        if (files != null) {
+            for (File f : files) {
+                if (f.isDirectory()) {
+                    if (!deleteDir(f)) {
+                        return false;
+                    }
+                } else if (!f.delete()) {
+                    return false;
+                }
+            }
+        }
+        return dir.delete();
+    }
 }

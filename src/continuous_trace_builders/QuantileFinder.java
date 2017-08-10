@@ -20,8 +20,9 @@ public class QuantileFinder {
         for (Parameter p : conf.parameters()) {
             if (p instanceof RealParameter || p instanceof SegmentsParameter) {
                 final List<Double> values = new ArrayList<>();
-                for (int i = 0; i < ds.values.size(); i++) {
-                    final List<double[]> trace = ds.values.get(i);
+                final Dataset.Reader reader = ds.reader();
+                while (reader.hasNext()) {
+                    final List<double[]> trace = reader.next();
                     values.addAll(trace.stream().map(aTrace -> ds.get(aTrace, p)).collect(Collectors.toList()));
                 }
                 Collections.sort(values);

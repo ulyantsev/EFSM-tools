@@ -9,6 +9,7 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.*;
 import java.util.function.Function;
@@ -16,7 +17,7 @@ import java.util.stream.Collectors;
 
 public class TraceTranslator {
     // to improve precision in the NuSMV model
-    public static Map<String, Double> paramScales(String filename) {
+    static Map<String, Double> paramScales(String filename) {
         final Map<String, Double> paramScales = new TreeMap<>();
         try (Scanner sc = new Scanner(new File(filename))) {
             while (sc.hasNextLine()) {
@@ -53,7 +54,7 @@ public class TraceTranslator {
 
     private static void printOutputTraces(Configuration conf, String directory, Set<String> allEvents,
                 Set<List<String>> allActionCombinations, Dataset ds, boolean satBased, int traceIncludeEach,
-                double traceFraction) throws FileNotFoundException {
+                double traceFraction) throws IOException {
         // coverage
         final Set<Pair<String, Integer>> inputCovered = new HashSet<>();
         final Set<Pair<String, Integer>> outputCovered = new HashSet<>();
@@ -70,7 +71,7 @@ public class TraceTranslator {
         }
 
         // trace usage mask
-        final Boolean[] use = new Boolean[ds.values.size()];
+        final Boolean[] use = new Boolean[ds.totalTraces()];
         int max = (int) Math.round(use.length * traceFraction);
         Arrays.fill(use, 0, max, true);
         Arrays.fill(use, max, use.length, false);
@@ -78,8 +79,9 @@ public class TraceTranslator {
 
         int addedTraces = 0;
         try (PrintWriter pw = new PrintWriter(new File(Utils.combinePaths(directory, OUTPUT_TRACE_FILENAME)))) {
-            for (int i = 0; i < ds.values.size(); i++) {
-                final List<double[]> trace = ds.values.get(i);
+            final Dataset.Reader reader = ds.reader();
+            for (int i = 0; i < ds.totalTraces(); i++) {
+                final List<double[]> trace = reader.next();
                 final List<String> events = new ArrayList<>();
                 final List<List<String>> actionCombinations = new ArrayList<>();
 
@@ -157,10 +159,10 @@ public class TraceTranslator {
         }
     }
 
-    public static List<String> generateScenarios(Configuration conf, String directory, Dataset ds,
+    static List<String> generateScenarios(Configuration conf, String directory, Dataset ds,
             Set<List<String>> allActionCombinations, String gvOutput, String smvOutput, boolean addActionDescriptions,
             boolean satBased, boolean allEventCombinations, int traceIncludeEach, double traceFraction,
-            String... moreCommandLineOptions) throws FileNotFoundException {
+            String... moreCommandLineOptions) throws IOException {
         // traces
         final Set<String> allEvents = new TreeSet<>();
         if (allEventCombinations) {

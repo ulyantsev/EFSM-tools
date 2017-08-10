@@ -127,7 +127,7 @@ public class ConstraintBasedBuilder {
     }
 
     private static void addOIOConstraints(Configuration conf, Collection<String> transConstraints,
-                                          Dataset ds, List<List<Parameter>> grouping) {
+                                          Dataset ds, List<List<Parameter>> grouping) throws IOException {
         for (Parameter pi : conf.inputParameters) {
             if (pi instanceof IgnoredBoolParameter) {
                 continue;
@@ -140,7 +140,10 @@ public class ConstraintBasedBuilder {
                     continue;
                 }
                 final Map<Integer, Set<Integer>> indexPairs = new TreeMap<>();
-                for (List<double[]> trace : ds.values) {
+
+                final Dataset.Reader reader = ds.reader();
+                while (reader.hasNext()) {
+                    final List<double[]> trace = reader.next();
                     for (int i = 0; i < trace.size() - 1; i++) {
                         final int indexO1 = po.traceNameIndex(ds.get(trace.get(i), po));
                         final int indexI = pi.traceNameIndex(ds.get(trace.get(i), pi));
@@ -170,7 +173,9 @@ public class ConstraintBasedBuilder {
                     continue;
                 }
                 final Map<List<Integer>, Set<Integer>> indexPairs = new HashMap<>();
-                for (List<double[]> trace : ds.values) {
+                final Dataset.Reader reader = ds.reader();
+                while (reader.hasNext()) {
+                    final List<double[]> trace = reader.next();
                     for (int i = 0; i < trace.size() - 1; i++) {
                         List<Integer> key = new ArrayList<>();
                         for (Parameter pi : inputs) {
@@ -205,7 +210,8 @@ public class ConstraintBasedBuilder {
         }
     }
 
-    private static void addInputStateConstraints(Configuration conf, Collection<String> transConstraints, Dataset ds) {
+    private static void addInputStateConstraints(Configuration conf, Collection<String> transConstraints, Dataset ds)
+            throws IOException {
         for (Parameter pi : conf.inputParameters) {
             if (pi instanceof IgnoredBoolParameter) {
                 continue;
@@ -218,7 +224,9 @@ public class ConstraintBasedBuilder {
                 for (int index1 = 0; index1 < pi.valueCount(); index1++) {
                     indexPairs.put(index1, new TreeSet<>());
                 }
-                for (List<double[]> trace : ds.values) {
+                final Dataset.Reader reader = ds.reader();
+                while (reader.hasNext()) {
+                    final List<double[]> trace = reader.next();
                     for (int i = 0; i < trace.size() - 1; i++) {
                         final int index1 = pi.traceNameIndex(ds.get(trace.get(i), pi));
                         final int index2 = po.traceNameIndex(ds.get(trace.get(i + 1), po));
@@ -238,13 +246,16 @@ public class ConstraintBasedBuilder {
         }
     }
 
-    private static void addCurrentNextConstraints(Configuration conf, Collection<String> transConstraints, Dataset ds) {
+    private static void addCurrentNextConstraints(Configuration conf, Collection<String> transConstraints, Dataset ds)
+            throws IOException {
         for (Parameter p : conf.outputParameters) {
             if (p instanceof IgnoredBoolParameter) {
                 continue;
             }
             final Map<Integer, Set<Integer>> indexPairs = new TreeMap<>();
-            for (List<double[]> trace : ds.values) {
+            final Dataset.Reader reader = ds.reader();
+            while (reader.hasNext()) {
+                final List<double[]> trace = reader.next();
                 for (int i = 0; i < trace.size() - 1; i++) {
                     final int index1 = p.traceNameIndex(ds.get(trace.get(i), p));
                     final int index2 = p.traceNameIndex(ds.get(trace.get(i + 1), p));
