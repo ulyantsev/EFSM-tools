@@ -11,10 +11,10 @@ public class Utils {
         if (str.trim().equals("")) {
             return EMPTY_STRING_ARRAY;
         }
-        String[] temp = str.split(" +");
-        int start = temp[0].equals("") ? 1 : 0;
-        int len = temp.length;
-        int end = temp[len - 1].equals("") ? len - 1 : len;
+        final String[] temp = str.split(" +");
+        final int start = temp[0].equals("") ? 1 : 0;
+        final int len = temp.length;
+        final int end = temp[len - 1].equals("") ? len - 1 : len;
         return Arrays.copyOfRange(temp, start, end);
     }
 

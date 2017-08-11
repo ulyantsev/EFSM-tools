@@ -127,11 +127,13 @@ public class ConstraintBasedBuilder {
     }
 
     private static void addOIOConstraints(Configuration conf, Collection<String> transConstraints,
-                                          Dataset ds, List<List<Parameter>> grouping) throws IOException {
+                                          List<List<Parameter>> grouping, Map<Parameter, int[][]> paramIndices)
+            throws IOException {
         for (Parameter pi : conf.inputParameters) {
             if (pi instanceof IgnoredBoolParameter) {
                 continue;
             }
+            final int[][] tracesI = paramIndices.get(pi);
             for (Parameter po : conf.outputParameters) {
                 if (po instanceof IgnoredBoolParameter) {
                     continue;
@@ -139,28 +141,28 @@ public class ConstraintBasedBuilder {
                 if (grouping.stream().anyMatch(l -> l.contains(pi))) {
                     continue;
                 }
+                final int[][] tracesO = paramIndices.get(po);
+
                 final Map<Integer, Set<Integer>> indexPairs = new TreeMap<>();
 
-                final Dataset.Reader reader = ds.reader();
-                while (reader.hasNext()) {
-                    final List<double[]> trace = reader.next();
-                    for (int i = 0; i < trace.size() - 1; i++) {
-                        final int indexO1 = po.traceNameIndex(ds.get(trace.get(i), po));
-                        final int indexI = pi.traceNameIndex(ds.get(trace.get(i), pi));
-                        final int indexO2 = po.traceNameIndex(ds.get(trace.get(i + 1), po));
-                        int mapIndex = (indexO1 << 16) + indexI;
-                        Set<Integer> set = indexPairs.computeIfAbsent(mapIndex, k -> new TreeSet<>());
+                for (int u = 0; u < tracesI.length; u++) {
+                    for (int v = 0; v < tracesI[u].length - 1; v++) {
+                        final int indexO1 = tracesO[u][v];
+                        final int indexI = tracesI[u][v];
+                        final int indexO2 = tracesO[u][v + 1];
+                        final int mapIndex = (indexO1 << 16) + indexI;
+                        final Set<Integer> set = indexPairs.computeIfAbsent(mapIndex, k -> new TreeSet<>());
                         set.add(indexO2);
                     }
                 }
                 final List<String> optionList = new ArrayList<>();
                 for (Map.Entry<Integer, Set<Integer>> entry : indexPairs.entrySet()) {
-                    int indexI = entry.getKey() & ((1 << 16) - 1);
-                    int indexO1 = entry.getKey() >> 16;
-                    Set<Integer> indices = entry.getValue();
-                    String cond = "CONT_INPUT_" + pi.traceName() + " in " + pi.nusmvInterval(indexI)
+                    final int indexI = entry.getKey() & ((1 << 16) - 1);
+                    final int indexO1 = entry.getKey() >> 16;
+                    final Set<Integer> indices = entry.getValue();
+                    final String cond = "CONT_INPUT_" + pi.traceName() + " in " + pi.nusmvInterval(indexI)
                             + " & output_" + po.traceName() + " = " + indexO1;
-                    String next = indices.isEmpty() ? "" : (" & " + interval(indices, po, true));
+                    final String next = indices.isEmpty() ? "" : (" & " + interval(indices, po, true));
                     optionList.add(cond + next);
                 }
 
@@ -168,40 +170,44 @@ public class ConstraintBasedBuilder {
             }
         }
         for (List<Parameter> inputs : grouping) {
+            final int[][][] tracesI = new int[inputs.size()][][];
+            for (int i = 0; i < inputs.size(); i++) {
+                tracesI[i] = paramIndices.get(inputs.get(i));
+            }
             for (Parameter po : conf.outputParameters) {
                 if (po instanceof IgnoredBoolParameter) {
                     continue;
                 }
+                final int[][] tracesO = paramIndices.get(po);
                 final Map<List<Integer>, Set<Integer>> indexPairs = new HashMap<>();
-                final Dataset.Reader reader = ds.reader();
-                while (reader.hasNext()) {
-                    final List<double[]> trace = reader.next();
-                    for (int i = 0; i < trace.size() - 1; i++) {
-                        List<Integer> key = new ArrayList<>();
-                        for (Parameter pi : inputs) {
-                            final int indexI = pi.traceNameIndex(ds.get(trace.get(i), pi));
+
+                for (int u = 0; u < tracesO.length; u++) {
+                    for (int v = 0; v < tracesO[u].length - 1; v++) {
+                        final List<Integer> key = new ArrayList<>();
+                        for (int i = 0; i < inputs.size(); i++) {
+                            final int indexI = tracesI[i][u][v];
                             key.add(indexI);
                         }
-                        final int indexO1 = po.traceNameIndex(ds.get(trace.get(i), po));
+                        final int indexO1 = tracesO[u][v];
                         key.add(indexO1);
-                        Set<Integer> set = indexPairs.computeIfAbsent(key, k -> new TreeSet<>());
-                        final int indexO2 = po.traceNameIndex(ds.get(trace.get(i + 1), po));
+                        final Set<Integer> set = indexPairs.computeIfAbsent(key, k -> new TreeSet<>());
+                        final int indexO2 = tracesO[u][v + 1];
                         set.add(indexO2);
                     }
                 }
                 final List<String> optionList = new ArrayList<>();
                 for (Map.Entry<List<Integer>, Set<Integer>> entry : indexPairs.entrySet()) {
-                    List<Integer> key = new ArrayList<>(entry.getKey());
-                    int indexO1 = key.remove(key.size() - 1);
-                    Set<Integer> indices = entry.getValue();
-                    StringBuilder sb = new StringBuilder();
+                    final List<Integer> key = new ArrayList<>(entry.getKey());
+                    final int indexO1 = key.remove(key.size() - 1);
+                    final Set<Integer> indices = entry.getValue();
+                    final StringBuilder sb = new StringBuilder();
                     for (int i = 0; i < inputs.size(); i++) {
-                        Parameter pi = inputs.get(i);
+                        final Parameter pi = inputs.get(i);
                         sb.append("CONT_INPUT_").append(pi.traceName()).append(" in ")
                                 .append(pi.nusmvInterval(key.get(i))).append(" & ");
                     }
                     sb.append("output_").append(po.traceName()).append(" = ").append(indexO1);
-                    String next = indices.isEmpty() ? "" : (" & " + interval(indices, po, true));
+                    final String next = indices.isEmpty() ? "" : (" & " + interval(indices, po, true));
                     optionList.add(sb.toString() + next);
                 }
 
@@ -210,26 +216,27 @@ public class ConstraintBasedBuilder {
         }
     }
 
-    private static void addInputStateConstraints(Configuration conf, Collection<String> transConstraints, Dataset ds)
+    private static void addInputStateConstraints(Configuration conf, Collection<String> transConstraints,
+                                                 Map<Parameter, int[][]> paramIndices)
             throws IOException {
         for (Parameter pi : conf.inputParameters) {
             if (pi instanceof IgnoredBoolParameter) {
                 continue;
             }
+            final int[][] tracesI = paramIndices.get(pi);
             for (Parameter po : conf.outputParameters) {
                 if (po instanceof IgnoredBoolParameter) {
                     continue;
                 }
+                final int[][] tracesO = paramIndices.get(po);
                 final Map<Integer, Set<Integer>> indexPairs = new TreeMap<>();
                 for (int index1 = 0; index1 < pi.valueCount(); index1++) {
                     indexPairs.put(index1, new TreeSet<>());
                 }
-                final Dataset.Reader reader = ds.reader();
-                while (reader.hasNext()) {
-                    final List<double[]> trace = reader.next();
-                    for (int i = 0; i < trace.size() - 1; i++) {
-                        final int index1 = pi.traceNameIndex(ds.get(trace.get(i), pi));
-                        final int index2 = po.traceNameIndex(ds.get(trace.get(i + 1), po));
+                for (int u = 0; u < tracesI.length; u++) {
+                    for (int v = 0; v < tracesI[u].length - 1; v++) {
+                        final int index1 = tracesI[u][v];
+                        final int index2 = tracesO[u][v + 1];
                         indexPairs.get(index1).add(index2);
                     }
                 }
@@ -246,19 +253,19 @@ public class ConstraintBasedBuilder {
         }
     }
 
-    private static void addCurrentNextConstraints(Configuration conf, Collection<String> transConstraints, Dataset ds)
+    private static void addCurrentNextConstraints(Configuration conf, Collection<String> transConstraints,
+                                                  Map<Parameter, int[][]> paramIndices)
             throws IOException {
         for (Parameter p : conf.outputParameters) {
             if (p instanceof IgnoredBoolParameter) {
                 continue;
             }
+            final int[][] traces = paramIndices.get(p);
             final Map<Integer, Set<Integer>> indexPairs = new TreeMap<>();
-            final Dataset.Reader reader = ds.reader();
-            while (reader.hasNext()) {
-                final List<double[]> trace = reader.next();
-                for (int i = 0; i < trace.size() - 1; i++) {
-                    final int index1 = p.traceNameIndex(ds.get(trace.get(i), p));
-                    final int index2 = p.traceNameIndex(ds.get(trace.get(i + 1), p));
+            for (int[] trace : traces) {
+                for (int v = 0; v < trace.length - 1; v++) {
+                    final int index1 = trace[v];
+                    final int index2 = trace[v + 1];
                     Set<Integer> secondIndices = indexPairs.get(index1);
                     if (secondIndices == null) {
                         secondIndices = new TreeSet<>();
@@ -373,7 +380,7 @@ public class ConstraintBasedBuilder {
         }
         // 3. Ok = a & Ik = b -> O(k+1)=c
         if (!disableOIO_CONSTRAINTS) {
-            addOIOConstraints(conf, transConstraints, ds, grouping);
+            addOIOConstraints(conf, transConstraints, grouping, paramIndices);
         }
 
         // 2. 2-dimensional constraints "input -> possible next state"
@@ -383,14 +390,14 @@ public class ConstraintBasedBuilder {
         // FIXME do something with potential deadlocks, when unknown
         // input combinations require non-intersecting actions
         if (!disableINPUT_STATE) {
-            addInputStateConstraints(conf, transConstraints, ds);
+            addInputStateConstraints(conf, transConstraints, paramIndices);
         }
 
         // 2. 2-dimensional constraints "current state -> next state"
         // "for each output, only its value transitions found in some pair of contiguous trace
         // elements are possible"
         if (!disableCURRENT_NEXT) {
-            addCurrentNextConstraints(conf, transConstraints, ds);
+            addCurrentNextConstraints(conf, transConstraints, paramIndices);
         }
 
         List<String> fairnessConstraints = new ArrayList<>();

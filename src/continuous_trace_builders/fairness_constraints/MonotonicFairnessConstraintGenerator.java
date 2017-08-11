@@ -27,8 +27,8 @@ public class MonotonicFairnessConstraintGenerator {
         final List<ControlParameter>[] controlParameters = getControlParameters(ds, conf.outputParameters, groups, keys,
                 inputs);
         for (int out = 0; out < conf.outputParameters.size(); out++) {
-            Parameter po = conf.outputParameters.get(out);
-            int outValsCount = po.valueCount();
+            final Parameter po = conf.outputParameters.get(out);
+            final int outValsCount = po.valueCount();
             for (ControlParameter control : controlParameters[out]) {
                 for (int pos = 0; pos < outValsCount - 1; pos++) {
                     constraints.add("FAIRNESS !(output_" + po.traceName() + " = " + pos
@@ -52,8 +52,8 @@ public class MonotonicFairnessConstraintGenerator {
             boolean[][][] res = new boolean[outputsCount][groupsCount][];
             for (int output = 0; output < outputsCount; output++) {
                 for (int group = 0; group < groups.size(); group++) {
-                    List<List<Integer>> groupKeys = keys.get(group);
-                    boolean[] curRes = new boolean[groupKeys.size()];
+                    final List<List<Integer>> groupKeys = keys.get(group);
+                    final boolean[] curRes = new boolean[groupKeys.size()];
                     Arrays.fill(curRes, true);
                     res[output][group] = curRes;
                 }
@@ -61,10 +61,10 @@ public class MonotonicFairnessConstraintGenerator {
             return res;
         };
         @SuppressWarnings("unchecked")
-        Map<List<Integer>, Integer>[] keyToPos = new Map[groupsCount];
+        final Map<List<Integer>, Integer>[] keyToPos = new Map[groupsCount];
         for (int group = 0; group < groupsCount; group++) {
-            Map<List<Integer>, Integer> map = new HashMap<>();
-            List<List<Integer>> groupKeys = keys.get(group);
+            final Map<List<Integer>, Integer> map = new HashMap<>();
+            final List<List<Integer>> groupKeys = keys.get(group);
             for (int i = 0; i < groupKeys.size(); i++) {
                 map.put(groupKeys.get(i), i);
             }
@@ -92,7 +92,7 @@ public class MonotonicFairnessConstraintGenerator {
             final List<double[]> trace = reader.next();
             for (double[] elem : trace) {
                 for (int out = 0; out < outputsCount; out++) {
-                    double val = ds.get(elem, outputParameters.get(out));
+                    final double val = ds.get(elem, outputParameters.get(out));
                     minOut[out] = Math.min(minOut[out], val);
                     maxOut[out] = Math.max(maxOut[out], val);
                 }
@@ -108,29 +108,28 @@ public class MonotonicFairnessConstraintGenerator {
         List<ControlParameter>[] res = new List[outputParameters.size()];
         for (int out = 0; out < outputParameters.size(); out++) {
             res[out] = new ArrayList<>();
-            Parameter po = outputParameters.get(out);
-            outer:
-            for (int group = 0; group < groups.size(); group++) {
+            final Parameter po = outputParameters.get(out);
+            outer: for (int group = 0; group < groups.size(); group++) {
                 List<List<Integer>> groupKeys = keys.get(group);
                 List<Integer> plusKey = null;
                 List<Integer> minusKey = null;
                 for (int i = 0; i < groupKeys.size(); i++) {
-                    boolean stay = canStay[out][group][i];
-                    boolean plus = canPlus[out][group][i];
-                    boolean minus = canMinus[out][group][i];
+                    final boolean stay = canStay[out][group][i];
+                    final boolean plus = canPlus[out][group][i];
+                    final boolean minus = canMinus[out][group][i];
                     if (!stay && !plus && !minus) {
                         continue outer;
                     }
                     if (!stay && plus && !minus) {
                         plusKey = groupKeys.get(i);
                     }
-                    if (!stay && !plus && minus) {
+                    if (!stay && !plus) {
                         minusKey = groupKeys.get(i);
                     }
                 }
                 if (plusKey != null && minusKey != null) {
                     if (po.traceNameIndex(minOut[out]) > po.traceNameIndex(maxOut[out])) {
-                        List<Integer> temp = plusKey;
+                        final List<Integer> temp = plusKey;
                         plusKey = minusKey;
                         minusKey = temp;
                     }
