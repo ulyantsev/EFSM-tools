@@ -19,19 +19,19 @@ public class Dataset implements Serializable {
     private int minTraceLength = Integer.MAX_VALUE;
     private String dirName;
 
-    int totalTraces() {
+    public int totalTraces() {
         return totalTraces;
     }
 
-    int totalFiles() {
+    public int totalFiles() {
         return totalFiles;
     }
 
-    int maxTraceLength() {
+    public int maxTraceLength() {
         return maxTraceLength;
     }
 
-    int minTraceLength() {
+    public int minTraceLength() {
         return minTraceLength;
     }
 

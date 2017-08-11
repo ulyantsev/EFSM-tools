@@ -7,6 +7,7 @@ import continuous_trace_builders.parameters.Parameter;
 import java.io.IOException;
 import java.util.*;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import static continuous_trace_builders.fairness_constraints.Helper.*;
 
@@ -14,15 +15,12 @@ public class MonotonicFairnessConstraintGenerator {
     public static List<String> generateFairnessConstraints(Configuration conf, Dataset ds,
                                                            List<List<Parameter>> grouping) throws IOException {
         final List<Parameter> inputs = conf.inputParameters;
-        final int inputsSize = inputs.size();
-        final List<List<Integer>> groups = new ArrayList<>(inputsSize); // groups.toInt() + single elements
-        final List<List<Integer>> paramIndexToGroup = new ArrayList<>(inputsSize);
+        final List<List<Integer>> groups = new ArrayList<>(inputs.size()); // groups.toInt() + single elements
+        final List<List<Integer>> paramIndexToGroup = new ArrayList<>(inputs.size());
         Helper.initIntGroups(inputs, grouping, groups, paramIndexToGroup);
         final List<String> constraints = new ArrayList<>();
-        final List<List<List<Integer>>> keys = new ArrayList<>();
-        for (List<Integer> group : groups) {
-            keys.add(collectKeys(group, inputs));
-        }
+        final List<List<List<Integer>>> keys = groups.stream().map(group -> collectKeys(group, inputs))
+                .collect(Collectors.toList());
 
         final List<ControlParameter>[] controlParameters = getControlParameters(ds, conf.outputParameters, groups, keys,
                 inputs);
@@ -45,12 +43,9 @@ public class MonotonicFairnessConstraintGenerator {
                                                                  List<List<Integer>> groups, List<List<List<Integer>>> keys,
                                                                  List<Parameter> inputs) throws IOException {
         // Init
-        final int outputsCount = outputParameters.size();
-        final int groupsCount = groups.size();
-
         Supplier<boolean[][][]> initBoolArray = () -> {
-            boolean[][][] res = new boolean[outputsCount][groupsCount][];
-            for (int output = 0; output < outputsCount; output++) {
+            final boolean[][][] res = new boolean[outputParameters.size()][groups.size()][];
+            for (int output = 0; output < outputParameters.size(); output++) {
                 for (int group = 0; group < groups.size(); group++) {
                     final List<List<Integer>> groupKeys = keys.get(group);
                     final boolean[] curRes = new boolean[groupKeys.size()];
@@ -61,8 +56,8 @@ public class MonotonicFairnessConstraintGenerator {
             return res;
         };
         @SuppressWarnings("unchecked")
-        final Map<List<Integer>, Integer>[] keyToPos = new Map[groupsCount];
-        for (int group = 0; group < groupsCount; group++) {
+        final Map<List<Integer>, Integer>[] keyToPos = new Map[groups.size()];
+        for (int group = 0; group < groups.size(); group++) {
             final Map<List<Integer>, Integer> map = new HashMap<>();
             final List<List<Integer>> groupKeys = keys.get(group);
             for (int i = 0; i < groupKeys.size(); i++) {
@@ -72,29 +67,27 @@ public class MonotonicFairnessConstraintGenerator {
         }
         final boolean[][][] canPlus = initBoolArray.get(), canStay = initBoolArray.get(), canMinus = initBoolArray.get();
 
-        final double[] minOut = new double[outputsCount];
-        final double[] maxOut = new double[outputsCount];
+        final double[] minOut = new double[outputParameters.size()];
+        final double[] maxOut = new double[outputParameters.size()];
 
-        initMinMax(ds, outputParameters, outputsCount, minOut, maxOut);
+        initMinMax(ds, outputParameters, minOut, maxOut);
 
         findContradictions(ds, outputParameters, groups, inputs, keyToPos, canPlus, canStay, canMinus, minOut, maxOut);
 
         return collectConstraints(outputParameters, groups, keys, canPlus, canStay, canMinus, minOut, maxOut);
     }
 
-    private static void initMinMax(Dataset ds, List<Parameter> outputParameters, int outputsCount, double[] minOut,
-                                   double[] maxOut) throws IOException {
-        for (int out = 0; out < outputsCount; out++) {
-            minOut[out] = maxOut[out] = ds.get(ds.reader().next().get(0), outputParameters.get(out));
-        }
+    private static void initMinMax(Dataset ds, List<Parameter> outputParameters, double[] minOut, double[] maxOut)
+            throws IOException {
+        Arrays.fill(minOut, Double.POSITIVE_INFINITY);
+        Arrays.fill(maxOut, Double.NEGATIVE_INFINITY);
         final Dataset.Reader reader = ds.reader();
         while (reader.hasNext()) {
-            final List<double[]> trace = reader.next();
-            for (double[] elem : trace) {
-                for (int out = 0; out < outputsCount; out++) {
-                    final double val = ds.get(elem, outputParameters.get(out));
-                    minOut[out] = Math.min(minOut[out], val);
-                    maxOut[out] = Math.max(maxOut[out], val);
+            for (double[] elem : reader.next()) {
+                for (int i = 0; i < outputParameters.size(); i++) {
+                    final double val = ds.get(elem, outputParameters.get(i));
+                    minOut[i] = Math.min(minOut[i], val);
+                    maxOut[i] = Math.max(maxOut[i], val);
                 }
             }
         }
@@ -110,7 +103,7 @@ public class MonotonicFairnessConstraintGenerator {
             res[out] = new ArrayList<>();
             final Parameter po = outputParameters.get(out);
             outer: for (int group = 0; group < groups.size(); group++) {
-                List<List<Integer>> groupKeys = keys.get(group);
+                final List<List<Integer>> groupKeys = keys.get(group);
                 List<Integer> plusKey = null;
                 List<Integer> minusKey = null;
                 for (int i = 0; i < groupKeys.size(); i++) {

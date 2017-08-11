@@ -1,7 +1,6 @@
 package continuous_trace_builders.fairness_constraints;
 
 import continuous_trace_builders.Configuration;
-import continuous_trace_builders.Dataset;
 import continuous_trace_builders.parameters.Parameter;
 import continuous_trace_builders.parameters.RealParameter;
 import continuous_trace_builders.parameters.SegmentsParameter;
@@ -9,7 +8,8 @@ import continuous_trace_builders.parameters.SegmentsParameter;
 import java.io.IOException;
 import java.util.*;
 
-import static continuous_trace_builders.fairness_constraints.Helper.*;
+import static continuous_trace_builders.fairness_constraints.Helper.ControlParameter;
+import static continuous_trace_builders.fairness_constraints.Helper.collectKeys;
 
 
 public class ComplexFairnessConstraintGenerator {
@@ -18,8 +18,8 @@ public class ComplexFairnessConstraintGenerator {
     private final static double REL_ERROR = 1. / 20;
 
     @SuppressWarnings("unchecked")
-    private static Counter[][] collectCounts(Dataset ds, Parameter po, List<List<Integer>> groups,
-                                             List<Parameter> inputs) throws IOException {
+    private static Counter[][] collectCounts(Parameter po, List<List<Integer>> groups, List<Parameter> inputs,
+                                             Map<Parameter, int[][]> paramIndices) throws IOException {
         final int outValsCount = po.valueCount();
         final Counter[][] inputsCount = new Counter[outValsCount][outValsCount];
         final int groupsSize = groups.size();
@@ -28,25 +28,28 @@ public class ComplexFairnessConstraintGenerator {
                 inputsCount[i][j] = new Counter(groups, inputs);
             }
         }
-        final Dataset.Reader reader = ds.reader();
-        while (reader.hasNext()) {
-            final List<double[]> trace = reader.next();
-            int curOutInterval = get(ds, trace, 0, po);
+        final int[][] tracesO = paramIndices.get(po);
+        final int[][][] tracesI = new int[inputs.size()][][];
+        for (int i = 0; i < inputs.size(); i++) {
+            tracesI[i] = paramIndices.get(inputs.get(i));
+        }
+        for (int ti = 0; ti < tracesO.length; ti++) {
+            int curOutInterval = tracesO[ti][0];
             int start = 1;
-            while (start < trace.size() && get(ds, trace, start, po) == curOutInterval) {
+            while (start < tracesO[ti].length && tracesO[ti][start] == curOutInterval) {
                 start++;
             }
-            if (start == trace.size()) {
+            if (start == tracesO[ti].length) {
                 continue;
             }
             int prevOutInterval = curOutInterval;
-            curOutInterval = get(ds, trace, start, po);
+            curOutInterval = tracesO[ti][start];
             Map<List<Integer>, Integer>[] cnt = new HashMap[groupsSize];
             for (int i = 0; i < cnt.length; i++) {
                 cnt[i] = new HashMap<>();
             }
-            for (int i = start; i < trace.size(); i++) {
-                int iOutInterval = get(ds, trace, i, po);
+            for (int i = start; i < tracesO[ti].length; i++) {
+                int iOutInterval = tracesO[ti][i];
                 if (iOutInterval != curOutInterval) {
                     inputsCount[prevOutInterval][iOutInterval].add(cnt);
                     cnt = new HashMap[groupsSize];
@@ -57,10 +60,10 @@ public class ComplexFairnessConstraintGenerator {
                     curOutInterval = iOutInterval;
                 }
                 for (int j = 0; j < groupsSize; j++) {
-                    List<Integer> group = groups.get(j);
-                    List<Integer> key = new ArrayList<>(group.size());
-                    for (int item : group) {
-                        key.add(get(ds, trace, i, inputs.get(item)));
+                    final List<Integer> group = groups.get(j);
+                    final List<Integer> key = new ArrayList<>(group.size());
+                    for (int g = 0; g < group.size(); g++) {
+                        key.add(tracesI[g][ti][i]);
                     }
                     cnt[j].put(key, cnt[j].getOrDefault(key, 0) + 1);
                 }
@@ -70,8 +73,8 @@ public class ComplexFairnessConstraintGenerator {
     }
 
 
-    public static List<String> generateFairnessConstraints(Configuration conf, Dataset ds,
-                                                           List<List<Parameter>> grouping) throws IOException {
+    public static List<String> generateFairnessConstraints(Configuration conf, List<List<Parameter>> grouping,
+                                                           Map<Parameter, int[][]> paramIndices) throws IOException {
         final List<Parameter> inputs = conf.inputParameters;
         final int inputsSize = inputs.size();
         final List<List<Integer>> groups = new ArrayList<>(inputsSize); // groups.toInt() + single elements
@@ -81,7 +84,7 @@ public class ComplexFairnessConstraintGenerator {
 
         for (Parameter po : conf.outputParameters) {
             if (po instanceof RealParameter || po instanceof SegmentsParameter) {
-                final Counter[][] inputsCount = collectCounts(ds, po, groups, inputs);
+                final Counter[][] inputsCount = collectCounts(po, groups, inputs, paramIndices);
                 final int outValsCount = po.valueCount();
                 for (int i = 0; i < outValsCount; i++) {
                     for (int j = 0; j < outValsCount; j++) {

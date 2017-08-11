@@ -405,7 +405,7 @@ public class ConstraintBasedBuilder {
             fairnessConstraints.addAll(MonotonicFairnessConstraintGenerator.generateFairnessConstraints(conf, ds, grouping));
         }
         if (!constraintBasedDisableCOMPLEX_FAIRNESS_CONSTRAINTS) {
-            fairnessConstraints.addAll(ComplexFairnessConstraintGenerator.generateFairnessConstraints(conf, ds, grouping));
+            fairnessConstraints.addAll(ComplexFairnessConstraintGenerator.generateFairnessConstraints(conf, grouping, paramIndices));
         }
 
         printRes(conf, initConstraints, transConstraints, fairnessConstraints, Utils.combinePaths(directory,
