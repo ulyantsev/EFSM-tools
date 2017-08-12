@@ -84,7 +84,7 @@ public class Dataset implements Serializable {
         return result;
     }
 
-    private static final int MAX_VALUES_IN_FILE = 5_000_000;
+    private static final int MAX_VALUES_IN_FILE = 4_000_000;
 
     public Reader reader() throws IOException {
         return new Reader();

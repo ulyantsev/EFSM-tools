@@ -352,10 +352,7 @@ public abstract class BooleanFormula {
 
     @Override
     public boolean equals(Object other) {
-        if (other.getClass() != getClass()) {
-            return false;
-        }
-        return toString().equals(other.toString());
+        return other.getClass() == getClass() && toString().equals(other.toString());
     }
     
     @Override

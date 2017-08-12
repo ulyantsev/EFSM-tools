@@ -14,10 +14,7 @@ import org.kohsuke.args4j.Option;
 import org.kohsuke.args4j.spi.BooleanOptionHandler;
 import sat_solving.SatSolver;
 import scenario.StringScenario;
-import structures.moore.MooreNode;
-import structures.moore.NegativePlantScenarioForest;
-import structures.moore.NondetMooreAutomaton;
-import structures.moore.PositivePlantScenarioForest;
+import structures.moore.*;
 import verification.ltl.LtlParser;
 import verification.verifier.Counterexample;
 import verification.verifier.NondetMooreVerifierPair;
@@ -90,7 +87,7 @@ public class PlantBuilderMain extends MainBase {
 
     @Option(name = "--timeout", aliases = {"-to"},
             usage = "solver timeout (sec)", metaVar = "<timeout>")
-    private int timeout = 10_000_000;
+    private int timeout = 1_000_000_000;
 
     @Option(name = "--nusmv",
             usage = "file for NuSMV output (optional)", metaVar = "<file>")
@@ -127,14 +124,9 @@ public class PlantBuilderMain extends MainBase {
     private boolean timedConstraints;
 
     private Optional<NondetMooreAutomaton> resultAutomaton = null;
-    private final Map<String, String> colorRuleMap = new LinkedHashMap<>();
 
     public Optional<NondetMooreAutomaton> resultAutomaton() {
         return resultAutomaton;
-    }
-
-    public Map<String, String> colorRuleMap() {
-        return colorRuleMap;
     }
 
     public static void main(String[] args) {
@@ -163,105 +155,120 @@ public class PlantBuilderMain extends MainBase {
             return;
         }
 
-        final PositivePlantScenarioForest positiveForest = new PositivePlantScenarioForest(!deterministic && !fast);
-        final List<StringScenario> scenarios = new ArrayList<>();
-        for (String scenarioPath : arguments) {
-            scenarios.addAll(loadScenarios(scenarioPath, true));
-            logger().info("Loaded scenarios from " + scenarioPath);
-        }
-        scenarios.forEach(positiveForest::addScenario);
-        logger().info("Scenario forest size: " + positiveForest.nodeCount());
-        saveScenarioTree(positiveForest, treeFilePath);
         final List<String> eventnames = eventNames(eventNames, eventNumber);
         final List<String> events = events(eventnames, eventNumber, varNumber);
         final List<String> actions = actions(actionNames, actionNumber);
-        final List<String> strFormulae = LtlParser.load(ltlFilePath, varNumber, eventnames);
-        logger().info("LTL formula from " + ltlFilePath);
-
-        final List<StringScenario> negativeScenarios = new ArrayList<>();
-        final NegativePlantScenarioForest negativeForest = new NegativePlantScenarioForest();
-        if (negscFilePath != null) {
-            negativeScenarios.addAll(StringScenario.loadScenarios(negscFilePath, true));
-            negativeForest.load(negscFilePath, true);
-        }
-
-        logger().info("Initializing the verifier...");
-
-        final NondetMooreVerifierPair verifier = new NondetMooreVerifierPair(logger(), strFormulae,
-                events, actions);
         final long finishTime = System.currentTimeMillis() + (long) timeout * 1000;
-
-        logger().info("Started building automaton.");
-
-        resultAutomaton = stateMerging
-                ? StateMergingNondetAutomatonBuilder.build(logger(), events, actions, arguments, strFormulae)
-                : fast ? RapidPlantAutomatonBuilder.build(positiveForest, events, timedConstraints)
-                : PlantAutomatonBuilder.build(logger(), positiveForest, negativeForest, size, actionspecFilePath,
-                events, actions, verifier, finishTime, solver, deterministic, bfsConstraints, !incomplete);
-
-        if (!resultAutomaton.isPresent()) {
-            logger().info("Automaton with " + size + " states NOT FOUND!");
-            logger().info("Automaton builder execution time: " + executionTime());
-        } else {
+        if (fast) {
+            if (arguments.size() != 1) {
+                logger().severe("Strictly one scenario argument is required for fast construction!");
+                return;
+            }
+            final LazyPositivePlantScenarioForest lazyForest = new LazyPositivePlantScenarioForest(arguments.get(0),
+                    true);
+            resultAutomaton = RapidPlantAutomatonBuilder.build(lazyForest, events, timedConstraints);
             final NondetMooreAutomaton a = resultAutomaton.get();
             logger().info("Automaton with " + a.stateCount() + " states WAS FOUND!");
             logger().info("Automaton builder execution time: " + executionTime());
+            save(a, events, actions);
+        } else {
+            final PositivePlantScenarioForest positiveForest = new PositivePlantScenarioForest(!deterministic);
+            final List<StringScenario> scenarios = new ArrayList<>();
+            for (String scenarioPath : arguments) {
+                scenarios.addAll(loadScenarios(scenarioPath, true));
+                logger().info("Loaded scenarios from " + scenarioPath);
+            }
+            scenarios.forEach(positiveForest::addScenario);
+            logger().info("Scenario forest size: " + positiveForest.nodeCount());
+            saveScenarioTree(positiveForest, treeFilePath);
+            final List<String> strFormulae = LtlParser.load(ltlFilePath, varNumber, eventnames);
+            logger().info("LTL formula from " + ltlFilePath);
 
-            if (a.compliesWith(scenarios, true, true)) {
-                logger().info("COMPLIES WITH SCENARIOS");
+            final List<StringScenario> negativeScenarios = new ArrayList<>();
+            final NegativePlantScenarioForest negativeForest = new NegativePlantScenarioForest();
+            if (negscFilePath != null) {
+                negativeScenarios.addAll(StringScenario.loadScenarios(negscFilePath, true));
+                negativeForest.load(negscFilePath, true);
+            }
+
+            logger().info("Initializing the verifier...");
+
+            final NondetMooreVerifierPair verifier = new NondetMooreVerifierPair(logger(), strFormulae, events, actions);
+
+            logger().info("Started building automaton.");
+
+            resultAutomaton = stateMerging
+                    ? StateMergingNondetAutomatonBuilder.build(logger(), events, actions, arguments, strFormulae)
+                    : PlantAutomatonBuilder.build(logger(), positiveForest, negativeForest, size, actionspecFilePath,
+                    events, actions, verifier, finishTime, solver, deterministic, bfsConstraints, !incomplete);
+
+            if (!resultAutomaton.isPresent()) {
+                logger().info("Automaton with " + size + " states NOT FOUND!");
+                logger().info("Automaton builder execution time: " + executionTime());
             } else {
-                logger().severe("NOT COMPLIES WITH SCENARIOS");
-            }
+                final NondetMooreAutomaton a = resultAutomaton.get();
+                logger().info("Automaton with " + a.stateCount() + " states WAS FOUND!");
+                logger().info("Automaton builder execution time: " + executionTime());
 
-            if (a.compliesWith(negativeScenarios, false, false)) {
-                logger().info("COMPLIES WITH NEGATIVE SCENARIOS");
-            } else {
-                logger().severe("NOT COMPLIES WITH NEGATIVE SCENARIOS");
-            }
+                if (a.compliesWith(scenarios, true, true)) {
+                    logger().info("COMPLIES WITH SCENARIOS");
+                } else {
+                    logger().severe("NOT COMPLIES WITH SCENARIOS");
+                }
 
-            if (resultFilePath != null) {
-                saveToFile(a.toString(colorRuleMap, Optional.empty()), resultFilePath);
-            }
+                if (a.compliesWith(negativeScenarios, false, false)) {
+                    logger().info("COMPLIES WITH NEGATIVE SCENARIOS");
+                } else {
+                    logger().severe("NOT COMPLIES WITH NEGATIVE SCENARIOS");
+                }
 
-            if (nusmvFilePath != null) {
-                saveToFile(a.toNuSMVString(events, actions, Optional.empty()), nusmvFilePath);
-            }
+                save(a, events, actions);
 
-            final Verifier usualVerifier = new Verifier(logger(), strFormulae, events, actions);
-            final List<Counterexample> counterexamples = usualVerifier.verifyNondetMoore(a);
-            if (counterexamples.stream().allMatch(Counterexample::isEmpty)) {
-                logger().info("VERIFIED");
-            } else {
-                logger().severe("NOT VERIFIED");
-            }
+                final Verifier usualVerifier = new Verifier(logger(), strFormulae, events, actions);
+                final List<Counterexample> counterexamples = usualVerifier.verifyNondetMoore(a);
+                if (counterexamples.stream().allMatch(Counterexample::isEmpty)) {
+                    logger().info("VERIFIED");
+                } else {
+                    logger().severe("NOT VERIFIED");
+                }
 
-            // completeness check
-            boolean complete = true;
-            if (!incomplete) {
-                for (MooreNode s : a.states()) {
-                    for (String event : events) {
-                        complete &= s.transitions().stream().anyMatch(t -> t.event().endsWith(event));
+                // completeness check
+                boolean complete = true;
+                if (!incomplete) {
+                    for (MooreNode s : a.states()) {
+                        for (String event : events) {
+                            complete &= s.transitions().stream().anyMatch(t -> t.event().endsWith(event));
+                        }
+                    }
+                } else {
+                    for (MooreNode s : a.states()) {
+                        complete &= s.transitionCount() != 0;
                     }
                 }
-            } else {
-                for (MooreNode s : a.states()) {
-                    complete &= s.transitionCount() != 0;
-                }
-            }
-            if (complete) {
-                logger().info("COMPLETE");
-            } else {
-                logger().severe("INCOMPLETE");
-            }
-
-            // determinism check
-            if (deterministic) {
-                if (a.isDeterministic()) {
-                    logger().info("DETERMINISTIC");
+                if (complete) {
+                    logger().info("COMPLETE");
                 } else {
-                    logger().severe("NONDETERMINISTIC");
+                    logger().severe("INCOMPLETE");
+                }
+
+                // determinism check
+                if (deterministic) {
+                    if (a.isDeterministic()) {
+                        logger().info("DETERMINISTIC");
+                    } else {
+                        logger().severe("NONDETERMINISTIC");
+                    }
                 }
             }
+        }
+    }
+
+    private void save(NondetMooreAutomaton a, List<String> events, List<String> actions) {
+        if (resultFilePath != null) {
+            saveToFile(a.toString(), resultFilePath);
+        }
+        if (nusmvFilePath != null) {
+            saveToFile(a.toNuSMVString(events, actions, Optional.empty()), nusmvFilePath);
         }
     }
 }

@@ -266,7 +266,7 @@ public class QbfFormulaBuilder extends FormulaBuilder {
                 expansion = FalseFormula.INSTANCE;
                 break;
             case FUTURE:
-                FormulaList orList = new FormulaList(BinaryOperations.OR);
+                final FormulaList orList = new FormulaList(BinaryOperations.OR);
                 for (int j = index; j <= k; j++) {
                     orList.add(translateNonCyclic(a, j));
                 }
@@ -334,11 +334,11 @@ public class QbfFormulaBuilder extends FormulaBuilder {
 
         BooleanFormula expansion;
         if (node instanceof UnaryOperator) {
-            UnaryOperator op = (UnaryOperator) node;
-            LtlNode a = op.getOperand();
+            final UnaryOperator op = (UnaryOperator) node;
+            final LtlNode a = op.getOperand();
 
             final Function<BinaryOperations, BooleanFormula> globalFuture = operation -> {
-                FormulaList list = new FormulaList(operation);
+                final FormulaList list = new FormulaList(operation);
                 for (int j = Math.min(index, l); j <= k; j++) {
                     list.add(translateCyclic(a, l, j));
                 }

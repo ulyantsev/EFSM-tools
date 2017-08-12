@@ -122,7 +122,7 @@ public class StringScenario {
         return eventList.size() == 1 ? eventList.get(0) : eventList.toString();
     }
 
-    private static String removeVariables(String input) throws ParseException {
+    public static String removeVariables(String input) throws ParseException {
         final Pattern p = Pattern.compile("(\\w+)(\\s)*+\\[([^\\[\\]]+)\\]");
         final StringBuilder sb = new StringBuilder();
         final Matcher m = p.matcher(input);

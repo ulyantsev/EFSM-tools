@@ -71,9 +71,7 @@ public class MonotonicFairnessConstraintGenerator {
         final double[] maxOut = new double[outputParameters.size()];
 
         initMinMax(ds, outputParameters, minOut, maxOut);
-
         findContradictions(ds, outputParameters, groups, inputs, keyToPos, canPlus, canStay, canMinus, minOut, maxOut);
-
         return collectConstraints(outputParameters, groups, keys, canPlus, canStay, canMinus, minOut, maxOut);
     }
 

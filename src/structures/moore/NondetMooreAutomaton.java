@@ -166,40 +166,33 @@ public class NondetMooreAutomaton {
         state.removeTransition(transition);
     }
 
-    public String toString(Map<String, String> colorRules, Optional<Configuration> conf) {
+    public String toString(Configuration conf) {
         final StringBuilder sb = new StringBuilder();
         sb.append("# generated file; view: dot -Tpng <filename> > filename.png\n"
             + "digraph Automaton {\n");
 
-        final Map<String, String> actionDescriptions = conf.isPresent()
-                ? conf.get().extendedActionDescriptions() : new HashMap<>();
+        final Map<String, String> actionDescriptions = conf != null
+                ? conf.extendedActionDescriptions() : new HashMap<>();
 
         final String initNodes = String.join(", ",
                 initialStates().stream().map(s -> "init" + s).collect(Collectors.toList()));
         
-        sb.append("    " + initNodes + " [shape=point, width=0.01, height=0.01, label=\"\", color=white];\n");
+        sb.append("    ").append(initNodes).append(" [shape=point, width=0.01, height=0.01, label=\"\", color=white];\n");
         sb.append("    node [shape=box, style=rounded];\n");
         for (int i = 0; i < states.size(); i++) {
             final MooreNode state = states.get(i);
-            String color = "";
-            for (String action : state.actions().getActions()) {
-                final String col = colorRules.get(action);
-                if (col != null) {
-                    color = " style=filled fillcolor=\"" + col + "\"";
-                }
-            }
-            
-            sb.append("    " + state.number() + " [label=\""
-                    + state.toString(actionDescriptions) + "\"" + color + "]" + ";\n");
+
+            sb.append("    ").append(state.number()).append(" [label=\"").append(state.toString(actionDescriptions))
+                    .append("\"").append("]").append(";\n");
             if (isInitial.get(i)) {
-                sb.append("    init" + state.number() + " -> " + state.number() + ";\n");
+                sb.append("    init").append(state.number()).append(" -> ").append(state.number()).append(";\n");
             }
         }
         
         for (MooreNode state : states) {
             for (MooreTransition t : state.transitions()) {
-                sb.append("    " + t.src().number() + " -> " + t.dst().number()
-                        + " [label=\" " + t.event() + " \"];\n");
+                sb.append("    ").append(t.src().number()).append(" -> ").append(t.dst().number()).append(" [label=\" ")
+                        .append(t.event()).append(" \"];\n");
             }
         }
 
@@ -209,7 +202,7 @@ public class NondetMooreAutomaton {
     
     @Override
     public String toString() {
-        return toString(Collections.emptyMap(), Optional.empty());
+        return toString(null);
     }
 
     private static void nusmvEventDescriptions(int[] arr, int index, StringBuilder result,
@@ -676,11 +669,8 @@ public class NondetMooreAutomaton {
 
         if (markUnsupportedTransitions) {
             for (MooreNode state : states) {
-                for (MooreTransition t : state.transitions()) {
-                    if (!supported.contains(t)) {
-                        unsupportedTransitions.add(t);
-                    }
-                }
+                unsupportedTransitions.addAll(state.transitions().stream()
+                        .filter(t -> !supported.contains(t)).collect(Collectors.toList()));
             }
         }
 

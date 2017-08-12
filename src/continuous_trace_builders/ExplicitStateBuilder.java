@@ -13,6 +13,7 @@ import structures.moore.NondetMooreAutomaton;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class ExplicitStateBuilder {
     private final static boolean ALL_EVENT_COMBINATIONS = false;
@@ -54,8 +55,7 @@ public class ExplicitStateBuilder {
                         res.unsupportedTransitions().remove(t);
                         for (MooreTransition tOther : list) {
                             if (tOther.event().equals(closestEvent)) {
-                                final MooreTransition tCopy = new MooreTransition(state,
-                                        tOther.dst(), t.event());
+                                final MooreTransition tCopy = new MooreTransition(state, tOther.dst(), t.event());
                                 res.addTransition(state, tCopy);
                                 res.unsupportedTransitions().add(tCopy);
                                 redirected++;
@@ -72,16 +72,13 @@ public class ExplicitStateBuilder {
     public static void run(Configuration conf, String directory, String datasetFilename, boolean satBased,
                            int traceIncludeEach, double traceFraction, boolean proximityCompletion,
                            boolean outputSmv, boolean outputSpin, boolean timedConstraints) throws IOException {
-        System.out.print("Loading the dataset...");
-        Dataset ds = Dataset.load(Utils.combinePaths(directory, datasetFilename));
-        System.out.println(" done");
+        final Dataset ds = Dataset.load(Utils.combinePaths(directory, datasetFilename));
         System.out.println(conf);
         System.out.println();
         final String namePrefix = "plant-explicit.";
         final List<String> params = TraceTranslator.generateScenarios(conf, directory, ds, new HashSet<>(),
                 "", "", false, satBased, ALL_EVENT_COMBINATIONS, traceIncludeEach, traceFraction,
                 timedConstraints ? new String[] { "--timedConstraints" } : new String[0]);
-        ds = null;
         System.out.println();
         final PlantBuilderMain builder = new PlantBuilderMain();
         builder.run(params.toArray(new String[params.size()]), Author.IB, "");
@@ -90,13 +87,12 @@ public class ExplicitStateBuilder {
             return;
         }
         final NondetMooreAutomaton a = builder.resultAutomaton().get();
-        dumpAutomaton(a, conf, directory, namePrefix, builder.colorRuleMap(), proximityCompletion, outputSmv,
-                outputSpin);
+        dumpAutomaton(a, conf, directory, namePrefix, proximityCompletion, outputSmv, outputSpin);
     }
 
     static void dumpAutomaton(NondetMooreAutomaton a, Configuration conf, String directory, String namePrefix,
-                              Map<String, String> colorRules, boolean proximityCompletion, boolean outputSmv,
-                              boolean outputSpin) throws FileNotFoundException {
+                              boolean proximityCompletion, boolean outputSmv, boolean outputSpin)
+            throws FileNotFoundException {
         NondetMooreAutomaton effectiveA = a;
         if (proximityCompletion) {
             effectiveA = proximityBasedCompletion(effectiveA, conf);
@@ -104,11 +100,10 @@ public class ExplicitStateBuilder {
 
         TraceEvaluationBuilder.dumpProperties(effectiveA);
 
-        Utils.writeToFile(Utils.combinePaths(directory, namePrefix + "gv"),
-                          effectiveA.toString(colorRules, Optional.of(conf)));
+        Utils.writeToFile(Utils.combinePaths(directory, namePrefix + "gv"), effectiveA.toString(conf));
         // reduced GV file with transitions merged for different inputs
         Utils.writeToFile(Utils.combinePaths(directory, namePrefix + "reduced." + "gv"),
-                          effectiveA.simplify().toString(colorRules, Optional.of(conf)));
+                effectiveA.simplify().toString(conf));
         if (outputSmv) {
             Utils.writeToFile(Utils.combinePaths(directory, namePrefix + "smv"),
                     effectiveA.toNuSMVString(eventsFromAutomaton(a), conf.actions(), Optional.of(conf)));
@@ -121,10 +116,7 @@ public class ExplicitStateBuilder {
 
     // assuming completeness and checking only state 0
     private static List<String> eventsFromAutomaton(NondetMooreAutomaton a) {
-        final Set<String> result = new TreeSet<>();
-        for (MooreTransition t : a.state(0).transitions()) {
-            result.add(t.event());
-        }
-        return new ArrayList<>(result);
+        return new ArrayList<>(a.state(0).transitions().stream().map(MooreTransition::event)
+                .collect(Collectors.toCollection(TreeSet::new)));
     }
 }

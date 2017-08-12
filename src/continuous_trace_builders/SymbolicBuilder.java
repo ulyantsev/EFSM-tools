@@ -291,9 +291,7 @@ public class SymbolicBuilder {
         CURRENT_NEXT_2D = currentNext2D;
         CURRENT_NEXT_3D = currentNext3D;
 
-        System.out.print("Loading the dataset...");
         final Dataset ds = Dataset.load(Utils.combinePaths(directory, datasetFilename));
-        System.out.println(" done");
         final Set<Parameter> allParameters = new LinkedHashSet<>(conf.parameters());
         final Map<Parameter, int[][]> paramIndices = ds.toParamIndices(allParameters);
         final Set<String> initConstraints = new LinkedHashSet<>();

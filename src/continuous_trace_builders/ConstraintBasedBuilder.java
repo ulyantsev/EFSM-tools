@@ -336,9 +336,7 @@ public class ConstraintBasedBuilder {
                            boolean constraintBasedDisableMONOTONIC_FAIRNESS_CONSTRAINTS,
                            boolean constraintBasedDisableCOMPLEX_FAIRNESS_CONSTRAINTS)
             throws IOException {
-        System.out.print("Loading the dataset...");
         final Dataset ds = Dataset.load(Utils.combinePaths(directory, datasetFilename));
-        System.out.println(" done");
         final Set<String> initConstraints = new LinkedHashSet<>();
         final Set<String> transConstraints = new LinkedHashSet<>();
         final Set<Parameter> allParameters = new LinkedHashSet<>(conf.parameters());

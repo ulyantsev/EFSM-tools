@@ -360,8 +360,7 @@ public class CompositionalBuilder {
                 return;
             }
             final NondetMooreAutomaton a = builder.resultAutomaton().get();
-            ExplicitStateBuilder.dumpAutomaton(a, conf, directory, namePrefix, builder.colorRuleMap(), false,
-                    outputSmv, outputSpin);
+            ExplicitStateBuilder.dumpAutomaton(a, conf, directory, namePrefix, false, outputSmv, outputSpin);
             automata.add(a);
             System.out.println();
         }
@@ -378,9 +377,9 @@ public class CompositionalBuilder {
             
             // Obtain the set of all possible composite actions
             final Set<List<String>> allActionCombinations = new HashSet<>();
-            TraceTranslator.generateScenarios(outputConfigurationComposition(conf1, conf2),
-                    directory, ds, allActionCombinations, "", "", false, satBased,
-                    ALL_EVENT_COMBINATIONS, traceIncludeEach, traceFraction);
+            TraceTranslator.generateScenarios(outputConfigurationComposition(conf1, conf2), directory, ds,
+                    allActionCombinations, "", "", false, satBased, ALL_EVENT_COMBINATIONS, traceIncludeEach,
+                    traceFraction);
             final Set<List<String>> allActionCombinationsSorted = new HashSet<>();
             for (List<String> actionCombination : allActionCombinations) {
                 final List<String> copy = new ArrayList<>(actionCombination);
@@ -395,8 +394,7 @@ public class CompositionalBuilder {
             lastConf = composeConfigurations(conf1, conf2, match);
 
             // mark unsupported transitions
-            ExplicitStateBuilder.dumpAutomaton(lastAuto, lastConf, directory, namePrefix, Collections.emptyMap(),
-                    false, outputSmv, outputSpin);
+            ExplicitStateBuilder.dumpAutomaton(lastAuto, lastConf, directory, namePrefix, false, outputSmv, outputSpin);
             System.out.println(lastConf);
             System.out.println();
         }
