@@ -36,8 +36,8 @@ public abstract class ScenarioAndLtlAutomatonBuilder {
     /*
      * Returns (automaton, transition variables supported by scenarios).
      */
-    public static Pair<MealyAutomaton, List<BooleanVariable>> constructAutomatonFromAssignment(Logger logger, List<Assignment> ass,
-                                                                                               ScenarioTree tree, int colorSize, boolean complete, CompletenessType completenessType) {
+    public static Pair<MealyAutomaton, List<BooleanVariable>> constructAutomatonFromAssignment(Logger logger,
+            List<Assignment> ass, ScenarioTree tree, int colorSize, boolean complete, CompletenessType completenessType) {
         final List<BooleanVariable> filteredYVars = new ArrayList<>();
         final int[] nodeColors = new int[tree.nodeCount()];
         
@@ -125,14 +125,14 @@ public abstract class ScenarioAndLtlAutomatonBuilder {
         return Pair.of(ans, filteredYVars);
     }
     
-    protected static String ltl2limboole(String formula) {
+    static String ltl2limboole(String formula) {
         return LtlUtils.expandEventList(formula)
                 .replace("&&", "&").replace("||", "|")
                 .replaceAll("\\band\\b", "&").replaceAll("\\bor\\b", "|")
                 .replaceAll("\\bnot\\b", "!");
     }
     
-    protected static int timeLeftForSolver(long finishTime) {
+    static int timeLeftForSolver(long finishTime) {
         return (int) (finishTime - System.currentTimeMillis()) / 1000 + 1;
     }
 }

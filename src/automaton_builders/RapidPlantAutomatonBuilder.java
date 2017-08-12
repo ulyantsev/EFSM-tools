@@ -21,7 +21,7 @@ public class RapidPlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
      */
     public static Optional<NondetMooreAutomaton> build(MooreNodeIterable iterable, List<String> events,
                                                        boolean timedConstraints) throws IOException {
-        System.out.println("Started construction.");
+        System.out.println("Construction: initialization...");
         final Map<StringActions, Integer> actionsToState = new HashMap<>();
         final List<StringActions> stateToActions = new ArrayList<>();
         final List<Boolean> isInitial = new ArrayList<>();
@@ -43,6 +43,7 @@ public class RapidPlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
         final NondetMooreAutomaton automaton = new NondetMooreAutomaton(stateToActions.size(), stateToActions,
                 isInitial);
 
+        System.out.println("Construction: adding transitions...");
         it = iterable.nodeIterator();
         while ((p = it.next()) != null) {
             final MooreNode node = p.getLeft();
@@ -54,6 +55,7 @@ public class RapidPlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
                 }
             }
         }
+        System.out.println("Construction: adding looping unsupported transitions...");
         // completion with loops
         for (MooreNode state : automaton.states()) {
             events.stream().filter(event -> !state.hasTransition(event)).forEach(event -> {
@@ -64,6 +66,7 @@ public class RapidPlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
         }
 
         if (timedConstraints) {
+            System.out.println("Construction: timed constraints...");
             final Set<MooreNode> processedNodes = new HashSet<>();
             final Map<MooreNode, Integer> loopConstraints = new HashMap<>();
             it = iterable.nodeIterator();

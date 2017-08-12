@@ -13,18 +13,16 @@ import java.util.stream.Collectors;
 public class Dataset implements Serializable {
     private final Map<String, Integer> paramIndices = new HashMap<>();
     private final Map<String, Double> paramScales;
-    private int totalFiles = 0;
     private int totalTraces = 0;
     private int maxTraceLength = 0;
     private int minTraceLength = Integer.MAX_VALUE;
     private String dirName;
 
+    private final static String HEADER_FILENAME = "header.bin";
+    private final static String DATA_FILENAME = "data.txt";
+
     public int totalTraces() {
         return totalTraces;
-    }
-
-    public int totalFiles() {
-        return totalFiles;
     }
 
     public int maxTraceLength() {
@@ -38,15 +36,14 @@ public class Dataset implements Serializable {
     public final static long serialVersionUID = 1L;
 
     public static Dataset load(String dirName) throws IOException {
-        final Dataset ds;
-        final String inFilename = Utils.combinePaths(dirName, "header.bin");
+        final String inFilename = Utils.combinePaths(dirName, HEADER_FILENAME);
         try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(inFilename))) {
-            ds = (Dataset) in.readObject();
+            final Dataset ds = (Dataset) in.readObject();
+            ds.dirName = dirName;
+            return ds;
         } catch (ClassNotFoundException e) {
             throw new RuntimeException();
         }
-        ds.dirName = dirName;
-        return ds;
     }
 
     Map<Parameter, int[][]> toParamIndices(Collection<Parameter> ps) throws IOException {
@@ -84,77 +81,66 @@ public class Dataset implements Serializable {
         return result;
     }
 
-    private static final int MAX_VALUES_IN_FILE = 4_000_000;
-
     public Reader reader() throws IOException {
         return new Reader();
     }
 
     public class Reader {
-        List<List<double[]>> currentValues;
-        int currentFile = 0;
-        int currentTraceInFile;
+        private final BufferedReader reader;
+        private List<double[]> preparedNext;
 
         Reader() throws IOException {
-            read();
+            reader = new BufferedReader(new FileReader(Utils.combinePaths(dirName, DATA_FILENAME)));
         }
 
-        @SuppressWarnings("unchecked")
-        void read() throws IOException {
-            final String inFilename = Utils.combinePaths(dirName, currentFile + ".bin");
-            try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(inFilename))) {
-                currentValues = (List<List<double[]>>) in.readObject();
-            } catch (ClassNotFoundException e) {
-                throw new RuntimeException();
-            }
-            currentTraceInFile = 0;
-        }
-
-        public boolean hasNext() {
-            return currentFile < totalFiles - 1 || currentTraceInFile < currentValues.size();
+        public boolean hasNext() throws IOException {
+            preparedNext = next();
+            return preparedNext != null;
         }
 
         public List<double[]> next() throws IOException {
-            if (hasNext()) {
-                if (currentTraceInFile == currentValues.size()) {
-                    read();
-                    currentFile++;
+            final List<double[]> trace;
+            if (preparedNext != null) {
+                trace = preparedNext;
+                preparedNext = null;
+            } else {
+                String line;
+                trace = new ArrayList<>();
+                while (true) {
+                    line = reader.readLine();
+                    if (line == null) {
+                        reader.close();
+                        return null;
+                    }
+                    if (line.isEmpty()) {
+                        break;
+                    }
+                    trace.add(Arrays.stream(line.split(" ")).mapToDouble(Double::parseDouble).toArray());
                 }
-                return currentValues.get(currentTraceInFile++);
             }
-            throw new NoSuchElementException();
+            return trace;
         }
     }
 
     private class Writer {
-        int valuesWritten = 0;
-        List<List<double[]>> currentValues = new ArrayList<>();
+        private final PrintWriter pw;
+
+        Writer() throws IOException {
+            pw = new PrintWriter(new BufferedWriter(new FileWriter(Utils.combinePaths(dirName, DATA_FILENAME))));
+        }
 
         void write(List<double[]> trace) throws IOException {
             totalTraces++;
             maxTraceLength = Math.max(maxTraceLength, trace.size());
-            minTraceLength = Math.max(minTraceLength, trace.size());
-
-            final int newValueNumber = trace.get(0).length * trace.size();
-            if (valuesWritten + newValueNumber > MAX_VALUES_IN_FILE) {
-                writeFile();
+            minTraceLength = Math.min(minTraceLength, trace.size());
+            for (double[] arr : trace) {
+                pw.println(Arrays.toString(arr).replaceAll("[\\[\\],]", ""));
             }
-            currentValues.add(trace);
-            valuesWritten += newValueNumber;
-        }
-
-        void writeFile() throws IOException {
-            final String outFilename = Utils.combinePaths(dirName, totalFiles + ".bin");
-            try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(outFilename))) {
-                out.writeObject(currentValues);
-            }
-            valuesWritten = 0;
-            currentValues.clear();
-            totalFiles++;
+            pw.println();
         }
 
         void finish() throws IOException {
-            writeFile();
+            pw.close();
         }
     }
 
@@ -217,7 +203,7 @@ public class Dataset implements Serializable {
 
         writer.finish();
 
-        final String outFilename = Utils.combinePaths(outputDirName, "header.bin");
+        final String outFilename = Utils.combinePaths(outputDirName, HEADER_FILENAME);
         try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(outFilename))) {
             out.writeObject(this);
         }

@@ -15,6 +15,7 @@ public class DatasetSerializer {
                 traceFilenamePrefix, TraceTranslator.paramScales(Utils.combinePaths(directory, paramScaleFilename)),
                 includeFirstElement, outDirname);
         System.out.println("Done; dataset has been written to: " + outDirname + "; traces = " + ds.totalTraces()
-            + "; files = " + ds.totalFiles());
+            + "; minTraceLength = " + ds.minTraceLength() + "; maxTraceLength = "
+            + ds.maxTraceLength());
     }
 }

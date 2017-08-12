@@ -60,8 +60,11 @@ public class TraceTranslator {
         final Set<Pair<String, Integer>> outputCovered = new HashSet<>();
         int totalInputValues = 0;
         int totalOutputValues = 0;
-        for (Parameter p : conf.parameters()) {
+        for (Parameter p : conf.inputParameters) {
             totalInputValues += p.valueCount();
+        }
+        for (Parameter p : conf.outputParameters) {
+            totalOutputValues += p.valueCount();
         }
 
         // for smoothness LTL properties
