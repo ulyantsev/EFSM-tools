@@ -11,11 +11,8 @@ public class DatasetSerializer {
                            String paramScaleFilename, double intervalSec, boolean includeFirstElement)
                                  throws IOException {
         final String outDirname = Utils.combinePaths(directory, "dataset_" + traceFilenamePrefix + ".bin");
-        final Dataset ds = new Dataset(intervalSec, Utils.combinePaths(directory, traceLocation),
+        System.out.println(new Dataset(intervalSec, Utils.combinePaths(directory, traceLocation),
                 traceFilenamePrefix, TraceTranslator.paramScales(Utils.combinePaths(directory, paramScaleFilename)),
-                includeFirstElement, outDirname);
-        System.out.println("Done; dataset has been written to: " + outDirname + "; traces = " + ds.totalTraces()
-            + "; minTraceLength = " + ds.minTraceLength() + "; maxTraceLength = "
-            + ds.maxTraceLength());
+                includeFirstElement, outDirname));
     }
 }

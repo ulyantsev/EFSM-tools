@@ -14,6 +14,7 @@ public class Dataset implements Serializable {
     private final Map<String, Integer> paramIndices = new HashMap<>();
     private final Map<String, Double> paramScales;
     private int totalTraces = 0;
+    private int totalElements = 0;
     private int maxTraceLength = 0;
     private int minTraceLength = Integer.MAX_VALUE;
     private String dirName;
@@ -21,8 +22,18 @@ public class Dataset implements Serializable {
     private final static String HEADER_FILENAME = "header.bin";
     private final static String DATA_FILENAME = "data.txt";
 
+    @Override
+    public String toString() {
+        return "Dataset [dir = " + dirName+ ", #traces = " + totalTraces() + ", #elements = " + totalElements()
+                + ", minTraceLength = " + minTraceLength() + ", maxTraceLength = " + maxTraceLength() + "]";
+    }
+
     public int totalTraces() {
         return totalTraces;
+    }
+
+    public int totalElements() {
+        return totalElements;
     }
 
     public int maxTraceLength() {
@@ -131,6 +142,7 @@ public class Dataset implements Serializable {
 
         void write(List<double[]> trace) throws IOException {
             totalTraces++;
+            totalElements += trace.size();
             maxTraceLength = Math.max(maxTraceLength, trace.size());
             minTraceLength = Math.min(minTraceLength, trace.size());
             for (double[] arr : trace) {
