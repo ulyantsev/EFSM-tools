@@ -6,7 +6,6 @@ package automaton_builders;
 
 import continuous_trace_builders.MooreNodeIterable;
 import continuous_trace_builders.MooreNodeIterator;
-import org.apache.commons.lang3.tuple.Pair;
 import scenario.StringActions;
 import structures.moore.MooreNode;
 import structures.moore.MooreTransition;
@@ -14,29 +13,65 @@ import structures.moore.NondetMooreAutomaton;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.function.BiFunction;
 
 public class RapidPlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
     /*
      * positiveForest must be constructed with separatePaths
      */
-    public static Optional<NondetMooreAutomaton> build(MooreNodeIterable iterable, List<String> events,
+    public static NondetMooreAutomaton build(MooreNodeIterable iterable, List<String> events,
                                                        boolean timedConstraints) throws IOException {
-        System.out.println("Construction: initialization...");
+        System.out.println("Construction: main phase...");
         final Map<StringActions, Integer> actionsToState = new HashMap<>();
         final List<StringActions> stateToActions = new ArrayList<>();
         final List<Boolean> isInitial = new ArrayList<>();
         MooreNodeIterator it = iterable.nodeIterator();
-        Pair<MooreNode, Boolean> p;
-        while ((p = it.next()) != null) {
-            final MooreNode node = p.getLeft();
-            final boolean initial = p.getRight();
+        MooreNode root;
 
-            if (!actionsToState.containsKey(node.actions())) {
-                actionsToState.put(node.actions(), stateToActions.size());
-                stateToActions.add(node.actions());
+        final BiFunction<MooreNode, Boolean, Integer> processNode = (node, initial) -> {
+            final StringActions actions = node.actions();
+            Integer result = actionsToState.get(actions);
+            if (result == null) {
+                result = stateToActions.size();
+                actionsToState.put(actions, result);
+                stateToActions.add(actions);
                 isInitial.add(initial);
             } else if (initial) {
-                isInitial.set(actionsToState.get(node.actions()), true);
+                isInitial.set(result, true);
+            }
+            return result;
+        };
+
+        class TransitionStub {
+            private final int from;
+            private final String event;
+            private final int to;
+
+            private TransitionStub(int from, String event, int to) {
+                this.from = from;
+                this.event = event;
+                this.to = to;
+            }
+        }
+
+        final List<TransitionStub> transitionStubs = new ArrayList<>();
+
+        while ((root = it.next()) != null) {
+            MooreNode node = root;
+            int curValue = processNode.apply(root, true);
+
+            while (true) {
+                final Collection<MooreTransition> c = node.transitions();
+                if (c.isEmpty()) {
+                    break;
+                } else {
+                    final MooreTransition t = c.iterator().next();
+                    final MooreNode newNode = t.dst();
+                    final int nextValue = processNode.apply(newNode, false);
+                    transitionStubs.add(new TransitionStub(curValue, t.event(), nextValue));
+                    node = newNode;
+                    curValue = nextValue;
+                }
             }
         }
         // transitions from scenarios
@@ -44,17 +79,14 @@ public class RapidPlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
                 isInitial);
 
         System.out.println("Construction: adding transitions...");
-        it = iterable.nodeIterator();
-        while ((p = it.next()) != null) {
-            final MooreNode node = p.getLeft();
-            final MooreNode sourceState = automaton.state(actionsToState.get(node.actions()));
-            for (MooreTransition t : node.transitions()) {
-                final MooreNode destState = automaton.state(actionsToState.get(t.dst().actions()));
-                if (sourceState.scenarioDst(t.event(), destState.actions()) == null) {
-                    sourceState.addTransition(t.event(), destState);
-                }
+        for (TransitionStub stub : transitionStubs) {
+            final MooreNode sourceState = automaton.state(stub.from);
+            final MooreNode destState = automaton.state(stub.to);
+            if (sourceState.scenarioDst(stub.event, destState.actions()) == null) {
+                sourceState.addTransition(stub.event, destState);
             }
         }
+
         System.out.println("Construction: adding looping unsupported transitions...");
         // completion with loops
         for (MooreNode state : automaton.states()) {
@@ -66,35 +98,39 @@ public class RapidPlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
         }
 
         if (timedConstraints) {
+            // TODO this fragment of code has been revised but not tested
             System.out.println("Construction: timed constraints...");
-            final Set<MooreNode> processedNodes = new HashSet<>();
             final Map<MooreNode, Integer> loopConstraints = new HashMap<>();
             it = iterable.nodeIterator();
-            while ((p = it.next()) != null) {
-                final MooreNode node = p.getLeft();
-                if (!processedNodes.add(node)) {
-                    continue;
-                }
-                int limit = 0;
-                MooreNode curNode = node;
-                while (!curNode.transitions().isEmpty()) {
-                    final MooreNode newNode = curNode.transitions().iterator().next().dst();
-                    processedNodes.add(curNode);
-                    if (newNode.actions().equals(curNode.actions())) {
-                        curNode = newNode;
-                        limit++;
-                    } else {
-                        break;
+            while ((root = it.next()) != null) {
+                MooreNode curNode = root;
+                MooreNode newNode;
+                do {
+                    int limit = 0;
+                    while (true) {
+                        if (curNode.transitions().isEmpty()) {
+                            newNode = null;
+                            break;
+                        } else {
+                            newNode = curNode.transitions().iterator().next().dst();
+                            final boolean eq = newNode.actions().equals(curNode.actions());
+                            curNode = newNode;
+                            if (eq) {
+                                limit++;
+                            } else {
+                                break;
+                            }
+                        }
                     }
-                }
-                final MooreNode automatonState = automaton.state(actionsToState.get(node.actions()));
-                Integer maxLimit = loopConstraints.get(automatonState);
-                maxLimit = maxLimit == null ? limit : Math.max(limit, maxLimit);
-                loopConstraints.put(automatonState, maxLimit);
+                    final MooreNode automatonState = automaton.state(actionsToState.get(curNode.actions()));
+                    Integer maxLimit = loopConstraints.get(automatonState);
+                    maxLimit = maxLimit == null ? limit : Math.max(limit, maxLimit);
+                    loopConstraints.put(automatonState, maxLimit);
+                } while (newNode != null);
             }
             automaton.setLoopConstraints(loopConstraints);
         }
 
-        return Optional.of(automaton);
+        return automaton;
     }
 }

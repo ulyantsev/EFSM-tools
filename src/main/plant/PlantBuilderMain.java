@@ -166,8 +166,8 @@ public class PlantBuilderMain extends MainBase {
             }
             final LazyPositivePlantScenarioForest lazyForest = new LazyPositivePlantScenarioForest(arguments.get(0),
                     true);
-            resultAutomaton = RapidPlantAutomatonBuilder.build(lazyForest, events, timedConstraints);
-            final NondetMooreAutomaton a = resultAutomaton.get();
+            final NondetMooreAutomaton a = RapidPlantAutomatonBuilder.build(lazyForest, events, timedConstraints);
+            resultAutomaton = Optional.of(a);
             logger().info("Automaton with " + a.stateCount() + " states WAS FOUND!");
             logger().info("Automaton builder execution time: " + executionTime());
             save(a, events, actions);

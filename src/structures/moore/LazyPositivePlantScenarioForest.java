@@ -2,7 +2,6 @@ package structures.moore;
 
 import continuous_trace_builders.MooreNodeIterable;
 import continuous_trace_builders.MooreNodeIterator;
-import org.apache.commons.lang3.tuple.Pair;
 import scenario.StringScenario;
 
 import java.io.BufferedReader;
@@ -28,7 +27,6 @@ public class LazyPositivePlantScenarioForest implements MooreNodeIterable {
     public MooreNodeIterator nodeIterator() {
         return new MooreNodeIterator() {
             private BufferedReader reader;
-            private Iterator<MooreNode> curIterator;
 
             PositivePlantScenarioForest newLineGraph() throws IOException {
                 if (reader == null) {
@@ -61,31 +59,10 @@ public class LazyPositivePlantScenarioForest implements MooreNodeIterable {
                 }
             }
 
-            private Iterator<MooreNode> newIterator() throws IOException {
-                final PositivePlantScenarioForest forest = newLineGraph();
-                return forest == null ? null : forest.nodes().iterator();
-            }
-
             @Override
-            public Pair<MooreNode, Boolean> next() throws IOException {
-                boolean initial = false;
-                if (curIterator == null) {
-                    curIterator = newIterator();
-                    if (curIterator == null) {
-                        return null;
-                    }
-                    initial = true;
-                }
-                MooreNode nextNode = curIterator.hasNext() ? curIterator.next() : null;
-                if (nextNode == null) {
-                    curIterator = newIterator();
-                    if (curIterator == null) {
-                        return null;
-                    }
-                    nextNode = curIterator.next();
-                    initial = true;
-                }
-                return Pair.of(nextNode, initial);
+            public MooreNode next() throws IOException {
+                final PositivePlantScenarioForest forest = newLineGraph();
+                return forest == null ? null : forest.nodes().iterator().next();
             }
         };
     }
