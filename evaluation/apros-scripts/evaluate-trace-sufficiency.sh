@@ -4,6 +4,11 @@ default_folds=10
 
 conf="$1" # s1, ..., s8
 
+if [[ "$conf" == "" ]]; then
+    echo "Configuration not specified!"
+    exit
+fi
+
 avgs=(0 0)
 avgt=(0 0)
 avgf=(0 0)

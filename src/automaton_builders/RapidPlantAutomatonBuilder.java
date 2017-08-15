@@ -98,6 +98,7 @@ public class RapidPlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
         }
 
         if (timedConstraints) {
+            // TODO can be inlined into the first pass; will need to replace states with indices
             System.out.println("Construction: timed constraints...");
             final Map<MooreNode, Integer> loopConstraints = new HashMap<>();
             it = iterable.nodeIterator();
