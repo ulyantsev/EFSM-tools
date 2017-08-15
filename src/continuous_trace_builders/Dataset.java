@@ -15,8 +15,8 @@ public class Dataset implements Serializable {
     private final Map<String, Double> paramScales;
     private int totalTraces = 0;
     private int totalElements = 0;
-    private int maxTraceLength = 0;
     private int minTraceLength = Integer.MAX_VALUE;
+    private int maxTraceLength = 0;
     private String dirName;
 
     private final static String HEADER_FILENAME = "header.bin";
@@ -36,12 +36,12 @@ public class Dataset implements Serializable {
         return totalElements;
     }
 
-    public int maxTraceLength() {
-        return maxTraceLength;
-    }
-
     public int minTraceLength() {
         return minTraceLength;
+    }
+
+    public int maxTraceLength() {
+        return maxTraceLength;
     }
 
     public final static long serialVersionUID = 1L;
@@ -134,25 +134,42 @@ public class Dataset implements Serializable {
     }
 
     private class Writer {
-        private final PrintWriter pw;
+        private final BufferedWriter out;
 
         Writer() throws IOException {
-            pw = new PrintWriter(new BufferedWriter(new FileWriter(Utils.combinePaths(dirName, DATA_FILENAME))));
+            out = new BufferedWriter(new FileWriter(Utils.combinePaths(dirName, DATA_FILENAME)));
         }
 
         void write(List<double[]> trace) throws IOException {
             totalTraces++;
             totalElements += trace.size();
-            maxTraceLength = Math.max(maxTraceLength, trace.size());
             minTraceLength = Math.min(minTraceLength, trace.size());
+            maxTraceLength = Math.max(maxTraceLength, trace.size());
             for (double[] arr : trace) {
-                pw.println(Arrays.toString(arr).replaceAll("[\\[\\],]", ""));
+                out.write(arrayToString(arr));
+                out.newLine();
             }
-            pw.println();
+            out.newLine();
+        }
+
+        private String doubleToString(double x) {
+            final String value = Double.toString(x);
+            return value.endsWith(".0") ? value.substring(0, value.length() - 2) : value;
+        }
+
+        private String arrayToString(double[] arr) {
+            final StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < arr.length; i++) {
+                sb.append(doubleToString(arr[i]));
+                if (i != arr.length - 1) {
+                    sb.append(' ');
+                }
+            }
+            return sb.toString();
         }
 
         void finish() throws IOException {
-            pw.close();
+            out.close();
         }
     }
 
