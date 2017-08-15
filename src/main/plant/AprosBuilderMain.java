@@ -164,13 +164,13 @@ public class AprosBuilderMain extends MainBase {
                             !disableCurNext2D, !disableCurNext3D, disableCurNextOutputs);
                 } else if (Objects.equals(type, "explicit-state")) {
                     ExplicitStateBuilder.run(conf, directory, datasetFilename, satBased, traceIncludeEach,
-                            traceFraction, true, outputSmv, outputSpin, timedConstraints);
+                            traceFraction, true, true, outputSmv, outputSpin, timedConstraints);
                 } else if (Objects.equals(type, "explicit-state-completion-with-loops")) {
                     ExplicitStateBuilder.run(conf, directory, datasetFilename, satBased, traceIncludeEach,
-                            traceFraction, false, outputSmv, outputSpin, timedConstraints);
+                            traceFraction, false, true, outputSmv, outputSpin, timedConstraints);
                 } else if (Objects.equals(type, "trace-evaluation")) {
-                    TraceEvaluationBuilder.run(conf, directory, datasetFilename, satBased, traceIncludeEach,
-                            traceFraction);
+                    ExplicitStateBuilder.run(conf, directory, datasetFilename, satBased, traceIncludeEach,
+                            traceFraction, true, false, false, false, timedConstraints);
                 } else if (Objects.equals(type, "traces")) {
                     TraceModelGenerator.run(conf, directory, datasetFilename);
                 } else if (Objects.equals(type, "quantiles")) {

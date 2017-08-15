@@ -71,11 +71,11 @@ public class ExplicitStateBuilder {
 
     public static void run(Configuration conf, String directory, String datasetFilename, boolean satBased,
                            int traceIncludeEach, double traceFraction, boolean proximityCompletion,
-                           boolean outputSmv, boolean outputSpin, boolean timedConstraints) throws IOException {
+                           boolean outputGv, boolean outputSmv, boolean outputSpin, boolean timedConstraints)
+            throws IOException {
         final Dataset ds = Dataset.load(Utils.combinePaths(directory, datasetFilename));
         System.out.println(conf);
         System.out.println();
-        final String namePrefix = "plant-explicit.";
         final List<String> params = TraceTranslator.generateScenarios(conf, directory, ds, new HashSet<>(),
                 "", "", false, satBased, ALL_EVENT_COMBINATIONS, traceIncludeEach, traceFraction,
                 timedConstraints ? new String[] { "--timedConstraints" } : new String[0]);
@@ -83,27 +83,28 @@ public class ExplicitStateBuilder {
         final PlantBuilderMain builder = new PlantBuilderMain();
         builder.run(params.toArray(new String[params.size()]), Author.IB, "");
         if (!builder.resultAutomaton().isPresent()) {
-            System.err.println("No automaton found.");
-            return;
+            throw new RuntimeException("No automaton found!");
         }
         final NondetMooreAutomaton a = builder.resultAutomaton().get();
-        dumpAutomaton(a, conf, directory, namePrefix, proximityCompletion, outputSmv, outputSpin);
+        dumpAutomaton(a, conf, directory, "plant-explicit.", proximityCompletion, outputGv, outputSmv, outputSpin);
     }
 
     static void dumpAutomaton(NondetMooreAutomaton a, Configuration conf, String directory, String namePrefix,
-                              boolean proximityCompletion, boolean outputSmv, boolean outputSpin)
+                              boolean proximityCompletion, boolean outputGv, boolean outputSmv, boolean outputSpin)
             throws FileNotFoundException {
         NondetMooreAutomaton effectiveA = a;
         if (proximityCompletion) {
             effectiveA = proximityBasedCompletion(effectiveA, conf);
         }
 
-        TraceEvaluationBuilder.dumpProperties(effectiveA);
+        dumpProperties(effectiveA);
 
-        Utils.writeToFile(Utils.combinePaths(directory, namePrefix + "gv"), effectiveA.toString(conf));
-        // reduced GV file with transitions merged for different inputs
-        Utils.writeToFile(Utils.combinePaths(directory, namePrefix + "reduced." + "gv"),
-                effectiveA.simplify().toString(conf));
+        if (outputGv) {
+            Utils.writeToFile(Utils.combinePaths(directory, namePrefix + "gv"), effectiveA.toString(conf));
+            // reduced GV file with transitions merged for different inputs
+            Utils.writeToFile(Utils.combinePaths(directory, namePrefix + "reduced." + "gv"),
+                    effectiveA.simplify().toString(conf));
+        }
         if (outputSmv) {
             Utils.writeToFile(Utils.combinePaths(directory, namePrefix + "smv"),
                     effectiveA.toNuSMVString(eventsFromAutomaton(a), conf.actions(), Optional.of(conf)));
@@ -112,6 +113,16 @@ public class ExplicitStateBuilder {
             Utils.writeToFile(Utils.combinePaths(directory, namePrefix + "pml"),
                     effectiveA.toSPINString(eventsFromAutomaton(a), conf.actions(), Optional.of(conf)));
         }
+    }
+
+    private static void dumpProperties(NondetMooreAutomaton a) {
+        final int nStates = a.states().size();
+        final int nTrans = a.transitionNumber();
+        final int nTransUnsup = a.unsupportedTransitions().size();
+        final int nTransSup = nTrans - nTransUnsup;
+        System.out.println("Number of states: " +  nStates);
+        System.out.println("Number of supported transitions: " + nTransSup);
+        System.out.println("Fraction of supported transitions: " + (float) ((double) nTransSup / nTrans));
     }
 
     // assuming completeness and checking only state 0

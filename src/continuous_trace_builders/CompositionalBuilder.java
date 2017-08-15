@@ -17,10 +17,11 @@ import java.io.IOException;
 import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 public class CompositionalBuilder {
-    final static boolean ALL_EVENT_COMBINATIONS = false;
-    final static boolean EXTEND_STATE_SPACE_TO_ENSURE_COMPLETENESS = false;
+    private final static boolean ALL_EVENT_COMBINATIONS = false;
+    private final static boolean EXTEND_STATE_SPACE_TO_ENSURE_COMPLETENESS = false;
 
     // assuming that we have at most 10 intervals
     static boolean isProperAction(String action, String prefix) {
@@ -240,15 +241,10 @@ public class CompositionalBuilder {
 
     private static Configuration outputConfigurationComposition(Configuration c1, Configuration c2) {
         final List<Parameter> outputParams = new ArrayList<>(c1.outputParameters);
-        final Set<String> allParamNames = new HashSet<>();
-        for (Parameter p : c1.outputParameters) {
-            allParamNames.add(p.traceName());
-        }
-        for (Parameter p : c2.outputParameters) {
-            if (allParamNames.add(p.traceName())) {
-                outputParams.add(p);
-            }
-        }
+        final Set<String> allParamNames = c1.outputParameters.stream().map(Parameter::traceName)
+                .collect(Collectors.toSet());
+        outputParams.addAll(c2.outputParameters.stream().filter(p -> allParamNames.add(p.traceName()))
+                .collect(Collectors.toList()));
         return new Configuration(c1.intervalSec, outputParams, Collections.emptyList());
     }
 
@@ -298,24 +294,16 @@ public class CompositionalBuilder {
             }
             
             // internal connections
-            for (Pair<Integer, Parameter> iop : inputOutputPairs) {
-                badFirstIndices.add(iop.getLeft());
-            }
+            badFirstIndices.addAll(inputOutputPairs.stream().map(Pair::getLeft).collect(Collectors.toList()));
             // duplications
-            for (Pair<Integer, Integer> ip : inputPairs) {
-                badSecondIndices.add(ip.getRight());
-            }
+            badSecondIndices.addAll(inputPairs.stream().map(Pair::getRight).collect(Collectors.toList()));
             // internal connections
-            for (Pair<Parameter, Integer> oip : outputInputPairs) {
-                badSecondIndices.add(oip.getRight());
-            }
-            
-            for (Pair<Parameter, Integer> p : outputInputPairs) {
-                badActionPrefixes.add(p.getLeft().traceName());
-            }
-            for (Pair<Integer, Parameter> p : inputOutputPairs) {
-                badActionPrefixes.add(p.getRight().traceName());
-            }
+            badSecondIndices.addAll(outputInputPairs.stream().map(Pair::getRight).collect(Collectors.toList()));
+
+            badActionPrefixes.addAll(outputInputPairs.stream().map(p -> p.getLeft().traceName())
+                    .collect(Collectors.toList()));
+            badActionPrefixes.addAll(inputOutputPairs.stream().map(p -> p.getRight().traceName())
+                    .collect(Collectors.toList()));
         }
     }
 
@@ -360,7 +348,7 @@ public class CompositionalBuilder {
                 return;
             }
             final NondetMooreAutomaton a = builder.resultAutomaton().get();
-            ExplicitStateBuilder.dumpAutomaton(a, conf, directory, namePrefix, false, outputSmv, outputSpin);
+            ExplicitStateBuilder.dumpAutomaton(a, conf, directory, namePrefix, false, true, outputSmv, outputSpin);
             automata.add(a);
             System.out.println();
         }
@@ -394,7 +382,8 @@ public class CompositionalBuilder {
             lastConf = composeConfigurations(conf1, conf2, match);
 
             // mark unsupported transitions
-            ExplicitStateBuilder.dumpAutomaton(lastAuto, lastConf, directory, namePrefix, false, outputSmv, outputSpin);
+            ExplicitStateBuilder.dumpAutomaton(lastAuto, lastConf, directory, namePrefix, false, true, outputSmv,
+                    outputSpin);
             System.out.println(lastConf);
             System.out.println();
         }

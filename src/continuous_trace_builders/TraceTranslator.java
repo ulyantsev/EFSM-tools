@@ -72,7 +72,7 @@ public class TraceTranslator {
 
         // trace usage mask
         final Boolean[] use = new Boolean[ds.totalTraces()];
-        int max = (int) Math.round(use.length * traceFraction);
+        final int max = (int) Math.round(use.length * traceFraction);
         Arrays.fill(use, 0, max, true);
         Arrays.fill(use, max, use.length, false);
         Collections.shuffle(Arrays.asList(use));
