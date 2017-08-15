@@ -98,35 +98,27 @@ public class RapidPlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
         }
 
         if (timedConstraints) {
-            // TODO this fragment of code has been revised but not tested
             System.out.println("Construction: timed constraints...");
             final Map<MooreNode, Integer> loopConstraints = new HashMap<>();
             it = iterable.nodeIterator();
             while ((root = it.next()) != null) {
                 MooreNode curNode = root;
-                MooreNode newNode;
+                int limit = 1;
                 do {
-                    int limit = 0;
-                    while (true) {
-                        if (curNode.transitions().isEmpty()) {
-                            newNode = null;
-                            break;
-                        } else {
-                            newNode = curNode.transitions().iterator().next().dst();
-                            final boolean eq = newNode.actions().equals(curNode.actions());
-                            curNode = newNode;
-                            if (eq) {
-                                limit++;
-                            } else {
-                                break;
-                            }
+                    final MooreNode newNode = curNode.transitions().isEmpty() ? null
+                            : curNode.transitions().iterator().next().dst();
+                    if (newNode != null && newNode.actions().equals(curNode.actions())) {
+                        limit++;
+                    } else {
+                        final MooreNode automatonState = automaton.state(actionsToState.get(curNode.actions()));
+                        final Integer maxLimit = loopConstraints.get(automatonState);
+                        if (maxLimit == null || limit > maxLimit) {
+                            loopConstraints.put(automatonState, limit);
                         }
+                        limit = 1;
                     }
-                    final MooreNode automatonState = automaton.state(actionsToState.get(curNode.actions()));
-                    Integer maxLimit = loopConstraints.get(automatonState);
-                    maxLimit = maxLimit == null ? limit : Math.max(limit, maxLimit);
-                    loopConstraints.put(automatonState, maxLimit);
-                } while (newNode != null);
+                    curNode = newNode;
+                } while (curNode != null);
             }
             automaton.setLoopConstraints(loopConstraints);
         }

@@ -1,14 +1,15 @@
 #!/bin/bash
-tracemax=$(ls ../plant-synthesis/traces-plant/*.txt | wc -l)
-default_folds=5
+tracemax=$(ls ../plant-synthesis/traces-plant/ | grep "\\.txt$" | wc -l)
+default_folds=10
 
 conf="$1" # s1, ..., s8
 
 avgs=(0 0)
 avgt=(0 0)
 avgf=(0 0)
-diff=100
-for ((j = 1; j >= 0; j--)); do
+diff=$((tracemax / default_folds))
+tmp=".tmp.log"
+for ((j = 9; j >= 0; j--)); do
     tracemin=$((tracemax - diff*j))
     fraction=$(python -c "print(float($tracemin)/$tracemax)")
     echo -n "*** $conf : $tracemin traces ***"
@@ -21,10 +22,10 @@ for ((j = 1; j >= 0; j--)); do
         folds=$default_folds
     fi
     for ((k = 0; k < $folds; k++)); do
-        java -Xmx5G -jar ../../jars/apros-builder.jar --type trace-evaluation --config ../apros-configurations/"$conf".conf --dataset dataset_.bin --traceFraction $fraction 2>/dev/null > .tmp.log
-        s="$s + "$(grep "Number of states:" .tmp.log | sed -e 's/^.*: //')
-        t="$t + "$(grep "Number of supported transitions:" .tmp.log | sed -e 's/^.*: //')
-        f="$f + "$(grep "Fraction of supported transitions:" .tmp.log | sed -e 's/^.*: //')
+        java -Xmx2G -jar ../../jars/apros-builder.jar --type trace-evaluation --config ../apros-configurations/"$conf".conf --dataset dataset_.bin --traceFraction $fraction 2>/dev/null > "$tmp"
+        s="$s + "$(grep "Number of states:" "$tmp" | sed -e 's/^.*: //')
+        t="$t + "$(grep "Number of supported transitions:" "$tmp" | sed -e 's/^.*: //')
+        f="$f + "$(grep "Fraction of supported transitions:" "$tmp" | sed -e 's/^.*: //')
     done
     avgs[$j]=$(python -c "print(($s)/$folds)")
     avgt[$j]=$(python -c "print(($t)/$folds)")

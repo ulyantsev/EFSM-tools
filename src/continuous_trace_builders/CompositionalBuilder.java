@@ -331,7 +331,7 @@ public class CompositionalBuilder {
         // 3. Build all the basic plants
         final List<NondetMooreAutomaton> automata = new ArrayList<>();
         for (int i = 0; i < confs.size(); i++) {
-            System.out.println("*** BUILDING BASIC PLANTS, STAGE " + (i + 1));
+            System.out.println("*** BUILDING BASIC PLANT MODELS, STAGE " + (i + 1));
             final Configuration conf = confs.get(i);
             System.out.println(conf);
             System.out.println();

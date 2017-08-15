@@ -213,13 +213,13 @@ public class PlantBuilderMain extends MainBase {
                 if (a.compliesWith(scenarios, true, true)) {
                     logger().info("COMPLIES WITH SCENARIOS");
                 } else {
-                    logger().severe("NOT COMPLIES WITH SCENARIOS");
+                    logger().severe("DOES NOT COMPLY WITH SCENARIOS");
                 }
 
                 if (a.compliesWith(negativeScenarios, false, false)) {
                     logger().info("COMPLIES WITH NEGATIVE SCENARIOS");
                 } else {
-                    logger().severe("NOT COMPLIES WITH NEGATIVE SCENARIOS");
+                    logger().severe("DOES NOT COMPLY WITH NEGATIVE SCENARIOS");
                 }
 
                 save(a, events, actions);
