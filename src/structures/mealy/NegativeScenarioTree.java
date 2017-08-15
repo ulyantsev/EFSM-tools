@@ -8,7 +8,7 @@ import bool.MyBooleanExpression;
 import scenario.StringActions;
 import scenario.StringScenario;
 
-import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.text.ParseException;
 import java.util.Collection;
 import java.util.LinkedHashSet;
@@ -29,7 +29,7 @@ public class NegativeScenarioTree {
         return root;
     }
 
-    public void load(String filepath, boolean removeVars) throws FileNotFoundException, ParseException {
+    public void load(String filepath, boolean removeVars) throws IOException, ParseException {
         for (StringScenario scenario : StringScenario.loadScenarios(filepath, removeVars)) {
             addScenario(scenario, 0);
         }

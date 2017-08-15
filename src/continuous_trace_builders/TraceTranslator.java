@@ -7,10 +7,7 @@ package continuous_trace_builders;
 import continuous_trace_builders.parameters.Parameter;
 import org.apache.commons.lang3.tuple.Pair;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.*;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -81,16 +78,17 @@ public class TraceTranslator {
         Collections.shuffle(Arrays.asList(use));
 
         int addedTraces = 0;
-        try (PrintWriter pw = new PrintWriter(new File(Utils.combinePaths(directory, OUTPUT_TRACE_FILENAME)))) {
+        try (BufferedWriter out = new BufferedWriter(new FileWriter(Utils.combinePaths(directory, OUTPUT_TRACE_FILENAME)))) {
             final Dataset.Reader reader = ds.reader();
             for (int i = 0; i < ds.totalTraces(); i++) {
                 final List<double[]> trace = reader.next();
-                final List<String> events = new ArrayList<>();
-                final List<List<String>> actionCombinations = new ArrayList<>();
 
                 if (i % traceIncludeEach != 0 || !use[i]) {
                     continue;
                 }
+
+                final List<String> events = new ArrayList<>();
+                final List<List<String>> actionCombinations = new ArrayList<>();
 
                 for (int j = 0; j < trace.size(); j++) {
                     final double[] snapshot = trace.get(j);
@@ -139,16 +137,16 @@ public class TraceTranslator {
                         .collect(Collectors.toList());
                 events.add(0, "");
                 events.remove(events.size() - 1);
-                pw.println(String.join("; ", events));
-                pw.println(String.join("; ", actions));
+                out.write(String.join("; ", events));
+                out.newLine();
+                out.write(String.join("; ", actions));
+                out.newLine();
                 addedTraces++;
             }
         }
         System.out.println("Traces: " + addedTraces);
-        System.out.println(String.format("Input coverage: %.2f%%",
-                100.0 * inputCovered.size() / totalInputValues));
-        System.out.println(String.format("Output coverage: %.2f%%",
-                100.0 * outputCovered.size() / totalOutputValues));
+        System.out.println(String.format("Input coverage: %.2f%%", 100.0 * inputCovered.size() / totalInputValues));
+        System.out.println(String.format("Output coverage: %.2f%%", 100.0 * outputCovered.size() / totalOutputValues));
 
         if (satBased) {
             // smoothness temporal properties

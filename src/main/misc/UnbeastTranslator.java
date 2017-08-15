@@ -7,7 +7,7 @@ import verification.ltl.grammar.LtlNode;
 import verification.ltl.grammar.LtlUtils;
 
 import java.io.File;
-import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
  * Created by buzhinsky on 4/17/17.
  */
 public class UnbeastTranslator {
-    public static void main(String[] args) throws LtlParseException, FileNotFoundException, ParseException {
+    public static void main(String[] args) throws LtlParseException, IOException, ParseException {
         if (args.length != 5) {
             System.err.println("Usage: java -jar unbeast-translator.jar <scenario path> <ltl path>" +
                     " <comma-separated events> <comma-separated actions> <output path>");

@@ -2,8 +2,7 @@ package scenario;
 
 import bool.MyBooleanExpression;
 
-import java.io.File;
-import java.io.FileNotFoundException;
+import java.io.*;
 import java.text.ParseException;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -32,20 +31,21 @@ public class StringScenario {
     }
 
     public static List<StringScenario> loadScenarios(String filepath, boolean removeVars)
-            throws ParseException, FileNotFoundException {
+            throws ParseException, IOException {
         final List<StringScenario> ans = new ArrayList<>();
-        
-        try (Scanner in = new Scanner(new File(filepath))) {
+
+        try (BufferedReader in = new BufferedReader(new FileReader(filepath))) {
             String inp = "";
-            while (in.hasNextLine()) {
-                String s = in.nextLine().trim();
+            String line;
+            while ((line = in.readLine()) != null) {
+                String s = line.trim();
                 if (removeVars) {
                     s = removeVariables(s);
                 }
                 if (inp.isEmpty() && s.isEmpty()) {
                     continue;
                 }
-    
+
                 if (inp.isEmpty()) {
                     inp = s;
                 } else {
@@ -54,7 +54,6 @@ public class StringScenario {
                 }
             }
         }
-
         return ans;
     }
     
@@ -85,7 +84,7 @@ public class StringScenario {
             MyBooleanExpression expr;
             
             if (events[i].contains("[")) {
-                String[] p = events[i].split("\\[");
+                final String[] p = events[i].split("\\[");
                 this.events.add(splitEvent(p[0].trim()));
                 expr = MyBooleanExpression.get(p[1].replace(']', ' '));
             } else {

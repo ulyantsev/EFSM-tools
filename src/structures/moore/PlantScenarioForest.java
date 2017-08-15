@@ -3,7 +3,7 @@ package structures.moore;
 import scenario.StringActions;
 import scenario.StringScenario;
 
-import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.text.ParseException;
 import java.util.Collection;
 import java.util.Collections;
@@ -30,7 +30,7 @@ public abstract class PlantScenarioForest {
         return nodes.size();
     }
 
-    public void load(String filepath, boolean removeVars) throws FileNotFoundException, ParseException {
+    public void load(String filepath, boolean removeVars) throws IOException, ParseException {
         StringScenario.loadScenarios(filepath, removeVars).forEach(this::addScenario);
     }
     

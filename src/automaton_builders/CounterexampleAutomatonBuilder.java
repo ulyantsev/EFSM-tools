@@ -48,8 +48,7 @@ public class CounterexampleAutomatonBuilder extends ScenarioAndLtlAutomatonBuild
             final MealyTransition t = a.state(state).transition(event, MyBooleanExpression.getTautology());
             expressions.add(t.expr());
             actions.add(t.actions());
-            final int newState = t.dst().number();          
-            state = newState;
+            state = t.dst().number();
         }
         logger.info("ADDING COUNTEREXAMPLE: " + counterexample);
         try {

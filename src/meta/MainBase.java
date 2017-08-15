@@ -26,7 +26,7 @@ public abstract class MainBase {
     private static long START_TIME;
     private static Logger LOGGER;
 
-    public Random random() {
+    protected Random random() {
         return RANDOM;
     }
 
@@ -54,7 +54,6 @@ public abstract class MainBase {
                 System.out.println("Log redirected to " + logFilePath);
             } catch (Exception e) {
                 System.err.println("Can't work with file " + logFilePath + ": " + e.getMessage());
-                return;
             }
         }
     }
@@ -112,7 +111,7 @@ public abstract class MainBase {
     }
 
     protected List<StringScenario> loadScenarios(String filename, boolean removeVars)
-            throws FileNotFoundException, ParseException {
+            throws IOException, ParseException {
         try {
             return StringScenario.loadScenarios(filename, removeVars);
         } catch (FileNotFoundException e) {

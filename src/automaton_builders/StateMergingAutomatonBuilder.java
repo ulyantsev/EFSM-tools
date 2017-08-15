@@ -10,19 +10,19 @@ import structures.mealy.MealyAutomaton;
 import verification.verifier.Counterexample;
 import verification.verifier.Verifier;
 
-import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.text.ParseException;
 import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public class StateMergingAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
-    public static APTA getAPTA(List<List<String>> possc, Iterable<List<String>> negsc) {
+    public static APTA getAPTA(List<List<String>> posSc, Iterable<List<String>> negSc) {
         final APTA a = new APTA();
-        for (List<String> sc : possc) {
+        for (List<String> sc : posSc) {
             a.addScenario(sc, true);
         }
-        for (List<String> sc : negsc) {
+        for (List<String> sc : negSc) {
             a.addScenario(sc, false);
         }
         a.resetColors();
@@ -30,30 +30,30 @@ public class StateMergingAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder
     }
     
     public static Optional<MealyAutomaton> build(Logger logger, Verifier verifier, List<String> scenarioFilePaths,
-                                                 String negscFilePath) throws FileNotFoundException, ParseException {
-        final List<List<String>> possc = new ArrayList<>();
+                                                 String negscFilePath) throws IOException, ParseException {
+        final List<List<String>> posSc = new ArrayList<>();
         for (String filePath : scenarioFilePaths) {
             for (StringScenario sc : StringScenario.loadScenarios(filePath, false)) {
                 List<String> l = new ArrayList<>();
                 for (int i = 0; i < sc.size(); i++) {
                     l.add(sc.getEvents(i).get(0));
                 }
-                possc.add(l);
+                posSc.add(l);
             }
         }
         
-        final Set<List<String>> negsc = new LinkedHashSet<>();
+        final Set<List<String>> negSc = new LinkedHashSet<>();
         if (negscFilePath != null) {
             for (StringScenario sc : StringScenario.loadScenarios(negscFilePath, false)) {
                 List<String> l = new ArrayList<>();
                 for (int i = 0; i < sc.size(); i++) {
                     l.add(sc.getEvents(i).get(0));
                 }
-                negsc.add(l);
+                negSc.add(l);
             }
         }
         
-        APTA a = getAPTA(possc, negsc);
+        APTA a = getAPTA(posSc, negSc);
         
         int iterations = 1;
         while (true) {
@@ -77,11 +77,11 @@ public class StateMergingAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder
                             continue;
                         }
                         added++;
-                        negsc.add(ce.events());
+                        negSc.add(ce.events());
                         logger.info("ADDING COUNTEREXAMPLE: " + ce.events());
                     }
                     logger.info("(ADDED COUNTEREXAMPLES: " + added + ")");
-                    a = getAPTA(possc, negsc);
+                    a = getAPTA(posSc, negSc);
                     iterations++;
                 } else {
                     System.out.print(".");

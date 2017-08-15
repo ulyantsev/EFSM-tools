@@ -76,8 +76,6 @@ public class QbfAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
                     if (verifier.verify(a)) {
                         logger.info(new SolverResult(list).toString().split("\n")[0]);
                         return Optional.of(a);
-                    } else {
-                        continue;
                     }
                 }
             }
@@ -106,8 +104,6 @@ public class QbfAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
                             completenessType).getLeft();
                     if (verifier.verify(a)) {
                         return Optional.of(a);
-                    } else {
-                        continue;
                     }
                 } else {
                     return Optional.empty();

@@ -13,6 +13,7 @@ import verification.verifier.Counterexample;
 import verification.verifier.Verifier;
 
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.text.ParseException;
 import java.util.*;
 import java.util.logging.Logger;
@@ -20,7 +21,7 @@ import java.util.stream.Collectors;
 
 public class StateMergingNondetAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
     public static Optional<NondetMooreAutomaton> build(Logger logger, List<String> events, List<String> actions,
-            List<String> arguments, List<String> strFormulae) throws FileNotFoundException, ParseException {
+            List<String> arguments, List<String> strFormulae) throws IOException, ParseException {
         final List<String> eventsWithDummy = new ArrayList<>(events);
         eventsWithDummy.add("");
         final List<String> actionCombinations = new ArrayList<>();

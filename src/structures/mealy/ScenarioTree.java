@@ -4,7 +4,7 @@ import bool.MyBooleanExpression;
 import scenario.StringActions;
 import scenario.StringScenario;
 
-import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.text.ParseException;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -23,14 +23,14 @@ public class ScenarioTree {
         return root;
     }
 
-    public void load(String filepath) throws FileNotFoundException, ParseException {
+    public void load(String filepath) throws IOException, ParseException {
         load(filepath, false);
     }
     
     /*
      * varNumber = -1 for no variable removal
      */
-    public void load(String filepath, boolean removeVars) throws FileNotFoundException, ParseException {
+    public void load(String filepath, boolean removeVars) throws IOException, ParseException {
         for (StringScenario scenario : StringScenario.loadScenarios(filepath, removeVars)) {
             addScenario(scenario);
         }
