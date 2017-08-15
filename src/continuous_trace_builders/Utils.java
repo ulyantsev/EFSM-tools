@@ -22,9 +22,9 @@ public class Utils {
         return Paths.get("", paths).toString();
     }
 
-    static void writeToFile(String path, String text) throws FileNotFoundException {
-        try (PrintWriter pw = new PrintWriter(path)) {
-            pw.print(text);
+    static void writeToFile(String path, String text) throws IOException {
+        try (BufferedWriter out = new BufferedWriter(new FileWriter(path))) {
+            out.write(text);
         }
     }
 

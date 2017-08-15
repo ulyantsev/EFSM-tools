@@ -16,9 +16,9 @@ public class TraceModelGenerator {
     public static void run(Configuration conf, String directory, String datasetFilename) throws IOException {
         final Dataset ds = Dataset.load(Utils.combinePaths(directory, datasetFilename));
 
-        final int maxLength = ds.maxTraceLength();
         final int minLength = ds.minTraceLength();
-        if (maxLength != minLength) {
+        final int maxLength = ds.maxTraceLength();
+        if (minLength != maxLength) {
             throw new AssertionError("All traces are currently assumed to have equal lengths.");
         }
 
@@ -26,11 +26,14 @@ public class TraceModelGenerator {
         final String individualTraceDir = Utils.combinePaths(directory, "individual-trace-models");
         new File(individualTraceDir).mkdir();
 
-        writeTraceModel(conf, ds, maxLength, 0, ds.totalTraces(), outFilename, ds.reader());
-        final Dataset.Reader reader = ds.reader();
+        Dataset.Reader reader = ds.reader();
+        writeTraceModel(conf, ds, maxLength, 0, ds.totalTraces(), outFilename, reader);
+        reader.next(); // will result in null and close the reader
+        reader = ds.reader();
         for (int i = 0; i < ds.totalTraces(); i++) {
             writeTraceModel(conf, ds, maxLength, i, i + 1, individualTraceDir + "/trace-model-" + i + ".smv", reader);
         }
+        reader.next(); // will result in null and close the reader
 
         System.out.println("Done; the model has been written to: " + outFilename);
         System.out.println("Individual trace models have been written to: " + individualTraceDir);
@@ -45,15 +48,23 @@ public class TraceModelGenerator {
         sb.append("FROZENVAR\n    trace: ").append(indexFrom).append("..").append(indexTo - 1).append(";\n");
         sb.append("ASSIGN\n");
         sb.append("    init(step) := 0;\n");
-        sb.append("    next(step) := step < ").append(maxLength - 1).append(" ? step + 1 : ").append(maxLength - 1).append(";\n");
+        sb.append("    next(step) := step < ").append(maxLength - 1).append(" ? step + 1 : ").append(maxLength - 1)
+                .append(";\n");
         sb.append("    init(unsupported) := FALSE;\n");
         sb.append("    next(unsupported) := step = ").append(maxLength - 1).append(";\n");
 
+        final Map<Parameter, StringBuilder> stringBuilders = new HashMap<>();
         for (Parameter p : conf.outputParameters) {
-            sb.append("    output_").append(p.traceName()).append(" := case\n");
-            for (int traceIndex = indexFrom; traceIndex < indexTo; traceIndex++) {
-                final List<double[]> trace = reader.next();
-                sb.append("        trace = ").append(traceIndex).append(": case\n");
+            final StringBuilder pSb = new StringBuilder();
+            stringBuilders.put(p, pSb);
+            pSb.append("    output_").append(p.traceName()).append(" := case\n");
+        }
+
+        for (int traceIndex = indexFrom; traceIndex < indexTo; traceIndex++) {
+            final List<double[]> trace = reader.next();
+            for (Parameter p : conf.outputParameters) {
+                final StringBuilder pSb = stringBuilders.get(p);
+                pSb.append("        trace = ").append(traceIndex).append(": case\n");
                 final List<Set<Integer>> valuesToSteps = new ArrayList<>();
                 for (int i = 0; i < p.valueCount(); i++) {
                     valuesToSteps.add(new TreeSet<>());
@@ -78,18 +89,22 @@ public class TraceModelGenerator {
                 for (int i = 0; i < pairs.size(); i++) {
                     final String condition = i == pairs.size() - 1 ? "TRUE"
                             : ("step in " + expressWithIntervalsNuSMV(pairs.get(i).getRight()));
-                    sb.append("            ").append(condition).append(": ").append(pairs.get(i).getLeft())
+                    pSb.append("            ").append(condition).append(": ").append(pairs.get(i).getLeft())
                             .append(";\n");
 
                 }
-                sb.append("        esac;\n");
+                pSb.append("        esac;\n");
             }
-            sb.append("    esac;\n");
+        }
+
+        for (Parameter p : conf.outputParameters) {
+            final StringBuilder pSb = stringBuilders.get(p);
+            pSb.append("    esac;\n");
+            sb.append(pSb);
         }
 
         sb.append("DEFINE\n");
         sb.append("    loop_executed := unsupported;\n");
-
         sb.append(ConstraintBasedBuilder.plantConversions(conf));
 
         Utils.writeToFile(filename, sb.toString());

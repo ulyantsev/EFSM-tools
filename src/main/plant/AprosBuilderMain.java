@@ -124,15 +124,15 @@ public class AprosBuilderMain extends MainBase {
             usage = "constraint-based: disable fairness constraints, generated on the base of monotonicity")
     private boolean constraintBasedDisableMONOTONIC_FAIRNESS_CONSTRAINTS;
 
-    public static void main(String[] args) {
-        new AprosBuilderMain().run(args, Author.IB,
-                "Toolset for NuSMV plant model synthesis from simulation traces in the Apros format");
-    }
-
     @Option(name = "--constraintBasedDisableCOMPLEX_FAIRNESS_CONSTRAINTS", handler = BooleanOptionHandler.class,
             usage = "constraint-based: disable complex fairness constraints, generated on base of constant difference" +
                     " of two values to move from one parameter to another")
     private boolean constraintBasedDisableCOMPLEX_FAIRNESS_CONSTRAINTS;
+
+    public static void main(String[] args) {
+        new AprosBuilderMain().run(args, Author.IB,
+                "Toolset for NuSMV plant model synthesis from simulation traces in the Apros format");
+    }
 
     @Override
     protected void launcher() throws IOException {

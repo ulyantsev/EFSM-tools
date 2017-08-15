@@ -10,7 +10,6 @@ import structures.moore.MooreNode;
 import structures.moore.MooreTransition;
 import structures.moore.NondetMooreAutomaton;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -91,7 +90,7 @@ public class ExplicitStateBuilder {
 
     static void dumpAutomaton(NondetMooreAutomaton a, Configuration conf, String directory, String namePrefix,
                               boolean proximityCompletion, boolean outputGv, boolean outputSmv, boolean outputSpin)
-            throws FileNotFoundException {
+            throws IOException {
         NondetMooreAutomaton effectiveA = a;
         if (proximityCompletion) {
             effectiveA = proximityBasedCompletion(effectiveA, conf);
