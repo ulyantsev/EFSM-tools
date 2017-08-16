@@ -84,9 +84,9 @@ public class TruthTable {
     public TruthTable(final Collection<BooleanExpression> expressionCollection)
             throws ParseException {
         this.expressionCollection = expressionCollection;
-        results = new HashMap<Map<String, Boolean>, Map<BooleanExpression, Boolean>>();
+        results = new HashMap<>();
 
-        variablesList = new ArrayList<String>();
+        variablesList = new ArrayList<>();
 
         for (final BooleanExpression expression : expressionCollection) {
             for (final String str : expression.getVariableSet()) {
@@ -100,7 +100,7 @@ public class TruthTable {
         resultsKeyList = buildDictionary(variablesList);
 
         for (final Map<String, Boolean> dict : resultsKeyList) {
-            final Map<BooleanExpression, Boolean> map = new HashMap<BooleanExpression, Boolean>();
+            final Map<BooleanExpression, Boolean> map = new HashMap<>();
 
             for (final BooleanExpression expression : expressionCollection) {
                 map.put(expression, expression.evaluate(dict));
@@ -132,47 +132,46 @@ public class TruthTable {
      */
     @Override
     public String toString() {
-        String str = "";
+        final StringBuilder sb = new StringBuilder();
 
         // Build the header by listing all variables...
         for (final String var : variablesList) {
-            str += var + " ";
+            sb.append(var).append(" ");
         }
 
         // and then the expressions themselves
         for (final BooleanExpression expression : expressionCollection) {
-            str += " " + expression + " ";
+            sb.append(" ").append(expression).append(" ");
         }
 
-        str += "\n";
+        sb.append("\n");
 
         // Build each row by listing the values of the variables and the value
         // of the expression
         for (final Map<String, Boolean> dict : resultsKeyList) {
             for (final String var : variablesList) {
-                str += (dict.get(var) ? "1" : "0") + " ";
+                sb.append(dict.get(var) ? "1" : "0").append(" ");
             }
 
             for (final BooleanExpression expression : expressionCollection) {
                 for (int i = 0; i < (expression.toString().length() - 1) / 2; i++) {
-                    str += " ";
+                    sb.append(" ");
                 }
 
-                str += " " + (results.get(dict).get(expression) ? "1" : "0");
+                sb.append(" ").append(results.get(dict).get(expression) ? "1" : "0");
 
                 for (int i = 0; i < expression.toString().length() / 2; i++) {
-                    str += " ";
+                    sb.append(" ");
                 }
 
-                str += " ";
+                sb.append(" ");
             }
 
-            str += "\n";
+            sb.append("\n");
         }
 
-        str = str.substring(0, str.length() - 1);
-
-        return str;
+        final String result = sb.toString();
+        return result.substring(0, result.length() - 1);
     }
     
     /**
@@ -186,7 +185,7 @@ public class TruthTable {
      * @return the list of dictionaries
      */
     private List<Map<String, Boolean>> buildDictionary(final List<String> vars) {
-        final List<Map<String, Boolean>> dictsList = new ArrayList<Map<String, Boolean>>();
+        final List<Map<String, Boolean>> dictsList = new ArrayList<>();
         final String nextKey;
 
         // If there are no variables, return a list containing a single empty
@@ -203,7 +202,7 @@ public class TruthTable {
         if (vars.size() == 1) {
             // Execute for both possible values of b
             for (final boolean b : new boolean[] { false, true }) {
-                final Map<String, Boolean> dict = new HashMap<String, Boolean>();
+                final Map<String, Boolean> dict = new HashMap<>();
 
                 dict.put(nextKey, b);
                 dictsList.add(dict);
@@ -221,7 +220,7 @@ public class TruthTable {
             for (final boolean b : new boolean[] { false, true }) {
                 for (final Map<String, Boolean> subDict : dictsSubSet) {
                     // New Map to avoid reference issues
-                    final Map<String, Boolean> dict = new HashMap<String, Boolean>();
+                    final Map<String, Boolean> dict = new HashMap<>();
 
                     dict.put(nextKey, b);
                     dict.putAll(subDict);
