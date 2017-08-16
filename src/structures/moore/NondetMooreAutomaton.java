@@ -22,11 +22,8 @@ public class NondetMooreAutomaton {
 
     private List<Integer> loopConstraints = null;
 
-    public void setLoopConstraints(Map<MooreNode, Integer> loopConstraints) {
-        this.loopConstraints = new ArrayList<>();
-        for (int i = 0; i < stateCount(); i++) {
-            this.loopConstraints.add(loopConstraints.get(states.get(i)));
-        }
+    public void setLoopConstraints(List<Integer> loopConstraints) {
+        this.loopConstraints = new ArrayList<>(loopConstraints);
     }
 
     public Set<MooreTransition> unsupportedTransitions() {

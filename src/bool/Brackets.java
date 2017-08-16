@@ -19,73 +19,60 @@
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  */
 package bool;
+
 import java.util.HashMap;
 import java.util.Map;
 
 /**
  * A utility class to work with brackets in Boolean expressions.
- * 
+ *
  * @author Chris Bouchard
  * @version 0.1 Beta
  */
-public class Brackets
-{
+public class Brackets {
     /**
      * Map of open brackets to their matching close bracket
      */
     private static final Map<String, String> BRACKET_PAIRS = new HashMap<String, String>();
-    
-    static
-    {
+
+    static {
         BRACKET_PAIRS.put("(", ")");
         BRACKET_PAIRS.put("[", "]");
         BRACKET_PAIRS.put("{", "}");
     }
-    
+
     /**
      * Return true if open and close are a matching pair of open and close
      * brackets, respectively, else false.
-     * 
-     * @param open
-     *            the open bracket to evaluate
-     * @param close
-     *            the close bracket to evaluate
-     * 
+     *
+     * @param open  the open bracket to evaluate
+     * @param close the close bracket to evaluate
      * @return true if open and close are a matching pair of brackets, else
-     *         false
+     * false
      */
-    public static boolean isBracketPair(final String open, final String close)
-    {
+    public static boolean isBracketPair(final String open, final String close) {
         return BRACKET_PAIRS.containsKey(open) && BRACKET_PAIRS.get(open).equals(close);
     }
-    
+
     /**
      * Return true if str is a close bracket, else false
-     * 
-     * @param str
-     *            the string to evaluate
-     * 
+     *
+     * @param str the string to evaluate
      * @return true if str is a close bracket, else false
-     * 
      * @see #isOpenBracket(String)
      */
-    public static boolean isCloseBracket(final String str)
-    {
+    public static boolean isCloseBracket(final String str) {
         return BRACKET_PAIRS.containsValue(str);
     }
-    
+
     /**
      * Return true if str is an open bracket, else false.
-     * 
-     * @param str
-     *            the string to evaluate
-     * 
+     *
+     * @param str the string to evaluate
      * @return true if str is an open bracket, else false
-     * 
      * @see #isCloseBracket(String)
      */
-    public static boolean isOpenBracket(final String str)
-    {
+    public static boolean isOpenBracket(final String str) {
         return BRACKET_PAIRS.containsKey(str);
     }
 }
