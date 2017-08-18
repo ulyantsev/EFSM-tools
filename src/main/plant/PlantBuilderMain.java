@@ -98,6 +98,10 @@ public class PlantBuilderMain extends MainBase {
                     + "size, negative scenarios, LTL formulae and action specifications are ignored")
     private boolean fast = false;
 
+    @Option(name = "--makeAllStatesInitial", handler = BooleanOptionHandler.class,
+            usage = "if --fast is enabled: make all states initial regardless of scenarios")
+    private boolean makeAllStatesInitial = false;
+
     @Option(name = "--solver",
             usage = "SAT solver: INCREMENTAL_CRYPTOMINISAT (default), LINGELING, CRYPTOMINISAT",
             metaVar = "<solver>")
@@ -166,7 +170,8 @@ public class PlantBuilderMain extends MainBase {
             }
             final LazyPositivePlantScenarioForest lazyForest = new LazyPositivePlantScenarioForest(arguments.get(0),
                     true);
-            final NondetMooreAutomaton a = RapidPlantAutomatonBuilder.build(lazyForest, events, timedConstraints);
+            final NondetMooreAutomaton a = RapidPlantAutomatonBuilder.build(lazyForest, events, timedConstraints,
+                    makeAllStatesInitial);
             resultAutomaton = Optional.of(a);
             logger().info("Automaton with " + a.stateCount() + " states WAS FOUND!");
             logger().info("Automaton builder execution time: " + executionTime());

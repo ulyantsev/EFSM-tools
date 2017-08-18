@@ -32,8 +32,8 @@ public class RapidPlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
     /*
      * positiveForest must be constructed with separatePaths
      */
-    public static NondetMooreAutomaton build(MooreNodeIterable iterable, List<String> events,
-                                                       boolean timedConstraints) throws IOException {
+    public static NondetMooreAutomaton build(MooreNodeIterable iterable, List<String> events, boolean timedConstraints,
+                                             boolean makeAllStatesInitial) throws IOException {
         System.out.println("Construction: main phase...");
         final Map<StringActions, Integer> actionsToState = new HashMap<>();
         final List<StringActions> stateToActions = new ArrayList<>();
@@ -50,7 +50,7 @@ public class RapidPlantAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
                 stateToActions.add(actions);
                 isInitial.add(initial);
                 loopConstraints.add(null);
-            } else if (initial) {
+            } else if (initial || makeAllStatesInitial) {
                 isInitial.set(result, true);
             }
             return result;

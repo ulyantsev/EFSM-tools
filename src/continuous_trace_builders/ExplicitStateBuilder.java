@@ -70,14 +70,22 @@ public class ExplicitStateBuilder {
 
     public static void run(Configuration conf, String directory, String datasetFilename, boolean satBased,
                            int traceIncludeEach, double traceFraction, boolean proximityCompletion,
-                           boolean outputGv, boolean outputSmv, boolean outputSpin, boolean timedConstraints)
+                           boolean outputGv, boolean outputSmv, boolean outputSpin, boolean timedConstraints,
+                           boolean makeAllStatesInitial)
             throws IOException {
         final Dataset ds = Dataset.load(Utils.combinePaths(directory, datasetFilename));
         System.out.println(conf);
         System.out.println();
+        final List<String> additionalOptions = new ArrayList<>();
+        if (timedConstraints) {
+            additionalOptions.add("--timedConstraints");
+        }
+        if (makeAllStatesInitial) {
+            additionalOptions.add("--makeAllStatesInitial");
+        }
         final List<String> params = TraceTranslator.generateScenarios(conf, directory, ds, new HashSet<>(),
                 "", "", false, satBased, ALL_EVENT_COMBINATIONS, traceIncludeEach, traceFraction,
-                timedConstraints ? new String[] { "--timedConstraints" } : new String[0]);
+                additionalOptions.toArray(new String[additionalOptions.size()]));
         System.out.println();
         final PlantBuilderMain builder = new PlantBuilderMain();
         builder.run(params.toArray(new String[params.size()]), Author.IB, "");

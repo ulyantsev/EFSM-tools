@@ -129,6 +129,10 @@ public class AprosBuilderMain extends MainBase {
                     " of two values to move from one parameter to another")
     private boolean constraintBasedDisableCOMPLEX_FAIRNESS_CONSTRAINTS;
 
+    @Option(name = "--makeAllStatesInitial", handler = BooleanOptionHandler.class,
+            usage = "explicit-state: make all states initial regardless of traces")
+    private boolean makeAllStatesInitial = false;
+
     public static void main(String[] args) {
         new AprosBuilderMain().run(args, Author.IB,
                 "Toolset for NuSMV plant model synthesis from simulation traces in the Apros format");
@@ -164,13 +168,13 @@ public class AprosBuilderMain extends MainBase {
                             !disableCurNext2D, !disableCurNext3D, disableCurNextOutputs);
                 } else if (Objects.equals(type, "explicit-state")) {
                     ExplicitStateBuilder.run(conf, directory, datasetFilename, satBased, traceIncludeEach,
-                            traceFraction, true, true, outputSmv, outputSpin, timedConstraints);
+                            traceFraction, true, true, outputSmv, outputSpin, timedConstraints, makeAllStatesInitial);
                 } else if (Objects.equals(type, "explicit-state-completion-with-loops")) {
                     ExplicitStateBuilder.run(conf, directory, datasetFilename, satBased, traceIncludeEach,
-                            traceFraction, false, true, outputSmv, outputSpin, timedConstraints);
+                            traceFraction, false, true, outputSmv, outputSpin, timedConstraints, makeAllStatesInitial);
                 } else if (Objects.equals(type, "trace-evaluation")) {
                     ExplicitStateBuilder.run(conf, directory, datasetFilename, satBased, traceIncludeEach,
-                            traceFraction, true, false, false, false, timedConstraints);
+                            traceFraction, true, false, false, false, timedConstraints, makeAllStatesInitial);
                 } else if (Objects.equals(type, "traces")) {
                     TraceModelGenerator.run(conf, directory, datasetFilename);
                 } else if (Objects.equals(type, "quantiles")) {
