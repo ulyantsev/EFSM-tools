@@ -72,6 +72,7 @@ public class Dataset implements Serializable {
                 for (int j = 0; j < tracesM[i].length; j++) {
                     tracesM[i][j] = traces.get(i).get(j);
                 }
+                traces.get(i).clear();
             }
             res.put(p, tracesM);
         }

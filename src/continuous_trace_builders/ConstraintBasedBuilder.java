@@ -315,9 +315,7 @@ public class ConstraintBasedBuilder {
         sb.append("DEFINE\n");
         sb.append("    unsupported := FALSE;\n");
         sb.append(plantConversions(conf));
-        for (String fair : fairnessConstraints) {
-            sb.append(fair).append("\n");
-        }
+        fairnessConstraints.forEach(fair -> sb.append(fair).append("\n"));
         final String transformed = sb.toString()
                 .replaceAll("& TRUE", "")
                 .replaceAll("in TRUE", "")
@@ -340,7 +338,10 @@ public class ConstraintBasedBuilder {
         final Set<String> initConstraints = new LinkedHashSet<>();
         final Set<String> transConstraints = new LinkedHashSet<>();
         final Set<Parameter> allParameters = new LinkedHashSet<>(conf.parameters());
+
+        System.out.print("Obtaining parameter indices...");
         final Map<Parameter, int[][]> paramIndices = ds.toParamIndices(allParameters);
+        System.out.println(" done");
 
         final List<List<Parameter>> grouping = new ArrayList<>();
         if (groupingFile != null) {
@@ -355,7 +356,7 @@ public class ConstraintBasedBuilder {
             try (BufferedReader in = new BufferedReader(new FileReader(Paths.get(directory, groupingFile).toString()))) {
                 while (true) {
                     final String line = in.readLine();
-                    if (line == null || line.trim().equals("")) {
+                    if (line == null || line.trim().isEmpty()) {
                         break;
                     }
                     grouping.add(Arrays.asList(line.trim().split(" "))
@@ -369,41 +370,58 @@ public class ConstraintBasedBuilder {
         // 1. overall 1-dimensional constraints
         // "each output may only have values found in the traces"
         if (!disableOVERALL_1D) {
+            System.out.print("Overall 1D constraints...");
             add1DConstraints(conf, initConstraints, transConstraints, paramIndices);
+            System.out.println(" done");
         }
         // 2. overall 2-dimensional constraints
         // "for each pair of outputs, only value pairs found in some trace element are possible"
         if (!disableOVERALL_2D) {
+            System.out.print("Overall 2D constraints...");
             add2DConstraints(conf, initConstraints, transConstraints, paramIndices);
+            System.out.println(" done");
         }
         // 3. Ok = a & Ik = b -> O(k+1)=c
         if (!disableOIO_CONSTRAINTS) {
+            System.out.print("Output-input-output constraints...");
             addOIOConstraints(conf, transConstraints, grouping, paramIndices);
+            System.out.println(" done");
         }
 
         // 2. 2-dimensional constraints "input -> possible next state"
         // "for each pair of an input and an output, only output values are possible which occur after
         // the given input value in some pair of contiguous trace elements"
         // if the input is unknown, then no constraint
-        // FIXME do something with potential deadlocks, when unknown
+        // FIXME do something with potential deadlocks, when unknown - seems that this is not a major problem in LTL MC
         // input combinations require non-intersecting actions
         if (!disableINPUT_STATE) {
+            System.out.print("Input-state constraints...");
             addInputStateConstraints(conf, transConstraints, paramIndices);
+            System.out.println(" done");
         }
 
         // 2. 2-dimensional constraints "current state -> next state"
         // "for each output, only its value transitions found in some pair of contiguous trace
         // elements are possible"
         if (!disableCURRENT_NEXT) {
+            System.out.print("Current-next constraints...");
             addCurrentNextConstraints(conf, transConstraints, paramIndices);
+            System.out.println(" done");
         }
 
-        List<String> fairnessConstraints = new ArrayList<>();
+        final List<String> fairnessConstraints = new ArrayList<>();
         if (!constraintBasedDisableMONOTONIC_FAIRNESS_CONSTRAINTS) {
-            fairnessConstraints.addAll(MonotonicFairnessConstraintGenerator.generateFairnessConstraints(conf, ds, grouping));
+            System.out.print("Monotonic fairness constraints...");
+            fairnessConstraints.addAll(MonotonicFairnessConstraintGenerator.generateFairnessConstraints(conf, ds,
+                    grouping));
+            System.out.println(" done");
+
         }
         if (!constraintBasedDisableCOMPLEX_FAIRNESS_CONSTRAINTS) {
-            fairnessConstraints.addAll(ComplexFairnessConstraintGenerator.generateFairnessConstraints(conf, grouping, paramIndices));
+            System.out.print("Complex fairness constraints...");
+            fairnessConstraints.addAll(ComplexFairnessConstraintGenerator.generateFairnessConstraints(conf, grouping,
+                    paramIndices));
+            System.out.println(" done");
         }
 
         printRes(conf, initConstraints, transConstraints, fairnessConstraints, Utils.combinePaths(directory,

@@ -135,7 +135,7 @@ public class AprosBuilderMain extends MainBase {
 
     public static void main(String[] args) {
         new AprosBuilderMain().run(args, Author.IB,
-                "Toolset for NuSMV plant model synthesis from simulation traces in the Apros format");
+                "Toolset for NuSMV and Promela plant model synthesis from simulation traces in the Apros format");
     }
 
     @Override

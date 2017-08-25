@@ -64,8 +64,9 @@ public class Helper {
     }
 
     static class ControlParameter {
-        int group;
-        List<Integer> minusKey, plusKey;
+        final int group;
+        final List<Integer> minusKey;
+        final List<Integer> plusKey;
 
         ControlParameter(int group, List<Integer> plusKey, List<Integer> minusKey) {
             this.group = group;

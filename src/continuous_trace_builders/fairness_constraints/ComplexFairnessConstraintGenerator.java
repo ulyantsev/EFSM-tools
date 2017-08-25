@@ -76,9 +76,8 @@ public class ComplexFairnessConstraintGenerator {
     public static List<String> generateFairnessConstraints(Configuration conf, List<List<Parameter>> grouping,
                                                            Map<Parameter, int[][]> paramIndices) throws IOException {
         final List<Parameter> inputs = conf.inputParameters;
-        final int inputsSize = inputs.size();
-        final List<List<Integer>> groups = new ArrayList<>(inputsSize); // groups.toInt() + single elements
-        final List<List<Integer>> paramIndexToGroup = new ArrayList<>(inputsSize);
+        final List<List<Integer>> groups = new ArrayList<>(inputs.size()); // groups.toInt() + single elements
+        final List<List<Integer>> paramIndexToGroup = new ArrayList<>(inputs.size());
         Helper.initIntGroups(inputs, grouping, groups, paramIndexToGroup);
         final List<String> constraints = new ArrayList<>();
 
@@ -106,10 +105,10 @@ public class ComplexFairnessConstraintGenerator {
     }
 
     private static List<ControlParameter> getControlParameters(Counter c1, Counter c2) {
-        if (c1.vals.size() < MIN_VISIT_COUNT || c2.vals.size() < MIN_VISIT_COUNT) {
-            return new ArrayList<>();
-        }
         final List<ControlParameter> res = new ArrayList<>();
+        if (c1.vals.size() < MIN_VISIT_COUNT || c2.vals.size() < MIN_VISIT_COUNT) {
+            return res;
+        }
         for (int i = 0; i < c1.groupsCount; i++) {
             final List<List<Integer>> gKeys = new ArrayList<>(c1.keys[i]);
             for (int j = 0; j < gKeys.size(); j++) {
