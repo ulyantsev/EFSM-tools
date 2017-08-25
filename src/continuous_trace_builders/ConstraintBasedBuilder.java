@@ -20,9 +20,8 @@ import java.util.stream.Collectors;
 public class ConstraintBasedBuilder {
     static String plantCaption(Configuration conf) {
         final StringBuilder sb = new StringBuilder();
-        final String inputLine = String.join(", ",
-                conf.inputParameters.stream().map(p -> "CONT_INPUT_" + p.traceName())
-                        .collect(Collectors.toList()));
+        final String inputLine = String.join(", ", conf.inputParameters.stream().map(p -> "CONT_INPUT_" + p.traceName())
+                .collect(Collectors.toList()));
         sb.append("MODULE PLANT(").append(inputLine).append(")\n");
         sb.append("VAR\n");
         for (Parameter p : conf.outputParameters) {
@@ -173,6 +172,9 @@ public class ConstraintBasedBuilder {
             final int[][][] tracesI = new int[inputs.size()][][];
             for (int i = 0; i < inputs.size(); i++) {
                 tracesI[i] = paramIndices.get(inputs.get(i));
+                if (tracesI[i] == null) {
+                    System.out.println(i + " " + inputs.get(i) + " " + inputs);
+                }
             }
             for (Parameter po : conf.outputParameters) {
                 if (po instanceof IgnoredBoolParameter) {
@@ -339,12 +341,9 @@ public class ConstraintBasedBuilder {
         final Set<String> transConstraints = new LinkedHashSet<>();
         final Set<Parameter> allParameters = new LinkedHashSet<>(conf.parameters());
 
-        System.out.print("Obtaining parameter indices...");
-        final Map<Parameter, int[][]> paramIndices = ds.toParamIndices(allParameters);
-        System.out.println(" done");
-
         final List<List<Parameter>> grouping = new ArrayList<>();
         if (groupingFile != null) {
+            System.out.print("Reading parameter grouping...");
             Function<String, Parameter> findParameter = s -> {
                 for (Parameter par : conf.inputParameters) {
                     if (par.traceName().equals(s)) {
@@ -359,13 +358,21 @@ public class ConstraintBasedBuilder {
                     if (line == null || line.trim().isEmpty()) {
                         break;
                     }
-                    grouping.add(Arrays.asList(line.trim().split(" "))
-                            .stream()
-                            .map(findParameter)
-                            .collect(Collectors.toList()));
+                    final List<Parameter> group = Arrays.asList(line.trim().split(" "))
+                            .stream().map(findParameter).collect(Collectors.toList());
+                    if (group.contains(null)) {
+                        throw new RuntimeException("Finding a parameter resulted in null; there may be a mistake in" +
+                                " the grouping file");
+                    }
+                    grouping.add(group);
                 }
             }
+            System.out.println(" done");
         }
+
+        System.out.print("Obtaining parameter indices...");
+        final Map<Parameter, int[][]> paramIndices = ds.toParamIndices(allParameters);
+        System.out.println(" done");
 
         // 1. overall 1-dimensional constraints
         // "each output may only have values found in the traces"
