@@ -138,7 +138,7 @@ public class CounterexampleFormulaBuilder extends FormulaBuilder {
                         innerYConstraints.add(yVar(colorParent, colorChild, event).not());
                     }
                     BooleanFormula yFormula = completenessType == CompletenessType.NORMAL ?
-                            FalseFormula.INSTANCE : innerYConstraints.assemble();
+                            BooleanFormula.FALSE : innerYConstraints.assemble();
                     
                     // or actions on the transition are invalid
                     FormulaList innerZConstraints = new FormulaList(BinaryOperations.OR);

@@ -186,8 +186,8 @@ public class QuantifiedBooleanFormula {
             throws FormulaSizeException, TimeLimitExceededException {
         formulaToAppend = formulaToAppend.simplify();
         if (j == k + 1) {
-            assert formulaToAppend != FalseFormula.INSTANCE; // in this case the formula is obviously unsatisfiable
-            if (formulaToAppend != TrueFormula.INSTANCE) {
+            assert formulaToAppend != BooleanFormula.FALSE; // in this case the formula is obviously unsatisfiable
+            if (formulaToAppend != BooleanFormula.TRUE) {
                 buffer.append(formulaToAppend);
             }
         } else {
@@ -218,17 +218,17 @@ public class QuantifiedBooleanFormula {
                 
                 for (int iOther = 0; iOther < statesNum; iOther++) {
                     replacement.put(BooleanVariable.byName("sigma", iOther, j).get(),
-                            FalseFormula.INSTANCE);
+                            BooleanFormula.FALSE);
                 }
-                replacement.put(BooleanVariable.byName("sigma", i, j).get(), TrueFormula.INSTANCE);
+                replacement.put(BooleanVariable.byName("sigma", i, j).get(), BooleanFormula.TRUE);
                 for (int pIndex = 0; pIndex < events.size(); pIndex++) {
                     String e = events.get(pIndex);
                     for (String eOther : events) {
                         replacement.put(BooleanVariable.byName("eps", eOther, j).get(),
-                                    FalseFormula.INSTANCE);
+                                    BooleanFormula.FALSE);
                     }
                     replacement.put(BooleanVariable.byName("eps", e, j).get(),
-                            TrueFormula.INSTANCE);
+                            BooleanFormula.TRUE);
                     
                     // deal with zetas
                     for (String action : actions) {

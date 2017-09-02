@@ -289,7 +289,7 @@ public class NondetMooreAutomaton {
         final StringBuilder sb = new StringBuilder();
 
         if (false) {
-            sb.append("MODULE main()\n");
+            sb.append("MODULE main\n");
             sb.append("VAR\n");
             sb.append("    plant: PLANT(").append(inputLine).append(");\n");
             for (Pair<String, Parameter> entry : eventThresholds) {

@@ -100,9 +100,9 @@ public class BinaryOperation extends BooleanFormula {
         if (children.isEmpty()) {
             switch (type) {
             case AND:
-                return comment(TrueFormula.INSTANCE.toString());
+                return comment(BooleanFormula.TRUE.toString());
             case OR:
-                return comment(FalseFormula.INSTANCE.toString());
+                return comment(BooleanFormula.FALSE.toString());
             default:
                 throw new AssertionError();
             }
@@ -129,48 +129,48 @@ public class BinaryOperation extends BooleanFormula {
         BooleanFormula right;
         switch (type) {
         case AND:
-            if (childrenSimpl.contains(FalseFormula.INSTANCE)) {
-                return FalseFormula.INSTANCE;
+            if (childrenSimpl.contains(BooleanFormula.FALSE)) {
+                return BooleanFormula.FALSE;
             }
-            childrenSimpl.removeIf(elem -> elem == TrueFormula.INSTANCE);
-            return childrenSimpl.isEmpty() ? TrueFormula.INSTANCE
+            childrenSimpl.removeIf(elem -> elem == BooleanFormula.TRUE);
+            return childrenSimpl.isEmpty() ? BooleanFormula.TRUE
                 : childrenSimpl.size() == 1 ? childrenSimpl.get(0) : and(childrenSimpl);
         case OR:
-            if (childrenSimpl.contains(TrueFormula.INSTANCE)) {
-                return TrueFormula.INSTANCE;
+            if (childrenSimpl.contains(BooleanFormula.TRUE)) {
+                return BooleanFormula.TRUE;
             }
-            childrenSimpl.removeIf(elem -> elem == FalseFormula.INSTANCE);
-            return childrenSimpl.isEmpty() ? FalseFormula.INSTANCE
+            childrenSimpl.removeIf(elem -> elem == BooleanFormula.FALSE);
+            return childrenSimpl.isEmpty() ? BooleanFormula.FALSE
                     : childrenSimpl.size() == 1 ? childrenSimpl.get(0) : or(childrenSimpl);
         case EQ:
             left = childrenSimpl.get(0);
             right = childrenSimpl.get(1);
             if (left == right) { // both TRUE or both FALSE
-                return TrueFormula.INSTANCE;
-            } else if (left == TrueFormula.INSTANCE && right == FalseFormula.INSTANCE) {
-                return FalseFormula.INSTANCE;
-            } else if (left == FalseFormula.INSTANCE && right == TrueFormula.INSTANCE) {
-                return FalseFormula.INSTANCE;
-            } else if (left == TrueFormula.INSTANCE) {
+                return BooleanFormula.TRUE;
+            } else if (left == BooleanFormula.TRUE && right == BooleanFormula.FALSE) {
+                return BooleanFormula.FALSE;
+            } else if (left == BooleanFormula.FALSE && right == BooleanFormula.TRUE) {
+                return BooleanFormula.FALSE;
+            } else if (left == BooleanFormula.TRUE) {
                 return right;
-            } else if (right == TrueFormula.INSTANCE) {
+            } else if (right == BooleanFormula.TRUE) {
                 return left;
-            } else if (left == FalseFormula.INSTANCE) {
+            } else if (left == BooleanFormula.FALSE) {
                 return right.not();
-            } else if (right == FalseFormula.INSTANCE) {
+            } else if (right == BooleanFormula.FALSE) {
                 return left.not();
             }
             return new BinaryOperation(childrenSimpl, BinaryOperations.EQ);
         case IMPLIES:
             left = childrenSimpl.get(0);
             right = childrenSimpl.get(1);
-            if (left == FalseFormula.INSTANCE || right == TrueFormula.INSTANCE) {
-                return TrueFormula.INSTANCE;
-            } else if (left == TrueFormula.INSTANCE && right == FalseFormula.INSTANCE) {
-                return FalseFormula.INSTANCE;
-            } else if (left == TrueFormula.INSTANCE) {
+            if (left == BooleanFormula.FALSE || right == BooleanFormula.TRUE) {
+                return BooleanFormula.TRUE;
+            } else if (left == BooleanFormula.TRUE && right == BooleanFormula.FALSE) {
+                return BooleanFormula.FALSE;
+            } else if (left == BooleanFormula.TRUE) {
                 return right;
-            } else if (right == FalseFormula.INSTANCE) {
+            } else if (right == BooleanFormula.FALSE) {
                 return left.not();
             }
             return new BinaryOperation(childrenSimpl, BinaryOperations.IMPLIES);

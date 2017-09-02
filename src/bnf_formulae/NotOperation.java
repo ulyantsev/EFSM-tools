@@ -26,8 +26,8 @@ public class NotOperation extends BooleanFormula {
     @Override
     public BooleanFormula simplify() {
         final BooleanFormula insideSimpl = inside.simplify();
-        return insideSimpl == TrueFormula.INSTANCE ? FalseFormula.INSTANCE
-             : insideSimpl == FalseFormula.INSTANCE ? TrueFormula.INSTANCE : insideSimpl.not();
+        return insideSimpl == BooleanFormula.TRUE ? BooleanFormula.FALSE
+             : insideSimpl == BooleanFormula.FALSE ? BooleanFormula.TRUE : insideSimpl.not();
     }
 
     @Override

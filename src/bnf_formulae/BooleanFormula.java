@@ -13,7 +13,51 @@ import java.util.*;
 import java.util.logging.Logger;
 
 public abstract class BooleanFormula {
-    public static Optional<Assignment> fromDimacsToken(String token, DimacsConversionInfo dimacs) {
+    public static final BooleanFormula TRUE = new BooleanFormula() {
+        @Override
+        public String toLimbooleString() {
+            throw new AssertionError();
+        }
+
+        @Override
+        public String toString() {
+            return "TRUE";
+        }
+
+        @Override
+        public BooleanFormula multipleSubstitute(Map<BooleanVariable, BooleanFormula> replacement) {
+            return this;
+        }
+
+        @Override
+        public BooleanFormula simplify() {
+            return this;
+        }
+    };
+
+    public static final BooleanFormula FALSE = new BooleanFormula() {
+        @Override
+        public String toLimbooleString() {
+            throw new AssertionError();
+        }
+
+        @Override
+        public String toString() {
+            return "FALSE";
+        }
+
+        @Override
+        public BooleanFormula multipleSubstitute(Map<BooleanVariable, BooleanFormula> replacement) {
+            return this;
+        }
+
+        @Override
+        public BooleanFormula simplify() {
+            return this;
+        }
+    };
+
+    static Optional<Assignment> fromDimacsToken(String token, DimacsConversionInfo dimacs) {
         final boolean isTrue = token.charAt(0) != '-';
         if (!isTrue) {
             token = token.substring(1);
@@ -34,7 +78,7 @@ public abstract class BooleanFormula {
             return Collections.unmodifiableList(list);
         }
         
-        public SolveAsSatResult(List<Assignment> list, long time, DimacsConversionInfo info) {
+        SolveAsSatResult(List<Assignment> list, long time, DimacsConversionInfo info) {
             this.list = list;
             this.time = time;
             this.info = info;
@@ -345,10 +389,6 @@ public abstract class BooleanFormula {
      * Removes TRUE and FALSE.
      */
     public abstract BooleanFormula simplify();
-    
-    /*public static BooleanFormula fromBoolean(boolean value) {
-        return value ? TrueFormula.INSTANCE : FalseFormula.INSTANCE;
-    }*/
 
     @Override
     public boolean equals(Object other) {

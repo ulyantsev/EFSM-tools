@@ -240,9 +240,9 @@ public class QbfFormulaBuilder extends FormulaBuilder {
     
     private BooleanFormula translateConstant(LtlNode node) {
         if (node == BooleanNode.TRUE) {
-            return TrueFormula.INSTANCE;
+            return BooleanFormula.TRUE;
         } else if (node == BooleanNode.FALSE) {
-            return FalseFormula.INSTANCE;
+            return BooleanFormula.FALSE;
         } else {
             throw new AssertionError();
         }
@@ -263,7 +263,7 @@ public class QbfFormulaBuilder extends FormulaBuilder {
             LtlNode a = op.getOperand();
             switch (op.getType()) {
             case GLOBAL:
-                expansion = FalseFormula.INSTANCE;
+                expansion = BooleanFormula.FALSE;
                 break;
             case FUTURE:
                 final FormulaList orList = new FormulaList(BinaryOperations.OR);
@@ -273,7 +273,7 @@ public class QbfFormulaBuilder extends FormulaBuilder {
                 expansion = orList.assemble();
                 break;
             case NEXT:
-                expansion = index == k ? FalseFormula.INSTANCE : translateNonCyclic(a, index + 1);
+                expansion = index == k ? BooleanFormula.FALSE : translateNonCyclic(a, index + 1);
                 break;
             case NEG:
                 assert a instanceof BooleanNode || a instanceof Predicate;
