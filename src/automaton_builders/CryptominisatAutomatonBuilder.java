@@ -3,7 +3,6 @@ package automaton_builders;
 import formula_builders.DimacsCnfBuilder;
 import structures.mealy.MealyAutomaton;
 import structures.mealy.MealyNode;
-import structures.mealy.MealyTransition;
 import structures.mealy.ScenarioTree;
 
 import java.io.*;
@@ -65,12 +64,11 @@ public class CryptominisatAutomatonBuilder {
             for (int i = 0; i < tree.nodeCount(); i++) {
                 final int color = nodeColors[i];
                 final MealyNode state = ans.state(color);
-                for (MealyTransition t : tree.nodes().get(i).transitions()) {
-                    if (!state.hasTransition(t.event(), t.expr())) {
-                        int childColor = nodeColors[t.dst().number()];
-                        state.addTransition(t.event(), t.expr(), t.actions(), ans.state(childColor));
-                    }
-                }
+                tree.nodes().get(i).transitions().stream().filter(t -> !state.hasTransition(t.event(), t.expr()))
+                        .forEach(t -> {
+                    int childColor = nodeColors[t.dst().number()];
+                    state.addTransition(t.event(), t.expr(), t.actions(), ans.state(childColor));
+                });
             }
             return ans;
         }

@@ -17,9 +17,9 @@ import verification.ltl.LtlParser;
 import verification.ltl.buchi.BuchiAutomaton;
 import verification.ltl.buchi.BuchiNode;
 import verification.ltl.buchi.translator.JLtl2baTranslator;
-import verification.ltl.grammar.LtlNode;
-import verification.ltl.grammar.LtlUtils;
 import verification.ltl.grammar.PredicateFactory;
+import verification.ltl.grammar.UnaryOperator;
+import verification.ltl.grammar.UnaryOperatorType;
 import verification.statemachine.SimpleState;
 import verification.statemachine.StateMachine;
 import verification.statemachine.StateTransition;
@@ -37,33 +37,29 @@ public class VerifierFactory {
     
     private final List<BuchiAutomaton> preparedFormulae = new ArrayList<>();
     private final List<Set<BuchiNode>> finiteCounterexampleBuchiStates = new ArrayList<>();
-    private final List<LtlNode> preparedLtlNodes = new ArrayList<>();
-    
+
     private final boolean verifyFromAllStates;
     
-    public VerifierFactory(boolean verifyFromAllStates) {
+    VerifierFactory(boolean verifyFromAllStates) {
         this.verifyFromAllStates = verifyFromAllStates;
     }
 
-    public void prepareFormulas(List<String> formulas) throws LtlParseException {
+    void prepareFormulas(List<String> formulas) throws LtlParseException {
          final JLtl2baTranslator translator = new JLtl2baTranslator();
 
-         for (LtlNode node : LtlParser.parse(formulas, new GrammarConverter(predicates))) {
-             preparedLtlNodes.add(node);
-             preparedFormulae.add(translator.translate(LtlUtils.getInstance().neg(node)));
-         }
+        preparedFormulae.addAll(LtlParser.parse(formulas, new GrammarConverter(predicates)).stream()
+                .map(node -> translator.translate(new UnaryOperator(UnaryOperatorType.NEG, node)))
+                .collect(Collectors.toList()));
          
          finiteCounterexampleBuchiStates.addAll(preparedFormulae.stream()
                  .map(FiniteCounterexampleNodeSearcher::findCounterexampleBuchiStates)
                  .collect(Collectors.toList()));
     }
         
-    public void configureDetMealyMachine(MealyAutomaton automaton) {
+    void configureDetMealyMachine(MealyAutomaton automaton) {
         final StateMachine machine = new StateMachine();
 
-        final SimpleState nondetInit = verifyFromAllStates
-                ? new SimpleState("nondet_init", true)
-                : null;
+        final SimpleState nondetInit = verifyFromAllStates ? new SimpleState("nondet_init", true) : null;
         if (verifyFromAllStates) {
             machine.addState(nondetInit);
         }
@@ -88,7 +84,7 @@ public class VerifierFactory {
         this.machine = machine;
     }
 
-    public void configureNondetMooreMachine(NondetMooreAutomaton automaton) {
+    void configureNondetMooreMachine(NondetMooreAutomaton automaton) {
         final StateMachine machine = new StateMachine();
 
         final SimpleState[] statesArr = new SimpleState[automaton.stateCount() + 1];

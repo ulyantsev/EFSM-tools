@@ -1,17 +1,17 @@
 package algorithms;
 
+import structures.mealy.MealyNode;
+import structures.mealy.MealyTransition;
+import structures.mealy.ScenarioTree;
+
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
-import structures.mealy.MealyNode;
-import structures.mealy.ScenarioTree;
-import structures.mealy.MealyTransition;
-
 public class AdjacencyCalculator {
     public static Map<MealyNode, Set<MealyNode>> getAdjacent(ScenarioTree tree) {
-        Map<MealyNode, Set<MealyNode>> ans = new HashMap<>();
+        final Map<MealyNode, Set<MealyNode>> ans = new HashMap<>();
         calcNode(tree, tree.root(), ans);
         return ans;
     }
@@ -27,22 +27,17 @@ public class AdjacencyCalculator {
             for (MealyTransition t1 : node.transitions()) {
                 // calculating for children
                 calcNode(tree, t1.dst(), ans);
-                for (MealyNode other : tree.nodes()) {
-                    if (other != node) {
-                        for (MealyTransition t2 : other.transitions()) {
-                            if (t1.event().equals(t2.event())) {
-                                if (t1.expr() == t2.expr()) {
-                                    if (!t1.actions().equals(t2.actions())
-                                            || ans.get(t1.dst()).contains(t2.dst())) {
-                                        adjacentSet.add(other);
-                                    }
-                                } else if (t1.expr().hasSolutionWith(t2.expr())) {
-                                    adjacentSet.add(other);
-                                }
-                            }
+                tree.nodes().stream().filter(other -> other != node).forEach(other -> other.transitions().stream()
+                        .filter(t2 -> t1.event().equals(t2.event())).forEach(t2 -> {
+                    if (t1.expr() == t2.expr()) {
+                        if (!t1.actions().equals(t2.actions())
+                                || ans.get(t1.dst()).contains(t2.dst())) {
+                            adjacentSet.add(other);
                         }
+                    } else if (t1.expr().hasSolutionWith(t2.expr())) {
+                        adjacentSet.add(other);
                     }
-                }
+                }));
             }
         }
     }

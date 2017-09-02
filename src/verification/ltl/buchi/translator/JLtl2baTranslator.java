@@ -122,13 +122,11 @@ public class JLtl2baTranslator {
          * If accept node has not transitions, add transition to it
          */
         private void checkAcceptStates() {
-            for (BuchiNode n : acceptNodes) {
-                if (n.getTransitions().isEmpty()) {
-                    TransitionCondition cond = new TransitionCondition();
-                    cond.addExpression(BooleanNode.TRUE);
-                    n.addTransition(cond, n);
-                }
-            }
+            acceptNodes.stream().filter(n -> n.getTransitions().isEmpty()).forEach(n -> {
+                final TransitionCondition cond = new TransitionCondition();
+                cond.addExpression(BooleanNode.TRUE);
+                n.addTransition(cond, n);
+            });
         }
     }
 

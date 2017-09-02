@@ -46,7 +46,7 @@ public class LtlParser {
                 expansion.add(event + String.valueOf(arr));
             }
             lastPos = m.end();
-            sb.append("event(" + String.join(", ", expansion) + ")");
+            sb.append("event(").append(String.join(", ", expansion)).append(")");
         }
         sb.append(formula.substring(lastPos, formula.length()));
         return sb.toString();
@@ -74,7 +74,7 @@ public class LtlParser {
                 }
             }
             lastPos = m.end();
-            sb.append("event(" + String.join(", ", expansion) + ")");
+            sb.append("event(").append(String.join(", ", expansion)).append(")");
         }
         sb.append(formula.substring(lastPos, formula.length()));
         return sb.toString();

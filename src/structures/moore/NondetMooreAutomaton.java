@@ -302,6 +302,12 @@ public class NondetMooreAutomaton {
 
         sb.append("MODULE PLANT(").append(inputLine).append(")\n");
         sb.append("VAR\n");
+        for (Pair<String, Parameter> entry : actionThresholds) {
+            final String paramName = entry.getKey();
+            final Parameter p = entry.getValue();
+            final String name = "CONT_" + paramName;
+            sb.append("    ").append(name).append(": ").append(p.nusmvType()).append(";\n");
+        }
         sb.append("    unsupported: boolean;\n");
         sb.append("    loop_executed: boolean;\n");
         sb.append("    state: 0..").append(stateCount() - 1).append(";\n");
@@ -411,6 +417,7 @@ public class NondetMooreAutomaton {
         }
 
         // output conversion to continuous values
+        sb.append("ASSIGN\n");
         for (Pair<String, Parameter> entry : actionThresholds) {
             final String paramName = entry.getKey();
             final Parameter param = entry.getValue();
