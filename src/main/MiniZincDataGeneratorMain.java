@@ -88,9 +88,9 @@ public class MiniZincDataGeneratorMain extends MainBase {
         final int[] events = new int[tree.nodeCount() - 1], actions = new int[tree.nodeCount() - 1],
                 parents = new int[tree.nodeCount() - 1];
         for (int nodeNum = 1; nodeNum < tree.nodeCount(); nodeNum++) {
-            MealyTransition t = incomingTransition[nodeNum];
+            final MealyTransition t = incomingTransition[nodeNum];
 
-            String eventExpr = t.event() + "[" + t.expr().toString() + "]";
+            final String eventExpr = t.event() + "[" + t.expr().toString() + "]";
             events[nodeNum - 1] = eventExprOrder.indexOf(eventExpr) + 1;
             actions[nodeNum - 1] = actionsOrder.indexOf(t.actions().toString());
             parents[nodeNum - 1] = t.src().number();

@@ -11,27 +11,19 @@ import structures.mealy.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class CounterexampleFormulaBuilder extends FormulaBuilder {
     private final NegativeScenarioTree negativeTree;
     private final List<BooleanFormula> prohibitedFsms;
 
-    public CounterexampleFormulaBuilder(ScenarioTree tree, int colorSize,
-            List<String> events, List<String> actions,
-            CompletenessType completenessType, NegativeScenarioTree negativeTree,
-            List<BooleanFormula> prohibitedFsms) {
+    public CounterexampleFormulaBuilder(ScenarioTree tree, int colorSize, List<String> events, List<String> actions,
+            CompletenessType completenessType, NegativeScenarioTree negativeTree, List<BooleanFormula> prohibitedFsms) {
         super(colorSize, tree, completenessType, events, actions);
         this.negativeTree = negativeTree;
         this.prohibitedFsms = prohibitedFsms;
     }
 
-    public Collection<BooleanVariable> nagativeVars() {
-        return existVars.stream().filter(v -> v.name.startsWith("xx_")).collect(Collectors.toList());
-    }
-    
     private static BooleanVariable xxVar(int state, int color) {
         return BooleanVariable.byName("xx", state, color).get();
     }

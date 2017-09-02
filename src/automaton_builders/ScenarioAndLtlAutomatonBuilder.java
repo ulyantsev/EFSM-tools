@@ -26,17 +26,15 @@ import java.util.stream.Collectors;
  */
 
 public abstract class ScenarioAndLtlAutomatonBuilder {
-    protected static void deleteTrash() {
+    static void deleteTrash() {
         // delete files from the previous run
-        Arrays.stream(new File(".").listFiles())
-            .filter(f -> f.getName().startsWith("_tmp."))
-            .forEach(File::delete);
+        Arrays.stream(new File(".").listFiles()).filter(f -> f.getName().startsWith("_tmp.")).forEach(File::delete);
     }
     
     /*
      * Returns (automaton, transition variables supported by scenarios).
      */
-    public static Pair<MealyAutomaton, List<BooleanVariable>> constructAutomatonFromAssignment(Logger logger,
+    static Pair<MealyAutomaton, List<BooleanVariable>> constructAutomatonFromAssignment(Logger logger,
             List<Assignment> ass, ScenarioTree tree, int colorSize, boolean complete, CompletenessType completenessType) {
         final List<BooleanVariable> filteredYVars = new ArrayList<>();
         final int[] nodeColors = new int[tree.nodeCount()];

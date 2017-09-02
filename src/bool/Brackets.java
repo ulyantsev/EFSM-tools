@@ -33,7 +33,7 @@ public class Brackets {
     /**
      * Map of open brackets to their matching close bracket
      */
-    private static final Map<String, String> BRACKET_PAIRS = new HashMap<String, String>();
+    private static final Map<String, String> BRACKET_PAIRS = new HashMap<>();
 
     static {
         BRACKET_PAIRS.put("(", ")");

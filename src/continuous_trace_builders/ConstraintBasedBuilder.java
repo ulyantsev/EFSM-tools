@@ -27,12 +27,16 @@ public class ConstraintBasedBuilder {
         for (Parameter p : conf.outputParameters) {
             sb.append("    output_").append(p.traceName()).append(": 0..").append(p.valueCount() - 1).append(";\n");
         }
+        for (Parameter p : conf.outputParameters) {
+            final String name = "CONT_" + p.traceName();
+            sb.append("    ").append(name).append(": ").append(p.nusmvType()).append(";\n");
+        }
         return sb.toString();
     }
 
     static String plantConversions(Configuration conf) {
         final StringBuilder sb = new StringBuilder();
-        sb.append("DEFINE\n");
+        sb.append("ASSIGN\n");
         // output conversion to continuous values
         for (Parameter p : conf.outputParameters) {
             sb.append("    CONT_").append(p.traceName()).append(" := case\n");
@@ -92,6 +96,7 @@ public class ConstraintBasedBuilder {
                     continue;
                 }
                 final int[][] tracesJ = paramIndices.get(pj);
+                @SuppressWarnings("unchecked")
                 final Set<Integer>[] indexPairs = new Set[pi.valueCount()];
                 for (int u = 0; u < tracesI.length; u++) {
                     for (int v = 0; v < tracesI[u].length; v++) {

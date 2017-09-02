@@ -89,11 +89,8 @@ public class TruthTable {
         variablesList = new ArrayList<>();
 
         for (final BooleanExpression expression : expressionCollection) {
-            for (final String str : expression.getVariableSet()) {
-                if (!variablesList.contains(str)) {
-                    variablesList.add(str);
-                }
-            }
+            expression.getVariableSet().stream().filter(str -> !variablesList.contains(str))
+                    .forEach(variablesList::add);
         }
 
         Collections.sort(variablesList);
@@ -191,7 +188,7 @@ public class TruthTable {
         // If there are no variables, return a list containing a single empty
         // dictionary
         if (vars.size() == 0) {
-            dictsList.add(new HashMap<String, Boolean>());
+            dictsList.add(new HashMap<>());
             return dictsList;
         }
 

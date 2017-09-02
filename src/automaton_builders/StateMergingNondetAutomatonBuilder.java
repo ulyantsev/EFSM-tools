@@ -79,7 +79,8 @@ public class StateMergingNondetAutomatonBuilder extends ScenarioAndLtlAutomatonB
         return build2(logger, v, newSc, actions);
     }
 
-    public static List<String> transformPath(List<String> eventList, List<StringActions> actionList, List<String> actions) {
+    private static List<String> transformPath(List<String> eventList, List<StringActions> actionList,
+                                              List<String> actions) {
         final List<String> newEvents = new ArrayList<>();
         for (int i = 0; i < eventList.size(); i++) {
             final char[] scAction = new char[actions.size()];
@@ -93,8 +94,9 @@ public class StateMergingNondetAutomatonBuilder extends ScenarioAndLtlAutomatonB
         return newEvents;
     }
 
-    public static Optional<NondetMooreAutomaton> build2(Logger logger, Verifier verifier, List<List<String>> possc,
-                                                  List<String> actions) throws FileNotFoundException, ParseException {
+    private static Optional<NondetMooreAutomaton> build2(Logger logger, Verifier verifier, List<List<String>> possc,
+                                                         List<String> actions)
+            throws FileNotFoundException, ParseException {
         final List<List<String>> negsc = new ArrayList<>();
         APTA a = StateMergingAutomatonBuilder.getAPTA(possc, negsc);
 

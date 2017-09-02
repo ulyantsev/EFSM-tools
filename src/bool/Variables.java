@@ -39,8 +39,8 @@ public class Variables {
      * @return true if str is a valid variable name, else false
      */
     public static boolean isVariable(final String str, final Set<Collection<String>> dictionaries) {
-        if (BooleanOperator.isOperator(str) || Brackets.isOpenBracket(str) || Brackets.isCloseBracket(str) || str.length() != 1
-                || !Character.isLetter(str.charAt(0))) {
+        if (BooleanOperator.isOperator(str) || Brackets.isOpenBracket(str) || Brackets.isCloseBracket(str)
+                || str.length() != 1 || !Character.isLetter(str.charAt(0))) {
             return false;
         }
 

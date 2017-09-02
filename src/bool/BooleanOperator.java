@@ -35,7 +35,7 @@ public abstract class BooleanOperator {
     /**
      * Map of strings representing unary operators to their implementation
      */
-    private static final Map<String, BooleanOperator> OPERATORS = new HashMap<String, BooleanOperator>();
+    private static final Map<String, BooleanOperator> OPERATORS = new HashMap<>();
 
     static {
         // IFF (Biconditional)

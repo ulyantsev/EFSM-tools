@@ -24,8 +24,7 @@ public class BooleanVariable extends BooleanFormula implements Comparable<Boolea
         assert indices.length == 0 || !prefix.contains("_");
         return indices.length == 0
                 ? prefix
-                : Arrays.deepToString(indices).replace("[", prefix + "_")
-                    .replace(", ", "_").replace("]", "");
+                : Arrays.deepToString(indices).replace("[", prefix + "_").replace(", ", "_").replace("]", "");
     }
 
     public BooleanVariable(String prefix, Object... indices) {
