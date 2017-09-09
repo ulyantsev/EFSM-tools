@@ -111,7 +111,7 @@ public class BFSVariableProhibitionDeterminer {
     
     private void parentConstraints() {
         for (int j = 1; j < colorSize; j++) {
-            FormulaList options = new FormulaList(BinaryOperations.OR);
+            final FormulaList options = new FormulaList(BinaryOperations.OR);
             for (int i = 0; i < j; i++) {
                 options.add(pVar(j, i));
             }
@@ -130,7 +130,7 @@ public class BFSVariableProhibitionDeterminer {
     private void pDefinitions() {
         for (int i = 0; i < colorSize; i++) {
             for (int j = i + 1; j < colorSize; j++) {
-                FormulaList definition = new FormulaList(BinaryOperations.AND);
+                final FormulaList definition = new FormulaList(BinaryOperations.AND);
                 definition.add(tVar(i, j));
                 for (int k = i - 1; k >=0; k--) {
                     definition.add(tVar(k, j).not());
@@ -143,7 +143,7 @@ public class BFSVariableProhibitionDeterminer {
     private void tDefinitions() {
         for (int i = 0; i < colorSize; i++) {
             for (int j = i + 1; j < colorSize; j++) {
-                FormulaList definition = new FormulaList(BinaryOperations.OR);
+                final FormulaList definition = new FormulaList(BinaryOperations.OR);
                 for (int e = 0; e < eventNum; e++) {
                     definition.add(yVar(i, j, e));
                 }
@@ -158,7 +158,7 @@ public class BFSVariableProhibitionDeterminer {
             for (int i = 0; i < colorSize; i++) {
                 for (int j = i + 1; j < colorSize; j++) {
                     for (int e1 = 0; e1 < eventNum; e1++) {
-                        FormulaList definition = new FormulaList(BinaryOperations.AND);
+                        final FormulaList definition = new FormulaList(BinaryOperations.AND);
                         definition.add(yVar(i, j, e1));
                         for (int e2 = e1 - 1; e2 >= 0; e2--) {
                             definition.add(yVar(i, j, e2).not());

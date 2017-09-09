@@ -9,6 +9,7 @@ import continuous_trace_builders.parameters.Parameter;
 import java.io.*;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.zip.ZipInputStream;
 
 public class Dataset implements Serializable {
     private final Map<String, Integer> paramIndices = new HashMap<>();
@@ -185,35 +186,49 @@ public class Dataset implements Serializable {
         }
         final Writer writer = new Writer();
 
-        for (String filename : new File(traceLocation).list()) {
-            if (!filename.endsWith(".txt") || !filename.startsWith(traceFilenamePrefix)) {
+        final String[] filenames = new File(traceLocation).list();
+        Arrays.sort(filenames);
+
+        for (String filename : filenames) {
+            final boolean isArchive = filename.endsWith(".txt.zip");
+            if (!(filename.endsWith(".txt") || isArchive) || !filename.startsWith(traceFilenamePrefix)) {
                 continue;
             }
             double timestampToRecord = includeFirstElement? 0 : intervalSec;
 
-            try (Scanner sc = new Scanner(new File(Utils.combinePaths(traceLocation, filename)))) {
+            final File file = new File(Utils.combinePaths(traceLocation, filename));
+
+            final InputStream is;
+            if (isArchive) {
+                final ZipInputStream zis = new ZipInputStream(new FileInputStream(file));
+                zis.getNextEntry();
+                is = zis;
+            } else {
+                is = new FileInputStream(file);
+            }
+
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(is))) {
                 final List<double[]> trace = new ArrayList<>();
 
-                final int paramNum = Integer.valueOf(sc.nextLine()) - 1;
-                sc.nextLine();
+                final int paramNum = Integer.valueOf(reader.readLine()) - 1;
+                reader.readLine();
                 if (paramIndices.isEmpty()) {
                     // read param names
                     for (int i = 0; i < paramNum; i++) {
-                        final String[] tokens = Utils.splitString(sc.nextLine());
+                        final String[] tokens = Utils.splitString(reader.readLine());
                         final String name = String.join("#", tokens);
                         paramIndices.put(name, paramIndices.size());
                     }
                 } else {
                     // skip param names
                     for (int i = 0; i < paramNum; i++) {
-                        sc.nextLine();
+                        reader.readLine();
                     }
                 }
 
-                while (sc.hasNextLine()) {
-                    final String line = sc.nextLine();
+                String line;
+                while ((line = reader.readLine()) != null) {
                     final String[] tokens = Utils.splitString(line);
-
                     double curTimestamp = Double.parseDouble(tokens[0]);
                     if (curTimestamp >= timestampToRecord) {
                         timestampToRecord += intervalSec;
