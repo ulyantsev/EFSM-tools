@@ -9,7 +9,9 @@ import continuous_trace_builders.parameters.Parameter;
 import java.io.*;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 
 public class Dataset implements Serializable {
     private final Map<String, Integer> paramIndices = new HashMap<>();
@@ -103,7 +105,10 @@ public class Dataset implements Serializable {
         private List<double[]> preparedNext;
 
         Reader() throws IOException {
-            reader = new BufferedReader(new FileReader(Utils.combinePaths(dirName, DATA_FILENAME)));
+            final String path = Utils.combinePaths(dirName, DATA_FILENAME + ".zip");
+            final ZipInputStream zis = new ZipInputStream(new FileInputStream(path));
+            zis.getNextEntry();
+            reader = new BufferedReader(new InputStreamReader(zis));
         }
 
         public boolean hasNext() throws IOException {
@@ -139,7 +144,10 @@ public class Dataset implements Serializable {
         private final BufferedWriter out;
 
         Writer() throws IOException {
-            out = new BufferedWriter(new FileWriter(Utils.combinePaths(dirName, DATA_FILENAME)));
+            final String path = Utils.combinePaths(dirName, DATA_FILENAME + ".zip");
+            final ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(path));
+            zos.putNextEntry(new ZipEntry(DATA_FILENAME));
+            out = new BufferedWriter(new OutputStreamWriter(zos));
         }
 
         void write(List<double[]> trace) throws IOException {
