@@ -173,22 +173,22 @@ Here are scripts to run some examples (the first one is from the paper):
 
 Configuration files describe inputs and outputs of the plant model. A dataset file must be precompiled from traces represented in the format of the Apros continuous process simulator. Examples of configuration, a script to generate traces and a script to precompile a dataset can be found in [evaluation/counter](/evaluation/counter).
 
-This method will be described in:
+This method is described in:
 
-* Buzhinsky I., Pakonen A., Vyatkin V. Scalable methods of discrete plant model generation for closed-loop model checking. Accepted to IECON 2017 
+* [Buzhinsky I., Pakonen A., Vyatkin V. Scalable methods of discrete plant model generation for closed-loop model checking. 43rd Annual Conference of the IEEE Industrial Electronics Society (IECON). October 29 – November 01, Beijing, China, pp. 5483–5488. IEEE, 2017](http://rain.ifmo.ru/~buzhinsky/papers/iecon-2017-scalable.pdf) 
 
 *3. Constraint-based (symbolic) method.* Synthesizes purely symbolic models which are easier for the verifier [NuSMV](http://nusmv.fbk.eu/) to process. Run:
 > java -jar jars/apros-builder.jar --type constraint-based --config <config file> --dataset <dataset file> --constraintBasedDisableOIO_CONSTRAINTS --constraintBasedDisableFAIRNESS_CONSTRAINTS
 
-This method will be described in:
+This method is described in:
 
-* Buzhinsky I., Pakonen A., Vyatkin V. Scalable methods of discrete plant model generation for closed-loop model checking. Accepted to IECON 2017 
+* [Buzhinsky I., Pakonen A., Vyatkin V. Scalable methods of discrete plant model generation for closed-loop model checking. 43rd Annual Conference of the IEEE Industrial Electronics Society (IECON). October 29 – November 01, Beijing, China, pp. 5483–5488. IEEE, 2017](http://rain.ifmo.ru/~buzhinsky/papers/iecon-2017-scalable.pdf)
 
 *4. Modular method*. Modular explicit-state plant model construction. An example is given in [evaluation/counter/modular.sh](/evaluation/counter/modular.sh).
 
-This method will be described in:
+This method is described in:
 
-* Buzhinsky I., Vyatkin V. Modular Plant Model Synthesis from Behavior Traces and Temporal Properties. Accepted to ETFA 2017 
+* [Buzhinsky I., Vyatkin V. Modular Plant Model Synthesis from Behavior Traces and Temporal Properties. 22nd IEEE Conference on Emerging Technologies & Factory Automation (ETFA). September 12–15, 2017, Limassol, Cyprus. IEEE, 2017](http://rain.ifmo.ru/~buzhinsky/papers/etfa-2017-modular.pdf) 
 
 ## Moore machine synthesis from traces and LTL properties
 
