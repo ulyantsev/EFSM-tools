@@ -17,6 +17,8 @@ public class ComplexFairnessConstraintGenerator {
     private final static int MIN_VISIT_COUNT = 5;
     private final static double REL_ERROR = 1. / 20;
 
+    private static final continuous_trace_builders.Counter C = new continuous_trace_builders.Counter();
+
     @SuppressWarnings("unchecked")
     private static Counter[][] collectCounts(Parameter po, List<List<Integer>> groups, List<Parameter> inputs,
                                              Map<Parameter, int[][]> paramIndices) throws IOException {
@@ -96,11 +98,13 @@ public class ComplexFairnessConstraintGenerator {
                                     + control.keyToString(groups, inputs, true) + ")");
                             constraints.add("FAIRNESS !(output_" + po.traceName() + " = " + mid
                                     + control.keyToString(groups, inputs, false) + ")");
+                            C.add(2);
                         }
                     }
                 }
             }
         }
+        C.log();
         return constraints;
     }
 

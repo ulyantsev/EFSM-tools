@@ -1,7 +1,7 @@
 package continuous_trace_builders;
 
 /**
- * (c) Igor Buzhinsky
+ * (C) Igor Buzhinsky
  */
 
 import continuous_trace_builders.fairness_constraints.ComplexFairnessConstraintGenerator;
@@ -18,6 +18,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class ConstraintBasedBuilder {
+    private static final Counter C = new Counter();
+
     static String plantCaption(Configuration conf) {
         final StringBuilder sb = new StringBuilder();
         final String inputLine = String.join(", ", conf.inputParameters.stream().map(p -> "CONT_INPUT_" + p.traceName())
@@ -79,7 +81,9 @@ public class ConstraintBasedBuilder {
             }
             initConstraints.add(interval(indices, p, false));
             transConstraints.add(interval(indices, p, true));
+            C.add(2);
         }
+        C.log();
     }
 
     private static void add2DConstraints(Configuration conf, Collection<String> initConstraints,
@@ -125,9 +129,11 @@ public class ConstraintBasedBuilder {
                     }
 
                     list.add(String.join(" | ", optionList));
+                    C.add(1);
                 }
             }
         }
+        C.log();
     }
 
     private static void addOIOConstraints(Configuration conf, Collection<String> transConstraints,
@@ -171,6 +177,7 @@ public class ConstraintBasedBuilder {
                 }
 
                 transConstraints.add(String.join(" | ", optionList));
+                C.add(1);
             }
         }
         for (List<Parameter> inputs : grouping) {
@@ -219,13 +226,14 @@ public class ConstraintBasedBuilder {
                 }
 
                 transConstraints.add(String.join(" | ", optionList));
+                C.add(1);
             }
         }
+        C.log();
     }
 
     private static void addInputStateConstraints(Configuration conf, Collection<String> transConstraints,
-                                                 Map<Parameter, int[][]> paramIndices)
-            throws IOException {
+                                                 Map<Parameter, int[][]> paramIndices) throws IOException {
         for (Parameter pi : conf.inputParameters) {
             if (pi instanceof IgnoredBoolParameter) {
                 continue;
@@ -256,8 +264,10 @@ public class ConstraintBasedBuilder {
                 }
 
                 transConstraints.add(String.join(" | ", optionList));
+                C.add(1);
             }
         }
+        C.log();
     }
 
     private static void addCurrentNextConstraints(Configuration conf, Collection<String> transConstraints,
@@ -284,12 +294,13 @@ public class ConstraintBasedBuilder {
             final List<String> optionList = new ArrayList<>();
             for (Map.Entry<Integer, Set<Integer>> implication : indexPairs.entrySet()) {
                 final int index1 = implication.getKey();
-                optionList.add("output_" + p.traceName()
-                        + " = " + index1
+                optionList.add("output_" + p.traceName() + " = " + index1
                         + (" & " + interval(indexPairs.get(index1), p, true)));
             }
             transConstraints.add(String.join(" | ", optionList));
+            C.add(1);
         }
+        C.log();
     }
 
     private static void printRes(Configuration conf, Collection<String> initConstraints,
@@ -332,7 +343,7 @@ public class ConstraintBasedBuilder {
         Utils.writeToFile(outFilename, transformed);
 
         System.out.println("Done; model has been written to: " + outFilename);
-        System.out.println("Constraints generated: " + constraintsCount);
+        System.out.println("Constraints generated (not counting duplicates): " + constraintsCount);
     }
 
     public static void run(Configuration conf, String directory, String datasetFilename, String groupingFile,
@@ -384,20 +395,17 @@ public class ConstraintBasedBuilder {
         if (!disableOVERALL_1D) {
             System.out.print("Overall 1D constraints...");
             add1DConstraints(conf, initConstraints, transConstraints, paramIndices);
-            System.out.println(" done");
         }
         // 2. overall 2-dimensional constraints
         // "for each pair of outputs, only value pairs found in some trace element are possible"
         if (!disableOVERALL_2D) {
             System.out.print("Overall 2D constraints...");
             add2DConstraints(conf, initConstraints, transConstraints, paramIndices);
-            System.out.println(" done");
         }
-        // 3. Ok = a & Ik = b -> O(k+1)=c
+        // 3. Ok = a & Ik = b -> O(k+1)=C
         if (!disableOIO_CONSTRAINTS) {
             System.out.print("Output-input-output constraints...");
             addOIOConstraints(conf, transConstraints, grouping, paramIndices);
-            System.out.println(" done");
         }
 
         // 2. 2-dimensional constraints "input -> possible next state"
@@ -409,7 +417,6 @@ public class ConstraintBasedBuilder {
         if (!disableINPUT_STATE) {
             System.out.print("Input-state constraints...");
             addInputStateConstraints(conf, transConstraints, paramIndices);
-            System.out.println(" done");
         }
 
         // 2. 2-dimensional constraints "current state -> next state"
@@ -418,7 +425,6 @@ public class ConstraintBasedBuilder {
         if (!disableCURRENT_NEXT) {
             System.out.print("Current-next constraints...");
             addCurrentNextConstraints(conf, transConstraints, paramIndices);
-            System.out.println(" done");
         }
 
         final List<String> fairnessConstraints = new ArrayList<>();
@@ -426,14 +432,12 @@ public class ConstraintBasedBuilder {
             System.out.print("Monotonic fairness constraints...");
             fairnessConstraints.addAll(MonotonicFairnessConstraintGenerator.generateFairnessConstraints(conf, ds,
                     grouping));
-            System.out.println(" done");
 
         }
         if (!constraintBasedDisableCOMPLEX_FAIRNESS_CONSTRAINTS) {
             System.out.print("Complex fairness constraints...");
             fairnessConstraints.addAll(ComplexFairnessConstraintGenerator.generateFairnessConstraints(conf, grouping,
                     paramIndices));
-            System.out.println(" done");
         }
 
         printRes(conf, initConstraints, transConstraints, fairnessConstraints, Utils.combinePaths(directory,

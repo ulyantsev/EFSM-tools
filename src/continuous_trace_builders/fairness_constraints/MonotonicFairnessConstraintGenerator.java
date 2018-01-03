@@ -1,6 +1,7 @@
 package continuous_trace_builders.fairness_constraints;
 
 import continuous_trace_builders.Configuration;
+import continuous_trace_builders.Counter;
 import continuous_trace_builders.Dataset;
 import continuous_trace_builders.parameters.Parameter;
 
@@ -12,6 +13,8 @@ import java.util.stream.Collectors;
 import static continuous_trace_builders.fairness_constraints.Helper.*;
 
 public class MonotonicFairnessConstraintGenerator {
+    private static final Counter C = new Counter();
+
     public static List<String> generateFairnessConstraints(Configuration conf, Dataset ds,
                                                            List<List<Parameter>> grouping) throws IOException {
         final List<Parameter> inputs = conf.inputParameters;
@@ -33,9 +36,11 @@ public class MonotonicFairnessConstraintGenerator {
                             + control.keyToString(groups, inputs, true) + ")");
                     constraints.add("FAIRNESS !(output_" + po.traceName() + " = " + (pos + 1)
                             + control.keyToString(groups, inputs, false) + ")");
+                    C.add(2);
                 }
             }
         }
+        C.log();
         return constraints;
     }
 
