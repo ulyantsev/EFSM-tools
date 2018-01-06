@@ -74,7 +74,7 @@ public class ScenariosFromJSON {
         return result;
     }
 
-    static List<String> splitList(String list) {
+    private static List<String> splitList(String list) {
         return Arrays.asList(list.replace("[", "").replace("\"", "").replace("]", "").split(", "));
     }
 

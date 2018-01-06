@@ -187,17 +187,17 @@ public class UnbeastTransformer {
     
     private static class Visitor implements INodeVisitor<Void, StringBuilder> {
         private Void visitUnary(String name, UnaryOperator op, StringBuilder sb) {
-            sb.append("<" + name + ">");
+            sb.append("<").append(name).append(">");
             op.getOperand().accept(this, sb);
-            sb.append("</" + name + ">");
+            sb.append("</").append(name).append(">");
             return null;
         }
         
         private Void visitBinary(String name, BinaryOperator op, StringBuilder sb) {
-            sb.append("<" + name + ">");
+            sb.append("<").append(name).append(">");
             op.getLeftOperand().accept(this, sb);
             op.getRightOperand().accept(this, sb);
-            sb.append("</" + name + ">");
+            sb.append("</").append(name).append(">");
             return null;
         }
 
@@ -360,16 +360,16 @@ public class UnbeastTransformer {
             //sb.append("<PathToLTLCompiler>ltl2ba-1.1/ltl2ba -f</PathToLTLCompiler>\n");
             sb.append("<PathToLTLCompiler>./ltl2tgba-wrapper</PathToLTLCompiler>\n");
             sb.append("<GlobalInputs>\n");
-            events.forEach(e -> sb.append("  <Bit>" + e + "</Bit>\n"));
+            events.forEach(e -> sb.append("  <Bit>").append(e).append("</Bit>\n"));
             sb.append("</GlobalInputs>\n");
             sb.append("<GlobalOutputs>\n");
-            actions.forEach(a -> sb.append("  <Bit>" + a + "</Bit>\n"));
+            actions.forEach(a -> sb.append("  <Bit>").append(a).append("</Bit>\n"));
             sb.append("</GlobalOutputs>\n");
             sb.append("<Assumptions>\n");
-            eventAssumptions(events).forEach(a -> sb.append("  <LTL>" + a + "</LTL>\n"));
+            eventAssumptions(events).forEach(a -> sb.append("  <LTL>").append(a).append("</LTL>\n"));
             sb.append("</Assumptions>\n");
             sb.append("<Specification>\n");
-            specification.forEach(s -> sb.append("  <LTL>" + s + "</LTL>\n"));
+            specification.forEach(s -> sb.append("  <LTL>").append(s).append("</LTL>\n"));
             sb.append("</Specification>\n");
             sb.append("</SynthesisProblem>\n");
             return sb.toString();
@@ -390,13 +390,13 @@ public class UnbeastTransformer {
         }
     }
     
-    static class Game {
+    private static class Game {
         private final Scanner input;
         private final PrintWriter output;
         private final List<String> actions;
         private final List<String> events;
 
-        public Game(Scanner input, PrintWriter output, List<String> actions, List<String> events) {
+        Game(Scanner input, PrintWriter output, List<String> actions, List<String> events) {
             this.input = input;
             this.output = output;
             this.actions = actions;

@@ -16,4 +16,4 @@ case "$conf" in
     *) echo "Unsupported configuration!"; exit ;;
 esac
 
-/usr/bin/time -f "$format" java -Xmx4G -jar ../../jars/apros-builder.jar --type explicit-state --satBased --config ../apros-configurations/"$conf".conf --dataset dataset_.bin --traceIncludeEach $each
+/usr/bin/time -f "$format" java -Xmx4G -jar ../../jars/continuous-trace-builder.jar --type explicit-state --satBased --config ../apros-configurations/"$conf".conf --dataset dataset_.bin --traceIncludeEach $each

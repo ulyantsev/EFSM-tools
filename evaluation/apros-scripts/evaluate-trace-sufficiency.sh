@@ -27,7 +27,7 @@ for ((j = 9; j >= 0; j--)); do
         folds=$default_folds
     fi
     for ((k = 0; k < $folds; k++)); do
-        java -Xmx2G -jar ../../jars/apros-builder.jar --type trace-evaluation --config ../apros-configurations/"$conf".conf --dataset dataset_.bin --traceFraction $fraction 2>/dev/null > "$tmp"
+        java -Xmx2G -jar ../../jars/continuous-trace-builder.jar --type trace-evaluation --config ../apros-configurations/"$conf".conf --dataset dataset_.bin --traceFraction $fraction 2>/dev/null > "$tmp"
         s="$s + "$(grep "Number of states:" "$tmp" | sed -e 's/^.*: //')
         t="$t + "$(grep "Number of supported transitions:" "$tmp" | sed -e 's/^.*: //')
         f="$f + "$(grep "Fraction of supported transitions:" "$tmp" | sed -e 's/^.*: //')

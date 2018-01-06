@@ -2,12 +2,13 @@ package main.plant;
 
 import continuous_trace_builders.Configuration;
 import continuous_trace_builders.Dataset;
-import continuous_trace_builders.parameters.Parameter;
 import continuous_trace_builders.TraceTranslator;
+import continuous_trace_builders.parameters.Parameter;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -36,12 +37,15 @@ public class AprosTracesToMint {
                 traceWriter.println();
             }
 
-            for (int i = 0; i < ds.values.size(); i++) {
-                if (i % traceIncludeEach != 0) {
+            final Dataset.Reader reader = ds.reader();
+            int i = 0;
+            while (reader.hasNext()) {
+                final List<double[]> list = reader.next();
+                if (i++ % traceIncludeEach != 0) {
                     continue;
                 }
                 traceWriter.println("trace");
-                for (double[] values : ds.values.get(i)) {
+                for (double[] values : list) {
                     final StringBuilder event = new StringBuilder("A");
                     for (Parameter p : conf.inputParameters) {
                         event.append(p.traceNameIndex(ds.get(values, p)));

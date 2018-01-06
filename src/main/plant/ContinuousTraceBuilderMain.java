@@ -15,7 +15,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class AprosBuilderMain extends MainBase {
+public class ContinuousTraceBuilderMain extends MainBase {
     @Argument(usage = "type-specific arguments", metaVar = "args", required = false)
     private List<String> arguments = new ArrayList<>();
 
@@ -134,7 +134,7 @@ public class AprosBuilderMain extends MainBase {
     private boolean makeAllStatesInitial = false;
 
     public static void main(String[] args) {
-        new AprosBuilderMain().run(args, Author.IB,
+        new ContinuousTraceBuilderMain().run(args, Author.IB,
                 "Toolset for NuSMV and Promela plant model synthesis from simulation traces in the Apros format");
     }
 
