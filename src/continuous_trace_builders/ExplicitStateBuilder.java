@@ -10,8 +10,14 @@ import structures.moore.MooreNode;
 import structures.moore.MooreTransition;
 import structures.moore.NondetMooreAutomaton;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.io.IOException;
-import java.util.*;
+import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 public class ExplicitStateBuilder {
@@ -109,21 +115,30 @@ public class ExplicitStateBuilder {
 
         if (outputGv) {
             System.out.println("GraphViz output...");
-            Utils.writeToFile(Utils.combinePaths(directory, namePrefix + "gv"), effectiveA.toString(conf));
+            try (BufferedWriter out = new BufferedWriter(new FileWriter(Utils.combinePaths(directory,
+                    namePrefix + "gv")))) {
+                effectiveA.toString(conf, new PrintWriter(out));
+            }
             // reduced GV file with transitions merged for different inputs
             System.out.println("Reduced GraphViz output...");
-            Utils.writeToFile(Utils.combinePaths(directory, namePrefix + "reduced." + "gv"),
-                    effectiveA.simplify().toString(conf));
+            try (BufferedWriter out = new BufferedWriter(new FileWriter(Utils.combinePaths(directory,
+                    namePrefix + "reduced." + "gv")))) {
+                effectiveA.simplify().toString(conf, new PrintWriter(out));
+            }
         }
         if (outputSmv) {
             System.out.println("NuSMV output...");
-            Utils.writeToFile(Utils.combinePaths(directory, namePrefix + "smv"),
-                    effectiveA.toNuSMVString(eventsFromAutomaton(a), conf.actions(), conf));
+            try (BufferedWriter out = new BufferedWriter(new FileWriter(Utils.combinePaths(directory,
+                    namePrefix + "smv")))) {
+                effectiveA.toNuSMVString(eventsFromAutomaton(a), conf.actions(), conf, new PrintWriter(out));
+            }
         }
         if (outputSpin) {
             System.out.println("Promela output...");
-            Utils.writeToFile(Utils.combinePaths(directory, namePrefix + "pml"),
-                    effectiveA.toSPINString(eventsFromAutomaton(a), conf.actions(), conf));
+            try (BufferedWriter out = new BufferedWriter(new FileWriter(Utils.combinePaths(directory,
+                    namePrefix + "pml")))) {
+                effectiveA.toSPINString(eventsFromAutomaton(a), conf.actions(), conf, new PrintWriter(out));
+            }
         }
     }
 
