@@ -14,6 +14,7 @@ import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.*;
+import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -451,12 +452,31 @@ public class NondetMooreAutomaton {
         return String.join("\n", Arrays.stream(s.split("\n")).map(x -> indent + x).collect(Collectors.toList()));
     }
 
+    private static class EventStore {
+        final List<String> events;
+        final Map<String, Integer> eventIndices = new HashMap<>();
+        final int unknownInput;
+        final int dummyInput;
+
+        EventStore(List<String> events) {
+            this.events = events.stream().map(s -> "input_" + s).collect(Collectors.toList());
+            for (int i = 0; i < events.size(); i++) {
+                eventIndices.put(events.get(i), i);
+            }
+            unknownInput = -1;
+            dummyInput = -2;
+        }
+
+        String indexToEvent(int index) {
+            return index == unknownInput ? "!known_input" : index == dummyInput ? "" : events.get(index);
+        }
+    }
+
     public void toSPINString(List<String> events, List<String> actions, Configuration conf, PrintWriter pw) {
         if (conf == null) {
             throw new AssertionError();
         }
-        final List<String> unmodifiedEvents = events;
-        events = events.stream().map(s -> "input_" + s).collect(Collectors.toList());
+        final EventStore es = new EventStore(events);
         final List<Pair<String, Parameter>> eventThresholds = conf != null
                 ? conf.eventThresholds() : new ArrayList<>();
         final List<Pair<String, Parameter>> actionThresholds = conf != null
@@ -499,19 +519,19 @@ public class NondetMooreAutomaton {
         pw.append("bool current_unsupported;\n");
         pw.append("\n");
         pw.append("int state = -1;\n");
-        spinEventDeclarations(new int[eventThresholds.size()], 0, pw, eventThresholds, events);
+        spinEventDeclarations(new int[eventThresholds.size()], 0, pw, eventThresholds, es.events);
         pw.append("bool known_input;\n");
         pw.append("\n");
         pw.append("init { do :: atomic {\n");
         pw.append("\n");
         pw.append("    d_step {\n");
-        spinEventDescriptions(new int[eventThresholds.size()], 0, pw, eventThresholds, events);
-        pw.append("        known_input = ").append(String.join(" || ", events)).append(";\n");
+        spinEventDescriptions(new int[eventThresholds.size()], 0, pw, eventThresholds, es.events);
+        pw.append("        known_input = ").append(String.join(" || ", es.events)).append(";\n");
         pw.append("\n");
         pw.append("        #ifdef INCLUDE_UNSUPPORTED\n");
         final List<String> unsupported = new ArrayList<>();
         unsupported.add("!known_input");
-        for (String e : unmodifiedEvents) {
+        for (String e : events) {
             final Set<Integer> sourceStates = new TreeSet<>();
             for (int i = 0; i < stateCount(); i++) {
                 for (MooreTransition t : states.get(i).transitions()) {
@@ -537,46 +557,52 @@ public class NondetMooreAutomaton {
         pw.append("    if\n");
 
         // creation of the structure:
-        // destination -> source -> inputs which lead to this destination from this source
-        final List<Map<Integer, Set<String>>> mapList = new ArrayList<>();
+        // destination -> source -> indices of inputs which lead to this destination from this source
+        final List<Map<Integer, Set<Integer>>> mapList = new ArrayList<>();
         for (int i = 0; i < stateCount(); i++) {
-            final Map<Integer, Set<String>> map = new TreeMap<>();
-            for (int j = -1; j < stateCount(); j++) {
-                map.put(j, new TreeSet<>());
-            }
-            mapList.add(map);
+            mapList.add(new TreeMap<>());
         }
+        final BiConsumer<Pair<Integer, Integer>, Integer> cleverAdd = (p, index) -> {
+            final Map<Integer, Set<Integer>> m = mapList.get(p.getLeft());
+            Set<Integer> s = m.get(p.getRight());
+            if (s == null) {
+                s = new TreeSet<>();
+                m.put(p.getRight(), s);
+            }
+            s.add(index);
+        };
         for (int source = 0; source < stateCount(); source++) {
-            for (String event : events) {
+            for (int i = 0; i < es.events.size(); i++) {
+                final String event = es.events.get(i);
                 final List<Integer> destinations = states.get(source).transitions().stream()
                         .filter(t -> ("input_" + t.event()).equals(event))
                         .map(t -> t.dst().number()).collect(Collectors.toList());
                 for (int dest : destinations) {
-                    mapList.get(dest).get(source).add(event);
+                    cleverAdd.accept(Pair.of(dest, source), i);
                 }
                 final Set<Integer> allSuccStates = states.get(source).transitions().stream()
                         .map(t -> t.dst().number()).collect(Collectors.toCollection(TreeSet::new));
                 // if the input is unknown, then the choice for the next state is wide
                 for (int dest : allSuccStates) {
-                    mapList.get(dest).get(source).add("!known_input");
+                    cleverAdd.accept(Pair.of(dest, source), es.unknownInput);
                 }
             }
         }
         // transitions to initial states from the pseudo-initial state
         for (int dest : initialStates()) {
-            mapList.get(dest).get(-1).add("");
+            cleverAdd.accept(Pair.of(dest, -1), es.dummyInput);
         }
 
         for (int i = 0; i < stateCount(); i++) {
-            final Map<Integer, Set<String>> sources = mapList.get(i);
+            final Map<Integer, Set<Integer>> sources = mapList.get(i);
             final List<String> sourceOptions = new ArrayList<>();
             for (int j = -1; j < stateCount(); j++) {
-                final Set<String> inputs = sources.get(j);
-                if (inputs.isEmpty()) {
+                final Set<Integer> inputIndices = sources.get(j);
+                if (inputIndices == null) {
                     continue;
                 }
-                sourceOptions.add("(state == " + j + (j == -1 ? ""
-                        : (" && (" + String.join(" || ", inputs) + ")")) + ")");
+                sourceOptions.add("(state == " + j + (j == -1 ? "" : (" && (" + String.join(" || ",
+                        inputIndices.stream().map(es::indexToEvent).collect(Collectors.toSet())) + ")")) + ")");
             }
             if (sourceOptions.isEmpty()) {
                 continue;
@@ -646,7 +672,7 @@ public class NondetMooreAutomaton {
         pw.append("    d_step {\n").append(indent(4, dstepSb.toString())).append("\n    }\n\n").append(usualSb)
                 .append("} od }\n");
     }
-    
+
     public String toSPINString(List<String> events, List<String> actions, Configuration conf) {
         final StringWriter sw = new StringWriter();
         toSPINString(events, actions, conf, new PrintWriter(sw));
