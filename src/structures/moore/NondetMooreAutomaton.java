@@ -33,7 +33,7 @@ public class NondetMooreAutomaton {
         return unsupportedTransitions;
     }
 
-    public double transitionFraction(Predicate<MooreTransition> p) {
+    private double transitionFraction(Predicate<MooreTransition> p) {
         int matched = 0;
         int all = 0;
         for (MooreNode state : states) {
@@ -863,19 +863,22 @@ public class NondetMooreAutomaton {
     }
 
     public NondetMooreAutomaton simplify() {
-        final NondetMooreAutomaton copy = copy();
+        final List<StringActions> actions = states.stream().map(MooreNode::actions)
+                .collect(Collectors.toCollection(ArrayList::new));
+        final NondetMooreAutomaton copy = new NondetMooreAutomaton(states.size(), actions,
+                new ArrayList<>(this.isInitial));
 
         for (MooreNode state : states) {
             final Set<Integer> destinations = state.transitions().stream()
                     .map(MooreTransition::dst).map(MooreNode::number)
                     .collect(Collectors.toCollection(TreeSet::new));
             final MooreNode copyState = copy.state(state.number());
-            new HashSet<>(copyState.transitions()).forEach(copyState::removeTransition);
             for (Integer dst : destinations) {
                 copyState.addTransition(" ", copy.state(dst));
             }
         }
 
+        copy.loopConstraints = loopConstraints;
         return copy;
     }
 

@@ -36,6 +36,7 @@ public class ExplicitStateBuilder {
     }
 
     private static NondetMooreAutomaton proximityBasedCompletion(NondetMooreAutomaton a, Configuration conf) {
+        // NOTE: can increase the total number of transitions!
         final NondetMooreAutomaton res = a.copy();
         int redirected = 0;
         for (MooreNode state : res.states()) {
