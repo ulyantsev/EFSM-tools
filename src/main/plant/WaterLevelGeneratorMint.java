@@ -7,7 +7,7 @@ package main.plant;
 import scenario.StringScenario;
 
 import java.io.File;
-import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.text.ParseException;
 import java.util.List;
@@ -47,7 +47,7 @@ public class WaterLevelGeneratorMint {
         return level + " " + dry;
     }
     
-    public static void main(String[] args) throws FileNotFoundException, ParseException {
+    public static void main(String[] args) throws IOException, ParseException {
         for (int k = 1; k <= 10; k++) {
             final String dir = "evaluation/plant-synthesis/";
             final String prefix = dir + "water-level-" + k;

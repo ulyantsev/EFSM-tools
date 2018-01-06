@@ -273,7 +273,7 @@ public class PlantBuilderMain extends MainBase {
             saveToFile(a.toString(), resultFilePath);
         }
         if (nusmvFilePath != null) {
-            saveToFile(a.toNuSMVString(events, actions, Optional.empty()), nusmvFilePath);
+            saveToFile(a.toNuSMVString(events, actions, null), nusmvFilePath);
         }
     }
 }

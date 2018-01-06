@@ -101,24 +101,29 @@ public class ExplicitStateBuilder {
             throws IOException {
         NondetMooreAutomaton effectiveA = a;
         if (proximityCompletion) {
+            System.out.println("Proximity-based transition redirection...");
             effectiveA = proximityBasedCompletion(effectiveA, conf);
         }
 
         dumpProperties(effectiveA);
 
         if (outputGv) {
+            System.out.println("GraphViz output...");
             Utils.writeToFile(Utils.combinePaths(directory, namePrefix + "gv"), effectiveA.toString(conf));
             // reduced GV file with transitions merged for different inputs
+            System.out.println("Reduced GraphViz output...");
             Utils.writeToFile(Utils.combinePaths(directory, namePrefix + "reduced." + "gv"),
                     effectiveA.simplify().toString(conf));
         }
         if (outputSmv) {
+            System.out.println("NuSMV output...");
             Utils.writeToFile(Utils.combinePaths(directory, namePrefix + "smv"),
-                    effectiveA.toNuSMVString(eventsFromAutomaton(a), conf.actions(), Optional.of(conf)));
+                    effectiveA.toNuSMVString(eventsFromAutomaton(a), conf.actions(), conf));
         }
         if (outputSpin) {
+            System.out.println("Promela output...");
             Utils.writeToFile(Utils.combinePaths(directory, namePrefix + "pml"),
-                    effectiveA.toSPINString(eventsFromAutomaton(a), conf.actions(), Optional.of(conf)));
+                    effectiveA.toSPINString(eventsFromAutomaton(a), conf.actions(), conf));
         }
     }
 

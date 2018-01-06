@@ -275,15 +275,15 @@ public class NondetMooreAutomaton {
         return loopConstraints.stream().mapToInt(x -> x).max().getAsInt();
     }
 
-    public String toNuSMVString(List<String> events, List<String> actions, Optional<Configuration> conf) {
+    public String toNuSMVString(List<String> events, List<String> actions, Configuration conf) {
         final List<String> unmodifiedEvents = events;
         events = events.stream().map(s -> "input_" + s).collect(Collectors.toList());
-        final List<Pair<String, Parameter>> eventThresholds = conf.isPresent()
-                ? conf.get().eventThresholds() : new ArrayList<>();
-        final List<Pair<String, Parameter>> actionThresholds = conf.isPresent()
-                ? conf.get().actionThresholds() : new ArrayList<>();
-        final Map<String, String> actionDescriptions = conf.isPresent()
-                ? conf.get().extendedActionDescriptions() : new HashMap<>();
+        final List<Pair<String, Parameter>> eventThresholds = conf != null
+                ? conf.eventThresholds() : new ArrayList<>();
+        final List<Pair<String, Parameter>> actionThresholds = conf != null
+                ? conf.actionThresholds() : new ArrayList<>();
+        final Map<String, String> actionDescriptions = conf != null
+                ? conf.extendedActionDescriptions() : new HashMap<>();
         final String inputLine = String.join(", ", eventThresholds.stream()
                 .map(t -> "CONT_INPUT_" + t.getKey()).collect(Collectors.toList()));
         final StringBuilder sb = new StringBuilder();
@@ -439,22 +439,22 @@ public class NondetMooreAutomaton {
         return String.join("\n", Arrays.stream(s.split("\n")).map(x -> indent + x).collect(Collectors.toList()));
     }
 
-    public String toSPINString(List<String> events, List<String> actions, Optional<Configuration> conf) {
-        if (!conf.isPresent()) {
+    public String toSPINString(List<String> events, List<String> actions, Configuration conf) {
+        if (conf == null) {
             throw new AssertionError();
         }
         final List<String> unmodifiedEvents = events;
         final StringBuilder sb = new StringBuilder();
         events = events.stream().map(s -> "input_" + s).collect(Collectors.toList());
-        final List<Pair<String, Parameter>> eventThresholds = conf.isPresent()
-                ? conf.get().eventThresholds() : new ArrayList<>();
-        final List<Pair<String, Parameter>> actionThresholds = conf.isPresent()
-                ? conf.get().actionThresholds() : new ArrayList<>();
+        final List<Pair<String, Parameter>> eventThresholds = conf != null
+                ? conf.eventThresholds() : new ArrayList<>();
+        final List<Pair<String, Parameter>> actionThresholds = conf != null
+                ? conf.actionThresholds() : new ArrayList<>();
 
         for (Pair<String, Parameter> p : eventThresholds) {
             sb.append(p.getRight().spinType()).append(" PLANT_INPUT_").append(p.getLeft()).append(";\n");
         }
-        for (Parameter p : conf.get().outputParameters) {
+        for (Parameter p : conf.outputParameters) {
             sb.append(p.spinType()).append(" PLANT_OUTPUT_").append(p.traceName()).append(";\n");
             sb.append(p.spinType()).append(" CONT_PLANT_OUTPUT_").append(p.traceName()).append(";\n");
         }

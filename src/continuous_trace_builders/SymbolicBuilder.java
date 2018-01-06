@@ -12,12 +12,13 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+@Deprecated
 public class SymbolicBuilder {
-    static boolean CURRENT_1D;
-    static boolean CURRENT_2D;
-    static boolean CURRENT_3D;
-    static boolean CURRENT_NEXT_2D;
-    static boolean CURRENT_NEXT_3D;
+    private static boolean CURRENT_1D;
+    private static boolean CURRENT_2D;
+    private static boolean CURRENT_3D;
+    private static boolean CURRENT_NEXT_2D;
+    private static boolean CURRENT_NEXT_3D;
 
     private static void current1d(Configuration conf, Collection<String> initConstraints,
                                   Collection<String> transConstraints, Map<Parameter, int[][]> paramIndices) {

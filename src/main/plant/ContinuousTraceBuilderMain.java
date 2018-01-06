@@ -16,7 +16,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class ContinuousTraceBuilderMain extends MainBase {
-    @Argument(usage = "type-specific arguments", metaVar = "args", required = false)
+    @Argument(usage = "type-specific arguments", metaVar = "args")
     private List<String> arguments = new ArrayList<>();
 
     @Option(name = "--type", aliases = {"-t"},
