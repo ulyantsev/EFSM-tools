@@ -52,16 +52,16 @@ public class ContinuousTraceBuilderMain extends MainBase {
             metaVar = "<k>")
     private int traceIncludeEach = 1;
 
-    @Option(name = "--traceFraction", aliases = {}, usage = "use only a randomly selected fraction of available traces",
+    @Option(name = "--traceFraction", usage = "use only a randomly selected fraction of available traces",
             metaVar = "<k>")
     private double traceFraction = 1;
 
-    @Option(name = "--timeInterval", aliases = {},
+    @Option(name = "--timeInterval",
             usage = "prepare-dataset: minimum time interval between trace elements (default: 1)",
             metaVar = "<double>")
-    private double timeInterval = 1.0;
+    private double timeInterval = 1;
 
-    @Option(name = "--dir", aliases = {}, usage = "directory where all work files are stored (config file included)",
+    @Option(name = "--dir", usage = "directory where all work files are stored (config file included)",
             metaVar = "<path>")
     private String directory = "";
 
@@ -82,7 +82,7 @@ public class ContinuousTraceBuilderMain extends MainBase {
             metaVar = "<file>")
     private String groupingFile;
 
-    @Option(name = "--output", aliases = {},
+    @Option(name = "--output",
             usage = "list of comma-separated output languages (promela, nusmv), default: nusmv",
             metaVar = "<file>")
     private String output = "nusmv";
@@ -138,6 +138,15 @@ public class ContinuousTraceBuilderMain extends MainBase {
                 "Toolset for NuSMV and Promela plant model synthesis from simulation traces in the Apros format");
     }
 
+    public static Boolean[] traceUsageMask(Dataset ds, double traceFraction) {
+        final Boolean[] use = new Boolean[ds.totalTraces()];
+        final int max = (int) Math.round(use.length * traceFraction);
+        Arrays.fill(use, 0, max, true);
+        Arrays.fill(use, max, use.length, false);
+        Collections.shuffle(Arrays.asList(use));
+        return use;
+    }
+
     @Override
     protected void launcher() throws IOException {
         initializeLogger(logFilePath);
@@ -157,7 +166,7 @@ public class ContinuousTraceBuilderMain extends MainBase {
             } else {
                 final Configuration conf = Configuration.load(Utils.combinePaths(directory, confFilename));
                 if (Objects.equals(type, "constraint-based")) {
-                    ConstraintBasedBuilder.run(conf, directory, datasetFilename, groupingFile,
+                    ConstraintBasedBuilder.run(conf, directory, datasetFilename, groupingFile, traceFraction,
                             constraintBasedDisableOVERALL_1D, constraintBasedDisableOVERALL_2D,
                             constraintBasedDisableOIO_CONSTRAINTS,
                             constraintBasedDisableINPUT_STATE, constraintBasedDisableCURRENT_NEXT,
@@ -165,7 +174,7 @@ public class ContinuousTraceBuilderMain extends MainBase {
                             constraintBasedDisableCOMPLEX_FAIRNESS_CONSTRAINTS);
                 } else if (Objects.equals(type, "constraint-based-new")) {
                     SymbolicBuilder.run(conf, directory, datasetFilename, true, !disableCur2D, !disableCur3D,
-                            !disableCurNext2D, !disableCurNext3D, disableCurNextOutputs);
+                            !disableCurNext2D, !disableCurNext3D, disableCurNextOutputs, traceFraction);
                 } else if (Objects.equals(type, "explicit-state")) {
                     ExplicitStateBuilder.run(conf, directory, datasetFilename, satBased, traceIncludeEach,
                             traceFraction, true, true, outputSmv, outputSpin, timedConstraints, makeAllStatesInitial);

@@ -5,10 +5,10 @@ package continuous_trace_builders;
  */
 
 import continuous_trace_builders.parameters.Parameter;
+import main.plant.ContinuousTraceBuilderMain;
 
 import java.io.*;
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
@@ -35,15 +35,15 @@ public class Dataset implements Serializable {
         return totalTraces;
     }
 
-    public int totalElements() {
+    private int totalElements() {
         return totalElements;
     }
 
-    public int minTraceLength() {
+    int minTraceLength() {
         return minTraceLength;
     }
 
-    public int maxTraceLength() {
+    int maxTraceLength() {
         return maxTraceLength;
     }
 
@@ -60,24 +60,30 @@ public class Dataset implements Serializable {
         }
     }
 
-    Map<Parameter, int[][]> toParamIndices(Collection<Parameter> ps) throws IOException {
+    Map<Parameter, int[][]> toParamIndices(Collection<Parameter> ps, double traceFraction) throws IOException {
         final Map<Parameter, int[][]> res = new HashMap<>();
-        for (Parameter p : ps) {
-            final List<List<Integer>> traces = new ArrayList<>();
-            final Reader reader = new Reader();
-            while (reader.hasNext()) {
-                traces.add(reader.next().stream().map(line -> p.traceNameIndex(get(line, p)))
-                        .collect(Collectors.toList()));
-            }
-            final int[][] tracesM = new int[traces.size()][];
-            for (int i = 0; i < tracesM.length; i++) {
-                tracesM[i] = new int[traces.get(i).size()];
-                for (int j = 0; j < tracesM[i].length; j++) {
-                    tracesM[i][j] = traces.get(i).get(j);
+        final Boolean[] use = ContinuousTraceBuilderMain.traceUsageMask(this, traceFraction);
+        int index = 0;
+        int actualIndex = 0;
+        final int actualTraceNum = (int) Arrays.stream(use).filter(x -> x).count();
+
+        final Reader reader = new Reader();
+        while (reader.hasNext()) {
+            final List<double[]> values = reader.next();
+            if (use[index++]) {
+                for (Parameter p : ps) {
+                    int[][] matrix = res.get(p);
+                    if (matrix == null) {
+                        matrix = new int[actualTraceNum][];
+                        res.put(p, matrix);
+                    }
+                    matrix[actualIndex] = new int[values.size()];
+                    for (int i = 0; i < values.size(); i++) {
+                        matrix[actualIndex][i] = p.traceNameIndex(get(values.get(i), p));
+                    }
                 }
-                traces.get(i).clear();
+                actualIndex++;
             }
-            res.put(p, tracesM);
         }
         return res;
     }

@@ -5,6 +5,7 @@ package continuous_trace_builders;
  */
 
 import continuous_trace_builders.parameters.Parameter;
+import main.plant.ContinuousTraceBuilderMain;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.*;
@@ -70,12 +71,7 @@ public class TraceTranslator {
             smoothnessLevels.put(p, 1);
         }
 
-        // trace usage mask
-        final Boolean[] use = new Boolean[ds.totalTraces()];
-        final int max = (int) Math.round(use.length * traceFraction);
-        Arrays.fill(use, 0, max, true);
-        Arrays.fill(use, max, use.length, false);
-        Collections.shuffle(Arrays.asList(use));
+        final Boolean[] use = ContinuousTraceBuilderMain.traceUsageMask(ds, traceFraction);
 
         int addedTraces = 0;
         try (BufferedWriter out = new BufferedWriter(new FileWriter(Utils.combinePaths(directory, OUTPUT_TRACE_FILENAME)))) {

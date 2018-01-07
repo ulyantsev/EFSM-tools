@@ -311,6 +311,9 @@ public class ConstraintBasedBuilder {
         sb.append("    loop_executed: boolean;\n");
         sb.append("INIT\n");
 
+        initConstraints = prettifyConstraints(initConstraints);
+        transConstraints = prettifyConstraints(transConstraints);
+
         initConstraints.remove("TRUE");
         transConstraints.remove("TRUE");
 
@@ -337,20 +340,27 @@ public class ConstraintBasedBuilder {
         sb.append("    unsupported := FALSE;\n");
         sb.append(plantConversions(conf));
         fairnessConstraints.forEach(fair -> sb.append(fair).append("\n"));
-        final String transformed = sb.toString()
-                .replaceAll("& TRUE", "")
-                .replaceAll("in TRUE", "")
-                .replaceAll("([a-zA-Z_][a-zA-Z0-9_]*) in FALSE", "!$1")
-                .replaceAll("\\s*&\\s*\\(TRUE\\)\\s*", "\n  ")
-                .replaceAll("\\s+\\|", " |")
-                .replaceAll("\\s+\\)", ")");
-        Utils.writeToFile(outFilename, transformed);
+        Utils.writeToFile(outFilename, sb.toString());
 
         System.out.println("Done; model has been written to: " + outFilename);
         System.out.println("Constraints generated (not counting duplicates): " + constraintsCount);
     }
 
+    private static Set<String> prettifyConstraints(Collection<String> constraints) {
+        return constraints.stream().map(c -> c
+                .replaceAll("& TRUE", "")
+                .replaceAll("in TRUE", "")
+                .replaceAll("([a-zA-Z_][a-zA-Z0-9_]*) in FALSE", "!$1")
+                .replaceAll("in \\{([0-9]+)\\}", "= $1")
+                .replaceAll("\\s+\\|", " |")
+                .replaceAll("\\s+&", " &")
+                .replaceAll("\\s+\\)", ")")
+                .trim()
+        ).collect(Collectors.toCollection(LinkedHashSet::new));
+    }
+
     public static void run(Configuration conf, String directory, String datasetFilename, String groupingFile,
+                           double traceFraction,
                            boolean disableOVERALL_1D, boolean disableOVERALL_2D, boolean disableOIO_CONSTRAINTS,
                            boolean disableINPUT_STATE, boolean disableCURRENT_NEXT,
                            boolean constraintBasedDisableMONOTONIC_FAIRNESS_CONSTRAINTS,
@@ -390,7 +400,8 @@ public class ConstraintBasedBuilder {
         }
 
         System.out.print("Obtaining parameter indices...");
-        final Map<Parameter, int[][]> paramIndices = ds.toParamIndices(allParameters);
+        final Map<Parameter, int[][]> paramIndices = ds.toParamIndices(allParameters, traceFraction);
+
         System.out.println(" done");
 
         // 1. overall 1-dimensional constraints

@@ -284,7 +284,7 @@ public class SymbolicBuilder {
 
     public static void run(Configuration conf, String directory, String datasetFilename, boolean current1D,
                            boolean current2D, boolean current3D, boolean currentNext2D, boolean currentNext3D,
-                           boolean disableCurNextOutputs)
+                           boolean disableCurNextOutputs, double traceFraction)
             throws IOException {
         CURRENT_1D = current1D;
         CURRENT_2D = current2D;
@@ -294,7 +294,7 @@ public class SymbolicBuilder {
 
         final Dataset ds = Dataset.load(Utils.combinePaths(directory, datasetFilename));
         final Set<Parameter> allParameters = new LinkedHashSet<>(conf.parameters());
-        final Map<Parameter, int[][]> paramIndices = ds.toParamIndices(allParameters);
+        final Map<Parameter, int[][]> paramIndices = ds.toParamIndices(allParameters, traceFraction);
         final Set<String> initConstraints = new LinkedHashSet<>();
         final Set<String> transConstraints = new LinkedHashSet<>();
 
