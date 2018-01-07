@@ -148,7 +148,7 @@ public class TraceModelGenerator {
         return String.join(" union ", stringIntervals);
     }
 
-    public static String expressWithIntervalsSPIN(Collection<Integer> values, String varName) {
+    private static String expressWithIntervalsSPIN(Collection<Integer> values, String varName) {
         final List<Pair<Integer, Integer>> intervals = intervals(values);
         final List<String> stringIntervals = new ArrayList<>();
         final Set<Integer> separate = new TreeSet<>();
@@ -166,5 +166,17 @@ public class TraceModelGenerator {
                     .collect(Collectors.toList()));
         }
         return String.join(" || ", stringIntervals);
+    }
+
+    public static String expressWithIntervalsSPIN(Collection<Integer> values, int minValue, int maxValue,
+                                                  String varName) {
+        final Set<Integer> reversedValues = new HashSet<>();
+        for (int i = minValue; i <= maxValue; i++) {
+            reversedValues.add(i);
+        }
+        reversedValues.removeAll(values);
+        final String original = expressWithIntervalsSPIN(values, varName);
+        final String reversed = expressWithIntervalsSPIN(reversedValues, varName);
+        return original.length() <= reversed.length() ? ("(" + original + ")") : ("!(" + reversed + ")");
     }
 }

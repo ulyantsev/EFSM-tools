@@ -17,7 +17,6 @@ import structures.mealy.MealyAutomaton;
 import structures.mealy.MealyNode;
 import structures.mealy.MealyTransition;
 import structures.mealy.ScenarioTree;
-import verification.ltl.grammar.LtlNode;
 import verification.verifier.Verifier;
 
 import java.io.IOException;
@@ -32,17 +31,17 @@ public class BacktrackingAutomatonBuilder {
         protected final List<String> actions;
         protected final long finishTime;
         protected final MealyAutomaton automaton;
-        protected final int[] coloring;
+        final int[] coloring;
         protected final Verifier verifier;
         protected CompletenessType completenessType;
 
         /*
          * auxiliary list for search space reduction
          */
-        protected final int[] incomingTransitionNumbers;
+        final int[] incomingTransitionNumbers;
         
-        public TraverseState(int colorSize, List<String> events, List<String> actions, long finishTime,
-                int[] coloring, Verifier verifier, CompletenessType completenessType) {
+        TraverseState(int colorSize, List<String> events, List<String> actions, long finishTime,
+                      int[] coloring, Verifier verifier, CompletenessType completenessType) {
             this.colorSize = colorSize;
             this.events = events;
             this.actions = actions;
@@ -54,7 +53,7 @@ public class BacktrackingAutomatonBuilder {
             incomingTransitionNumbers = new int[colorSize];
         }
         
-        protected void checkTimeLimit() throws TimeLimitExceededException {
+        void checkTimeLimit() throws TimeLimitExceededException {
             if (System.currentTimeMillis() > finishTime) {
                 throw new TimeLimitExceededException();
             }
@@ -70,8 +69,8 @@ public class BacktrackingAutomatonBuilder {
     private static class OrdinaryTraverseState extends TraverseState {
         private List<MealyTransition> frontier;
         
-        public OrdinaryTraverseState(ScenarioTree tree, Verifier verifier, int colorSize, long finishTime,
-                List<String> events, List<String> actions, CompletenessType completenessType) {
+        OrdinaryTraverseState(ScenarioTree tree, Verifier verifier, int colorSize, long finishTime,
+                              List<String> events, List<String> actions, CompletenessType completenessType) {
             super(colorSize, events, actions, finishTime, new int[tree.nodeCount()],
                     verifier, completenessType);
             frontier = new ArrayList<>(tree.root().transitions());
@@ -145,8 +144,8 @@ public class BacktrackingAutomatonBuilder {
     private static class TraverseStateWithMultiEdges extends TraverseState {
         private List<List<MealyTransition>> frontier;
 
-        public TraverseStateWithMultiEdges(ScenarioTree tree, Verifier verifier, int colorSize, long finishTime,
-                List<String> events, List<String> actions, CompletenessType completenessType) {
+        TraverseStateWithMultiEdges(ScenarioTree tree, Verifier verifier, int colorSize, long finishTime,
+                                    List<String> events, List<String> actions, CompletenessType completenessType) {
             super(colorSize, events, actions, finishTime, new int[tree.nodeCount()],
                     verifier, completenessType);
             frontier = new ArrayList<>(groupByDst(tree.root().transitions()));
@@ -243,8 +242,8 @@ public class BacktrackingAutomatonBuilder {
         private List<List<MealyTransition>> frontier;
         private final List<String> eventNames;
 
-        public TraverseStateWithCoverageAndWeakCompleteness(ScenarioTree tree, int colorSize, long finishTime,
-                List<String> events, List<String> eventNames, int variables) {
+        TraverseStateWithCoverageAndWeakCompleteness(ScenarioTree tree, int colorSize, long finishTime,
+                                                     List<String> events, List<String> eventNames, int variables) {
             super(colorSize, events, null, finishTime, new int[tree.nodeCount()], null, null);
             frontier = new ArrayList<>(groupByDst(tree.root().transitions()));
             this.eventNames = eventNames;
@@ -382,8 +381,8 @@ public class BacktrackingAutomatonBuilder {
             }
         }
         
-        public TraverseStateWithErrors(List<StringScenario> scenarios, int colorSize, long finishTime,
-                List<String> events, List<String> eventNames, int variables, int errorNumber) {
+        TraverseStateWithErrors(List<StringScenario> scenarios, int colorSize, long finishTime,
+                                List<String> events, List<String> eventNames, int variables, int errorNumber) {
             super(colorSize, events, null, finishTime, null, null, null);
             for (int i = 0; i < scenarios.size(); i++) {
                 frontier.add(new FrontierElement(i, 0));
@@ -471,10 +470,10 @@ public class BacktrackingAutomatonBuilder {
          * Returns whether the labeling was successful regarding the number of possible errors.
          */
         private boolean label() {
-            final Map<MealyTransition, List<StringActions>> actionOccurrencies = new HashMap<>();
+            final Map<MealyTransition, List<StringActions>> actionOccurrences = new HashMap<>();
             for (int i = 0; i < colorSize; i++) {
                 for (MealyTransition t : automaton.state(i).transitions()) {
-                    actionOccurrencies.put(t, new ArrayList<>());
+                    actionOccurrences.put(t, new ArrayList<>());
                 }
             }
             for (StringScenario sc : scenarios) {
@@ -485,7 +484,7 @@ public class BacktrackingAutomatonBuilder {
                         break;
                     }
                     for (String e : sc.getEvents(i)) {
-                        actionOccurrencies.get(state.transition(e, tautology())).add(sc.getActions(i));
+                        actionOccurrences.get(state.transition(e, tautology())).add(sc.getActions(i));
                     }
                     state = t.dst();
                 }
@@ -493,7 +492,7 @@ public class BacktrackingAutomatonBuilder {
             int madeErrors = 0;
             for (int i = 0; i < colorSize; i++) {
                 for (MealyTransition t : new ArrayList<>(automaton.state(i).transitions())) {
-                    final List<StringActions> actions = actionOccurrencies.get(t);
+                    final List<StringActions> actions = actionOccurrences.get(t);
                     final StringActions mode = mode(actions);
                     automaton.state(i).removeTransition(t);
                     automaton.state(i).addTransition(t.event(), t.expr(), mode, t.dst());
@@ -561,7 +560,8 @@ public class BacktrackingAutomatonBuilder {
         return MyBooleanExpression.getTautology();
     }
     
-    private static boolean isWeakComplete(MealyAutomaton automaton, List<String> eventNames, Map<String, List<String>> eventExtensions) {
+    private static boolean isWeakComplete(MealyAutomaton automaton, List<String> eventNames,
+                                          Map<String, List<String>> eventExtensions) {
         for (int i = 0; i < automaton.stateCount(); i++) {
             for (String initialEvent : eventNames) {
                 // is there at least one transition with this initialEvent from this state?
@@ -599,7 +599,7 @@ public class BacktrackingAutomatonBuilder {
     }
     
     public static Optional<MealyAutomaton> build(Logger logger, ScenarioTree tree, int size,
-                                                 List<LtlNode> formulae, List<String> events, List<String> actions, Verifier verifier,
+                                                 List<String> events, List<String> actions, Verifier verifier,
                                                  long finishTime, CompletenessType completenessType, int variables,
                                                  boolean ensureCoverageAndWeakCompleteness, List<String> eventNames,
                                                  int errorNumber, List<StringScenario> scenarios) throws IOException {

@@ -222,7 +222,7 @@ public class QbfBuilderMain extends MainBase {
                 resultAutomaton = StateMergingAutomatonBuilder.build(logger(), verifier, arguments, negscFilePath);
                 break;
             case BACKTRACKING:
-                resultAutomaton = BacktrackingAutomatonBuilder.build(logger(), tree, size, formulae, events, actions,
+                resultAutomaton = BacktrackingAutomatonBuilder.build(logger(), tree, size, events, actions,
                         verifier, finishTime, completenesstype, varNumber, ensureCoverageAndWeakCompleteness,
                         eventnames, backtrackingErrorNumber, scenarios);
                 break;

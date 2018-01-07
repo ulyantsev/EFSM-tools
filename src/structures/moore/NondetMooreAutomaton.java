@@ -491,7 +491,6 @@ public class NondetMooreAutomaton {
         }
 
         pw.append("\n");
-
         pw.append("#define INCLUDE_FAIRNESS\n");
         pw.append("#define INCLUDE_UNSUPPORTED\n");
         pw.append("\n");
@@ -542,8 +541,8 @@ public class NondetMooreAutomaton {
                 }
             }
             if (!sourceStates.isEmpty()) {
-                unsupported.add("input_" + e + " && ("
-                        + TraceModelGenerator.expressWithIntervalsSPIN(sourceStates, "state") + ")");
+                unsupported.add("input_" + e + " && "
+                        + TraceModelGenerator.expressWithIntervalsSPIN(sourceStates, 0, stateCount() - 1, "state"));
             }
         }
         pw.append("        current_unsupported = ").append(String.join(" ||\n            ", unsupported)).append(";\n");
