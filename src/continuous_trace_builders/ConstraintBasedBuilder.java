@@ -311,6 +311,9 @@ public class ConstraintBasedBuilder {
         sb.append("    loop_executed: boolean;\n");
         sb.append("INIT\n");
 
+        initConstraints.remove("TRUE");
+        transConstraints.remove("TRUE");
+
         final int constraintsCount = initConstraints.size() + transConstraints.size();
         if (initConstraints.isEmpty()) {
             initConstraints.add("TRUE");
@@ -337,6 +340,7 @@ public class ConstraintBasedBuilder {
         final String transformed = sb.toString()
                 .replaceAll("& TRUE", "")
                 .replaceAll("in TRUE", "")
+                .replaceAll("([a-zA-Z_][a-zA-Z0-9_]*) in FALSE", "!$1")
                 .replaceAll("\\s*&\\s*\\(TRUE\\)\\s*", "\n  ")
                 .replaceAll("\\s+\\|", " |")
                 .replaceAll("\\s+\\)", ")");
@@ -350,8 +354,7 @@ public class ConstraintBasedBuilder {
                            boolean disableOVERALL_1D, boolean disableOVERALL_2D, boolean disableOIO_CONSTRAINTS,
                            boolean disableINPUT_STATE, boolean disableCURRENT_NEXT,
                            boolean constraintBasedDisableMONOTONIC_FAIRNESS_CONSTRAINTS,
-                           boolean constraintBasedDisableCOMPLEX_FAIRNESS_CONSTRAINTS)
-            throws IOException {
+                           boolean constraintBasedDisableCOMPLEX_FAIRNESS_CONSTRAINTS) throws IOException {
         final Dataset ds = Dataset.load(Utils.combinePaths(directory, datasetFilename));
         final Set<String> initConstraints = new LinkedHashSet<>();
         final Set<String> transConstraints = new LinkedHashSet<>();
