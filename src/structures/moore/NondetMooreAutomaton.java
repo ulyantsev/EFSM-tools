@@ -471,39 +471,20 @@ public class NondetMooreAutomaton {
             return index == unknownInput ? "!known_input" : index == dummyInput ? "" : events.get(index);
         }
 
-        List<String> reversed(Set<Integer> indices) {
-            final List<String> reversed = new ArrayList<>();
-            for (int i = -1; i < events.size(); i++) {
-                if (!indices.contains(i)) {
-                    reversed.add(indexToEvent(i));
-                }
-            }
-            return reversed;
-        }
-
-        // with negation optimization... for particular cases due to non-disjoint input events
+        // with negation optimization
         String indexSetToString(Set<Integer> indices) {
             final int eventNum = events.size() + 1;
             if (indices.size() == eventNum) {
-                // the simplest case
                 return "";
-            } else if (indices.size() == eventNum - 1 && indices.size() > 2) {
-                final List<String> reversed = reversed(indices);
-                if (reversed.size() != 1) {
-                    throw new AssertionError();
+            } else if (indices.size() > eventNum / 2 + 1) {
+                final List<String> reversed = new ArrayList<>();
+                for (int i = -1; i < events.size(); i++) {
+                    if (!indices.contains(i)) {
+                        reversed.add(indexToEvent(i));
+                    }
                 }
-                final String e = reversed.get(0);
-                return " && (!(" + e + ") || input_sum > 1)";
-            } else if (indices.size() == eventNum - 2 && indices.size() > 6) {
-                final List<String> reversed = reversed(indices);
-                if (reversed.size() != 2) {
-                    throw new AssertionError();
-                }
-                final String e1 = reversed.get(0);
-                final String e2 = reversed.get(1);
-                return " && (!(" + e1 + " || " + e2 + ") || (" + e1 + " != " + e2 + ") && input_sum > 1 || input_sum > 2)";
+                return " && (" + String.join(" + ", reversed) + " < input_sum)";
             } else {
-                // the most common case
                 return " && (" + String.join(" || ", indices.stream().map(this::indexToEvent).collect(Collectors.toList()))
                         + ")";
             }
