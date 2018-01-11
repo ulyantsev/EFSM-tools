@@ -470,6 +470,44 @@ public class NondetMooreAutomaton {
         String indexToEvent(int index) {
             return index == unknownInput ? "!known_input" : index == dummyInput ? "" : events.get(index);
         }
+
+        List<String> reversed(Set<Integer> indices) {
+            final List<String> reversed = new ArrayList<>();
+            for (int i = -1; i < events.size(); i++) {
+                if (!indices.contains(i)) {
+                    reversed.add(indexToEvent(i));
+                }
+            }
+            return reversed;
+        }
+
+        // with negation optimization... for particular cases due to non-disjoint input events
+        String indexSetToString(Set<Integer> indices) {
+            final int eventNum = events.size() + 1;
+            if (indices.size() == eventNum) {
+                // the simplest case
+                return "";
+            } else if (indices.size() == eventNum - 1 && indices.size() > 2) {
+                final List<String> reversed = reversed(indices);
+                if (reversed.size() != 1) {
+                    throw new AssertionError();
+                }
+                final String e = reversed.get(0);
+                return " && (!(" + e + ") || input_sum > 1)";
+            } else if (indices.size() == eventNum - 2 && indices.size() > 6) {
+                final List<String> reversed = reversed(indices);
+                if (reversed.size() != 2) {
+                    throw new AssertionError();
+                }
+                final String e1 = reversed.get(0);
+                final String e2 = reversed.get(1);
+                return " && (!(" + e1 + " || " + e2 + ") || (" + e1 + " != " + e2 + ") && input_sum > 1 || input_sum > 2)";
+            } else {
+                // the most common case
+                return " && (" + String.join(" || ", indices.stream().map(this::indexToEvent).collect(Collectors.toList()))
+                        + ")";
+            }
+        }
     }
 
     public void toSPINString(List<String> events, List<String> actions, Configuration conf, PrintWriter pw) {
@@ -520,13 +558,15 @@ public class NondetMooreAutomaton {
         pw.append("int state = -1;\n");
         spinEventDeclarations(new int[eventThresholds.size()], 0, pw, eventThresholds, es.events);
         pw.append("bool known_input;\n");
+        pw.append("int input_sum;\n");
         pw.append("\n");
         pw.append("init { do :: atomic {\n");
         pw.append("\n");
         pw.append("    d_step {\n");
         spinEventDescriptions(new int[eventThresholds.size()], 0, pw, eventThresholds, es.events);
-        pw.append("        known_input = ").append(String.join(" || ", es.events)).append(";\n");
-        pw.append("\n");
+        pw.append("        input_sum = ").append(String.join(" + ", es.events)).append(";\n");
+        pw.append("        known_input = input_sum > 0;\n");
+        pw.append("        input_sum = input_sum + !known_input;\n");
         pw.append("        #ifdef INCLUDE_UNSUPPORTED\n");
         final List<String> unsupported = new ArrayList<>();
         unsupported.add("!known_input");
@@ -600,8 +640,7 @@ public class NondetMooreAutomaton {
                 if (inputIndices == null) {
                     continue;
                 }
-                sourceOptions.add("(state == " + j + (j == -1 ? "" : (" && (" + String.join(" || ",
-                        inputIndices.stream().map(es::indexToEvent).collect(Collectors.toSet())) + ")")) + ")");
+                sourceOptions.add("(state == " + j + (j == -1 ? "" : es.indexSetToString(inputIndices)) + ")");
             }
             if (sourceOptions.isEmpty()) {
                 continue;
