@@ -39,7 +39,7 @@ public class IgnoredBoolParameter extends Parameter {
 
     @Override
     public String nusmvType() {
-        return "0..0";
+        return "boolean";
     }
 
     @Override
