@@ -44,8 +44,7 @@ public class RealParameter extends Parameter {
         final List<String> res = new ArrayList<>();
         for (int j = 0; j < cutoffs.size(); j++) {
             final double lower = j == 0 ? doubleBounds.getLeft() : cutoffs.get(j - 1);
-            final double upper = j == cutoffs.size() - 1
-                    ? doubleBounds.getRight() : cutoffs.get(j);
+            final double upper = j == cutoffs.size() - 1 ? doubleBounds.getRight() : cutoffs.get(j);
             res.add("[" + j + "] " + lower + " ≤ " + traceName() + " < " + upper);
         }
         return res;
@@ -54,8 +53,7 @@ public class RealParameter extends Parameter {
     @Override
     public int traceNameIndex(double value) {
         if (value < lowerBound || value > upperBound) {
-            throw new RuntimeException("Parameter " + traceName()
-                + ": bounds violated for value " + value);
+            throw new RuntimeException("Parameter " + traceName() + ": bounds violated for value " + value);
         }
         for (int i = 0; i < cutoffs.size(); i++) {
             if (value < cutoffs.get(i)) {
@@ -77,8 +75,7 @@ public class RealParameter extends Parameter {
         thresholds.addAll(cutoffs.subList(0, cutoffs.size() - 1));
         thresholds.add((double) upperBound);
 
-        return "param " + simulationEnvironmentName() + " (" + traceName() + "): REAL"
-                + thresholds;
+        return "param " + simulationEnvironmentName() + " (" + traceName() + "): REAL" + thresholds;
     }
 
     @Override
@@ -114,13 +111,11 @@ public class RealParameter extends Parameter {
     }
 
     private int intervalMin(int interval) {
-        return interval == 0 ? lowerBound
-                : (int) Math.round(Math.floor(cutoffs.get(interval - 1)));
+        return interval == 0 ? lowerBound : (int) Math.round(Math.floor(cutoffs.get(interval - 1)));
     }
     
     private int intervalMax(int interval) {
-        return interval == cutoffs.size() - 1 ? upperBound
-                : (int) Math.round(Math.ceil(cutoffs.get(interval)));
+        return interval == cutoffs.size() - 1 ? upperBound : (int) Math.round(Math.ceil(cutoffs.get(interval)));
     }
     
     @Override

@@ -20,6 +20,10 @@ import java.util.stream.Collectors;
 public class ConstraintBasedBuilder {
     private static final Counter C = new Counter();
 
+    private static boolean ignorable(Parameter p) {
+        return p.valueCount() == 1 || p instanceof IgnoredBoolParameter;
+    }
+
     static String plantCaption(Configuration conf) {
         final StringBuilder sb = new StringBuilder();
         final String inputLine = String.join(", ", conf.inputParameters.stream().map(p -> "CONT_INPUT_" + p.traceName())
@@ -30,8 +34,7 @@ public class ConstraintBasedBuilder {
             sb.append("    output_").append(p.traceName()).append(": 0..").append(p.valueCount() - 1).append(";\n");
         }
         for (Parameter p : conf.outputParameters) {
-            final String name = "CONT_" + p.traceName();
-            sb.append("    ").append(name).append(": ").append(p.nusmvType()).append(";\n");
+            sb.append("    ").append("CONT_").append(p.traceName()).append(": ").append(p.nusmvType()).append(";\n");
         }
         return sb.toString();
     }
@@ -41,12 +44,12 @@ public class ConstraintBasedBuilder {
         sb.append("ASSIGN\n");
         // output conversion to continuous values
         for (Parameter p : conf.outputParameters) {
-            sb.append("    CONT_").append(p.traceName()).append(" := case\n");
-            for (int i = 0; i < p.valueCount(); i++) {
-                sb.append("        output_").append(p.traceName()).append(" = ").append(i).append(": ")
-                        .append(p.nusmvInterval(i)).append(";\n");
+            sb.append("    CONT_").append(p.traceName()).append(" := ");
+            for (int i = 0; i < p.valueCount() - 1; i++) {
+                sb.append("output_").append(p.traceName()).append(" = ").append(i).append(" ? ")
+                        .append(p.nusmvInterval(i)).append(" : ");
             }
-            sb.append("    esac;\n");
+            sb.append(p.nusmvInterval(p.valueCount() - 1)).append(";\n");
         }
         return sb.toString();
     }
@@ -69,7 +72,7 @@ public class ConstraintBasedBuilder {
     private static void add1DConstraints(Configuration conf, Collection<String> initConstraints,
                                   Collection<String> transConstraints, Map<Parameter, int[][]> paramIndices) {
         for (Parameter p : conf.outputParameters) {
-            if (p instanceof IgnoredBoolParameter) {
+            if (ignorable(p)) {
                 continue;
             }
             final int[][] traces = paramIndices.get(p);
@@ -90,13 +93,13 @@ public class ConstraintBasedBuilder {
                                   Collection<String> transConstraints, Map<Parameter, int[][]> paramIndices) {
         for (int i = 0; i < conf.outputParameters.size(); i++) {
             final Parameter pi = conf.outputParameters.get(i);
-            if (pi instanceof IgnoredBoolParameter) {
+            if (ignorable(pi)) {
                 continue;
             }
             final int[][] tracesI = paramIndices.get(pi);
             for (int j = 0; j < i; j++) {
                 final Parameter pj = conf.outputParameters.get(j);
-                if (pj instanceof IgnoredBoolParameter) {
+                if (ignorable(pj)) {
                     continue;
                 }
                 final int[][] tracesJ = paramIndices.get(pj);
@@ -140,12 +143,12 @@ public class ConstraintBasedBuilder {
                                           List<List<Parameter>> grouping, Map<Parameter, int[][]> paramIndices)
             throws IOException {
         for (Parameter pi : conf.inputParameters) {
-            if (pi instanceof IgnoredBoolParameter) {
+            if (ignorable(pi)) {
                 continue;
             }
             final int[][] tracesI = paramIndices.get(pi);
             for (Parameter po : conf.outputParameters) {
-                if (po instanceof IgnoredBoolParameter) {
+                if (ignorable(po)) {
                     continue;
                 }
                 if (grouping.stream().anyMatch(l -> l.contains(pi))) {
@@ -189,7 +192,7 @@ public class ConstraintBasedBuilder {
                 }
             }
             for (Parameter po : conf.outputParameters) {
-                if (po instanceof IgnoredBoolParameter) {
+                if (ignorable(po)) {
                     continue;
                 }
                 final int[][] tracesO = paramIndices.get(po);
@@ -235,12 +238,12 @@ public class ConstraintBasedBuilder {
     private static void addInputStateConstraints(Configuration conf, Collection<String> transConstraints,
                                                  Map<Parameter, int[][]> paramIndices) throws IOException {
         for (Parameter pi : conf.inputParameters) {
-            if (pi instanceof IgnoredBoolParameter) {
+            if (ignorable(pi)) {
                 continue;
             }
             final int[][] tracesI = paramIndices.get(pi);
             for (Parameter po : conf.outputParameters) {
-                if (po instanceof IgnoredBoolParameter) {
+                if (ignorable(po)) {
                     continue;
                 }
                 final int[][] tracesO = paramIndices.get(po);
@@ -274,7 +277,7 @@ public class ConstraintBasedBuilder {
                                                   Map<Parameter, int[][]> paramIndices)
             throws IOException {
         for (Parameter p : conf.outputParameters) {
-            if (p instanceof IgnoredBoolParameter) {
+            if (ignorable(p)) {
                 continue;
             }
             final int[][] traces = paramIndices.get(p);
@@ -328,7 +331,7 @@ public class ConstraintBasedBuilder {
         }
         sb.append("    (").append(String.join(")\n  & (", transConstraints)).append(")\n");
 
-        final List<String> outParameters = conf.outputParameters.stream()
+        final List<String> outParameters = conf.outputParameters.stream().filter(p -> p.valueCount() > 1)
             .map(p -> "output_" + p.traceName() + " = next(output_" + p.traceName() + ")")
             .collect(Collectors.toList());
 
@@ -360,9 +363,8 @@ public class ConstraintBasedBuilder {
     }
 
     public static void run(Configuration conf, String directory, String datasetFilename, String groupingFile,
-                           double traceFraction,
-                           boolean disableOVERALL_1D, boolean disableOVERALL_2D, boolean disableOIO_CONSTRAINTS,
-                           boolean disableINPUT_STATE, boolean disableCURRENT_NEXT,
+                           double traceFraction, boolean disableOVERALL_1D, boolean disableOVERALL_2D,
+                           boolean disableOIO_CONSTRAINTS, boolean disableINPUT_STATE, boolean disableCURRENT_NEXT,
                            boolean constraintBasedDisableMONOTONIC_FAIRNESS_CONSTRAINTS,
                            boolean constraintBasedDisableCOMPLEX_FAIRNESS_CONSTRAINTS) throws IOException {
         final Dataset ds = Dataset.load(Utils.combinePaths(directory, datasetFilename));
