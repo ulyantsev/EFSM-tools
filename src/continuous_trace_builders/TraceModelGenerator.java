@@ -103,8 +103,7 @@ public class TraceModelGenerator {
             sb.append(pSb);
         }
 
-        sb.append("DEFINE\n");
-        sb.append("    loop_executed := unsupported;\n");
+        sb.append("DEFINE loop_executed := unsupported;\n");
         sb.append(ConstraintBasedBuilder.plantConversions(conf));
 
         Utils.writeToFile(filename, sb.toString());

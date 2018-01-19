@@ -6,6 +6,7 @@ package continuous_trace_builders;
 
 import continuous_trace_builders.fairness_constraints.ComplexFairnessConstraintGenerator;
 import continuous_trace_builders.fairness_constraints.MonotonicFairnessConstraintGenerator;
+import continuous_trace_builders.parameters.BoolParameter;
 import continuous_trace_builders.parameters.IgnoredBoolParameter;
 import continuous_trace_builders.parameters.Parameter;
 
@@ -33,23 +34,31 @@ public class ConstraintBasedBuilder {
         for (Parameter p : conf.outputParameters) {
             sb.append("    output_").append(p.traceName()).append(": 0..").append(p.valueCount() - 1).append(";\n");
         }
-        for (Parameter p : conf.outputParameters) {
+        // these parameters have corresponding DEFINE statements
+        conf.outputParameters.stream().filter(p -> !(p instanceof BoolParameter)).forEach(p -> {
+            // these parameters have corresponding DEFINE statements
             sb.append("    ").append("CONT_").append(p.traceName()).append(": ").append(p.nusmvType()).append(";\n");
-        }
+        });
         return sb.toString();
     }
 
+    // output conversion to continuous values
     static String plantConversions(Configuration conf) {
         final StringBuilder sb = new StringBuilder();
+        conf.outputParameters.stream().filter(p -> p instanceof BoolParameter).forEach(p -> {
+            sb.append("DEFINE CONT_").append(p.traceName()).append(" := output_").append(p.traceName())
+                    .append(" = 1;\n");
+        });
         sb.append("ASSIGN\n");
-        // output conversion to continuous values
         for (Parameter p : conf.outputParameters) {
-            sb.append("    CONT_").append(p.traceName()).append(" := ");
-            for (int i = 0; i < p.valueCount() - 1; i++) {
-                sb.append("output_").append(p.traceName()).append(" = ").append(i).append(" ? ")
-                        .append(p.nusmvInterval(i)).append(" : ");
+            if (!(p instanceof BoolParameter)) {
+                sb.append("    CONT_").append(p.traceName()).append(" := ");
+                for (int i = 0; i < p.valueCount() - 1; i++) {
+                    sb.append("output_").append(p.traceName()).append(" = ").append(i).append(" ? ")
+                            .append(p.nusmvInterval(i)).append(" : ");
+                }
+                sb.append(p.nusmvInterval(p.valueCount() - 1)).append(";\n");
             }
-            sb.append(p.nusmvInterval(p.valueCount() - 1)).append(";\n");
         }
         return sb.toString();
     }
@@ -260,8 +269,7 @@ public class ConstraintBasedBuilder {
                 }
                 final List<String> optionList = new ArrayList<>();
                 for (int index1 = 0; index1 < pi.valueCount(); index1++) {
-                    optionList.add("CONT_INPUT_" + pi.traceName()
-                            + " in " + pi.nusmvInterval(index1)
+                    optionList.add("CONT_INPUT_" + pi.traceName() + " in " + pi.nusmvInterval(index1)
                             + (indexPairs.get(index1).isEmpty() ? ""
                             : (" & " + interval(indexPairs.get(index1), po, true))));
                 }
@@ -339,8 +347,7 @@ public class ConstraintBasedBuilder {
         sb.append("    init(loop_executed) := FALSE;\n");
         sb.append("    next(loop_executed) := ").append(String.join(" & ", outParameters)).append(";\n");
 
-        sb.append("DEFINE\n");
-        sb.append("    unsupported := FALSE;\n");
+        sb.append("DEFINE unsupported := FALSE;\n");
         sb.append(plantConversions(conf));
         fairnessConstraints.forEach(fair -> sb.append(fair).append("\n"));
         Utils.writeToFile(outFilename, sb.toString());
