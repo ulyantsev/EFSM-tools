@@ -15,28 +15,29 @@ import java.util.stream.Collectors;
 public class TraceModelGenerator {
     public static void run(Configuration conf, String directory, String datasetFilename) throws IOException {
         final Dataset ds = Dataset.load(Utils.combinePaths(directory, datasetFilename));
+        Dataset.Reader reader;
 
         final int minLength = ds.minTraceLength();
         final int maxLength = ds.maxTraceLength();
-        if (minLength != maxLength) {
-            throw new AssertionError("All traces are currently assumed to have equal lengths.");
+
+        if (minLength == maxLength) {
+            final String outFilename = Utils.combinePaths(directory, "trace-model.smv");
+            reader = ds.reader();
+            writeTraceModel(conf, ds, maxLength, 0, ds.totalTraces(), outFilename, reader);
+            reader.next(); // will result in null and close the reader
+            System.out.println("The model with all traces has been written to: " + outFilename);
+
+            final String individualTraceDir = Utils.combinePaths(directory, "individual-trace-models");
+            new File(individualTraceDir).mkdir();
+            reader = ds.reader();
+            for (int i = 0; i < ds.totalTraces(); i++) {
+                writeTraceModel(conf, ds, maxLength, i, i + 1, individualTraceDir + "/trace-model-" + i + ".smv", reader);
+            }
+            reader.next(); // will result in null and close the reader
+            System.out.println("Individual trace models have been written to: " + individualTraceDir);
+        } else {
+            throw new RuntimeException("Different lengths are not supported!");
         }
-
-        final String outFilename = Utils.combinePaths(directory, "trace-model.smv");
-        final String individualTraceDir = Utils.combinePaths(directory, "individual-trace-models");
-        new File(individualTraceDir).mkdir();
-
-        Dataset.Reader reader = ds.reader();
-        writeTraceModel(conf, ds, maxLength, 0, ds.totalTraces(), outFilename, reader);
-        reader.next(); // will result in null and close the reader
-        reader = ds.reader();
-        for (int i = 0; i < ds.totalTraces(); i++) {
-            writeTraceModel(conf, ds, maxLength, i, i + 1, individualTraceDir + "/trace-model-" + i + ".smv", reader);
-        }
-        reader.next(); // will result in null and close the reader
-
-        System.out.println("Done; the model has been written to: " + outFilename);
-        System.out.println("Individual trace models have been written to: " + individualTraceDir);
     }
 
     private static void writeTraceModel(Configuration conf, Dataset ds, int maxLength, int indexFrom, int indexTo,
