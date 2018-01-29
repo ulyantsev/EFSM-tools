@@ -9,11 +9,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-/**
- * TODO: add comment
- *
- * @author Kirill Egorov
- */
 public class LtlUtils {
     // expands things like event(A0, A1, A2) to (event(A0) || event(A1) || event(A2))
     public static String expandEventList(String input) {

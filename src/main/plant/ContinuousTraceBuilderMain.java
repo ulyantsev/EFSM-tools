@@ -185,7 +185,9 @@ public class ContinuousTraceBuilderMain extends MainBase {
                     ExplicitStateBuilder.run(conf, directory, datasetFilename, satBased, traceIncludeEach,
                             traceFraction, true, false, false, false, timedConstraints, makeAllStatesInitial);
                 } else if (Objects.equals(type, "traces")) {
-                    TraceModelGenerator.run(conf, directory, datasetFilename);
+                    TraceModelGenerator.run(conf, directory, datasetFilename, false);
+                } else if (Objects.equals(type, "controller-traces")) {
+                    TraceModelGenerator.run(conf, directory, datasetFilename, true);
                 } else if (Objects.equals(type, "quantiles")) {
                     QuantileFinder.run(conf, directory, datasetFilename);
                 } else {

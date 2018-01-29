@@ -13,7 +13,12 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class TraceModelGenerator {
-    public static void run(Configuration conf, String directory, String datasetFilename) throws IOException {
+    /*
+     * forController: instead of plant model behavior traces with discretization,
+     *  generate controller model behavior traces without discretization
+     */
+    public static void run(Configuration conf, String directory, String datasetFilename,
+                           boolean forController) throws IOException {
         final Dataset ds = Dataset.load(Utils.combinePaths(directory, datasetFilename));
         Dataset.Reader reader;
 
@@ -23,7 +28,7 @@ public class TraceModelGenerator {
         if (minLength == maxLength) {
             final String outFilename = Utils.combinePaths(directory, "trace-model.smv");
             reader = ds.reader();
-            writeTraceModel(conf, ds, maxLength, 0, ds.totalTraces(), outFilename, reader);
+            writeTraceModel(conf, ds, maxLength, 0, ds.totalTraces(), outFilename, reader, forController);
             reader.next(); // will result in null and close the reader
             System.out.println("The model with all traces has been written to: " + outFilename);
 
@@ -31,7 +36,8 @@ public class TraceModelGenerator {
             new File(individualTraceDir).mkdir();
             reader = ds.reader();
             for (int i = 0; i < ds.totalTraces(); i++) {
-                writeTraceModel(conf, ds, maxLength, i, i + 1, individualTraceDir + "/trace-model-" + i + ".smv", reader);
+                writeTraceModel(conf, ds, maxLength, i, i + 1, individualTraceDir + "/trace-model-" + i + ".smv",
+                        reader, forController);
             }
             reader.next(); // will result in null and close the reader
             System.out.println("Individual trace models have been written to: " + individualTraceDir);
@@ -41,9 +47,15 @@ public class TraceModelGenerator {
     }
 
     private static void writeTraceModel(Configuration conf, Dataset ds, int maxLength, int indexFrom, int indexTo,
-                                        String filename, Dataset.Reader reader) throws IOException {
+                                        String filename, Dataset.Reader reader, boolean forController)
+            throws IOException {
         final StringBuilder sb = new StringBuilder();
-        sb.append(ConstraintBasedBuilder.plantCaption(conf));
+        if (!forController) {
+            sb.append(ConstraintBasedBuilder.plantCaption(conf));
+        } else {
+            sb.append("MODULE TRACE()\n");
+            sb.append("VAR\n");
+        }
         sb.append("    step: 0..").append(maxLength - 1).append(";\n");
         sb.append("    unsupported: boolean;\n");
         sb.append("FROZENVAR\n    trace: ").append(indexFrom).append("..").append(indexTo - 1).append(";\n");
@@ -54,38 +66,55 @@ public class TraceModelGenerator {
         sb.append("    init(unsupported) := FALSE;\n");
         sb.append("    next(unsupported) := step = ").append(maxLength - 1).append(";\n");
 
-        final Map<Parameter, StringBuilder> stringBuilders = new HashMap<>();
-        for (Parameter p : conf.outputParameters) {
-            final StringBuilder pSb = new StringBuilder();
-            stringBuilders.put(p, pSb);
-            pSb.append("    output_").append(p.traceName()).append(" := case\n");
+        final Map<Parameter, StringBuilder> stringBuilders = new LinkedHashMap<>();
+
+        if (forController) {
+            for (Parameter p : conf.inputParameters) {
+                final StringBuilder pSb = new StringBuilder();
+                stringBuilders.put(p, pSb);
+                pSb.append("    input_").append(p.traceName()).append(" := case\n");
+            }
+            for (Parameter p : conf.outputParameters) {
+                final StringBuilder pSb = new StringBuilder();
+                stringBuilders.put(p, pSb);
+                pSb.append("    output_").append(p.traceName()).append(" := case\n");
+            }
+            sb.append("DEFINE\n");
+        } else {
+            for (Parameter p : conf.outputParameters) {
+                final StringBuilder pSb = new StringBuilder();
+                stringBuilders.put(p, pSb);
+                pSb.append("    output_").append(p.traceName()).append(" := case\n");
+            }
         }
 
         for (int traceIndex = indexFrom; traceIndex < indexTo; traceIndex++) {
             final List<double[]> trace = reader.next();
-            for (Parameter p : conf.outputParameters) {
-                final StringBuilder pSb = stringBuilders.get(p);
+            for (Map.Entry<Parameter, StringBuilder> e : stringBuilders.entrySet()) {
+                final Parameter p = e.getKey();
+                final StringBuilder pSb = e.getValue();
                 pSb.append("        trace = ").append(traceIndex).append(": case\n");
-                final List<Set<Integer>> valuesToSteps = new ArrayList<>();
-                for (int i = 0; i < p.valueCount(); i++) {
-                    valuesToSteps.add(new TreeSet<>());
-                }
+                final Map<Integer, Set<Integer>> valuesToSteps = new LinkedHashMap<>();
                 for (int step = 0; step < trace.size(); step++) {
                     final double value = ds.get(trace.get(step), p);
-                    final int res = p.traceNameIndex(value);
-                    valuesToSteps.get(res).add(step);
+                    // scaling is already applied here
+                    final int res = forController ? (int) Math.round(value) : p.traceNameIndex(value);
+
+                    Set<Integer> set = valuesToSteps.get(res);
+                    if (set == null) {
+                        set = new TreeSet<>();
+                        valuesToSteps.put(res, set);
+                    }
+                    set.add(step);
                 }
 
                 // more compact representation
                 final List<Pair<Integer, Set<Integer>>> pairs = new ArrayList<>();
-                for (int i = 0; i < p.valueCount(); i++) {
-                    if (!valuesToSteps.get(i).isEmpty()) {
-                        pairs.add(Pair.of(i, valuesToSteps.get(i)));
-                    }
+                for (Map.Entry<Integer, Set<Integer>> pair : valuesToSteps.entrySet()) {
+                    pairs.add(Pair.of(pair.getKey(), pair.getValue()));
                 }
 
                 pairs.sort((v1, v2) -> Integer.compare(v2.getRight().size(), v1.getRight().size()));
-                pairs.add(pairs.remove(0)); // shift
 
                 for (int i = 0; i < pairs.size(); i++) {
                     final String condition = i == pairs.size() - 1 ? "TRUE"
@@ -98,14 +127,14 @@ public class TraceModelGenerator {
             }
         }
 
-        for (Parameter p : conf.outputParameters) {
-            final StringBuilder pSb = stringBuilders.get(p);
-            pSb.append("    esac;\n");
-            sb.append(pSb);
+        for (StringBuilder pSb : stringBuilders.values()) {
+            sb.append(pSb).append("    esac;\n");
         }
 
-        sb.append("DEFINE loop_executed := unsupported;\n");
-        sb.append(ConstraintBasedBuilder.plantConversions(conf));
+        if (!forController) {
+            sb.append("DEFINE loop_executed := unsupported;\n");
+            sb.append(ConstraintBasedBuilder.plantConversions(conf));
+        }
 
         Utils.writeToFile(filename, sb.toString());
     }
