@@ -318,7 +318,7 @@
         <mkdir dir="${bin.dir}"/>
         <javac srcdir="${src.dir}"
                destdir="${bin.dir}"
-               classpath="${args4j.path}:${commons.lang3.path}"
+               classpath="${args4j.path}:${commons.lang3.path}:${ognl.path}:${ltl2ba.path}"
                includeantruntime="false"
                debug="${debug}">
             <include name="${plant.generator.main}.java"/>
@@ -330,6 +330,8 @@
             </manifest>
             <zipfileset src="${args4j.path}" excludes="META-INF/*.SF"/>
             <zipfileset src="${commons.lang3.path}" excludes="META-INF/*.SF"/>
+            <zipfileset src="${ognl.path}" excludes="META-INF/*.SF"/>
+            <zipfileset src="${ltl2ba.path}" excludes="META-INF/*.SF"/>
         </jar>
         <delete dir="${bin.dir}"/>
     </target>
@@ -360,7 +362,7 @@
         <mkdir dir="${bin.dir}"/>
         <javac srcdir="${src.dir}"
                destdir="${bin.dir}"
-               classpath="${args4j.path}:${commons.lang3.path}"
+               classpath="${args4j.path}:${commons.lang3.path}:${ognl.path}:${ltl2ba.path}"
                includeantruntime="false"
                debug="${debug}">
             <include name="${plant.scenario.generator.main}.java"/>
@@ -372,6 +374,8 @@
             </manifest>
             <zipfileset src="${args4j.path}" excludes="META-INF/*.SF"/>
             <zipfileset src="${commons.lang3.path}" excludes="META-INF/*.SF"/>
+            <zipfileset src="${ognl.path}" excludes="META-INF/*.SF"/>
+            <zipfileset src="${ltl2ba.path}" excludes="META-INF/*.SF"/>
         </jar>
         <delete dir="${bin.dir}"/>
     </target>
@@ -426,7 +430,7 @@
         <mkdir dir="${bin.dir}"/>
         <javac srcdir="${src.dir}"
                destdir="${bin.dir}"
-               classpath="${args4j.path}:${commons.lang3.path}:${javassist.path}"
+               classpath="${args4j.path}:${commons.lang3.path}:${javassist.path}:${ltl2ba.path}:${ognl.path}"
                includeantruntime="false"
                debug="${debug}">
             <include name="${moore.scenario.compliance.checker.main}.java"/>
@@ -439,6 +443,8 @@
             <zipfileset src="${args4j.path}" excludes="META-INF/*.SF"/>
             <zipfileset src="${commons.lang3.path}" excludes="META-INF/*.SF"/>
             <zipfileset src="${javassist.path}" excludes="meta-inf/*.sf"/>
+            <zipfileset src="${ltl2ba.path}" excludes="meta-inf/*.sf"/>
+            <zipfileset src="${ognl.path}" excludes="meta-inf/*.sf"/>
         </jar>
         <delete dir="${bin.dir}"/>
     </target>
@@ -447,7 +453,7 @@
         <mkdir dir="${bin.dir}"/>
         <javac srcdir="${src.dir}"
                destdir="${bin.dir}"
-               classpath="${commons.lang3.path}:${javassist.path}:${ltl2ba.path}:${ognl.path}"
+               classpath="${args4j.path}:${commons.lang3.path}:${javassist.path}:${ltl2ba.path}:${ognl.path}"
                includeantruntime="false"
                debug="${debug}">
             <include name="${unbeast.translator.main}.java"/>
@@ -461,6 +467,7 @@
             <zipfileset src="${javassist.path}" excludes="meta-inf/*.sf"/>
             <zipfileset src="${ltl2ba.path}" excludes="meta-inf/*.sf"/>
             <zipfileset src="${ognl.path}" excludes="meta-inf/*.sf"/>
+            <zipfileset src="${args4j.path}" excludes="META-INF/*.SF"/>
         </jar>
         <delete dir="${bin.dir}"/>
     </target>
