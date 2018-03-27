@@ -569,7 +569,84 @@ public class NondetMooreAutomaton {
 
     private void toDeterministicSPINString(List<String> events, List<String> actions, Configuration conf,
                                            PrintWriter pw) {
-        // TODO
+        final List<String> unmodifiedEvents = events;
+        events = events.stream().map(s -> "input_" + s).collect(Collectors.toList());
+        pw.append("d_step {\n");
+        final List<Pair<String, Parameter>> eventThresholds = conf != null
+                ? conf.eventThresholds() : new ArrayList<>();
+        final List<Pair<String, Parameter>> actionThresholds = conf != null
+                ? conf.actionThresholds() : new ArrayList<>();
+        // input conversion to discrete values
+        pw.append("    bool ").append(String.join(", ", events)).append(";\n");
+        spinEventDescriptions(new int[eventThresholds.size()], 0, pw, eventThresholds, events);
+        pw.append("    int prev_state = state;\n");
+        pw.append("    if\n");
+        for (int i = 0; i < stateCount(); i++) {
+            pw.append("    :: state == ").append(String.valueOf(i)).append(" ->\n        if\n");
+            final Map<Integer, List<String>> buckets = new TreeMap<>();
+            for (String e : unmodifiedEvents) {
+                // loops always correspond to nondet_transition = 0 and are always possible
+                int nondetNum = 1;
+                for (MooreNode node : states.get(i).allDst(e)) {
+                    if (node.number() != i) {
+                        buckets.computeIfAbsent(node.number(), k -> new ArrayList<>())
+                                .add("input_" + e + " && nondet_transition == " + nondetNum++);
+                    }
+                }
+            }
+            for (Map.Entry<Integer, List<String>> entry : buckets.entrySet()) {
+                pw.append("        :: ").append(String.join(" || ", entry.getValue())).append(" -> state = ")
+                        .append(String.valueOf(entry.getKey())).append(";\n");
+            }
+            pw.append("        :: else -> ").append(String.valueOf(i)).append(";\n");
+            pw.append("        fi\n");
+        }
+        // initial state
+        pw.append("    :: else -> state = nondet_transition;\n");
+        pw.append("    fi\n");
+        pw.append("    loop_executed = state == prev_state;\n");
+
+        // again outputs
+        final Map<String, String> actionDescriptions = conf != null
+                ? conf.extendedActionDescriptions() : new HashMap<>();
+        for (String action : actions) {
+            final List<Integer> properStates = new ArrayList<>();
+            for (int i = 0; i < stateCount(); i++) {
+                if (ArrayUtils.contains(states.get(i).actions().getActions(), action)) {
+                    properStates.add(i);
+                }
+            }
+            final String condition = properStates.isEmpty() ? "0"
+                    : TraceModelGenerator.expressWithIntervalsSPIN(properStates, 0, stateCount(), "state");
+            final String comment = actionDescriptions.containsKey(action)
+                    ? (" // " + actionDescriptions.get(action)) : "";
+            pw.append("    #define output_").append(action).append(" ").append(condition).append(comment).append("\n");
+        }
+        // outputs
+        for (Pair<String, Parameter> entry : actionThresholds) {
+            final String paramName = entry.getKey();
+            final Parameter param = entry.getValue();
+            pw.append("    if\n");
+            for (int i = 0; i < param.valueCount(); i++) {
+                final String condition = "output_" + paramName + i;
+                pw.append("    :: ").append(condition).append(" -> CONT_").append(paramName).append(" = ");
+                final String interval = param.nusmvInterval(i);
+                if (interval.contains("..")) {
+                    final String[] parts = interval.split("\\.\\.");
+                    final int minValue = Integer.parseInt(parts[0]);
+                    final int maxValue = Integer.parseInt(parts[1]);
+                    final int diff = maxValue - minValue;
+                    pw.append(String.valueOf(minValue)).append(" + (nondet_range_").append(paramName)
+                            .append(" <= ").append(String.valueOf(diff)).append(" -> nondet_range_")
+                            .append(paramName).append(" : ").append(String.valueOf(diff)).append(")");
+                } else {
+                    pw.append(interval);
+                }
+                pw.append(";\n");
+            }
+            pw.append("    fi\n");
+        }
+        pw.append("}\n");
     }
 
     public void toSPINString(List<String> events, List<String> actions, Configuration conf, PrintWriter pw) {
