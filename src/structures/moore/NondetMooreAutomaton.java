@@ -285,7 +285,93 @@ public class NondetMooreAutomaton {
         return loopConstraints.stream().mapToInt(x -> x).max().getAsInt();
     }
 
+    // no "unsupported" transitions: assuming that loops are always possible
+    // they should just be prohibited with fairness
+    private void toDeterministicNuSMVString(List<String> events, List<String> actions, Configuration conf,
+                                            PrintWriter pw) {
+        final List<String> unmodifiedEvents = events;
+        events = events.stream().map(s -> "input_" + s).collect(Collectors.toList());
+        pw.append("ASSIGN\n");
+        pw.append("    next(loop_executed) := state = next(state);\n");
+        pw.append("    next(state) := case\n");
+        pw.append("        state = -1: next(nondet_init_state);\n");
+        for (int i = 0; i < stateCount(); i++) {
+            pw.append("        state = ").append(String.valueOf(i)).append(": case\n");
+            final Map<Integer, List<String>> buckets = new TreeMap<>();
+            for (String e : unmodifiedEvents) {
+                // loops always correspond to nondet_transition = 0 and are always possible
+                int nondetNum = 1;
+                for (MooreNode node : states.get(i).allDst(e)) {
+                    if (node.number() != i) {
+                        buckets.computeIfAbsent(node.number(), k -> new ArrayList<>())
+                                .add("input_" + e + " & next(nondet_transition) = " + nondetNum++);
+                    }
+                }
+            }
+            for (Map.Entry<Integer, List<String>> entry : buckets.entrySet()) {
+                pw.append("            ").append(String.join(" | ", entry.getValue())).append(": ")
+                        .append(String.valueOf(entry.getKey())).append(";\n");
+            }
+            pw.append("            TRUE: ").append(String.valueOf(i)).append(";\n");
+            pw.append("        esac;\n");
+        }
+        pw.append("    esac;\n");
+
+        // outputs
+        final List<Pair<String, Parameter>> eventThresholds = conf != null
+                ? conf.eventThresholds() : new ArrayList<>();
+        final List<Pair<String, Parameter>> actionThresholds = conf != null
+                ? conf.actionThresholds() : new ArrayList<>();
+        for (Pair<String, Parameter> entry : actionThresholds) {
+            final String paramName = entry.getKey();
+            final Parameter param = entry.getValue();
+            pw.append("    next(CONT_").append(paramName).append(") := case\n");
+            for (int i = 0; i < param.valueCount(); i++) {
+                pw.append("        next(output_").append(paramName).append(String.valueOf(i)).append("): ");
+                final String interval = param.nusmvInterval(i);
+                if (interval.contains("..")) {
+                    final String[] parts = interval.split("\\.\\.");
+                    final int minValue = Integer.parseInt(parts[0]);
+                    final int maxValue = Integer.parseInt(parts[1]);
+                    final int diff = maxValue - minValue;
+                    pw.append(String.valueOf(minValue)).append(" + (next(nondet_range_").append(paramName)
+                            .append(") <= ").append(String.valueOf(diff)).append(" ? next(nondet_range_")
+                            .append(paramName).append(") : ").append(String.valueOf(diff)).append(")");
+                } else {
+                    pw.append(interval);
+                }
+                pw.append(";\n");
+            }
+            pw.append("    esac;\n");
+        }
+        // input conversion to discrete values
+        pw.append("DEFINE\n");
+        nusmvEventDescriptions(new int[eventThresholds.size()], 0, pw, eventThresholds, events);
+        // again outputs
+        final Map<String, String> actionDescriptions = conf != null
+                ? conf.extendedActionDescriptions() : new HashMap<>();
+        for (String action : actions) {
+            final List<Integer> properStates = new ArrayList<>();
+            for (int i = 0; i < stateCount(); i++) {
+                if (ArrayUtils.contains(states.get(i).actions().getActions(), action)) {
+                    properStates.add(i);
+                }
+            }
+            final String condition = properStates.isEmpty()
+                    ? "FALSE"
+                    : ("state in " + TraceModelGenerator.expressWithIntervalsNuSMV(properStates));
+            final String comment = actionDescriptions.containsKey(action)
+                    ? (" -- " + actionDescriptions.get(action)) : "";
+            pw.append("    output_").append(action).append(" := ").append(condition).append(";").append(comment)
+                    .append("\n");
+        }
+    }
+
     public void toNuSMVString(List<String> events, List<String> actions, Configuration conf, PrintWriter pw) {
+        if (System.getenv("EFSMTOOLS_DETERMINISTIC_PLANT_MODELS") != null) {
+            toDeterministicNuSMVString(events, actions, conf, pw);
+            return;
+        }
         final List<String> unmodifiedEvents = events;
         events = events.stream().map(s -> "input_" + s).collect(Collectors.toList());
         final List<Pair<String, Parameter>> eventThresholds = conf != null
@@ -297,7 +383,7 @@ public class NondetMooreAutomaton {
         final String inputLine = String.join(", ", eventThresholds.stream()
                 .map(t -> "CONT_INPUT_" + t.getKey()).collect(Collectors.toList()));
 
-        if (false) {
+        if (System.getenv("EFSMTOOLS_NUSMV_PRINT_MODEL_HEADER") != null) {
             pw.append("MODULE main\n");
             pw.append("VAR\n");
             pw.append("    plant: PLANT(").append(inputLine).append(");\n");
@@ -335,27 +421,16 @@ public class NondetMooreAutomaton {
             for (String event : events) {
                 final List<Integer> destinations = states.get(i).transitions().stream()
                         .filter(t -> ("input_" + t.event()).equals(event))
-                        .map(t -> t.dst().number()).collect(Collectors.toList());
-                Collections.sort(destinations);
-                Set<String> correspondingEvents = map.get(destinations);
-                if (correspondingEvents == null) {
-                    correspondingEvents = new TreeSet<>();
-                    map.put(destinations, correspondingEvents);
-                }
+                        .map(t -> t.dst().number()).sorted().collect(Collectors.toList());
+                Set<String> correspondingEvents = map.computeIfAbsent(destinations, k -> new TreeSet<>());
                 correspondingEvents.add(event);
             }
-            final Set<Integer> allSuccStates = states.get(i).transitions().stream()
-                    .map(t -> t.dst().number()).collect(Collectors.toCollection(TreeSet::new));
-            {
-                // if the input is unknown, then the choice for the next state is wide
-                final List<Integer> allSuccStatesList = new ArrayList<>(allSuccStates);
-                Set<String> correspondingEvents = map.get(allSuccStatesList);
-                if (correspondingEvents == null) {
-                    correspondingEvents = new TreeSet<>();
-                    map.put(allSuccStatesList, correspondingEvents);
-                }
-                correspondingEvents.add("!known_input");
-            }
+            final Set<Integer> allSuccStates = states.get(i).transitions().stream() .map(t -> t.dst().number())
+                    .collect(Collectors.toCollection(TreeSet::new));
+
+            // if the input is unknown, then the choice for the next state is wide
+            map.computeIfAbsent(new ArrayList<>(allSuccStates), k -> new TreeSet<>()).add("!known_input");
+
             for (Map.Entry<List<Integer>, Set<String>> entry : map.entrySet()) {
                 final List<Integer> destinations = entry.getKey();
                 final Set<String> correspondingEvents = entry.getValue();
@@ -432,8 +507,8 @@ public class NondetMooreAutomaton {
             final Parameter param = entry.getValue();
             pw.append("    CONT_").append(paramName).append(" := case\n");
             for (int i = 0; i < param.valueCount(); i++) {
-                pw.append("        output_").append(paramName).append(String.valueOf(i)).append(": ").append(param.nusmvInterval(i))
-                        .append(";\n");
+                pw.append("        output_").append(paramName).append(String.valueOf(i)).append(": ")
+                        .append(param.nusmvInterval(i)).append(";\n");
             }
             pw.append("    esac;\n");
         }
@@ -447,9 +522,8 @@ public class NondetMooreAutomaton {
         return sw.toString();
     }
 
-    private String indent(int spaces, String s) {
-        final String indent = StringUtils.repeat(' ', spaces);
-        return String.join("\n", Arrays.stream(s.split("\n")).map(x -> indent + x).collect(Collectors.toList()));
+    private String indent(String s) {
+        return String.join("\n", Arrays.stream(s.split("\n")).map(x -> "    " + x).collect(Collectors.toList()));
     }
 
     private static class EventStore {
@@ -485,15 +559,24 @@ public class NondetMooreAutomaton {
                 }
                 return " && (" + String.join(" + ", reversed) + " < input_sum)";
             } else {
-                return " && (" + String.join(" || ", indices.stream().map(this::indexToEvent).collect(Collectors.toList()))
-                        + ")";
+                return " && (" + String.join(" || ", indices.stream().map(this::indexToEvent)
+                        .collect(Collectors.toList())) + ")";
             }
         }
+    }
+
+    private void toDeterministicSPINString(List<String> events, List<String> actions, Configuration conf,
+                                           PrintWriter pw) {
+        // TODO
     }
 
     public void toSPINString(List<String> events, List<String> actions, Configuration conf, PrintWriter pw) {
         if (conf == null) {
             throw new AssertionError();
+        }
+        if (System.getenv("EFSMTOOLS_DETERMINISTIC_PLANT_MODELS") != null) {
+            toDeterministicSPINString(events, actions, conf, pw);
+            return;
         }
         final EventStore es = new EventStore(events);
         final List<Pair<String, Parameter>> eventThresholds = conf != null
@@ -583,13 +666,7 @@ public class NondetMooreAutomaton {
             mapList.add(new TreeMap<>());
         }
         final BiConsumer<Pair<Integer, Integer>, Integer> cleverAdd = (p, index) -> {
-            final Map<Integer, Set<Integer>> m = mapList.get(p.getLeft());
-            Set<Integer> s = m.get(p.getRight());
-            if (s == null) {
-                s = new TreeSet<>();
-                m.put(p.getRight(), s);
-            }
-            s.add(index);
+            mapList.get(p.getLeft()).computeIfAbsent(p.getRight(), k -> new TreeSet<>()).add(index);
         };
         for (int source = 0; source < stateCount(); source++) {
             for (int i = 0; i < es.events.size(); i++) {
@@ -688,7 +765,7 @@ public class NondetMooreAutomaton {
         dstepSb.append("    loop_executed = state == last_state;\n");
         dstepSb.append("    #endif\n\n");
 
-        pw.append("    d_step {\n").append(indent(4, dstepSb.toString())).append("\n    }\n\n").append(usualSb)
+        pw.append("    d_step {\n").append(indent(dstepSb.toString())).append("\n    }\n\n").append(usualSb)
                 .append("} od }\n");
     }
 

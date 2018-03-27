@@ -61,7 +61,7 @@ public class MooreNode {
         return String.valueOf(number + "\\n" + String.join("\\n",
                 Arrays.stream(actions.getActions())
                 .map(Object::toString)
-                .map(s -> actionDescriptions.containsKey(s) ? actionDescriptions.get(s) : s)
+                .map(s -> actionDescriptions.getOrDefault(s, s))
                 .collect(Collectors.toList())));
     }
     

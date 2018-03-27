@@ -243,7 +243,7 @@ public class TraceTranslator {
             System.out.println(" input " + describe.apply(p));
         }
 
-        Arrays.stream(moreCommandLineOptions).forEach(builderArgs::add);
+        builderArgs.addAll(Arrays.asList(moreCommandLineOptions));
 
         return builderArgs;
     }
