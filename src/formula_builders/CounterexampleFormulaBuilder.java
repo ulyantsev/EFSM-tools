@@ -164,7 +164,7 @@ public class CounterexampleFormulaBuilder extends FormulaBuilder {
     
     // for the completeness heuristics
     private void fsmProhibitionConstraints(List<BooleanFormula> constraints) {
-        prohibitedFsms.forEach(constraints::add);
+        constraints.addAll(prohibitedFsms);
     }
     
     private List<BooleanFormula> negativeConstraints() {

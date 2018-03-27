@@ -239,7 +239,8 @@ public class NondetMooreAutomaton {
     }
 
     private static void spinEventDescriptions(int[] arr, int index, PrintWriter result,
-                                              List<Pair<String, Parameter>> thresholds, List<String> events) {
+                                              List<Pair<String, Parameter>> thresholds, List<String> events,
+                                              String prefix) {
         if (index == arr.length) {
             final String event = "input_A" + Arrays.toString(arr).replaceAll("[,\\[\\] ]", "");
             if (!events.contains(event)) {
@@ -254,12 +255,12 @@ public class NondetMooreAutomaton {
             if (conditions.isEmpty()) {
                 conditions.add("true");
             }
-            result.append("        ").append(event).append(" = ").append(String.join(" && ", conditions)).append(";\n");
+            result.append(prefix).append(event).append(" = ").append(String.join(" && ", conditions)).append(";\n");
         } else {
             final int intervalNum = thresholds.get(index).getRight().valueCount();
             for (int i = 0; i < intervalNum; i++) {
                 arr[index] = i;
-                spinEventDescriptions(arr, index + 1, result, thresholds, events);
+                spinEventDescriptions(arr, index + 1, result, thresholds, events, prefix);
             }
         }
     }
@@ -577,8 +578,7 @@ public class NondetMooreAutomaton {
         final List<Pair<String, Parameter>> actionThresholds = conf != null
                 ? conf.actionThresholds() : new ArrayList<>();
         // input conversion to discrete values
-        pw.append("    bool ").append(String.join(", ", events)).append(";\n");
-        spinEventDescriptions(new int[eventThresholds.size()], 0, pw, eventThresholds, events);
+        spinEventDescriptions(new int[eventThresholds.size()], 0, pw, eventThresholds, events, "    bool ");
         pw.append("    int prev_state = state;\n");
         pw.append("    if\n");
         for (int i = 0; i < stateCount(); i++) {
@@ -706,7 +706,7 @@ public class NondetMooreAutomaton {
         pw.append("init { do :: atomic {\n");
         pw.append("\n");
         pw.append("    d_step {\n");
-        spinEventDescriptions(new int[eventThresholds.size()], 0, pw, eventThresholds, es.events);
+        spinEventDescriptions(new int[eventThresholds.size()], 0, pw, eventThresholds, es.events, "        ");
         pw.append("        input_sum = ").append(String.join(" + ", es.events)).append(";\n");
         pw.append("        known_input = input_sum > 0;\n");
         pw.append("        input_sum = input_sum + !known_input;\n");
