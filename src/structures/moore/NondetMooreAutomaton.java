@@ -294,7 +294,6 @@ public class NondetMooreAutomaton {
         pw.append("ASSIGN\n");
         pw.append("    next(loop_executed) := state = next(state);\n");
         pw.append("    next(state) := case\n");
-        pw.append("        state = -1: next(nondet_init_state);\n");
         for (int i = 0; i < stateCount(); i++) {
             pw.append("        state = ").append(String.valueOf(i)).append(": case\n");
             final Map<Integer, List<String>> buckets = new TreeMap<>();
@@ -315,6 +314,8 @@ public class NondetMooreAutomaton {
             pw.append("            TRUE: ").append(String.valueOf(i)).append(";\n");
             pw.append("        esac;\n");
         }
+        // initial state:
+        pw.append("        TRUE: next(nondet_transition);\n");
         pw.append("    esac;\n");
 
         // outputs
@@ -327,7 +328,8 @@ public class NondetMooreAutomaton {
             final Parameter param = entry.getValue();
             pw.append("    next(CONT_").append(paramName).append(") := case\n");
             for (int i = 0; i < param.valueCount(); i++) {
-                pw.append("        next(output_").append(paramName).append(String.valueOf(i)).append("): ");
+                final String condition = i == param.valueCount() - 1 ? "TRUE" : "next(output_" + paramName + i + ")";
+                pw.append("        ").append(condition).append(": ");
                 final String interval = param.nusmvInterval(i);
                 if (interval.contains("..")) {
                     final String[] parts = interval.split("\\.\\.");
