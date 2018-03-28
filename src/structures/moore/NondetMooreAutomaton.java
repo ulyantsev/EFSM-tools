@@ -598,7 +598,7 @@ public class NondetMooreAutomaton {
                 pw.append("        :: ").append(String.join(" || ", entry.getValue())).append(" -> state = ")
                         .append(String.valueOf(entry.getKey())).append(";\n");
             }
-            pw.append("        :: else -> ").append(String.valueOf(i)).append(";\n");
+            pw.append("        :: else -> ;\n");
             pw.append("        fi\n");
         }
         // initial state

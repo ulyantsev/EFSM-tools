@@ -123,7 +123,7 @@ public class QuantifiedBooleanFormula {
         }
     }
     
-    public boolean assignmentIsOk(List<Assignment> assignments) {
+    private boolean assignmentIsOk(List<Assignment> assignments) {
         final Set<String> properVars = existVars.stream().map(v -> v.name)
                 .collect(Collectors.toCollection(TreeSet::new));
         final Set<String> actualVars = assignments.stream().map(a -> a.var.name)

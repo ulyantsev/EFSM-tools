@@ -25,7 +25,7 @@ public class IncrementalInterface implements SolverInterface {
     private final DataOutputStream writer;
     private final DataInputStream reader;
     
-    public IncrementalInterface(List<int[]> positiveConstraints, String actionspec, Logger logger, SatSolver solver)
+    IncrementalInterface(List<int[]> positiveConstraints, String actionspec, Logger logger, SatSolver solver)
             throws IOException {
         if (!solver.isIncremental) {
             throw new AssertionError("An incremental solver was expected!");

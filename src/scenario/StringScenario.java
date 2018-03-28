@@ -128,7 +128,7 @@ public class StringScenario {
         int lastPos = 0;
         while (m.find()) {
             final String event = m.group(1);
-            sb.append(input.substring(lastPos, m.start()));
+            sb.append(input, lastPos, m.start());
             final MyBooleanExpression expr = MyBooleanExpression.get(m.group(3));
             final List<String> expansion = expr.getSatVarCombinations().stream()
                     .map(varAssignment -> event + varAssignment)
@@ -136,7 +136,7 @@ public class StringScenario {
             lastPos = m.end();
             sb.append(String.join("|", expansion)).append("[1]");
         }
-        sb.append(input.substring(lastPos, input.length()));
+        sb.append(input, lastPos, input.length());
         return sb.toString();
     }
 }

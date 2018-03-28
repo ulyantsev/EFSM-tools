@@ -40,8 +40,8 @@ public class ExpandableStringFormula {
     
     public SolveAsSatResult solve(int timeLeftForSolver) throws IOException {
         if (info == null) {
-            final SolveAsSatResult solution = BooleanFormula.solveAsSat(initialFormula,
-                    logger, timeLeftForSolver, solver);
+            final SolveAsSatResult solution = BooleanFormula.solveAsSat(initialFormula, logger, timeLeftForSolver,
+                    solver);
             info = solution.info;
             return solution;
         }

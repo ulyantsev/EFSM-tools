@@ -44,7 +44,7 @@ public class BooleanVariable extends BooleanFormula implements Comparable<Boolea
     
     public static BooleanVariable getOrCreate(String prefix, Object... indices) {
         final Optional<BooleanVariable> v = byName(prefix, indices);
-        return v.isPresent() ? v.get() : new BooleanVariable(prefix, indices);
+        return v.orElseGet(() -> new BooleanVariable(prefix, indices));
     }
     
     @Override

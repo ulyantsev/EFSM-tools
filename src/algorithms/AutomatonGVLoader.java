@@ -15,7 +15,7 @@ import structures.mealy.MealyTransition;
 
 public class AutomatonGVLoader {
     private static String readFileAsString(String filePath) throws IOException {
-        byte[] buffer = new byte[(int) new File(filePath).length()];
+        final byte[] buffer = new byte[(int) new File(filePath).length()];
         try (BufferedInputStream f = new BufferedInputStream(new FileInputStream(filePath))) {
             f.read(buffer);
         }
@@ -23,18 +23,18 @@ public class AutomatonGVLoader {
     }
     
     public static MealyAutomaton load(String fp) throws IOException, ParseException {
-        String expr = "(\\d+) ?-> ?(\\d+) ?\\[label ?= ?\" ?(\\w+) ?\\[(.+)\\] \\((.*)\\) ?\"\\];";
-        Pattern strPattern = Pattern.compile(expr);
-        
-        String target = readFileAsString(fp);
-        Matcher matcher = strPattern.matcher(target);
+        final String expr = "(\\d+) ?-> ?(\\d+) ?\\[label ?= ?\" ?(\\w+) ?\\[(.+)\\] \\((.*)\\) ?\"\\];";
+        final Pattern strPattern = Pattern.compile(expr);
+
+        final String target = readFileAsString(fp);
+        final Matcher matcher = strPattern.matcher(target);
         
         int maxNum = 0;
-        List<Integer> srcList = new ArrayList<>();
-        List<Integer> dstList = new ArrayList<>();
-        List<String> eventsList = new ArrayList<>();
-        List<MyBooleanExpression> guardConditionsList = new ArrayList<>();
-        List<StringActions> actionsList= new ArrayList<>();
+        final List<Integer> srcList = new ArrayList<>();
+        final List<Integer> dstList = new ArrayList<>();
+        final List<String> eventsList = new ArrayList<>();
+        final List<MyBooleanExpression> guardConditionsList = new ArrayList<>();
+        final List<StringActions> actionsList= new ArrayList<>();
         
         while (matcher.find()) {
             int srcNum = Integer.parseInt(matcher.group(1));
@@ -50,12 +50,12 @@ public class AutomatonGVLoader {
             StringActions actions = new StringActions(matcher.group(5));
             actionsList.add(actions);
         }
-        
-        MealyAutomaton res = new MealyAutomaton(maxNum + 1);
+
+        final MealyAutomaton res = new MealyAutomaton(maxNum + 1);
         for (int i = 0; i < srcList.size(); i++) {
-            MealyNode src = res.state(srcList.get(i)), dst = res.state(dstList.get(i));
-            MealyTransition transition = new MealyTransition(src, dst, eventsList.get(i), guardConditionsList.get(i),
-                    actionsList.get(i));
+            final MealyNode src = res.state(srcList.get(i)), dst = res.state(dstList.get(i));
+            final MealyTransition transition = new MealyTransition(src, dst, eventsList.get(i),
+                    guardConditionsList.get(i), actionsList.get(i));
             res.addTransition(src, transition);
         }
         

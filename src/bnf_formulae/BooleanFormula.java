@@ -94,13 +94,13 @@ public abstract class BooleanFormula {
     
     private static String fixedSizedDimacsHeader(int varNum, int clauseNum) {
         final int numLength = 10;
-        String varStr = String.valueOf(varNum);
+        final StringBuilder varStr = new StringBuilder(String.valueOf(varNum));
         while (varStr.length() < numLength) {
-            varStr += " ";
+            varStr.append(" ");
         }
-        String clauseStr = String.valueOf(clauseNum);
+        final StringBuilder clauseStr = new StringBuilder(String.valueOf(clauseNum));
         while (clauseStr.length() < numLength) {
-            clauseStr += " ";
+            clauseStr.append(" ");
         }
         return "p cnf " + varStr + " " + clauseStr;
     }

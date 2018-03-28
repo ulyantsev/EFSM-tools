@@ -15,7 +15,9 @@ import structures.mealy.MealyTransition;
 import verification.verifier.Verifier;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 
 public class AutomatonCompleter {
     private final Verifier verifier;
@@ -59,9 +61,7 @@ public class AutomatonCompleter {
             }
             prepared.add(new StringActions(String.join(",", sequence)));
         }
-        prepared.sort((a1, a2) ->
-            Integer.compare(a1.getActions().length, a2.getActions().length)
-        );
+        prepared.sort(Comparator.comparingInt(a -> a.getActions().length));
         return prepared;
     }
 
@@ -114,7 +114,7 @@ public class AutomatonCompleter {
         } else {
             // all transitions from this state stop being missing
             for (Pair<Integer, String> t : missingTransitions) {
-                if (t.getLeft() == missing.getLeft()) {
+                if (Objects.equals(t.getLeft(), missing.getLeft())) {
                     removedFromMissing.add(t);
                 }
             }

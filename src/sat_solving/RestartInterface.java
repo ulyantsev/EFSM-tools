@@ -21,7 +21,7 @@ public class RestartInterface implements SolverInterface {
     private final Logger logger;
     private final SatSolver solver;
 
-    public RestartInterface(List<int[]> positiveConstraints, String actionspec, Logger logger, SatSolver solver)
+    RestartInterface(List<int[]> positiveConstraints, String actionspec, Logger logger, SatSolver solver)
             throws IOException {
         if (solver.isIncremental) {
             throw new AssertionError("A non-incremental solver was expected!");

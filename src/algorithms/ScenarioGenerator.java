@@ -156,7 +156,7 @@ public class ScenarioGenerator {
                 currentVisited.add(transition);
             }
             
-            events.append(transition.event() + "[" + transition.expr() + "]");
+            events.append(transition.event()).append("[").append(transition.expr()).append("]");
             actions.append(transition.actions());
 
             curNode = transition.dst();
