@@ -99,13 +99,7 @@ public class TraceModelGenerator {
                     final double value = ds.get(trace.get(step), p);
                     // scaling is already applied here
                     final int res = forController ? (int) Math.round(value) : p.traceNameIndex(value);
-
-                    Set<Integer> set = valuesToSteps.get(res);
-                    if (set == null) {
-                        set = new TreeSet<>();
-                        valuesToSteps.put(res, set);
-                    }
-                    set.add(step);
+                    valuesToSteps.computeIfAbsent(res, k -> new TreeSet<>()).add(step);
                 }
 
                 // more compact representation
@@ -121,7 +115,6 @@ public class TraceModelGenerator {
                             : ("step in " + expressWithIntervalsNuSMV(pairs.get(i).getRight()));
                     pSb.append("            ").append(condition).append(": ").append(pairs.get(i).getLeft())
                             .append(";\n");
-
                 }
                 pSb.append("        esac;\n");
             }
@@ -140,6 +133,7 @@ public class TraceModelGenerator {
     }
 
     private static List<Pair<Integer, Integer>> intervals(Collection<Integer> values) {
+        // FIXME outputs (-1, -1) for an empty list which makes no sense, an exception might be more meaningful
         final List<Pair<Integer, Integer>> intervals = new ArrayList<>();
         int min = -1;
         int max = -1;
@@ -178,6 +172,9 @@ public class TraceModelGenerator {
     }
 
     private static String expressWithIntervalsSPIN(Collection<Integer> values, String varName) {
+        if (values.isEmpty()) {
+            return "0";
+        }
         final List<Pair<Integer, Integer>> intervals = intervals(values);
         final List<String> stringIntervals = new ArrayList<>();
         final Set<Integer> separate = new TreeSet<>();

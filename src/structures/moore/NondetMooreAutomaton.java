@@ -617,7 +617,7 @@ public class NondetMooreAutomaton {
                 }
             }
             final String condition = properStates.isEmpty() ? "0"
-                    : TraceModelGenerator.expressWithIntervalsSPIN(properStates, 0, stateCount(), "state");
+                    : TraceModelGenerator.expressWithIntervalsSPIN(properStates, 0, stateCount() - 1, "state");
             final String comment = actionDescriptions.containsKey(action)
                     ? (" // " + actionDescriptions.get(action)) : "";
             pw.append("    #define output_").append(action).append(" ").append(condition).append(comment).append("\n");
