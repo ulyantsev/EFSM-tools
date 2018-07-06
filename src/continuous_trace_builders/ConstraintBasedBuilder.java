@@ -282,8 +282,7 @@ public class ConstraintBasedBuilder {
     }
 
     private static void addCurrentNextConstraints(Configuration conf, Collection<String> transConstraints,
-                                                  Map<Parameter, int[][]> paramIndices)
-            throws IOException {
+                                                  Map<Parameter, int[][]> paramIndices) {
         for (Parameter p : conf.outputParameters) {
             if (ignorable(p)) {
                 continue;
@@ -294,11 +293,7 @@ public class ConstraintBasedBuilder {
                 for (int v = 0; v < trace.length - 1; v++) {
                     final int index1 = trace[v];
                     final int index2 = trace[v + 1];
-                    Set<Integer> secondIndices = indexPairs.get(index1);
-                    if (secondIndices == null) {
-                        secondIndices = new TreeSet<>();
-                        indexPairs.put(index1, secondIndices);
-                    }
+                    Set<Integer> secondIndices = indexPairs.computeIfAbsent(index1, k -> new TreeSet<>());
                     secondIndices.add(index2);
                 }
             }
@@ -396,8 +391,8 @@ public class ConstraintBasedBuilder {
                     if (line == null || line.trim().isEmpty()) {
                         break;
                     }
-                    final List<Parameter> group = Arrays.asList(line.trim().split(" "))
-                            .stream().map(findParameter).collect(Collectors.toList());
+                    final List<Parameter> group = Arrays.stream(line.trim().split(" ")).map(findParameter)
+                            .collect(Collectors.toList());
                     if (group.contains(null)) {
                         throw new RuntimeException("Finding a parameter resulted in null; there may be a mistake in" +
                                 " the grouping file");

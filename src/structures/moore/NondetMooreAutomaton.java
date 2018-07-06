@@ -658,10 +658,8 @@ public class NondetMooreAutomaton {
             return;
         }
         final EventStore es = new EventStore(events);
-        final List<Pair<String, Parameter>> eventThresholds = conf != null
-                ? conf.eventThresholds() : new ArrayList<>();
-        final List<Pair<String, Parameter>> actionThresholds = conf != null
-                ? conf.actionThresholds() : new ArrayList<>();
+        final List<Pair<String, Parameter>> eventThresholds = conf.eventThresholds();
+        final List<Pair<String, Parameter>> actionThresholds = conf.actionThresholds();
 
         for (Pair<String, Parameter> p : eventThresholds) {
             pw.append(p.getRight().spinType()).append(" PLANT_INPUT_").append(p.getLeft()).append(";\n");
@@ -697,6 +695,10 @@ public class NondetMooreAutomaton {
         pw.append("\n");
         pw.append("bool loop_executed;\n");
         pw.append("bool current_unsupported;\n");
+        if (loopConstraints != null) {
+            pw.append("int loop_executions;\n");
+            pw.append("bool loop_executions_violated;\n");
+        }
         pw.append("\n");
         pw.append("int state = -1;\n");
         spinEventDeclarations(new int[eventThresholds.size()], 0, pw, eventThresholds, es.events);
@@ -842,6 +844,18 @@ public class NondetMooreAutomaton {
 
         dstepSb.append("    #ifdef INCLUDE_FAIRNESS\n");
         dstepSb.append("    loop_executed = state == last_state;\n");
+        if (loopConstraints != null) {
+            dstepSb.append("    loop_executions = (!loop_executed -> 0 : (loop_executions >= ")
+                    .append(String.valueOf(maxLoopExecutions())).append(" -> ")
+                    .append(String.valueOf(maxLoopExecutions())).append(" : (loop_executions + 1)));\n");
+            final List<String> options = new ArrayList<>();
+            options.add("loop_executions_violated");
+            for (int i = 0; i < stateCount(); i++) {
+                options.add("state == " + i + " && loop_executions == " + loopConstraints.get(i));
+            }
+            dstepSb.append("    loop_executions_violated = ").append(String.join(" ||\n        ", options))
+                    .append(";\n");
+        }
         dstepSb.append("    #endif\n\n");
 
         pw.append("    d_step {\n").append(indent(dstepSb.toString())).append("\n    }\n\n").append(usualSb)
