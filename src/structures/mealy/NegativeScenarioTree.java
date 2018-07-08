@@ -35,7 +35,7 @@ public class NegativeScenarioTree {
         }
     }
     
-    public void addScenario(StringScenario scenario, int loopLength) throws ParseException {
+    public void addScenario(StringScenario scenario, int loopLength) {
         NegativeMealyNode loopNode = null;
         NegativeMealyNode node = root;
         for (int i = 0; i < scenario.size(); i++) {
@@ -61,7 +61,7 @@ public class NegativeScenarioTree {
      * If events.size() > 1, will add multiple edges towards the same destination.
      */
     private void addTransitions(NegativeMealyNode src, List<String> events, MyBooleanExpression expr,
-                                StringActions actions) throws ParseException {
+                                StringActions actions) {
         assert !events.isEmpty();
         NegativeMealyNode dst = null;
         for (String e : events) {

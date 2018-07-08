@@ -40,7 +40,7 @@ public class APTA {
         final NodeType type;
         final NodeType prevType;
 
-        public NodeTypesPut(int index, NodeType type) {
+        NodeTypesPut(int index, NodeType type) {
             this.index = index;
             this.type = type;
             prevType = nodeTypes.get(index);
@@ -69,7 +69,7 @@ public class APTA {
         final Integer prevNode;
         final Integer prevRevNode;
 
-        public NodePut(int from, String event, int to) {
+        NodePut(int from, String event, int to) {
             this.from = from;
             this.event = event;
             this.to = to;
@@ -279,7 +279,7 @@ public class APTA {
         nodeTypes.remove(node);
     }
     
-    public int merge(int r, int b, int score) {
+    private int merge(int r, int b, int score) {
         final NodeType rLabel = nodeTypes.get(r);
         final NodeType bLabel = nodeTypes.get(b);
         

@@ -84,7 +84,7 @@ public class ScenarioTree {
         for (MealyNode node : nodes) {
             events.addAll(node.transitions().stream().map(MealyTransition::event).collect(Collectors.toList()));
         }
-        return events.toArray(new String[events.size()]);
+        return events.toArray(new String[0]);
     }
     
     public List<String> actions() {
@@ -104,7 +104,7 @@ public class ScenarioTree {
                 variables.addAll(Arrays.asList(transition.expr().getVariables()));
             }
         }
-        return variables.toArray(new String[variables.size()]);
+        return variables.toArray(new String[0]);
     }
 
     public int variableCount() {
