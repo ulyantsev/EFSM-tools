@@ -92,10 +92,10 @@ public class ExplicitStateBuilder {
         }
         final List<String> params = TraceTranslator.generateScenarios(conf, directory, ds, new HashSet<>(),
                 "", "", false, satBased, ALL_EVENT_COMBINATIONS, traceIncludeEach, traceFraction,
-                additionalOptions.toArray(new String[additionalOptions.size()]));
+                additionalOptions.toArray(new String[0]));
         System.out.println();
         final PlantBuilderMain builder = new PlantBuilderMain();
-        builder.run(params.toArray(new String[params.size()]), Author.IB, "");
+        builder.run(params.toArray(new String[0]), Author.IB, "");
         if (!builder.resultAutomaton().isPresent()) {
             throw new RuntimeException("No automaton found!");
         }
