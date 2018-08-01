@@ -169,7 +169,7 @@ public class PlantBuilderMain extends MainBase {
                 return;
             }
             final LazyPositivePlantScenarioForest lazyForest = new LazyPositivePlantScenarioForest(arguments.get(0),
-                    true);
+                    varNumber > 0);
             final NondetMooreAutomaton a = RapidPlantAutomatonBuilder.build(lazyForest, events, timedConstraints,
                     makeAllStatesInitial);
             resultAutomaton = Optional.of(a);

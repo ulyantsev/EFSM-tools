@@ -121,10 +121,11 @@ public class StringScenario {
         return eventList.size() == 1 ? eventList.get(0) : eventList.toString();
     }
 
+    private final static Pattern P_REMOVE_VARIABLES = Pattern.compile("(\\w+)(\\s)*+\\[([^\\[\\]]+)\\]");
+
     public static String removeVariables(String input) throws ParseException {
-        final Pattern p = Pattern.compile("(\\w+)(\\s)*+\\[([^\\[\\]]+)\\]");
         final StringBuilder sb = new StringBuilder();
-        final Matcher m = p.matcher(input);
+        final Matcher m = P_REMOVE_VARIABLES.matcher(input);
         int lastPos = 0;
         while (m.find()) {
             final String event = m.group(1);

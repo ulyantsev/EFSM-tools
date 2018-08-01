@@ -34,7 +34,7 @@ public class FastAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
      * Returns (automaton, transition variables supported by scenarios).
      * Events and actions are represented by indices.
      */
-    public static Pair<MealyAutomaton, List<BooleanVariable>> constructAutomatonFromAssignment(
+    private static Pair<MealyAutomaton, List<BooleanVariable>> constructAutomatonFromAssignment(
             Logger logger, List<Assignment> ass, ScenarioTree tree, int colorSize,
             boolean complete, CompletenessType completenessType,
             List<String> actionList, List<String> eventList) {
@@ -124,7 +124,7 @@ public class FastAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
         return Pair.of(ans, filteredYVars);
     }
     
-    protected static Optional<MealyAutomaton> reportResult(Logger logger, int iterations, Optional<MealyAutomaton> a) {
+    private static Optional<MealyAutomaton> reportResult(Logger logger, int iterations, Optional<MealyAutomaton> a) {
         logger.info("ITERATIONS: " + (iterations + 1));
         return a;
     }
@@ -256,8 +256,8 @@ public class FastAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
                         normalCEs.add(normalCE);
                     }
                 }
-                normalCEs.stream().forEach(ce -> addCounterexample(logger, ce, negativeTree));
-                globalCEs.stream().forEach(ce -> addCounterexample(logger, ce, globalTree));
+                normalCEs.forEach(ce -> addCounterexample(logger, ce, negativeTree));
+                globalCEs.forEach(ce -> addCounterexample(logger, ce, globalTree));
             } else {
                 counterexamples.stream()
                         .filter(ce -> !ce.isEmpty()).distinct()
@@ -269,18 +269,14 @@ public class FastAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
         return Optional.empty();
     }
 
-    protected static void addCounterexample(Logger logger, Counterexample counterexample,
-                                            NegativeScenarioTree negativeForest) {
+    private static void addCounterexample(Logger logger, Counterexample counterexample,
+                                          NegativeScenarioTree negativeForest) {
         final List<MyBooleanExpression> expr =
                 Collections.nCopies(counterexample.events().size(), MyBooleanExpression.getTautology());
         final List<StringActions> actions = counterexample.actions().stream()
                 .map(action -> new StringActions(String.join(",", action))).collect(Collectors.toList());
-        try {
-            negativeForest.addScenario(new StringScenario(counterexample.events(), expr, actions),
-                    counterexample.loopLength);
-        } catch (ParseException e) {
-            throw new AssertionError();
-        }
+        negativeForest.addScenario(new StringScenario(counterexample.events(), expr, actions),
+                counterexample.loopLength);
         logger.info("ADDING COUNTEREXAMPLE: " + counterexample);
     }
 }

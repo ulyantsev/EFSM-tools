@@ -34,13 +34,13 @@ import java.util.*;
 import java.util.logging.Logger;
 
 public class CounterexampleAutomatonBuilder extends ScenarioAndLtlAutomatonBuilder {
-    protected static Optional<MealyAutomaton> reportResult(Logger logger, int iterations, Optional<MealyAutomaton> a) {
+    private static Optional<MealyAutomaton> reportResult(Logger logger, int iterations, Optional<MealyAutomaton> a) {
         logger.info("ITERATIONS: " + (iterations + 1));
         return a;
     }
     
-    protected static void addCounterexample(Logger logger, MealyAutomaton a,
-            Counterexample counterexample, NegativeScenarioTree negativeTree) {
+    private static void addCounterexample(Logger logger, MealyAutomaton a, Counterexample counterexample,
+                                          NegativeScenarioTree negativeTree) {
         int state = a.startState().number();
         final List<MyBooleanExpression> expressions = new ArrayList<>();
         final List<StringActions> actions = new ArrayList<>();
@@ -51,16 +51,11 @@ public class CounterexampleAutomatonBuilder extends ScenarioAndLtlAutomatonBuild
             state = t.dst().number();
         }
         logger.info("ADDING COUNTEREXAMPLE: " + counterexample);
-        try {
-            negativeTree.addScenario(new StringScenario(counterexample.events(), expressions, actions),
-                    counterexample.loopLength);
-        } catch (ParseException e) {
-            throw new RuntimeException(e);
-        }
+        negativeTree.addScenario(new StringScenario(counterexample.events(), expressions, actions),
+                counterexample.loopLength);
     }
     
-    protected static void addProhibited(List<Assignment> list,
-                                        List<BooleanFormula> prohibited) {
+    private static void addProhibited(List<Assignment> list, List<BooleanFormula> prohibited) {
         final FormulaList options = new FormulaList(BinaryOperations.OR);
         for (Assignment ass : list) {
             if (ass.var.name.startsWith("y_") && ass.value || ass.var.name.startsWith("z_")) {
@@ -92,7 +87,7 @@ public class CounterexampleAutomatonBuilder extends ScenarioAndLtlAutomatonBuild
             if (expandableFormula == null) {
                 final BooleanFormula basicFormula = builder.getBasicFormula();
                 negationConstraints.addAll(builder.getNegationConstraints());
-                negationConstraints.stream().forEach(negationList::add);
+                negationConstraints.forEach(negationList::add);
                 final String formula = basicFormula.and(negationList.assemble())
                         .simplify().toLimbooleString();
                 expandableFormula = new ExpandableStringFormula(formula, logger, satSolver);
@@ -100,7 +95,7 @@ public class CounterexampleAutomatonBuilder extends ScenarioAndLtlAutomatonBuild
                 negationConstraints.addAll(builder.getNegationConstraints());
                 final Set<BooleanFormula> diffConstraints = new LinkedHashSet<>(negationConstraints);
                 diffConstraints.removeAll(previousConstraints);
-                diffConstraints.stream().forEach(negationList::add);
+                diffConstraints.forEach(negationList::add);
                 final String negationFormula = negationList.assemble().simplify().toLimbooleString();
                 final List<String> negativeDimacsConstraints = BooleanFormula.extendDimacs(negationFormula,
                         logger, "_tmp.incremental.dimacs", expandableFormula.info());

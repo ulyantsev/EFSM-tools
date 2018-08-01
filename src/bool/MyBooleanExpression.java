@@ -59,7 +59,7 @@ public class MyBooleanExpression {
         final Pattern pattern = Pattern.compile("[()~&|=>+]");
         final HashSet<String> varsSet = new LinkedHashSet<>(Arrays.asList(pattern.split(repr)));
         varsSet.removeAll(Arrays.asList("", "1", "0"));
-        variables = varsSet.toArray(new String[varsSet.size()]);
+        variables = varsSet.toArray(new String[0]);
 
         String shortExpr = repr;
         for (String var : variables) {
