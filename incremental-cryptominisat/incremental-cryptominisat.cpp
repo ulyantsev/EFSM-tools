@@ -16,7 +16,7 @@ int main(int argc, const char* argv[]) {
     
     int var_number = atoi(argv[1]);
     int time_limit = atoi(argv[2]);
-    SATSolver solver (NULL, NULL);
+    SATSolver solver;
     solver.new_vars(var_number);
 
     while (true) {
