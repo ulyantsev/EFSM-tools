@@ -1,6 +1,3 @@
-/**
- * StateMachine.java, 02.03.2008
- */
 package verification.statemachine;
 
 import java.util.HashMap;

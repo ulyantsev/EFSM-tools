@@ -1,6 +1,3 @@
-/**
- * DfsNode.java, 12.04.2008
- */
 package verification.verifier;
 
 import java.util.Iterator;
@@ -26,7 +23,7 @@ public class IntersectionNode {
     public final boolean terminal;
     private final TransitionIterator iterator;
 
-    public IntersectionNode(IntersectionAutomata automata, SimpleState state, BuchiNode node) {
+    IntersectionNode(IntersectionAutomata automata, SimpleState state, BuchiNode node) {
         this.automata = automata;
         this.state = state;
         this.node = node;
@@ -40,7 +37,7 @@ public class IntersectionNode {
         return iterator.hasNext() ? iterator.next() : null;
     }
 
-    public void resetIterator() {
+    void resetIterator() {
         iterator.reset();
     }
 

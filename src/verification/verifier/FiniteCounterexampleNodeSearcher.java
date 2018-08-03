@@ -15,7 +15,7 @@ import verification.ltl.grammar.BooleanNode;
 import verification.ltl.grammar.IExpression;
 
 public class FiniteCounterexampleNodeSearcher {
-    public static Set<BuchiNode> findCounterexampleBuchiStates(BuchiAutomaton a) {
+    static Set<BuchiNode> findCounterexampleBuchiStates(BuchiAutomaton a) {
         final Set<BuchiNode> nodesWithDevilTransitions = nodesWithDevilTransitions(a);
         
         final Set<BuchiNode> nodesWithRejectingLoops = new LinkedHashSet<>();
