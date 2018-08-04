@@ -6,6 +6,7 @@ package continuous_trace_builders;
 
 import main.plant.PlantBuilderMain;
 import meta.Author;
+import org.apache.commons.lang3.tuple.Pair;
 import structures.moore.MooreNode;
 import structures.moore.MooreTransition;
 import structures.moore.NondetMooreAutomaton;
@@ -75,10 +76,10 @@ public class ExplicitStateBuilder {
         return res;
     }
 
-    public static void run(Configuration conf, String directory, String datasetFilename, boolean satBased,
-                           int traceIncludeEach, double traceFraction, boolean proximityCompletion,
-                           boolean outputGv, boolean outputSmv, boolean outputSpin, boolean timedConstraints,
-                           boolean makeAllStatesInitial)
+    public static NondetMooreAutomaton run(Configuration conf, String directory, String datasetFilename,
+                                           boolean satBased, int traceIncludeEach, double traceFraction,
+                                           boolean proximityCompletion, boolean outputGv, boolean outputSmv,
+                                           boolean outputSpin, boolean timedConstraints, boolean makeAllStatesInitial)
             throws IOException {
         final Dataset ds = Dataset.load(Utils.combinePaths(directory, datasetFilename));
         System.out.println(conf);
@@ -101,6 +102,7 @@ public class ExplicitStateBuilder {
         }
         final NondetMooreAutomaton a = builder.resultAutomaton().get();
         dumpAutomaton(a, conf, directory, "plant-explicit.", proximityCompletion, outputGv, outputSmv, outputSpin);
+        return a;
     }
 
     static void dumpAutomaton(NondetMooreAutomaton a, Configuration conf, String directory, String namePrefix,
@@ -144,13 +146,10 @@ public class ExplicitStateBuilder {
     }
 
     private static void dumpProperties(NondetMooreAutomaton a) {
-        final int nStates = a.states().size();
-        final int nTrans = a.transitionNumber();
-        final int nTransUnsup = a.unsupportedTransitions().size();
-        final int nTransSup = nTrans - nTransUnsup;
-        System.out.println("Number of states: " +  nStates);
-        System.out.println("Number of supported transitions: " + nTransSup);
-        System.out.println("Fraction of supported transitions: " + (float) ((double) nTransSup / nTrans));
+        final Pair<Integer, Integer> p = a.supportedAndAllTransitionNumbers();
+        System.out.println("Number of states: " + a.states().size());
+        System.out.println("Number of supported transitions: " + p.getLeft());
+        System.out.println("Fraction of supported transitions: " + (float) ((double) p.getLeft() / p.getRight()));
     }
 
     // assuming completeness and checking only state 0

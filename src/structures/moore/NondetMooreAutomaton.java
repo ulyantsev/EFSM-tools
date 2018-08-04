@@ -26,6 +26,13 @@ public class NondetMooreAutomaton {
 
     private List<Integer> loopConstraints = null;
 
+    public Pair<Integer, Integer> supportedAndAllTransitionNumbers() {
+        final int nTrans = transitionNumber();
+        final int nTransUnsup = unsupportedTransitions().size();
+        final int nTransSup = nTrans - nTransUnsup;
+        return Pair.of(nTransSup, nTrans);
+    }
+
     public void setLoopConstraints(List<Integer> loopConstraints) {
         this.loopConstraints = new ArrayList<>(loopConstraints);
     }
@@ -34,28 +41,8 @@ public class NondetMooreAutomaton {
         return unsupportedTransitions;
     }
 
-    private double transitionFraction(Predicate<MooreTransition> p) {
-        int matched = 0;
-        int all = 0;
-        for (MooreNode state : states) {
-            for (MooreTransition t : state.transitions()) {
-                all++;
-                matched += p.test(t) ? 1 : 0;
-            }
-        }
-        return (double) matched / all;
-    }
-
-    public double unsupportedTransitionFraction() {
-        return transitionFraction(unsupportedTransitions::contains);
-    }
-
     public int transitionNumber() {
         return states.stream().mapToInt(s -> s.transitions().size()).sum();
-    }
-
-    public double loopFraction() {
-        return transitionFraction(t -> t.dst() == t.src());
     }
 
     public static NondetMooreAutomaton readGV(String filename) throws FileNotFoundException {

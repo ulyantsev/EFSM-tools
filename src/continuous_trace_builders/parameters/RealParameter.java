@@ -6,15 +6,25 @@ package continuous_trace_builders.parameters;
 
 import org.apache.commons.lang3.tuple.Pair;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 public class RealParameter extends Parameter {
     final List<Double> cutoffs;
     private int lowerBound = Integer.MIN_VALUE + 1;
     private int upperBound = Integer.MAX_VALUE;
     private final Pair<Double, Double> doubleBounds;
+
+    public void addCutoff(double value) {
+        if (value < doubleBounds.getLeft() || value > doubleBounds.getRight()) {
+            throw new RuntimeException();
+        }
+        final Set<Double> newCutoffs = new TreeSet<>(cutoffs);
+        newCutoffs.add(value);
+        newCutoffs.remove(doubleBounds.getLeft());
+        newCutoffs.remove(doubleBounds.getRight());
+        cutoffs.clear();
+        cutoffs.addAll(newCutoffs);
+    }
 
     public RealParameter(String simulationEnvironmentName, String traceName, Pair<Double, Double> bounds,
                          Double... cutoffs) {
