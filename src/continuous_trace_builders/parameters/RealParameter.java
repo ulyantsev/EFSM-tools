@@ -1,6 +1,6 @@
 package continuous_trace_builders.parameters;
 
-/**
+/*
  * (c) Igor Buzhinsky
  */
 
@@ -9,29 +9,39 @@ import org.apache.commons.lang3.tuple.Pair;
 import java.util.*;
 
 public class RealParameter extends Parameter {
-    final List<Double> cutoffs;
+    final List<Double> thresholds;
     private int lowerBound = Integer.MIN_VALUE + 1;
     private int upperBound = Integer.MAX_VALUE;
     private final Pair<Double, Double> doubleBounds;
 
-    public void addCutoff(double value) {
-        if (value < doubleBounds.getLeft() || value > doubleBounds.getRight()) {
-            throw new RuntimeException();
+    public double lowerDoubleBound() {
+        return doubleBounds.getLeft();
+    }
+
+    public double upperDoubleBound() {
+        return doubleBounds.getRight();
+    }
+
+    public void replaceThresholds(List<Double> newCutoffs) {
+        for (double value : newCutoffs) {
+            if (value < doubleBounds.getLeft() || value > doubleBounds.getRight()) {
+                throw new RuntimeException();
+            }
         }
-        final Set<Double> newCutoffs = new TreeSet<>(cutoffs);
-        newCutoffs.add(value);
-        newCutoffs.remove(doubleBounds.getLeft());
-        newCutoffs.remove(doubleBounds.getRight());
-        cutoffs.clear();
-        cutoffs.addAll(newCutoffs);
+        final Set<Double> set = new TreeSet<>(newCutoffs);
+        set.remove(lowerDoubleBound());
+        set.remove(upperDoubleBound());
+        thresholds.clear();
+        thresholds.addAll(set);
+        thresholds.add(Double.POSITIVE_INFINITY);
     }
 
     public RealParameter(String simulationEnvironmentName, String traceName, Pair<Double, Double> bounds,
-                         Double... cutoffs) {
+                         Double... thresholds) {
         super(simulationEnvironmentName, traceName);
         this.doubleBounds = bounds;
-        this.cutoffs = new ArrayList<>(Arrays.asList(cutoffs));
-        this.cutoffs.add(Double.POSITIVE_INFINITY);
+        this.thresholds = new ArrayList<>(Arrays.asList(thresholds));
+        this.thresholds.add(Double.POSITIVE_INFINITY);
         if (bounds.getLeft() > lowerBound) {
             lowerBound = (int) Math.round(Math.floor(bounds.getLeft()));
         }
@@ -43,7 +53,7 @@ public class RealParameter extends Parameter {
     @Override
     public List<String> traceNames() {
         final List<String> res = new ArrayList<>();
-        for (int j = 0; j < cutoffs.size(); j++) {
+        for (int j = 0; j < thresholds.size(); j++) {
             res.add(traceName(j));
         }
         return res;
@@ -52,9 +62,9 @@ public class RealParameter extends Parameter {
     @Override
     public List<String> descriptions() {
         final List<String> res = new ArrayList<>();
-        for (int j = 0; j < cutoffs.size(); j++) {
-            final double lower = j == 0 ? doubleBounds.getLeft() : cutoffs.get(j - 1);
-            final double upper = j == cutoffs.size() - 1 ? doubleBounds.getRight() : cutoffs.get(j);
+        for (int j = 0; j < thresholds.size(); j++) {
+            final double lower = j == 0 ? doubleBounds.getLeft() : thresholds.get(j - 1);
+            final double upper = j == thresholds.size() - 1 ? doubleBounds.getRight() : thresholds.get(j);
             res.add("[" + j + "] " + lower + " ≤ " + traceName() + " < " + upper);
         }
         return res;
@@ -65,8 +75,8 @@ public class RealParameter extends Parameter {
         if (value < lowerBound || value > upperBound) {
             throw new RuntimeException("Parameter " + traceName() + ": bounds violated for value " + value);
         }
-        for (int i = 0; i < cutoffs.size(); i++) {
-            if (value < cutoffs.get(i)) {
+        for (int i = 0; i < thresholds.size(); i++) {
+            if (value < thresholds.get(i)) {
                 return i;
             }
         }
@@ -75,14 +85,14 @@ public class RealParameter extends Parameter {
 
     @Override
     public int valueCount() {
-        return cutoffs.size();
+        return thresholds.size();
     }
 
     @Override
     public String toString() {
         final ArrayList<Double> thresholds = new ArrayList<>();
         thresholds.add((double) lowerBound);
-        thresholds.addAll(cutoffs.subList(0, cutoffs.size() - 1));
+        thresholds.addAll(this.thresholds.subList(0, this.thresholds.size() - 1));
         thresholds.add((double) upperBound);
 
         return "param " + simulationEnvironmentName() + " (" + traceName() + "): REAL" + thresholds;
@@ -121,11 +131,11 @@ public class RealParameter extends Parameter {
     }
 
     private int intervalMin(int interval) {
-        return interval == 0 ? lowerBound : (int) Math.round(Math.floor(cutoffs.get(interval - 1)));
+        return interval == 0 ? lowerBound : (int) Math.round(Math.floor(thresholds.get(interval - 1)));
     }
     
     private int intervalMax(int interval) {
-        return interval == cutoffs.size() - 1 ? upperBound : (int) Math.round(Math.ceil(cutoffs.get(interval)));
+        return interval == thresholds.size() - 1 ? upperBound : (int) Math.round(Math.ceil(thresholds.get(interval)));
     }
     
     @Override

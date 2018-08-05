@@ -26,11 +26,11 @@ public abstract class Parameter {
             if (p instanceof RealParameter && q instanceof RealParameter) {
                 final RealParameter rp = (RealParameter) p;
                 final RealParameter rq = (RealParameter) q;
-                final Set<Double> allCutoffs = new TreeSet<>(rp.cutoffs);
-                allCutoffs.addAll(rq.cutoffs);
+                final Set<Double> allCutoffs = new TreeSet<>(rp.thresholds);
+                allCutoffs.addAll(rq.thresholds);
                 for (RealParameter x : Arrays.asList(rp, rq)) {
-                    x.cutoffs.clear();
-                    x.cutoffs.addAll(allCutoffs);
+                    x.thresholds.clear();
+                    x.thresholds.addAll(allCutoffs);
                 }
             } else if (p instanceof BoolParameter && q instanceof BoolParameter) {
             } else {
