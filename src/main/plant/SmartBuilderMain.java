@@ -9,6 +9,7 @@ import continuous_trace_builders.parameters.Parameter;
 import continuous_trace_builders.parameters.RealParameter;
 import meta.Author;
 import meta.MainBase;
+import org.apache.commons.lang3.tuple.Pair;
 import org.kohsuke.args4j.Option;
 
 import java.io.IOException;
@@ -50,76 +51,151 @@ public class SmartBuilderMain extends MainBase {
     @Option(name = "--randomSeed", usage = "random seed", metaVar = "<seed>")
     private Long randomSeed;
 
+    private final static boolean SIMULATE = true;
+
     public static void main(String[] args) {
         new SmartBuilderMain().run(args, Author.IB,
                 "Improvement of ContinuousTraceBuilder which required reduced configurations.");
     }
 
     private static class ParameterProfile {
-        private final Map<RealParameter, Set<Double>> mandatoryThresholds = new HashMap<>();
-        private final Map<RealParameter, Set<Double>> assignedThresholds = new HashMap<>();
+        private final Map<RealParameter, Set<Double>> thresholds = new HashMap<>();
+        private final Set<RealParameter> exhaustedParameters = new HashSet<>();
         private final Dataset ds;
-
-        // cached
-        private final Map<RealParameter, Map<Integer, List<Double>>> quantiles = new HashMap<>();
 
         private ParameterProfile(Configuration conf, Dataset ds) {
             for (Parameter p : conf.parameters()) {
                 if (p instanceof RealParameter) {
                     final RealParameter rp = (RealParameter) p;
-                    mandatoryThresholds.put(rp, new TreeSet<>(Arrays.asList(rp.lowerDoubleBound(),
+                    thresholds.put(rp, new TreeSet<>(Arrays.asList(rp.lowerDoubleBound(),
                             rp.upperDoubleBound())));
-                    assignedThresholds.put(rp, new TreeSet<>());
                 }
             }
             this.ds = ds;
         }
 
         private void addMandatory(RealParameter p, double value) {
-            mandatoryThresholds.get(p).add(value);
+            thresholds.get(p).add(value);
         }
 
         private void updateParameters() {
-            for (RealParameter p : mandatoryThresholds.keySet()) {
-                final List<Double> newThresholds = new ArrayList<>();
-                newThresholds.addAll(mandatoryThresholds.get(p));
-                newThresholds.addAll(assignedThresholds.get(p));
-                p.replaceThresholds(newThresholds);
+            for (Map.Entry<RealParameter, Set<Double>> e : thresholds.entrySet()) {
+                e.getKey().replaceThresholds(new ArrayList<>(e.getValue()));
             }
         }
 
-        private List<Double> getQuantiles(RealParameter p, int n) throws IOException {
-            Map<Integer, List<Double>> map = quantiles.get(p);
-            if (map == null) {
-                final Set<Integer> ns = new TreeSet<>();
-                for (int i = 2; i <= 10; i++) {
-                    ns.add(i);
-                }
-                map = QuantileFinder.find(ds, p, ns);
-                quantiles.put(p, map);
+        private boolean improveThresholds(RealParameter p, boolean forceDummy) throws IOException {
+            final List<Double> values = QuantileFinder.sortedValues(ds, p);
+            final Set<Double> target = thresholds.get(p);
+            final List<Double> currentThresholds = new ArrayList<>(target);
+            final int[] indices = new int[currentThresholds.size()];
+            for (int i = 1; i < currentThresholds.size(); i++) {
+                final double threshold = currentThresholds.get(i);
+                indices[i] = Math.abs(Collections.binarySearch(values, threshold));
             }
-            return map.get(n);
+
+            class Interval implements Comparable<Interval> {
+                private final double leftThreshold;
+                private final double rightThreshold;
+                private final int leftIndex;
+                private final int rightIndex;
+
+                public Interval(double leftThreshold, double rightThreshold, int leftIndex, int rightIndex) {
+                    this.leftThreshold = leftThreshold;
+                    this.rightThreshold = rightThreshold;
+                    this.leftIndex = leftIndex;
+                    this.rightIndex = rightIndex;
+                }
+
+                private int value() {
+                    return rightIndex - leftIndex;
+                }
+
+                private double midValue() {
+                    return (rightThreshold + leftThreshold) / 2;
+                }
+
+                private int midIndex() {
+                    return (rightIndex + leftIndex) / 2;
+                }
+
+                public boolean between(double value) {
+                    return value > leftThreshold && value < rightThreshold;
+                }
+
+                @Override
+                public int compareTo(Interval o) {
+                    return o.value() - value();
+                }
+
+                @Override
+                public String toString() {
+                    return value() + "[" + leftThreshold + " @ " + leftIndex + ", " + rightThreshold + " @ "
+                            + rightIndex + "]";
+                }
+            }
+
+            final Interval[] intervals = new Interval[indices.length - 1];
+            for (int i = 0; i < indices.length - 1; i++) {
+                intervals[i] = new Interval(currentThresholds.get(i), currentThresholds.get(i + 1), indices[i],
+                        indices[i + 1]);
+            }
+            Arrays.sort(intervals);
+            System.out.println(">>>> " + Arrays.toString(intervals));
+            for (Interval i : intervals) {
+                final int middleIndex = i.midIndex();
+                final double middleValue = values.get(middleIndex);
+                if (middleValue == i.leftThreshold) {
+                    // walk right
+                    for (int j = middleIndex + 1; j <= i.rightIndex; j++) {
+                        final double value = values.get(j);
+                        if (i.between(value)) {
+                            target.add(value);
+                            //System.out.println(value);
+                            return true;
+                        }
+                    }
+                    if (forceDummy) {
+                        target.add(i.midValue());
+                        return true;
+                    }
+                } else if (middleValue == i.rightThreshold) {
+                    // walk left
+                    for (int j = middleIndex - 1; j >= i.leftIndex; j--) {
+                        final double value = values.get(j);
+                        if (i.between(value)) {
+                            target.add(value);
+                            //System.out.println(value);
+                            return true;
+                        }
+                    }
+                    if (forceDummy) {
+                        target.add(i.midValue());
+                        return true;
+                    }
+                } else {
+                    target.add(middleValue);
+                    //System.out.println(middleValue);
+                    return true;
+                }
+            }
+            return false;
         }
 
         private void addMinimumAssignedThresholds() throws IOException {
-            for (RealParameter p : mandatoryThresholds.keySet()) {
-                final Set<Double> set = mandatoryThresholds.get(p);
+            for (RealParameter p : thresholds.keySet()) {
+                final Set<Double> set = thresholds.get(p);
                 if (set.size() == 2) {
-                    // add a 2-threshold based on quantiles
-                    final double threshold = getQuantiles(p, 2).get(0);
-                    assignedThresholds.get(p).add(set.contains(threshold) ? (p.upperDoubleBound()
-                            - p.lowerDoubleBound()) / 2 : threshold);
+                    System.out.println(">>>> " + p.traceName() + ": " + thresholds.get(p));
+                    improveThresholds(p, true);
+                    System.out.println(">>>> " + p.traceName() + ": " + thresholds.get(p));
                 }
             }
             updateParameters();
         }
 
         private int numberOfIntervals(RealParameter p) {
-            final Set<Double> set = new TreeSet<>(mandatoryThresholds.get(p));
-            set.addAll(assignedThresholds.get(p));
-            set.remove(p.lowerDoubleBound());
-            set.remove(p.upperDoubleBound());
-            return set.size() + 1;
+            return thresholds.get(p).size() - 1;
         }
 
         private void randomComplification(Random rnd) throws IOException {
@@ -141,23 +217,24 @@ public class SmartBuilderMain extends MainBase {
             }
             while (true) {
                 final RandomCollection<RealParameter> rc = new RandomCollection<>();
-                for (RealParameter p : assignedThresholds.keySet()) {
+                for (RealParameter p : thresholds.keySet()) {
+                    if (exhaustedParameters.contains(p)) {
+                        continue;
+                    }
                     final int n = numberOfIntervals(p);
                     if (n < 10) {
                         rc.add(10 - n, p);
                     }
                 }
                 final RealParameter chosen = rc.next();
-                final int oldNumberOfIntervals = numberOfIntervals(chosen);
-                final int oldNumberOfThresholds = assignedThresholds.get(chosen).size();
-                assignedThresholds.get(chosen).clear();
-                assignedThresholds.get(chosen).addAll(getQuantiles(chosen, oldNumberOfThresholds + 2));
-                final int newNumberOfIntervals = numberOfIntervals(chosen);
-                System.out.println(chosen.traceName() + ": " + oldNumberOfIntervals + " -> "
-                        + newNumberOfIntervals);
-                // FIXME solve the problem when the number of thresholds actually reduces due to value overlapping
-                if (newNumberOfIntervals > oldNumberOfIntervals) {
+                System.out.println(">>>> " + chosen.traceName() + ": " + thresholds.get(chosen));
+                final boolean success = improveThresholds(chosen, false);
+                if (success) {
+                    System.out.println(">>>> " + chosen.traceName() + ": " + thresholds.get(chosen));
                     break;
+                } else {
+                    exhaustedParameters.add(chosen);
+                    System.out.println(">>>> " + chosen.traceName() + ": failed to improve thresholds");
                 }
             }
             updateParameters();
@@ -219,21 +296,29 @@ public class SmartBuilderMain extends MainBase {
         final double rThreshold = 2;
         final Random rnd = randomSeed == null ? new Random() : new Random(randomSeed);
         while (true) {
-            final int referenceNumber = supportedNumber(conf, 1);
-            final List<Integer> supportedNumbers = new ArrayList<>();
-            for (int i = 0; i < repeats; i++) {
-                supportedNumbers.add(supportedNumber(conf, traceFraction));
-            }
-            final double avgSupportedNumber = supportedNumbers.stream().mapToInt(x -> x).max().orElse(1);
-            final double diff = 1 - traceFraction;
-            final double r = referenceNumber * diff / (referenceNumber - avgSupportedNumber);
-            System.out.println("r = " + r);
-            if (r > rThreshold) {
+            if (SIMULATE) {
                 profile.randomComplification(rnd);
             } else {
-                break;
+                final int referenceNumber = supportedNumber(conf, 1);
+                final List<Integer> supportedNumbers = new ArrayList<>();
+                for (int i = 0; i < repeats; i++) {
+                    supportedNumbers.add(supportedNumber(conf, traceFraction));
+                }
+                final double avgSupportedNumber = supportedNumbers.stream().mapToInt(x -> x).max().orElse(1);
+                final double diff = 1 - traceFraction;
+                final double r = referenceNumber * diff / (referenceNumber - avgSupportedNumber);
+                System.out.println(">>>> r = " + r);
+                if (r > rThreshold) {
+                    profile.randomComplification(rnd);
+                } else {
+                    break;
+                }
             }
         }
+
+        // TODO improve threshold refinement to account for threshold rounding, e.g. 0.2 and 0.3 together make no sense
+        // simplest solution: make minimum steps to left and right
+        // this requires recalling how rounded thresholds are used in FSMs
 
         // TODO repeat all this with symbolic models
 

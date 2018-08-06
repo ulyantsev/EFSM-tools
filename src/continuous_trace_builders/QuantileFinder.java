@@ -35,7 +35,7 @@ public class QuantileFinder {
         }
     }
 
-    public static Map<Integer, List<Double>> find(Dataset ds, Parameter p, Set<Integer> ns) throws IOException {
+    public static List<Double> sortedValues(Dataset ds, Parameter p) throws IOException {
         final List<Double> values = new ArrayList<>();
         final Dataset.Reader reader = ds.reader();
         while (reader.hasNext()) {
@@ -43,6 +43,11 @@ public class QuantileFinder {
             values.addAll(trace.stream().map(aTrace -> ds.get(aTrace, p)).collect(Collectors.toList()));
         }
         Collections.sort(values);
+        return values;
+    }
+
+    public static Map<Integer, List<Double>> find(Dataset ds, Parameter p, Set<Integer> ns) throws IOException {
+        final List<Double> values = sortedValues(ds, p);
         final Map<Integer, List<Double>> map = new TreeMap<>();
         for (int n : ns) {
             final List<Double> quantiles = new ArrayList<>();
