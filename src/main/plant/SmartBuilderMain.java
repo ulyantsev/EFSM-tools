@@ -311,7 +311,7 @@ public class SmartBuilderMain extends MainBase {
         // start a loop of improvement
         final double traceFraction = 0.95;
         final int repeats = 20;
-        final double rThreshold = 2;
+        final double rThreshold = 3;
         final Random rnd = randomSeed == null ? new Random() : new Random(randomSeed);
         while (true) {
             if (SIMULATE) {
@@ -331,11 +331,12 @@ public class SmartBuilderMain extends MainBase {
                 final double r = referenceNumber * diff / (referenceNumber - avgSupportedNumber);
                 System.out.println(">>>> r = " + r);
                 if (r <= rThreshold || !profile.randomComplification(rnd)) {
-                    ExplicitStateBuilder.dumpAutomaton(lastAutomaton, conf, directory, "plant-explicit.",
+                    ExplicitStateBuilder.dumpAutomaton(effectiveLastAutomaton(), conf, directory, "plant-explicit.",
                             false, true, true, true);
                     // TODO configure outputs (GV, Promela, NuSMV) in command-line parameters
                     break;
                 }
+                lastGoodAutomaton = lastAutomaton;
             }
         }
 
@@ -344,7 +345,12 @@ public class SmartBuilderMain extends MainBase {
         logger().info("Execution time: " + executionTime());
     }
 
+    private NondetMooreAutomaton lastGoodAutomaton = null;
     private NondetMooreAutomaton lastAutomaton = null;
+
+    private NondetMooreAutomaton effectiveLastAutomaton() {
+        return lastGoodAutomaton == null ? lastAutomaton : lastGoodAutomaton;
+    }
 
     private int supportedNumber(Configuration conf, double traceFraction) throws IOException {
         final NondetMooreAutomaton result = ExplicitStateBuilder.run(conf, directory, datasetFilename, false, 1,
