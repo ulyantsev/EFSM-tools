@@ -22,13 +22,13 @@ public class RealParameter extends Parameter {
         return doubleBounds.getRight();
     }
 
-    public void replaceThresholds(List<Double> newCutoffs) {
-        for (double value : newCutoffs) {
+    public void replaceThresholds(List<Double> newThresholds) {
+        for (double value : newThresholds) {
             if (value < doubleBounds.getLeft() || value > doubleBounds.getRight()) {
                 throw new RuntimeException();
             }
         }
-        final Set<Double> set = new TreeSet<>(newCutoffs);
+        final Set<Double> set = new TreeSet<>(newThresholds);
         set.remove(lowerDoubleBound());
         set.remove(upperDoubleBound());
         thresholds.clear();
@@ -94,7 +94,6 @@ public class RealParameter extends Parameter {
         thresholds.add((double) lowerBound);
         thresholds.addAll(this.thresholds.subList(0, this.thresholds.size() - 1));
         thresholds.add((double) upperBound);
-
         return "param " + simulationEnvironmentName() + " (" + traceName() + "): REAL" + thresholds;
     }
 
@@ -131,11 +130,11 @@ public class RealParameter extends Parameter {
     }
 
     private int intervalMin(int interval) {
-        return interval == 0 ? lowerBound : (int) Math.round(Math.floor(thresholds.get(interval - 1)));
+        return interval == 0 ? lowerBound : (int) Math.round(Math.ceil(thresholds.get(interval - 1)));
     }
     
     private int intervalMax(int interval) {
-        return interval == thresholds.size() - 1 ? upperBound : (int) Math.round(Math.ceil(thresholds.get(interval)));
+        return interval == thresholds.size() - 1 ? upperBound : (int) Math.round(Math.floor(thresholds.get(interval)));
     }
     
     @Override

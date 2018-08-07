@@ -105,7 +105,7 @@ public class ExplicitStateBuilder {
         return a;
     }
 
-    static void dumpAutomaton(NondetMooreAutomaton a, Configuration conf, String directory, String namePrefix,
+    public static void dumpAutomaton(NondetMooreAutomaton a, Configuration conf, String directory, String namePrefix,
                               boolean proximityCompletion, boolean outputGv, boolean outputSmv, boolean outputSpin)
             throws IOException {
         NondetMooreAutomaton effectiveA = a;

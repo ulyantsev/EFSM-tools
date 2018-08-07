@@ -9,8 +9,8 @@ import continuous_trace_builders.parameters.Parameter;
 import continuous_trace_builders.parameters.RealParameter;
 import meta.Author;
 import meta.MainBase;
-import org.apache.commons.lang3.tuple.Pair;
 import org.kohsuke.args4j.Option;
+import structures.moore.NondetMooreAutomaton;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -51,7 +51,7 @@ public class SmartBuilderMain extends MainBase {
     @Option(name = "--randomSeed", usage = "random seed", metaVar = "<seed>")
     private Long randomSeed;
 
-    private final static boolean SIMULATE = true;
+    private final static boolean SIMULATE = false;
 
     public static void main(String[] args) {
         new SmartBuilderMain().run(args, Author.IB,
@@ -75,7 +75,10 @@ public class SmartBuilderMain extends MainBase {
         }
 
         private void addMandatory(RealParameter p, double value) {
-            thresholds.get(p).add(value);
+            final NavigableSet<Double> target = (NavigableSet<Double>) thresholds.get(p);
+            if (value > target.iterator().next() && value < target.descendingIterator().next()) {
+                target.add(value);
+            }
         }
 
         private void updateParameters() {
@@ -84,56 +87,57 @@ public class SmartBuilderMain extends MainBase {
             }
         }
 
-        private boolean improveThresholds(RealParameter p, boolean forceDummy) throws IOException {
+        private class Interval implements Comparable<Interval> {
+            private final double leftThreshold;
+            private final double rightThreshold;
+            private final int leftIndex;
+            private final int rightIndex;
+
+            public Interval(double leftThreshold, double rightThreshold, int leftIndex, int rightIndex) {
+                this.leftThreshold = leftThreshold;
+                this.rightThreshold = rightThreshold;
+                this.leftIndex = leftIndex;
+                this.rightIndex = rightIndex;
+            }
+
+            private int value() {
+                return rightIndex - leftIndex;
+            }
+
+            private int midIndex() {
+                return (rightIndex + leftIndex) / 2;
+            }
+
+            public boolean between(double value) {
+                return value > leftThreshold && value < rightThreshold;
+            }
+
+            @Override
+            public int compareTo(Interval o) {
+                return o.value() - value();
+            }
+
+            @Override
+            public String toString() {
+                return value() + "[" + leftThreshold + " @ " + leftIndex + ", " + rightThreshold + " @ "
+                        + rightIndex + "]";
+            }
+        }
+
+        private static double roundToHalfInteger(double value) {
+            return Math.round(value + 0.5) - 0.5;
+        }
+
+        private boolean improveThresholds(RealParameter p) throws IOException {
             final List<Double> values = QuantileFinder.sortedValues(ds, p);
             final Set<Double> target = thresholds.get(p);
             final List<Double> currentThresholds = new ArrayList<>(target);
             final int[] indices = new int[currentThresholds.size()];
-            for (int i = 1; i < currentThresholds.size(); i++) {
+            for (int i = 1; i < currentThresholds.size() - 1; i++) {
                 final double threshold = currentThresholds.get(i);
                 indices[i] = Math.abs(Collections.binarySearch(values, threshold));
             }
-
-            class Interval implements Comparable<Interval> {
-                private final double leftThreshold;
-                private final double rightThreshold;
-                private final int leftIndex;
-                private final int rightIndex;
-
-                public Interval(double leftThreshold, double rightThreshold, int leftIndex, int rightIndex) {
-                    this.leftThreshold = leftThreshold;
-                    this.rightThreshold = rightThreshold;
-                    this.leftIndex = leftIndex;
-                    this.rightIndex = rightIndex;
-                }
-
-                private int value() {
-                    return rightIndex - leftIndex;
-                }
-
-                private double midValue() {
-                    return (rightThreshold + leftThreshold) / 2;
-                }
-
-                private int midIndex() {
-                    return (rightIndex + leftIndex) / 2;
-                }
-
-                public boolean between(double value) {
-                    return value > leftThreshold && value < rightThreshold;
-                }
-
-                @Override
-                public int compareTo(Interval o) {
-                    return o.value() - value();
-                }
-
-                @Override
-                public String toString() {
-                    return value() + "[" + leftThreshold + " @ " + leftIndex + ", " + rightThreshold + " @ "
-                            + rightIndex + "]";
-                }
-            }
+            indices[indices.length - 1] = values.size();
 
             final Interval[] intervals = new Interval[indices.length - 1];
             for (int i = 0; i < indices.length - 1; i++) {
@@ -143,40 +147,31 @@ public class SmartBuilderMain extends MainBase {
             Arrays.sort(intervals);
             System.out.println(">>>> " + Arrays.toString(intervals));
             for (Interval i : intervals) {
+                if (Math.ceil(i.leftThreshold) >= Math.floor(i.rightThreshold)) {
+                    // cannot cut in more intervals
+                    continue;
+                }
+
                 final int middleIndex = i.midIndex();
                 final double middleValue = values.get(middleIndex);
-                if (middleValue == i.leftThreshold) {
-                    // walk right
-                    for (int j = middleIndex + 1; j <= i.rightIndex; j++) {
-                        final double value = values.get(j);
-                        if (i.between(value)) {
-                            target.add(value);
-                            //System.out.println(value);
-                            return true;
-                        }
-                    }
-                    if (forceDummy) {
-                        target.add(i.midValue());
-                        return true;
-                    }
-                } else if (middleValue == i.rightThreshold) {
-                    // walk left
-                    for (int j = middleIndex - 1; j >= i.leftIndex; j--) {
-                        final double value = values.get(j);
-                        if (i.between(value)) {
-                            target.add(value);
-                            //System.out.println(value);
-                            return true;
-                        }
-                    }
-                    if (forceDummy) {
-                        target.add(i.midValue());
-                        return true;
-                    }
-                } else {
-                    target.add(middleValue);
-                    //System.out.println(middleValue);
+                final double adjustedMiddleValue = roundToHalfInteger(middleValue);
+
+                if (i.between(adjustedMiddleValue)) {
+                    // good middle
+                    target.add(adjustedMiddleValue);
                     return true;
+                } else if (adjustedMiddleValue <= i.leftThreshold) {
+                    // step right if possible
+                    if (i.between(adjustedMiddleValue + 1)) {
+                        target.add(adjustedMiddleValue + 1);
+                        return true;
+                    }
+                } else if (adjustedMiddleValue >= i.rightThreshold) {
+                    // step left if possible
+                    if (i.between(adjustedMiddleValue - 1)) {
+                        target.add(adjustedMiddleValue - 1);
+                        return true;
+                    }
                 }
             }
             return false;
@@ -187,7 +182,7 @@ public class SmartBuilderMain extends MainBase {
                 final Set<Double> set = thresholds.get(p);
                 if (set.size() == 2) {
                     System.out.println(">>>> " + p.traceName() + ": " + thresholds.get(p));
-                    improveThresholds(p, true);
+                    improveThresholds(p);
                     System.out.println(">>>> " + p.traceName() + ": " + thresholds.get(p));
                 }
             }
@@ -198,21 +193,33 @@ public class SmartBuilderMain extends MainBase {
             return thresholds.get(p).size() - 1;
         }
 
-        private void randomComplification(Random rnd) throws IOException {
+        private boolean randomComplification(Random rnd) throws IOException {
             class RandomCollection<E> {
                 private final NavigableMap<Double, E> map = new TreeMap<>();
+                private final Set<E> forbidden = new HashSet<>();
                 private double total = 0;
+                private int remainingValues = 0;
 
-                public void add(double weight, E result) {
-                    if (weight > 0) {
-                        total += weight;
-                        map.put(total, result);
-                    }
+                public void add(double weight, E item) {
+                    total += weight;
+                    map.put(total, item);
+                    remainingValues++;
+                }
+
+                public void remove(E item) {
+                    forbidden.add(item);
+                    remainingValues--;
                 }
 
                 public E next() {
-                    double value = rnd.nextDouble() * total;
-                    return map.higherEntry(value).getValue();
+                    if (remainingValues == 0) {
+                        return null;
+                    }
+                    E result;
+                    do {
+                        result = map.higherEntry(rnd.nextDouble() * total).getValue();
+                    } while (forbidden.contains(result));
+                    return result;
                 }
             }
             while (true) {
@@ -227,28 +234,39 @@ public class SmartBuilderMain extends MainBase {
                     }
                 }
                 final RealParameter chosen = rc.next();
+                if (chosen == null) {
+                    System.out.println(">>>> no more threshold improvements are possible");
+                    return false;
+                }
                 System.out.println(">>>> " + chosen.traceName() + ": " + thresholds.get(chosen));
-                final boolean success = improveThresholds(chosen, false);
+                final boolean success = improveThresholds(chosen);
                 if (success) {
                     System.out.println(">>>> " + chosen.traceName() + ": " + thresholds.get(chosen));
                     break;
                 } else {
                     exhaustedParameters.add(chosen);
+                    rc.remove(chosen);
                     System.out.println(">>>> " + chosen.traceName() + ": failed to improve thresholds");
                 }
             }
             updateParameters();
+            return true;
         }
     }
 
     private static void addSpecThreshold(ParameterProfile profile, RealParameter p, String sign, String strConst) {
         final int intConst = Integer.parseInt(strConst);
-        final double result
-                = sign.equals("=") || sign.equals("!=") ? intConst
-                : sign.equals(">") || sign.equals("<=") ? intConst + 0.5
-                : sign.equals(">=") || sign.equals("<") ? intConst - 0.5
-                : Double.NaN;
-        profile.addMandatory(p, result);
+        if (sign.equals("=") || sign.equals("!=")) {
+            // isolation
+            profile.addMandatory(p, intConst - 0.5);
+            profile.addMandatory(p, intConst + 0.5);
+        } else {
+            final double result
+                    = sign.equals(">") || sign.equals("<=") ? intConst + 0.5
+                    : sign.equals(">=") || sign.equals("<") ? intConst - 0.5
+                    : Double.NaN;
+            profile.addMandatory(p, result);
+        }
     }
 
     @Override
@@ -292,42 +310,49 @@ public class SmartBuilderMain extends MainBase {
 
         // start a loop of improvement
         final double traceFraction = 0.95;
-        final int repeats = 2;
+        final int repeats = 20;
         final double rThreshold = 2;
         final Random rnd = randomSeed == null ? new Random() : new Random(randomSeed);
         while (true) {
             if (SIMULATE) {
-                profile.randomComplification(rnd);
+                if (!profile.randomComplification(rnd)) {
+                    break;
+                }
             } else {
+                System.out.println(">>>> main construction");
                 final int referenceNumber = supportedNumber(conf, 1);
                 final List<Integer> supportedNumbers = new ArrayList<>();
                 for (int i = 0; i < repeats; i++) {
+                    System.out.println(">>>> reduced construction " + (i + 1) + "/" + repeats);
                     supportedNumbers.add(supportedNumber(conf, traceFraction));
                 }
-                final double avgSupportedNumber = supportedNumbers.stream().mapToInt(x -> x).max().orElse(1);
+                final double avgSupportedNumber = supportedNumbers.stream().mapToInt(x -> x).average().orElse(0);
                 final double diff = 1 - traceFraction;
                 final double r = referenceNumber * diff / (referenceNumber - avgSupportedNumber);
                 System.out.println(">>>> r = " + r);
-                if (r > rThreshold) {
-                    profile.randomComplification(rnd);
-                } else {
+                if (r <= rThreshold || !profile.randomComplification(rnd)) {
+                    ExplicitStateBuilder.dumpAutomaton(lastAutomaton, conf, directory, "plant-explicit.",
+                            false, true, true, true);
+                    // TODO configure outputs (GV, Promela, NuSMV) in command-line parameters
                     break;
                 }
             }
         }
-
-        // TODO improve threshold refinement to account for threshold rounding, e.g. 0.2 and 0.3 together make no sense
-        // simplest solution: make minimum steps to left and right
-        // this requires recalling how rounded thresholds are used in FSMs
 
         // TODO repeat all this with symbolic models
 
         logger().info("Execution time: " + executionTime());
     }
 
+    private NondetMooreAutomaton lastAutomaton = null;
+
     private int supportedNumber(Configuration conf, double traceFraction) throws IOException {
-        return ExplicitStateBuilder.run(conf, directory, datasetFilename, false, 1,
-                traceFraction, true, false, false, false, false, false).supportedAndAllTransitionNumbers().getLeft();
+        final NondetMooreAutomaton result = ExplicitStateBuilder.run(conf, directory, datasetFilename, false, 1,
+                traceFraction, true, false, false, false, false, false);
+        if (traceFraction == 1) {
+            lastAutomaton = result;
+        }
+        return result.supportedAndAllTransitionNumbers().getLeft();
 
     }
 }
