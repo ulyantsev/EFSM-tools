@@ -10,8 +10,11 @@ import continuous_trace_builders.parameters.RealParameter;
 import meta.Author;
 import meta.MainBase;
 import org.kohsuke.args4j.Option;
+import org.kohsuke.args4j.spi.BooleanOptionHandler;
 import structures.moore.NondetMooreAutomaton;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -19,6 +22,7 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class SmartBuilderMain extends MainBase {
     @Option(name = "--log", aliases = {"-l"}, usage = "write log to this file", metaVar = "<file>")
@@ -51,7 +55,55 @@ public class SmartBuilderMain extends MainBase {
     @Option(name = "--randomSeed", usage = "random seed", metaVar = "<seed>")
     private Long randomSeed;
 
-    private final static boolean SIMULATE = false;
+    @Option(name = "--r", usage = "r threshold (for explicit models)", metaVar = "<r>")
+    private double rThreshold = 3;
+
+    @Option(name = "--d", usage = "d threshold (for symbolic models)", metaVar = "<d>")
+    private double dThreshold = 0.05;
+
+    @Option(name = "--models",
+            usage = "list of comma-separated model types (symbolic, explicit), default: both",
+            metaVar = "<file>")
+    private String models = "symbolic, explicit";
+
+    @Option(name = "--traceFraction", usage = "trace fraction to construct reduced models", metaVar = "<fraction>")
+    private double traceFraction = 0.9;
+
+    @Option(name = "--repeats", usage = "number of constrcuted reduced models", metaVar = "<repeats>")
+    private int repeats = 20;
+
+    // from ContinuousTraceBuilder:
+
+    @Option(name = "--grouping",
+            usage = "constraint-based: file where parameters grouping is described",
+            metaVar = "<file>")
+    private String groupingFile;
+
+    @Option(name = "--constraintBasedDisableOVERALL_1D", handler = BooleanOptionHandler.class,
+            usage = "constraint-based: disable overall 1D constraints")
+    private boolean constraintBasedDisableOVERALL_1D;
+    @Option(name = "--constraintBasedDisableOVERALL_2D", handler = BooleanOptionHandler.class,
+            usage = "constraint-based: disable overall 2D constraints")
+    private boolean constraintBasedDisableOVERALL_2D;
+    @Option(name = "--constraintBasedDisableOIO_CONSTRAINTS", handler = BooleanOptionHandler.class,
+            usage = "constraint-based: disable output-input-output constraints")
+    private boolean constraintBasedDisableOIO_CONSTRAINTS;
+
+    @Option(name = "--constraintBasedDisableINPUT_STATE", handler = BooleanOptionHandler.class,
+            usage = "constraint-based: disable input-state constraints")
+    private boolean constraintBasedDisableINPUT_STATE;
+    @Option(name = "--constraintBasedDisableCURRENT_NEXT", handler = BooleanOptionHandler.class,
+            usage = "constraint-based: disable current-next constraints")
+    private boolean constraintBasedDisableCURRENT_NEXT;
+
+    @Option(name = "--constraintBasedDisableMONOTONIC_FAIRNESS_CONSTRAINTS", handler = BooleanOptionHandler.class,
+            usage = "constraint-based: disable fairness constraints, generated on the base of monotonicity")
+    private boolean constraintBasedDisableMONOTONIC_FAIRNESS_CONSTRAINTS;
+
+    @Option(name = "--constraintBasedDisableCOMPLEX_FAIRNESS_CONSTRAINTS", handler = BooleanOptionHandler.class,
+            usage = "constraint-based: disable complex fairness constraints, generated on base of constant difference" +
+                    " of two values to move from one parameter to another")
+    private boolean constraintBasedDisableCOMPLEX_FAIRNESS_CONSTRAINTS;
 
     public static void main(String[] args) {
         new SmartBuilderMain().run(args, Author.IB,
@@ -309,38 +361,64 @@ public class SmartBuilderMain extends MainBase {
         profile.addMinimumAssignedThresholds();
 
         // start a loop of improvement
-        final double traceFraction = 0.95;
-        final int repeats = 20;
-        final double rThreshold = 3;
         final Random rnd = randomSeed == null ? new Random() : new Random(randomSeed);
-        while (true) {
-            if (SIMULATE) {
+        final Set<String> modelSet = new TreeSet<>(Arrays.asList(models.split(", *")));
+        final boolean explicit = modelSet.contains("explicit");
+        final boolean symbolic = modelSet.contains("symbolic");
+        if (!explicit && !symbolic) {
+            // just simulate threshold improvements
+            while (true) {
                 if (!profile.randomComplification(rnd)) {
                     break;
                 }
-            } else {
-                System.out.println(">>>> main construction");
-                final int referenceNumber = supportedNumber(conf, 1);
-                final List<Integer> supportedNumbers = new ArrayList<>();
-                for (int i = 0; i < repeats; i++) {
-                    System.out.println(">>>> reduced construction " + (i + 1) + "/" + repeats);
-                    supportedNumbers.add(supportedNumber(conf, traceFraction));
+            }
+        } else {
+            if (explicit) {
+                while (true) {
+                    System.out.println(">>>> main construction");
+                    final int referenceNumber = supportedNumber(conf, 1);
+                    final List<Integer> supportedNumbers = new ArrayList<>();
+                    for (int i = 0; i < repeats; i++) {
+                        System.out.println(">>>> reduced construction " + (i + 1) + "/" + repeats);
+                        supportedNumbers.add(supportedNumber(conf, traceFraction));
+                    }
+                    final double avgSupportedNumber = supportedNumbers.stream().mapToInt(x -> x).average().orElse(0);
+                    final double diff = 1 - traceFraction;
+                    final double r = referenceNumber * diff / (referenceNumber - avgSupportedNumber);
+                    System.out.println(">>>> r = " + r);
+                    if (r <= rThreshold || !profile.randomComplification(rnd)) {
+                        ExplicitStateBuilder.dumpAutomaton(effectiveLastAutomaton(), conf, directory, "plant-explicit.",
+                                false, true, true, true);
+                        // TODO configure outputs (GV, Promela, NuSMV) in command-line parameters
+                        break;
+                    }
+                    lastGoodAutomaton = lastAutomaton;
                 }
-                final double avgSupportedNumber = supportedNumbers.stream().mapToInt(x -> x).average().orElse(0);
-                final double diff = 1 - traceFraction;
-                final double r = referenceNumber * diff / (referenceNumber - avgSupportedNumber);
-                System.out.println(">>>> r = " + r);
-                if (r <= rThreshold || !profile.randomComplification(rnd)) {
-                    ExplicitStateBuilder.dumpAutomaton(effectiveLastAutomaton(), conf, directory, "plant-explicit.",
-                            false, true, true, true);
-                    // TODO configure outputs (GV, Promela, NuSMV) in command-line parameters
-                    break;
+            }
+
+            if (symbolic) {
+                while (true) {
+                    System.out.println(">>>> main construction");
+                    final List<String> originalModel = callSymbolicBuilder(conf, 1);
+                    final List<Double> dValues = new ArrayList<>();
+                    for (int i = 0; i < repeats; i++) {
+                        System.out.println(">>>> reduced construction " + (i + 1) + "/" + repeats);
+                        final List<String> reducedModel = callSymbolicBuilder(conf, traceFraction);
+                        dValues.add(compareStringLists(originalModel, reducedModel));
+                    }
+                    final double d = dValues.stream().mapToDouble(x -> x).average().orElse(0);
+                    System.out.println(">>>> d = " + d);
+                    if (d > dThreshold || !profile.randomComplification(rnd)) {
+                        // TODO dump
+                        try (BufferedWriter bw = new BufferedWriter(new FileWriter(path()))) {
+                            bw.write(effectiveLastSymbolicModel());
+                        }
+                        break;
+                    }
+                    lastGoodSymbolicModel = lastSymbolicModel;
                 }
-                lastGoodAutomaton = lastAutomaton;
             }
         }
-
-        // TODO repeat all this with symbolic models
 
         logger().info("Execution time: " + executionTime());
     }
@@ -348,8 +426,15 @@ public class SmartBuilderMain extends MainBase {
     private NondetMooreAutomaton lastGoodAutomaton = null;
     private NondetMooreAutomaton lastAutomaton = null;
 
+    private String lastGoodSymbolicModel = null;
+    private String lastSymbolicModel = null;
+
     private NondetMooreAutomaton effectiveLastAutomaton() {
         return lastGoodAutomaton == null ? lastAutomaton : lastGoodAutomaton;
+    }
+
+    private String effectiveLastSymbolicModel() {
+        return lastGoodSymbolicModel == null ? lastSymbolicModel : lastGoodSymbolicModel;
     }
 
     private int supportedNumber(Configuration conf, double traceFraction) throws IOException {
@@ -359,6 +444,49 @@ public class SmartBuilderMain extends MainBase {
             lastAutomaton = result;
         }
         return result.supportedAndAllTransitionNumbers().getLeft();
+    }
 
+    private String path() {
+        return Utils.combinePaths(directory, ConstraintBasedBuilder.OUTPUT_FILENAME);
+    }
+
+    private List<String> callSymbolicBuilder(Configuration conf, double traceFraction) throws IOException {
+        ConstraintBasedBuilder.run(conf, directory, datasetFilename, groupingFile, traceFraction,
+                constraintBasedDisableOVERALL_1D, constraintBasedDisableOVERALL_2D,
+                constraintBasedDisableOIO_CONSTRAINTS,
+                constraintBasedDisableINPUT_STATE, constraintBasedDisableCURRENT_NEXT,
+                constraintBasedDisableMONOTONIC_FAIRNESS_CONSTRAINTS,
+                constraintBasedDisableCOMPLEX_FAIRNESS_CONSTRAINTS);
+        lastSymbolicModel = new String(Files.readAllBytes(Paths.get(path())), StandardCharsets.UTF_8);
+        List<String> lines = Files.readAllLines(Paths.get(path()), StandardCharsets.UTF_8);
+        lines = lines.stream().filter(l -> l.matches("^  (  \\(|&).*$")).collect(Collectors.toList());
+        lines = lines.stream().map(l -> l.replaceAll("(\\S)( \\|)", "$1\n$2").replaceAll("(\\S)( &)", "$1\n$2")).collect(Collectors.toList());
+        lines = Arrays.asList(String.join("\n", lines).split("\n"));
+        lines = lines.stream().map(l -> l.replaceAll("^ *", "")).collect(Collectors.toList());
+        lines = lines.stream().filter(l -> !l.matches("^$")).collect(Collectors.toList());
+        return lines;
+    }
+
+    private static double compareStringLists(List<String> x, List<String> y) {
+        return (double) levensteinDistance(x, y) / x.size();
+    }
+
+    private static int levensteinDistance(List<String> x, List<String> y) {
+        final int[][] dp = new int[x.size() + 1][y.size() + 1];
+
+        for (int i = 0; i <= x.size(); i++) {
+            for (int j = 0; j <= y.size(); j++) {
+                if (i == 0) {
+                    dp[i][j] = j;
+                } else if (j == 0) {
+                    dp[i][j] = i;
+                } else {
+                    dp[i][j] = Math.min(dp[i - 1][j - 1] + (x.get(i - 1).equals(y.get(j - 1)) ? 0 : 1),
+                            Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1));
+                }
+            }
+        }
+
+        return dp[x.size()][y.size()];
     }
 }

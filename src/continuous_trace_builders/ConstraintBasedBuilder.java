@@ -364,6 +364,8 @@ public class ConstraintBasedBuilder {
         ).collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
+    public final static String OUTPUT_FILENAME = "plant-constraints.smv";
+
     public static void run(Configuration conf, String directory, String datasetFilename, String groupingFile,
                            double traceFraction, boolean disableOVERALL_1D, boolean disableOVERALL_2D,
                            boolean disableOIO_CONSTRAINTS, boolean disableINPUT_STATE, boolean disableCURRENT_NEXT,
@@ -459,6 +461,6 @@ public class ConstraintBasedBuilder {
         }
 
         printRes(conf, initConstraints, transConstraints, fairnessConstraints, Utils.combinePaths(directory,
-                "plant-constraints.smv"));
+                OUTPUT_FILENAME));
     }
 }
