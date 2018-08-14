@@ -69,7 +69,7 @@ public class SmartBuilderMain extends MainBase {
     @Option(name = "--traceFraction", usage = "trace fraction to construct reduced models", metaVar = "<fraction>")
     private double traceFraction = 0.9;
 
-    @Option(name = "--repeats", usage = "number of constrcuted reduced models", metaVar = "<repeats>")
+    @Option(name = "--repeats", usage = "number of constructed reduced models", metaVar = "<repeats>")
     private int repeats = 20;
 
     // from ContinuousTraceBuilder:
