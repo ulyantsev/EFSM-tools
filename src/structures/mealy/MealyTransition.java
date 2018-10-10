@@ -10,7 +10,8 @@ public class MealyTransition {
     private final MealyNode src;
     private final MealyNode dst;
 
-    public MealyTransition(MealyNode src, MealyNode dst, String event, MyBooleanExpression expr, StringActions actions) {
+    public MealyTransition(MealyNode src, MealyNode dst, String event, MyBooleanExpression expr,
+                           StringActions actions) {
         this.src = src;
         this.dst = dst;
         this.event = event;

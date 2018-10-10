@@ -37,7 +37,9 @@ public class AutomataFromJSON {
 
     private static NondetMooreAutomaton jsonToAutomaton(String filename) throws IOException {
         final Vis v = new Vis();
-        new JSONParser(Source.sourceFor("a", new File(filename)), null).parse().accept(v);
+
+        //new JSONParser(Source.sourceFor("a", new File(filename)), null).parse().accept(v);
+        // FIXME
 
         final List<Boolean> isInitial = new ArrayList<>(Collections.nCopies(v.stateNumber(), false));
         isInitial.set(v.initialState, true);

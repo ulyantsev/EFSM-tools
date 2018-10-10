@@ -188,7 +188,7 @@ public class SymbolicBuilder {
                                       boolean disableCurNextOutputs) {
         final Set<Parameter> inputParameters = new HashSet<>(conf.inputParameters);
         final Set<Parameter> outputParameters = new HashSet<>(conf.outputParameters);
-        final List<Parameter> allParameters = new ArrayList(conf.parameters());
+        final List<Parameter> allParameters = new ArrayList<>(conf.parameters());
         for (int pi1 = 0; pi1 < allParameters.size(); pi1++) {
             final Parameter pCurrent1 = allParameters.get(pi1);
             if (pCurrent1 instanceof IgnoredBoolParameter) {

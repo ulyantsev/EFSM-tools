@@ -1,6 +1,3 @@
-/**
- * IntersectionAutomata.java, 12.04.2008
- */
 package verification.verifier;
 
 import java.util.HashMap;
@@ -16,21 +13,21 @@ import verification.statemachine.SimpleState;
  *
  * @author Kirill Egorov
  */
-public class IntersectionAutomata {
+class IntersectionAutomata {
     private final PredicateFactory predicates;
     private final BuchiAutomaton buchiAutomata;
     private final Map<String, IntersectionNode> nodeMap = new HashMap<>();
 
-    public IntersectionAutomata(PredicateFactory predicates, BuchiAutomaton buchi) {
+    IntersectionAutomata(PredicateFactory predicates, BuchiAutomaton buchi) {
         this.predicates = predicates;
         buchiAutomata = buchi;
     }
 
-    public BuchiAutomaton getBuchiAutomata() {
+    BuchiAutomaton getBuchiAutomata() {
         return buchiAutomata;
     }
 
-    public IntersectionNode getNode(SimpleState state, BuchiNode node) {
+    IntersectionNode getNode(SimpleState state, BuchiNode node) {
         String key = getUniqueKey(state, node);
 
         IntersectionNode res = nodeMap.get(key);
@@ -41,11 +38,11 @@ public class IntersectionAutomata {
         return res;
     }
 
-    public PredicateFactory getPredicates() {
+    PredicateFactory getPredicates() {
         return predicates;
     }
 
-    protected String getUniqueKey(SimpleState state, BuchiNode node) {
+    private String getUniqueKey(SimpleState state, BuchiNode node) {
         return state.getUniqueName() + "_" + node.getID();
     }
 }

@@ -342,7 +342,7 @@ public class CompositionalBuilder {
                     false, satBased, ALL_EVENT_COMBINATIONS, traceIncludeEach, traceFraction);
             System.out.println();
             final PlantBuilderMain builder = new PlantBuilderMain();
-            builder.run(params.toArray(new String[params.size()]), Author.IB, "");
+            builder.run(params.toArray(new String[0]), Author.IB, "");
             if (!builder.resultAutomaton().isPresent()) {
                 System.err.println("Basic plant model construction failed; is the number of states sufficient?");
                 return;

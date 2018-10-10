@@ -9,7 +9,7 @@
 #include <unistd.h>
 
 using namespace CMSat;
-static SATSolver solver(NULL, NULL);
+static SATSolver solver;
 static void (*sig_alrm_handler)(int);
 static bool interrupted = false;
 

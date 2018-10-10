@@ -1,6 +1,3 @@
-/**
- * SimpleVerifier.java, 06.04.2008
- */
 package verification.verifier;
 
 import java.util.ArrayList;
@@ -26,7 +23,7 @@ import verification.statemachine.SimpleState;
 public class SimpleVerifier {
     private final SimpleState initState;
     
-    public SimpleVerifier(SimpleState initState) {
+    SimpleVerifier(SimpleState initState) {
         this.initState = initState;
     }
 
@@ -41,7 +38,7 @@ public class SimpleVerifier {
         private final IntersectionNode dest;
         private final QueueElement predecessor;
         
-        public QueueElement(IntersectionTransition trans, QueueElement predecessor) {
+        QueueElement(IntersectionTransition trans, QueueElement predecessor) {
             this.trans = trans;
             this.dest = trans.target;
             this.predecessor = predecessor;

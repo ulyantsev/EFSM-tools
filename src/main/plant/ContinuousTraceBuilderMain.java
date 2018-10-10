@@ -1,6 +1,6 @@
 package main.plant;
 
-/**
+/*
  * (c) Igor Buzhinsky
  */
 
@@ -131,7 +131,7 @@ public class ContinuousTraceBuilderMain extends MainBase {
 
     @Option(name = "--makeAllStatesInitial", handler = BooleanOptionHandler.class,
             usage = "explicit-state: make all states initial regardless of traces")
-    private boolean makeAllStatesInitial = false;
+    private boolean makeAllStatesInitial;
 
     public static void main(String[] args) {
         new ContinuousTraceBuilderMain().run(args, Author.IB,

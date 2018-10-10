@@ -131,11 +131,11 @@ public class MiniZincDataGeneratorMain extends MainBase {
         sb.append("edge_src = ").append(Arrays.toString(edgeSrc)).append(";\n");
         sb.append("edge_dst = ").append(Arrays.toString(edgeDst)).append(";\n");
 
-        String[] eventsArray = eventExprOrder.toArray(new String[eventExprOrder.size()]);
+        String[] eventsArray = eventExprOrder.toArray(new String[0]);
         for (int i = 0; i < eventsArray.length; i++) {
             eventsArray[i] = "\"" + eventsArray[i] + "\"";
         }
-        String[] actionsArray = actionsOrder.toArray(new String[actionsOrder.size()]);
+        String[] actionsArray = actionsOrder.toArray(new String[0]);
         for (int i = 0; i < actionsArray.length; i++) {
             actionsArray[i] = "\"" + actionsArray[i] + "\"";
         }

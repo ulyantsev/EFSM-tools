@@ -1,6 +1,6 @@
 package main.plant;
 
-/**
+/*
  * (c) Igor Buzhinsky
  */
 

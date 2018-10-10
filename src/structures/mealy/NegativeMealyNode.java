@@ -18,19 +18,19 @@ public class NegativeMealyNode extends MealyNode {
     private final List<MealyTransition> transitionList;
     private Set<NegativeMealyNode> loops = null;
     
-    public NegativeMealyNode(int number) {
+    NegativeMealyNode(int number) {
         super(number);
         transitionList = new ArrayList<>();
     }
     
-    public void addLoop(NegativeMealyNode node) {
+    void addLoop(NegativeMealyNode node) {
         if (loops == null) {
             loops = new LinkedHashSet<>();
         }
         loops.add(node);
     }
     
-    public boolean weakInvalid() {
+    boolean weakInvalid() {
         return !loops().isEmpty();
     }
     

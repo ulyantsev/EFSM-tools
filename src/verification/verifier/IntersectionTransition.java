@@ -1,6 +1,3 @@
-/**
- * DfsTransition.java, 12.04.2008
- */
 package verification.verifier;
 
 import verification.statemachine.StateTransition;
@@ -14,7 +11,7 @@ public class IntersectionTransition {
     public final IntersectionNode target;
     public final StateTransition transition;
 
-    public IntersectionTransition(StateTransition transition, IntersectionNode target) {
+    IntersectionTransition(StateTransition transition, IntersectionNode target) {
         if (target == null) {
             throw new IllegalArgumentException("Target can't be null");
         }
@@ -30,9 +27,7 @@ public class IntersectionTransition {
         final IntersectionTransition that = (IntersectionTransition) o;
 
         if (!target.equals(that.target)) return false;
-        if (transition != null ? !transition.equals(that.transition) : that.transition != null) return false;
-
-        return true;
+        return transition != null ? transition.equals(that.transition) : that.transition == null;
     }
 
     @Override

@@ -45,7 +45,11 @@ public class ScenariosFromJSON {
 
     private static List<StringScenario> jsonToScenarios(String filename) throws IOException {
         final List<StringScenario> result = new ArrayList<>();
-        final Node node = new JSONParser(Source.sourceFor("sc", new File(filename)), null).parse();
+        final Node node = null;
+
+        //final Node node = new JSONParser(Source.sourceFor("sc", new File(filename)), null).parse();
+        // FIXME
+
         node.accept(new NodeVisitor<LexicalContext>(new LexicalContext()) {
             List<StringActions> outputs;
 
