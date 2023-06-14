@@ -225,6 +225,6 @@ Auxiliary tools (for experiments, etc.):
 * [consistency-checker.jar](/jars/consistency-checker.jar): check EFSM compliance with a set of scenarios
 
 ## Troubleshooting, questions, research collaboration, etc.
-Regarding research collaboration, email Vladimir Ulyantsev (ulyantsev@rain.ifmo.ru) and Igor Buzhinsky (igor_buzhinsky@corp.ifmo.ru).
+Regarding research collaboration, email Vladimir Ulyantsev (ulyantsev@rain.ifmo.ru) and Igor Buzhinsky (igor.buzhinsky@gmail.com).
 
 Regarding issues with the tool, bugs, etc., email Igor Buzhinsky.
